@@ -7,6 +7,8 @@ const id = CONFIG.gaMeasurementId?.trim();
 
 export function initAnalytics() {
   if (!id || !/^G-[A-Z0-9]+$/.test(id)) return;
+  // local development visits shouldn't show up in the numbers
+  if (["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)) return;
   window.dataLayer = window.dataLayer || [];
   window.gtag = function gtag() { window.dataLayer.push(arguments); };
   window.gtag("js", new Date());
