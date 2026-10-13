@@ -123,8 +123,11 @@ export async function ocrSpots(id, ev, opts) {
   const first = {};
   for (const [d, rs] of Object.entries(byD)) {
     const timed = rs.filter((r) => r.left != null && r.left > 0 && r.left < 150).map((r) => r.t - elapsed(r.left)).sort((a, b) => a - b);
-    // median of the clock-based starts; with no clock seen, the label's first sighting minus half a match
-    first[d] = timed.length ? timed[timed.length >> 1] : Math.min(...rs.map((r) => r.t)) - 80;
+    // earliest start two clock readings agree on (a paused or restarted match shows a later
+    // second start; a single misread digit is ignored); with no clock seen, the label's first
+    // sighting minus half a match
+    const agreed = timed.find((x, i) => timed.some((y, j) => j !== i && Math.abs(x - y) <= 12));
+    first[d] = agreed ?? (timed.length ? timed[timed.length >> 1] : Math.min(...rs.map((r) => r.t)) - 80);
   }
   // in order: quals by number, then playoffs, should appear at increasing times
   const order = (d) => (d.startsWith("Q-") ? +d.slice(2) : 1000 + +d.slice(2));
