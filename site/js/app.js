@@ -1,7 +1,6 @@
 import {
   $, $$, esc, data, getJSON, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
-  trend, matchTable, mountLineChart, sortableTable, meter, winBar,
-} from "./ui.js";
+  trend, matchTable, mountLineChart, sortableTable, meter, winBar, videoFor } from "./ui.js";
 import { SEASONS } from "./seasons.js";
 import { initAnalytics, trackPage } from "./analytics.js";
 import { CONFIG } from "./config.js";
@@ -273,7 +272,7 @@ async function team(r) {
   const n = /^\d{1,6}$/.test(args[0] ?? "") ? +args[0] : null, view = args[1] ?? "matches";
   if (n == null) { app.innerHTML = `<div class="card empty">That isn't a team number.</div>`; return; }
   // just the season summary and this team's file: ranks and meter scales are precomputed
-  const [meta, t] = await Promise.all([data.meta(season), data.team(season, n).catch(() => null)]);
+  const [meta, t, videos] = await Promise.all([data.meta(season), data.team(season, n).catch(() => null), data.videos(season)]);
   if (stale(r)) return;
   if (!t) {
     app.innerHTML = `<div class="card empty">Team ${n} has no matches in ${season}. ${state.seasons.filter((s) => s !== season).map((s) => `<a class="link" href="#/${s}/team/${n}">Try ${s}</a>`).join(" ")}</div>`;
@@ -363,6 +362,7 @@ async function team(r) {
   // one card per event, newest first
   $("#view").innerHTML = [...t.events].reverse().map((ev) => {
     const ms = t.matches.filter((m) => m.ev === ev.code).map((m) => toMatch(m, n));
+    const video = (m) => videoFor(videos, ev.code, m.time);
     return `<div class="card section">
       <div class="ev-head">
         <div>
@@ -376,7 +376,7 @@ async function team(r) {
           <div><span class="k">EPA out</span><b>${fmt(ev.epaEnd)}${ev.epaStart != null && ev.epaEnd != null && Math.abs(ev.epaEnd - ev.epaStart) >= 0.5 ? `<span class="delta ${ev.epaEnd > ev.epaStart ? "trend-up" : "trend-down"}">${ev.epaEnd > ev.epaStart ? "▲" : "▼"}</span>` : ""}</b></div>
         </div>
       </div>
-      ${matchTable(season, ms, { me: n, rpNames: meta.rpNames })}
+      ${matchTable(season, ms, { me: n, rpNames: meta.rpNames, video })}
     </div>`;
   }).join("");
 }
@@ -513,6 +513,23 @@ function trophyCase(season, awards) {
 }
 const TILES_SLOT = "%%TILES%%";
 
+// YouTube's privacy-enhanced player: no cookies until the viewer presses play.
+function openVideo(id, t, title) {
+  const dlg = document.createElement("dialog");
+  dlg.className = "video-dialog";
+  const src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?start=${t}&autoplay=1&rel=0`;
+  dlg.innerHTML = `<div class="video-head"><b>${esc(title ?? "")}</b>
+    <a class="small link" href="https://www.youtube.com/watch?v=${encodeURIComponent(id)}&t=${t}s" target="_blank" rel="noopener">Open on YouTube ↗</a>
+    <button class="video-close" aria-label="Close">✕</button></div>
+    <div class="video-frame"><iframe src="${src}" title="${esc(title ?? "Match video")}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
+  document.body.appendChild(dlg);
+  dlg.showModal();
+  const close = () => dlg.close();
+  dlg.querySelector(".video-close").onclick = close;
+  dlg.addEventListener("click", (e) => { if (e.target === dlg) close(); }); // click outside
+  dlg.addEventListener("close", () => dlg.remove()); // stops playback
+}
+
 const shortEvent = (name) => name.replace(/\s+(Championship|Qualifier|Tournament)$/i, "").trim();
 
 function toMatch(m, me) {
@@ -521,7 +538,7 @@ function toMatch(m, me) {
   const bits = (arr, bit) => arr?.map((x) => (x & bit ? 1 : 0));
   const mySide = { np: m.pred[0], rp: bits(m.rp, 1) }, oppSide = { np: m.pred[1], rp: bits(m.orp, 1) };
   return {
-    d: m.m, played: true,
+    d: m.m, played: true, time: m.time,
     red: isRed ? mine : m.opps, blue: isRed ? m.opps : mine,
     redScore: { total: isRed ? m.score : m.oppScore, rp: bits(isRed ? m.rp : m.orp, 2) },
     blueScore: { total: isRed ? m.oppScore : m.score, rp: bits(isRed ? m.orp : m.rp, 2) },
@@ -569,7 +586,7 @@ async function events(r) {
 async function event(r) {
   const { season, args } = r;
   const code = args[0], tab = args[1] ?? "matches";
-  const [meta, ev] = await Promise.all([data.meta(season), data.event(season, code).catch(() => null)]);
+  const [meta, ev, videos] = await Promise.all([data.meta(season), data.event(season, code).catch(() => null), data.videos(season)]);
   if (stale(r)) return;
   if (!ev) {
     app.innerHTML = `<div class="card empty">No event with code “${esc(code)}” in ${seasonLabel(season, meta.game)}. <a class="link" href="#/${season}/events">Browse events →</a></div>`;
@@ -612,6 +629,7 @@ async function event(r) {
             ${liveAt ? `<span class="pill live">Live · updated ${liveAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>` : ""}
             <span class="pill">${ev.teams} teams</span><span class="pill">${played.length}/${matches.length} matches played</span>
             <a class="pill" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}" target="_blank" rel="noopener">FTCScout ↗</a>
+            ${videos?.[code]?.streams?.[0] ? `<button class="pill" data-video="${videos[code].streams[0].id}" data-t="0" data-title="${esc(ev.name)}">▶ Event stream</button>` : ""}
           </div>
         </div>
         <div class="big-epa"><div class="label">Winner predicted</div><b>${decided.length ? pct(correct / decided.length) : "–"}</b><div class="label">${correct} of ${decided.length} matches</div></div>
@@ -620,7 +638,7 @@ async function event(r) {
       <div id="tab"></div>`;
     if (tab === "teams") eventTeams(season, meta, ev);
     else if (tab === "forecast" && canForecast) eventForecast(season, meta, ev, matches);
-    else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames })}</div>`;
+    else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time) })}</div>`;
   };
 
   draw();
@@ -874,6 +892,14 @@ async function boot() {
     location.hash = `#/${e.target.value}/${keep}`;
   };
   wireSearch($(".nav-search"));
+  // match videos: one player dialog for every ▶ button
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-video]");
+    if (!b) return;
+    e.preventDefault();
+    openVideo(b.dataset.video, +b.dataset.t || 0, b.dataset.title);
+  });
+  addEventListener("hashchange", () => $$(".video-dialog").forEach((d) => d.close()));
   // team photos: upload dialog when the photo service is configured
   document.addEventListener("click", (e) => {
     const link = e.target.closest("[data-upload]");

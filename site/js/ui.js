@@ -23,6 +23,7 @@ export const data = {
   events: (s) => getJSON(`data/${s}/events.json`),
   event: (s, code) => getJSON(`data/${s}/event/${code}.json`),
   summary: (s) => getJSON(`data/${s}/summary.json`),
+  videos: (s) => getJSON(`data/${s}/videos.json`).catch(() => ({})),
   // approved photos: from the upload service when configured, plus any stored in the repo
   async photos(api) {
     const [repo, svc] = await Promise.all([
@@ -145,7 +146,21 @@ export function winBar(pRed) {
 
 // One row per match.
 // m: { d, red, blue, played, redScore:{np, rp}, blueScore, pred:{pRed, red:{np, rp}, blue:{np, rp}} }
-export function matchTable(s, matches, { me, rpNames = [] } = {}) {
+// Video for a match: FIRST's own per-match upload if there is one, otherwise
+// the event's livestream recording at the moment the match started.
+const LEAD_SECONDS = 15; // start a little early so the field is visible before "go"
+export function videoFor(videos, evCode, time) {
+  const v = videos?.[evCode];
+  if (!v || !time) return null;
+  const up = v.uploads.find((u) => Math.abs(u.t - time) < 90e3);
+  if (up) return { id: up.id, t: 0 };
+  const s = v.streams.find((s) => time >= s.start && time <= s.end);
+  return s ? { id: s.id, t: Math.max(0, Math.round((time - s.start) / 1000) - LEAD_SECONDS) } : null;
+}
+
+const PLAY_ICON = '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1.2v7.6L8.6 5Z" fill="currentColor"/></svg>';
+
+export function matchTable(s, matches, { me, rpNames = [], video } = {}) {
   if (!matches.length) return `<div class="empty">No matches yet.</div>`;
   const slots = Math.max(2, ...matches.map((m) => Math.max(m.red.length, m.blue.length)));
   const teams = (side, nums) => Array.from({ length: slots }, (_, i) =>
@@ -163,7 +178,10 @@ export function matchTable(s, matches, { me, rpNames = [] } = {}) {
       : `<span class="faint small">upcoming</span>`;
     return `<tr class="${upset ? "upset" : ""}">
       ${m.evName ? `<td class="small"><a href="#/${s}/event/${m.ev}">${esc(m.evName)}</a></td>` : ""}
-      <td class="lvl">${esc(m.d)}</td>
+      <td class="lvl">${(() => {
+        const v = m.played && video?.(m);
+        return `${esc(m.d)}${v ? ` <button class="play" data-video="${v.id}" data-t="${v.t}" data-title="${esc(m.d)}" aria-label="Watch ${esc(m.d)}" title="Watch this match">${PLAY_ICON}</button>` : ""}`;
+      })()}</td>
       ${teams("red", m.red)}${teams("blue", m.blue)}
       <td class="c hide-sm">${pred}</td>
       <td class="c">${winBar(m.pred?.pRed)}</td>

@@ -39,7 +39,7 @@ export async function first(pathAndQuery) {
   }
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href && process.argv[2] === "check") {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href && process.argv[2] === "check") {
   if (!hasFirstApi()) {
     console.log("No credentials found. Add FTC_API_USER and FTC_API_KEY to .env (local) or GitHub secrets (Actions).");
     process.exit(1);
