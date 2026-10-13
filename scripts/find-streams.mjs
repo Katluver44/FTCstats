@@ -43,7 +43,9 @@ const STOP = new Set(("ftc first tech challenge tournament tournaments qualifier
   "championship championships regional region the of at and in event events division divisions robotics robot competition competitions " +
   "live livestream stream streaming day field fields scrimmage presented by season game decode into deep centerstage powerplay freight frenzy " +
   "ultimate goal skystone vs match matches part final finals playoffs playoff state north south east west central northern southern eastern western upper lower new high school").split(" "));
-const words = (s) => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").split(/[^a-z0-9]+/).filter((w) => w && !STOP.has(w) && !/^20\d\d$/.test(w));
+// letter-named leagues ("I-League", "I&S League", "X League") are one identifying word: "ileague", "isleague"
+const letterLeagues = (s) => s.replace(/\b([a-z](?:\s*&\s*[a-z])*)[\s-]+(league|division)\b/g, (_, l, kind) => l.replace(/[\s&]/g, "") + kind);
+const words = (s) => letterLeagues(String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")).split(/[^a-z0-9]+/).filter((w) => w && !STOP.has(w) && !/^20\d\d$/.test(w));
 const numbers = (s) => new Set([...String(s).matchAll(/(?:#|\bno\.?\s*|\b(?:qt|meet|qualifier|tournament|league)\s*)(\d{1,2})\b/gi)].map((m) => m[1]));
 
 export async function findStreams(season) {
@@ -129,9 +131,12 @@ export async function findStreams(season) {
   for (const e of evs) for (const w of new Set(words(e.name))) df.set(w, (df.get(w) ?? 0) + 1);
   const rare = (w) => !/^\d+$/.test(w) && w.length >= 3 && (df.get(w) ?? 0) <= Math.max(3, evs.length * 0.02);
   const NOT_FTC = /\b(vex|v5rc|vrc|vexu|v5|iq|push back|fll|lego|frc|ri3d|robot in 3 days|rebuilt|airport|webcam)\b/i;
-  const streams = Object.entries(cache.videos).filter(([, v]) => v.start && v.end && v.ok && !NOT_FTC.test(v.title)).map(([id, v]) => ({ id, ...v }));
+  const taken = new Set(Object.values(linked).flatMap((v) => v.streams?.map((x) => x.id) ?? [])); // already some event's video
+  const streams = Object.entries(cache.videos).filter(([id, v]) => v.start && v.end && v.ok && !NOT_FTC.test(v.title) && !taken.has(id)).map(([id, v]) => ({ id, ...v }));
+  // every event competes for a stream, even ones that already have video: otherwise
+  // "Suburban Northwest" wins the Northeast stream once Northeast has its own
   const cands = []; // { code, id, score, inside }
-  for (const e of evs.filter((e) => !e.hasVideo)) {
+  for (const e of evs) {
     const name = [...new Set(words(e.name))].filter(rare);
     const city = words(e.city ?? "").filter((w) => w.length >= 4);
     const nums = numbers(e.name);
@@ -156,6 +161,7 @@ export async function findStreams(season) {
   // and only if together they cover most of its matches
   const found = {};
   for (const [code, cs] of Map.groupBy(kept, (c) => c.code)) {
+    if (evs.find((x) => x.code === code).hasVideo) continue;
     const best = Math.max(...cs.map((c) => c.score));
     const use = cs.filter((c) => c.score === best);
     const e = evs.find((x) => x.code === code);
