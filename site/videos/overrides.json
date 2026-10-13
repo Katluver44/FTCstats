@@ -361,6 +361,35 @@
    "streams": [
     "https://youtu.be/9YpUHEGDVzM"
    ]
+  },
+  "INCMP": {
+   "streams": [
+    "https://youtu.be/6iqWbk-zI4s",
+    "https://youtu.be/jUcMwYLNJ2Q",
+    "https://youtu.be/lWUpQX4X2Bs",
+    "https://youtu.be/q6yKUamJEN4",
+    "https://youtu.be/lHPxZDTQ89w"
+   ]
+  },
+  "USPACMP": {
+   "streams": [
+    "https://youtu.be/Z5MjxPQa8gg"
+   ]
+  },
+  "USWYCMP": {
+   "streams": [
+    "https://youtu.be/V1A89P9iOp0"
+   ]
+  },
+  "BRREOS": {
+   "streams": [
+    "https://youtu.be/zrh_rfP35VA"
+   ]
+  },
+  "USHICMP": {
+   "streams": [
+    "https://youtu.be/d6EZ4zASZAo"
+   ]
   }
  },
  "2025": {
@@ -432,7 +461,8 @@
   "BRCMP": {
    "streams": [
     "https://youtu.be/gojg0BIjYJA",
-    "https://youtu.be/EWNkmp-gxRE"
+    "https://youtu.be/EWNkmp-gxRE",
+    "https://youtu.be/_jyyrhdaW0s"
    ]
   },
   "VNCMP": {
@@ -610,7 +640,8 @@
   },
   "USGANWLT": {
    "streams": [
-    "https://youtu.be/uYabNfVC-Aw"
+    "https://youtu.be/uYabNfVC-Aw",
+    "https://youtu.be/fEF8q9Basaw"
    ]
   },
   "USGADUGM1": {
@@ -631,7 +662,9 @@
   },
   "USARBEQ2": {
    "streams": [
-    "https://youtu.be/1WingSKwfNs"
+    "https://youtu.be/1WingSKwfNs",
+    "https://youtu.be/vTjVQKJ81Fs",
+    "https://youtu.be/XZODpgKAa_4"
    ]
   },
   "USARMHQ": {
@@ -742,7 +775,8 @@
   },
   "KZCMPJNB2": {
    "streams": [
-    "https://youtu.be/_hcWJRmSqL4"
+    "https://youtu.be/_hcWJRmSqL4",
+    "https://youtu.be/jZl2tIXY-o8"
    ]
   },
   "USCALACMP": {
@@ -978,7 +1012,8 @@
   "USFLFNM1": {
    "streams": [
     "https://youtu.be/5AMFclATWyY",
-    "https://youtu.be/Ly3Oy6UBnPk"
+    "https://youtu.be/Ly3Oy6UBnPk",
+    "https://youtu.be/zl4Iy7bqAt8"
    ]
   },
   "USMOKSSTLSM1": {
@@ -1075,12 +1110,15 @@
   "AUSYOS": {
    "streams": [
     "https://youtu.be/fBZOzjZr-60",
-    "https://youtu.be/kR0hDZqlHM8"
+    "https://youtu.be/kR0hDZqlHM8",
+    "https://youtu.be/7bTejVfIN2M",
+    "https://youtu.be/YhyTMxV91sc"
    ]
   },
   "INCMP": {
    "streams": [
-    "https://youtu.be/ZdU_efcd7b8"
+    "https://youtu.be/ZdU_efcd7b8",
+    "https://youtu.be/KynHfnrhU0M"
    ]
   },
   "LTCMP": {
@@ -1273,6 +1311,37 @@
   "ROCMP": {
    "streams": [
     "https://youtu.be/mvYjbQmqoJc"
+   ]
+  },
+  "USILPM2": {
+   "streams": [
+    "https://youtu.be/naeogWXX-dA"
+   ]
+  },
+  "INGUQ": {
+   "streams": [
+    "https://youtu.be/rQjP_sLvzd8"
+   ]
+  },
+  "IDCMP": {
+   "streams": [
+    "https://youtu.be/xgetRJgMPBA",
+    "https://youtu.be/-7bzEpWzviE"
+   ]
+  },
+  "USNYLICMP": {
+   "streams": [
+    "https://youtu.be/l0BXMZiglD8"
+   ]
+  },
+  "ROZAOS1": {
+   "streams": [
+    "https://youtu.be/0n2enP6ivQ8"
+   ]
+  },
+  "USMISCM5": {
+   "streams": [
+    "https://youtu.be/OdT7MmydN-s"
    ]
   }
  }

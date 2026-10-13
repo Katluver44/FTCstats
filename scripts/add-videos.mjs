@@ -50,9 +50,11 @@ if (pmAt >= 0) {
   const words = (t) => new Set(t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z]+/).filter((w) => w.length >= 4 && !STOP.has(w)));
   const groups = new Map();
   for (const v of vids) {
-    const d = titleMatch(v.title);
+    const d = titleMatch(v.title, true);
     if (!d) continue;
-    const key = v.title.replace(/\b(?:Qualification|Qual|Q|Playoff(?:\s*Match)?|Match|M|Semi-?final|Finals?)[\s#-]*\d+(?:[-, ]\s*\d)?/gi, "").replace(/\d+/g, "#").replace(/\s+/g, " ").trim();
+    const dm = v.title.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})\b/); // "1/10/26" -> 2026-01-10
+    const date = dm ? `${dm[3].length === 2 ? "20" + dm[3] : dm[3]}-${dm[1].padStart(2, "0")}-${dm[2].padStart(2, "0")}` : null;
+    const key = (date ? date + " " : "") + v.title.replace(/\b(?:Qualification|Qual|Q|Playoff(?:\s*Match)?|Match|M|Semi-?final|Finals?)[\s#-]*\d+(?:[-, ]\s*\d)?/gi, "").replace(/\d+/g, "#").replace(/\s+/g, " ").trim();
     (groups.get(key) ?? groups.set(key, []).get(key)).push({ ...v, d });
   }
   const dir = path.join("site", "data", String(season), "event");
@@ -60,7 +62,9 @@ if (pmAt >= 0) {
   for (const f of await fs.readdir(dir)) { const e = await readJson(path.join(dir, f), null); if (e?.matchList?.length) evs.push(e); }
   for (const [key, g] of groups) {
     const w = words(key), first = Math.min(...g.map((v) => v.at));
+    const date = key.match(/^(\d{4}-\d\d-\d\d) /)?.[1];
     const fits = evs.filter((e) => first >= Date.parse(e.start) - 864e5 && first <= Date.parse(e.end) + 60 * 864e5)
+      .filter((e) => !date || (date >= e.start.slice(0, 10) && date <= e.end.slice(0, 10))) // the title's date must be the event's
       .map((e) => ({ e, shared: [...words(e.name)].filter((x) => w.has(x)).length, has: g.filter((v) => e.matchList.some((m) => m.d === v.d)).length / g.length }))
       .filter((x) => x.shared >= 1 && x.has >= 0.8).sort((a, b) => b.shared - a.shared);
     if (!fits.length || (fits[1] && fits[1].shared === fits[0].shared)) { console.log(`  ? ${g.length} videos "${key}": ${fits.length ? "ambiguous" : "no event"}`); continue; }
@@ -86,13 +90,14 @@ const event = async (code) => {
   return evCache.get(code);
 };
 // "Qualification 12", "Qual 12", "Q12", "Q-01", "Playoff M-03", "Playoff 3", "Playoff Match 3", "Match 3", "Semifinal 1-2", "Final 2"
-function titleMatch(t) {
+function titleMatch(t, bareM = false) {
   let x;
   if ((x = t.match(/\b(?:Qualification|Qual|Q)[\s#-]*(\d{1,3})\b/i))) return `Q-${+x[1]}`;
   if ((x = t.match(/\bSemi-?final\s*(\d)\s*[-, ]\s*(?:game\s*|match\s*)?(\d)\b/i))) return `SF${x[1]}-${x[2]}`;
   if ((x = t.match(/\bFinals?\s*(?:game\s*|match\s*)?#?\s*(\d)\b/i))) return `F-${x[1]}`;
   if (/tie-?breaker|replay/i.test(t)) return null; // replays are numbered differently
-  if ((x = t.match(/\b(?:Playoff\s*)?M-(\d{1,2})\b/))) return `M-${+x[1]}`;
+  if ((x = t.match(/\b(?:Playoff\s*)?M-(\d{1,2})\b/)) || (x = t.match(/\bPlayoff\s+M(\d{1,2})\b/i))) return `M-${+x[1]}`;
+  if (bareM && (x = t.match(/\bM(\d{1,2})\b/))) return `M-${+x[1]}`; // "… Tournament M3" on a per-match channel
   if ((x = t.match(/\b(?:Playoff(?:\s*Match)?|Match)\s*#?\s*(\d{1,2})\b/i))) return `M-${+x[1]}`;
   return null;
 }
@@ -125,7 +130,7 @@ for (const c of cands) {
   }
   const ev = c.code ? await event(c.code) : null;
   // 2. a single match
-  let d = titleMatch(title);
+  let d = titleMatch(title, c.trusted);
   // a bare "Match 5" from a team's own channel is usually *their* 5th match, not Q-5:
   // trust it only from channels that upload every match of an event (--per-match-channel)
   if (d && !c.trusted && !/\b(?:Qualification|Qual|Q[\s#-]*\d|Playoff|Elimination|Semi-?final|Finals?|M-\d)/i.test(title)) d = null;
@@ -162,27 +167,25 @@ for (const c of cands) {
   }
   why(c, `no timestamps, not a livestream, no event to place it in: ${title}`);
 }
-// livestreams: each must hold a real share of the event's matches (one day of two is
-// ~half), and together they must cover at least 30% (a late-starting stream still
-// gives the right video for the matches it has: a match only uses a stream it falls inside)
+// livestreams: a stream of another year or event overlaps none of this event's matches,
+// so any real overlap counts. A playoffs-only day, a finals stream or one part of a split
+// stream holds few matches and is still the right video.
 for (const [code, ls] of Object.entries(lives)) {
-  const real = ls.filter((l) => l.inside.size / (l.total || 1) >= 0.15);
-  const union = new Set(real.flatMap((l) => [...l.inside])).size / (ls[0].total || 1);
   for (const l of ls) {
-    const share = Math.round((l.inside.size / (l.total || 1)) * 100);
-    if (!real.includes(l)) { why(l.c, `only ${share}% of ${code}'s matches happened while it was live`); continue; }
-    if (union < 0.3) { why(l.c, `${code}'s streams together cover only ${Math.round(union * 100)}% of its matches`); continue; }
+    const need = l.total <= 4 ? 1 : 2;
+    if (l.inside.size < need) { why(l.c, `only ${l.inside.size} of ${code}'s ${l.total} matches happened while it was live`); continue; }
     const o = (ov[season][code] ??= {});
     o.streams = [...new Set([...(o.streams ?? []), `https://youtu.be/${l.c.id}`])];
-    tally.livestream++; console.log(`  ✓ ${code} livestream, ${share}% of matches inside: ${l.title}`);
+    tally.livestream++; console.log(`  ✓ ${code} livestream, ${l.inside.size} of ${l.total} matches inside: ${l.title}`);
   }
 }
 let newCh = 0;
 for (const ch of channels) if (!chs.includes(ch)) { chs.push(ch); newCh++; }
 
-await fs.writeFile(tsFile, JSON.stringify(ts, null, 1) + "\n");
-await fs.writeFile(ovFile, JSON.stringify(ov, null, 1) + "\n");
-await fs.writeFile(chFile, JSON.stringify(chs, null, 1) + "\n");
-await fs.writeFile(upFile, JSON.stringify(up, null, 1) + "\n");
+const dry = process.argv.includes("--dry-run"); // report only, write nothing
+if (!dry) await fs.writeFile(tsFile, JSON.stringify(ts, null, 1) + "\n");
+if (!dry) await fs.writeFile(ovFile, JSON.stringify(ov, null, 1) + "\n");
+if (!dry) await fs.writeFile(chFile, JSON.stringify(chs, null, 1) + "\n");
+if (!dry) await fs.writeFile(upFile, JSON.stringify(up, null, 1) + "\n");
 console.log(`${season}: ${tally.timestamped} timestamped, ${tally.perMatch} single-match, ${tally.livestream} livestreams added, ${tally.upload} uploads to calibrate; ${tally.rejected} rejected; ${newCh} new channels`);
 console.log("next: node scripts/videos.mjs", season);
