@@ -112,11 +112,27 @@ export function meter(label, value, max, display) {
   return `<div class="meter"><span class="k">${esc(label)}</span>${dots(value, max)}<span class="v">${display ?? fmt(value)}</span></div>`;
 }
 
-// Bonus-RP dots: filled = earned (or predicted > 50%). Hovering names each RP.
+// Bonus-RP icons: one per ranking point, in the alliance colour when earned
+// (or predicted > 50%), faded when not. Hovering names each RP.
+const RP_ICONS = {
+  // DECODE
+  movement: '<path d="M2 8h9M8 4.5 11.5 8 8 11.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
+  goal: '<circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="2.3" fill="currentColor"/>',
+  pattern: '<rect x="2" y="2" width="5" height="5" rx="1" fill="currentColor"/><rect x="9" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="9" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9" y="9" width="5" height="5" rx="1" fill="currentColor"/>',
+  // BIOBUZZ
+  swarm: '<path d="M8 1.8 13.4 5v6L8 14.2 2.6 11V5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" fill="currentColor"/>',
+  pollinator: '<circle cx="8" cy="4.6" r="2.4" fill="currentColor"/><circle cx="11.4" cy="8" r="2.4" fill="currentColor"/><circle cx="8" cy="11.4" r="2.4" fill="currentColor"/><circle cx="4.6" cy="8" r="2.4" fill="currentColor"/><circle cx="8" cy="8" r="1.6" fill="var(--surface)"/>',
+};
+const rpIcon = (name, i) => {
+  const key = Object.keys(RP_ICONS).find((k) => String(name ?? "").toLowerCase().startsWith(k));
+  const body = key ? RP_ICONS[key] : `<text x="8" y="12" text-anchor="middle" font-size="10" font-weight="700" fill="currentColor">${i + 1}</text>`;
+  const n = String(name ?? "").match(/\d+$/)?.[0]; // "Pollinator 2" gets a small 2
+  return `<svg viewBox="0 0 16 16" width="14" height="14">${body}${n ? `<text x="15" y="16" text-anchor="end" font-size="7" font-weight="800" fill="currentColor">${n}</text>` : ""}</svg>`;
+};
 const rpDots = (side, arr, names = [], verb = "earned") => {
   if (!arr) return "";
   const tip = names.length ? `${side === "red" ? "Red" : "Blue"} ${verb}: ${arr.map((x, i) => `${names[i] ?? `RP ${i + 1}`} ${x ? "✓" : "✗"}`).join(" · ")}` : "";
-  return `<span class="rpd ${side}"${tip ? ` data-tip="${esc(tip)}"` : ""}>${arr.map((x) => `<i class="${x ? "on" : ""}"></i>`).join("")}</span>`;
+  return `<span class="rpd ${side}"${tip ? ` data-tip="${esc(tip)}"` : ""}>${arr.map((x, i) => `<i class="${x ? "on" : ""}">${rpIcon(names[i], i)}</i>`).join("")}</span>`;
 };
 
 // Slim red/blue bar with the favourite's chance beside it, always in the same place.
@@ -155,7 +171,7 @@ export function matchTable(s, matches, { me, rpNames = [] } = {}) {
     </tr>`;
   }).join("");
   return `<div class="table-wrap"><table class="mt">
-    <thead><tr>${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c" colspan="${slots}">Red</th><th class="c" colspan="${slots}">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Dots: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue. A faint red row means the favourite lost.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Dots: bonus RPs earned (hover a set to see which)." : ""}">Final</span></th></tr></thead>
+    <thead><tr>${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c" colspan="${slots}">Red</th><th class="c" colspan="${slots}">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Icons: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue. A faint red row means the favourite lost.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Icons: bonus RPs earned (hover them to see which)." : ""}">Final</span></th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
 }
 

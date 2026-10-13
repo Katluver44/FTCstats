@@ -511,8 +511,6 @@ async function event(r) {
     const played = matches.filter((m) => m.played);
     const decided = played.filter((m) => m.pred && m.redScore.total !== m.blueScore.total);
     const correct = decided.filter((m) => (m.pred.pRed > 0.5) === (m.redScore.total > m.blueScore.total)).length;
-    const upsets = decided.filter((m) => (m.pred.pRed > 0.5) !== (m.redScore.total > m.blueScore.total))
-      .sort((a, b) => Math.abs(b.pred.pRed - 0.5) - Math.abs(a.pred.pRed - 0.5)).slice(0, 3);
     const hasQuals = matches.some((m) => m.level === "Quals");
     // forecast needs a quals schedule, or no matches yet (pre-event); playoff-only events get none
     const canForecast = hasQuals || (!matches.length && ev.teamList.length >= 4);
@@ -530,11 +528,6 @@ async function event(r) {
         </div>
         <div class="big-epa"><div class="label">Winner predicted</div><b>${decided.length ? pct(correct / decided.length) : "–"}</b><div class="label">${correct} of ${decided.length} matches</div></div>
       </div></div>
-      ${upsets.length && tab === "matches" ? `<div class="card card-pad section"><h3>Biggest upsets</h3><div class="row" style="margin-top:8px;gap:18px">${upsets.map((m) => {
-        const winner = m.redScore.total > m.blueScore.total ? "red" : "blue";
-        const p = winner === "red" ? m.pred.pRed : 1 - m.pred.pRed;
-        return `<span><b>${esc(m.d)}</b> <span class="score ${winner}">${winner === "red" ? m.red.join(" & ") : m.blue.join(" & ")}</span> won with a <b>${pct(p)}</b> chance</span>`;
-      }).join("")}</div></div>` : ""}
       <nav class="tabs seg glass">${tabs.map(([k, label]) => `<a href="#/${season}/event/${code}/${k}" class="${k === tab ? "active" : ""}">${label}</a>`).join("")}</nav>
       <div id="tab"></div>`;
     if (tab === "teams") eventTeams(season, meta, ev);

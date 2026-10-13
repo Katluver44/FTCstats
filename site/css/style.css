@@ -315,9 +315,10 @@ td.c, th.c { text-align: center; }
 .final { font-variant-numeric: tabular-nums; font-weight: 650; }
 .final .w { color: var(--good); font-weight: 800; font-size: 15px; }
 .final .l { color: var(--muted); }
-.rpd { display: inline-flex; gap: 3px; vertical-align: middle; }
-.rpd i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid currentColor; opacity: .35; }
-.rpd i.on { background: currentColor; opacity: 1; }
+.rpd { display: inline-flex; gap: 2px; vertical-align: middle; }
+.rpd i { display: inline-flex; opacity: .22; }
+.rpd i.on { opacity: 1; }
+.rpd svg { display: block; }
 .rpd.red { color: var(--red); }
 .rpd.blue { color: var(--blue); }
 .wp { display: inline-flex; align-items: center; gap: 8px; vertical-align: middle; }
