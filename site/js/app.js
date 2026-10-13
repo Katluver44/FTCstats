@@ -252,8 +252,8 @@ async function team(r) {
   const { season, args } = r;
   const n = /^\d{1,6}$/.test(args[0] ?? "") ? +args[0] : null, view = args[1] ?? "matches";
   if (n == null) { app.innerHTML = `<div class="card empty">That isn't a team number.</div>`; return; }
-  const [meta, t, events, all] = await Promise.all([
-    data.meta(season), data.team(season, n).catch(() => null), data.events(season), data.teams(season),
+  const [meta, t, events, all, photos] = await Promise.all([
+    data.meta(season), data.team(season, n).catch(() => null), data.events(season), data.teams(season), data.photos(),
   ]);
   if (!t) {
     app.innerHTML = `<div class="card empty">Team ${n} has no matches in ${season}. ${state.seasons.filter((s) => s !== season).map((s) => `<a class="link" href="#/${s}/team/${n}">Try ${s}</a>`).join(" ")}</div>`;
@@ -285,7 +285,7 @@ async function team(r) {
   const top = all[0];
 
   app.innerHTML = `
-    <div class="card card-pad">
+    <div class="card card-pad"><div class="team-head"><div class="team-main">
       <div class="page-head">
         <div>
           <h1><span class="team-num">${n}</span> ${esc(t.name)}</h1>
@@ -304,7 +304,7 @@ async function team(r) {
           ${meta.rpNames.map((r, i) => meter(`${r} RP`, Math.max(0, e.rp[i]), 1, fmt(Math.max(0, e.rp[i]), 2).replace(/^0/, ""))).join("")}
         </div>
       </div>
-    </div>
+    </div>${teamPhotos(n, photos[n] ?? [])}</div></div>
     <div class="tiles section">${tiles}</div>
     <div class="row section" style="justify-content:space-between">
       <nav class="seg glass">
@@ -357,6 +357,20 @@ async function team(r) {
       ${matchTable(season, ms, { me: n })}
     </div>`;
   }).join("");
+}
+
+// Team photo area: approved photos (click to see the next one), or an invite to add one.
+const PHOTO_FORM = "https://github.com/Katluver44/FTCstats/issues/new?template=team-photo.yml";
+function teamPhotos(n, list) {
+  const add = `${PHOTO_FORM}&title=${encodeURIComponent(`Photo for team ${n}`)}&team=${n}`;
+  if (!list.length) {
+    return `<aside class="team-photo empty-photo"><a href="${add}" target="_blank" rel="noopener">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg>
+      <b>Add a photo</b><span class="small muted">Robot photos welcome. Shown after review.</span></a></aside>`;
+  }
+  const items = list.map((p, i) => `<figure class="${i ? "" : "on"}"><img src="${esc(p.file)}" alt="Team ${n}${p.caption ? `: ${esc(p.caption)}` : ""}" loading="lazy"><figcaption>${p.caption ? `${esc(p.caption)} · ` : ""}photo by ${esc(p.credit)}</figcaption></figure>`).join("");
+  return `<aside class="team-photo" data-count="${list.length}">${items}
+    <div class="photo-bar">${list.length > 1 ? `<button class="photo-next" aria-label="Next photo">${list.length} photos ›</button>` : ""}<a class="small link" href="${add}" target="_blank" rel="noopener">Add a photo</a></div></aside>`;
 }
 
 const shortEvent = (name) => name.replace(/\s+(Championship|Qualifier|Tournament)$/i, "").trim();
@@ -755,6 +769,15 @@ async function boot() {
     location.hash = `#/${e.target.value}/${keep}`;
   };
   wireSearch($(".nav-search"));
+  // team photos: "N photos ›" cycles through them
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".photo-next");
+    if (!btn) return;
+    const figs = [...btn.closest(".team-photo").querySelectorAll("figure")];
+    const i = figs.findIndex((f) => f.classList.contains("on"));
+    figs[i].classList.remove("on");
+    figs[(i + 1) % figs.length].classList.add("on");
+  });
   window.addEventListener("hashchange", route);
   route();
 }

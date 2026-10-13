@@ -23,6 +23,7 @@ export const data = {
   events: (s) => getJSON(`data/${s}/events.json`),
   event: (s, code) => getJSON(`data/${s}/event/${code}.json`),
   summary: (s) => getJSON(`data/${s}/summary.json`),
+  photos: () => getJSON("photos/index.json").catch(() => ({})),
   ranking: (s) => getJSON(`data/${s}/ranking.json`).catch(() => null),
   async team(s, n) {
     const bucket = await getJSON(`data/${s}/team/${Math.floor(n / 100)}.json`).catch(() => ({}));

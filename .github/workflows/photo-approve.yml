@@ -1,0 +1,53 @@
+# When the repo owner adds the "approved" label to a photo issue, save the
+# photo to the site, thank the submitter, close the issue, and redeploy.
+name: Add approved photo
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: photos
+  cancel-in-progress: false
+
+jobs:
+  add:
+    if: github.event.label.name == 'approved' && github.event.sender.login == github.repository_owner && contains(github.event.issue.labels.*.name, 'photo')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - id: add
+        run: echo "team=$(node scripts/add-photo.mjs)" >> "$GITHUB_OUTPUT"
+      - name: Commit the photo
+        env:
+          TEAM: ${{ steps.add.outputs.team }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/photos
+          git commit -m "Add approved photo for team ${TEAM} (#${ISSUE})"
+          git push
+      - name: Redeploy and close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TEAM: ${{ steps.add.outputs.team }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          gh workflow run deploy.yml --repo "$GITHUB_REPOSITORY"
+          gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body "Thanks! Your photo will appear on https://katluver44.github.io/FTCstats/#/team/${TEAM} within a few minutes."
+          gh issue close "$ISSUE" --repo "$GITHUB_REPOSITORY"
+      - name: Explain a failure on the issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body "Couldn't add this photo automatically (check the image is a JPG, PNG or WebP under 8 MB and the team number is right). See the Actions log for details."

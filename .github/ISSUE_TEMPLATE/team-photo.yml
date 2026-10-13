@@ -1,0 +1,36 @@
+name: Add a team or robot photo
+description: Share a photo for a team's page on FTCstats. Photos appear after the site owner approves them.
+title: "Photo for team "
+labels: ["photo"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing! Photos show on the team's page on https://katluver44.github.io/FTCstats/ once approved.
+        **Robot photos are best.** Please don't post photos where people can be identified unless everyone shown (and a parent or guardian for anyone under 18) has agreed.
+  - type: input
+    id: team
+    attributes:
+      label: Team number
+      placeholder: "e.g. 16379"
+    validations:
+      required: true
+  - type: textarea
+    id: photo
+    attributes:
+      label: Photo
+      description: Drag one image (JPG, PNG or WebP, under 8 MB) into this box.
+    validations:
+      required: true
+  - type: input
+    id: caption
+    attributes:
+      label: Caption (optional)
+      placeholder: "e.g. Our DECODE robot at the Pennsylvania Championship"
+  - type: checkboxes
+    id: permission
+    attributes:
+      label: Permission
+      options:
+        - label: I took this photo or have permission to share it, and everyone identifiable in it agreed to it being posted.
+          required: true
