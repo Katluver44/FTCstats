@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>FTCstats</title>
+  <meta name="description" content="FTC team ratings, match predictions and live ranking forecasts.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta property="og:title" content="FTCstats">
+  <meta property="og:description" content="FTC team ratings, match predictions you can check, and live ranking forecasts.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="modulepreload" href="js/app.js">
+  <link rel="modulepreload" href="js/ui.js">
+  <link rel="modulepreload" href="js/model.js">
+</head>
+<body>
+  <div class="utility">
+    <div class="utility-inner">
+      <span class="utility-note">FTC ratings &amp; match predictions</span>
+      <label class="utility-season">Season <select id="season" aria-label="Season"></select></label>
+      <button id="theme" class="utility-btn" aria-label="Toggle dark mode">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </div>
+  </div>
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="logo" href="#/">
+        <svg width="30" height="30" viewBox="0 0 22 22" aria-hidden="true">
+          <circle cx="3" cy="17" r="2" fill="var(--text)"/><circle cx="7.5" cy="12.5" r="2" fill="var(--text)"/><circle cx="12" cy="14.5" r="2" fill="var(--text)"/>
+          <circle cx="16" cy="8.5" r="2" fill="var(--accent)"/><circle cx="19.5" cy="3.5" r="2.4" fill="var(--accent)"/>
+        </svg>
+        <span class="logo-text">FTC<i>stats</i></span>
+      </a>
+      <nav class="nav-links">
+        <a data-page="teams">Teams</a>
+        <a data-page="events">Events</a>
+        <a data-page="about">About</a>
+      </nav>
+      <div class="search nav-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input placeholder="Search teams &amp; events" autocomplete="off" aria-label="Search teams and events">
+        <div class="search-results"></div>
+      </div>
+      <a class="btn btn-solid nav-cta" data-page="predict">Match Predictor</a>
+    </div>
+  </header>
+  <main id="app"><div class="loading">Loading…</div></main>
+  <footer>Match data from the <a href="https://ftc-events.firstinspires.org/api" target="_blank" rel="noopener">FIRST FTC Events API</a>, via <a href="https://ftcscout.org" target="_blank" rel="noopener">FTCScout</a> · not affiliated with FIRST</footer>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

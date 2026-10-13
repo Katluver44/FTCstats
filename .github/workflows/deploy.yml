@@ -1,0 +1,49 @@
+# Refreshes match data from FTCScout, rebuilds ratings, and deploys to GitHub Pages.
+# Runs hourly; during an event, live pages also pull fresh results in the browser.
+name: Update and deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # finished events never change, so keep the raw API cache between runs
+      - uses: actions/cache@v4
+        with:
+          path: .cache
+          key: ftc-cache-${{ github.run_id }}
+          restore-keys: ftc-cache-
+      - run: npm run update
+      - run: npm run check
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

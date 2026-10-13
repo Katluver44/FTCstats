@@ -1,0 +1,17 @@
+{
+  "name": "ftcstats",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FTC team ratings, match predictions and live ranking forecasts.",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "fetch": "node scripts/fetch.mjs 2024 && node scripts/fetch.mjs 2025 && node scripts/fetch.mjs 2026",
+    "build": "node scripts/build.mjs 2024 2025 2026",
+    "update": "npm run fetch && npm run build",
+    "serve": "python3 -m http.server 5173 --directory site",
+    "tune": "node scripts/tune.mjs 2025",
+    "compare": "node scripts/compare.mjs 2025",
+    "check": "node scripts/check-rs.mjs 2024 && node scripts/check-rs.mjs 2025 && node scripts/check-rs.mjs 2026"
+  }
+}
