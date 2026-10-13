@@ -2,7 +2,7 @@
 
 FTC team ratings, match predictions you can check, and ranking forecasts,
 for every season from 2019 (SKYSTONE) to now. A faster, prediction-first
-alternative to FTCScout. Live at https://katluver44.github.io/FTCstats/.
+alternative to FTCScout. Live at https://ftcstats-photos.vercel.app/ (the old GitHub Pages address redirects there).
 
 ## How it works
 - `scripts/fetch.mjs <season>` downloads every event (matches with per-robot
@@ -61,9 +61,11 @@ opponent-margin term, per-match win-probability scaling, bonus-RP chances in
 the pre-schedule ranking forecast.
 
 ## Deploying
-`.github/workflows/deploy.yml` runs hourly: fetch → build → ranking check
-(fails the run if our math drifts from FIRST's) → deploy to GitHub Pages.
-A cold run downloads every season (~15 min); warm runs take a few minutes.
+`.github/workflows/deploy.yml` runs hourly on GitHub Actions: fetch → build →
+ranking check (fails the run if our math drifts from FIRST's) → package the
+site with the photo service (`scripts/package-vercel.mjs`) → deploy to Vercel
+using the `VERCEL_TOKEN` secret. GitHub Pages only serves a redirect.
+Photo uploads go to Vercel Blob and appear after review at `/admin.html`.
 
 Data credit: match data from the FIRST FTC Events API via FTCScout. Not
 affiliated with FIRST. The FIRST API terms ask for non-commercial use and a
