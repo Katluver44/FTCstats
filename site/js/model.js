@@ -77,11 +77,11 @@ export const DEFAULT_PARAMS = {
   // recalibration feature, 2 (overlap/A - 1/4), fitted online like the others
   // (its coefficient came out negative, around -0.1, in every season).
   // calPairWin: how much of that feature's correction also moves the win probability.
-  // Off: leave-one-season-out (research/loso-new.mjs, calPair 1, calPairWin 1)
-  // gave mean Brier 0.17288 -> 0.17254 and MAE 21.56 -> 21.53, better in 5 of 6
-  // seasons but with the 95% CI below zero in only 3 (2019, 2021, 2025).
-  calPair: 0,
-  calPairWin: 0,
+  // Leave-one-season-out (research/loso-new.mjs) gave mean Brier 0.17288 -> 0.17254
+  // and MAE 21.56 -> 21.53: better in 5 of 6 seasons, never worse, 95% CI below
+  // zero in 3 (2019, 2021, 2025). On by owner's call (2026-10-13).
+  calPair: 1,
+  calPairWin: 1,
 };
 
 // ---- Two tracks ----
