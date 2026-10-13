@@ -71,6 +71,17 @@ export const DEFAULT_PARAMS = {
   cal: 1,
   calAlpha: 0.002, // weight of each new alliance result in the moments
   calRidge: 0.02, // ridge penalty
+  // Alliance overlap (diminishing returns): two robots strong in the same phase
+  // get in each other's way, so an alliance scores less than the sum of its
+  // robots. Overlap = sum over phases of the weaker robot's points; it is a 4th
+  // recalibration feature, 2 (overlap/A - 1/4), fitted online like the others
+  // (its coefficient came out negative, around -0.1, in every season).
+  // calPairWin: how much of that feature's correction also moves the win probability.
+  // Off: leave-one-season-out (research/loso-new.mjs, calPair 1, calPairWin 1)
+  // gave mean Brier 0.17288 -> 0.17254 and MAE 21.56 -> 21.53, better in 5 of 6
+  // seasons but with the 95% CI below zero in only 3 (2019, 2021, 2025).
+  calPair: 0,
+  calPairWin: 0,
 };
 
 // ---- Two tracks ----
@@ -150,12 +161,19 @@ export function epaComponent(ep, comp) {
 
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 
-// 3x3 linear solve (Cramer's rule).
-function solve3(M, y) {
-  const det = (m) => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
-  const d = det(M);
-  if (!(Math.abs(d) > 1e-12)) return [0, 0, 0];
-  return [0, 1, 2].map((c) => det(M.map((row, i) => row.map((v, j) => (j === c ? y[i] : v)))) / d);
+// Small linear solve (Gaussian elimination with partial pivoting).
+function solve(M, y) {
+  const n = y.length, A = M.map((row, i) => [...row, y[i]]);
+  for (let c = 0; c < n; c++) {
+    let p = c;
+    for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+    if (!(Math.abs(A[p][c]) > 1e-12)) return new Array(n).fill(0);
+    [A[c], A[p]] = [A[p], A[c]];
+    for (let r = c + 1; r < n; r++) { const f = A[r][c] / A[c][c]; for (let k = c; k <= n; k++) A[r][k] -= f * A[c][k]; }
+  }
+  const x = new Array(n).fill(0);
+  for (let r = n - 1; r >= 0; r--) { let s = A[r][n]; for (let k = r + 1; k < n; k++) s -= A[r][k] * x[k]; x[r] = s / A[r][r]; }
+  return x;
 }
 
 export class Model {
@@ -187,7 +205,9 @@ export class Model {
     const np0 = this.avgAllianceNp();
     // restored from an event file when replaying in the browser, so live matches the build
     // score-recalibration moments; restored from an event file like clipVar
-    this.cal = baseline.cal ? structuredClone(baseline.cal) : { b: [0, 0, 0], XX: [[0, 0, 0], [0, 0, 0], [0, 0, 0]], XY: [0, 0, 0] };
+    const nCal = this.p.calPair ? 4 : 3;
+    this.cal = baseline.cal?.b?.length === nCal ? structuredClone(baseline.cal)
+      : { b: new Array(nCal).fill(0), XX: Array.from({ length: nCal }, () => new Array(nCal).fill(0)), XY: new Array(nCal).fill(0) };
     this.errVar = baseline.clipVar ? { ...baseline.clipVar } : { auto: (0.6 * this.avg.auto) ** 2, teleop: (0.6 * this.avg.teleop) ** 2, endgame: (0.6 * this.avg.endgame) ** 2, np: (0.4 * np0) ** 2 };
   }
 
@@ -269,6 +289,19 @@ export class Model {
     out.foul = this.avg.foul;
     out.np = out.auto + out.teleop + out.endgame;
     out.rp = out.rp.map((r) => clamp(r, 0.01, 0.99));
+    // overlap: per phase, the weaker robot's points (per-robot elements included)
+    out.overlap = 0;
+    if (this.p.calPair && nums.length >= 2) {
+      const per = nums.map((n) => this.teamComps(this.team(n)));
+      for (const c of COMPONENTS) out.overlap += Math.min(...per.map((x) => x[c]));
+    }
+    return out;
+  }
+
+  // a team's points per phase, per-robot elements included
+  teamComps(t) {
+    const out = { auto: t.auto, teleop: t.teleop, endgame: t.endgame };
+    t.solo.forEach((s, j) => (out[this.soloComps[j]] += s));
     return out;
   }
 
@@ -304,10 +337,13 @@ export class Model {
     r.rawNp = r.np; b.rawNp = b.np;
     const level = (r.np + b.np) / (2 * A);
     const varSum = this.p.kalman ? [...red, ...blue].reduce((s, n) => s + this.preVar(n, eventCode), 0) : 0;
-    const pRed = this.winProb(r.np + b.foul, b.np + r.foul, varSum, level);
+    // the overlap part of the recalibration can also move the win probability
+    const ov = (x) => (this.p.cal && this.p.calPair ? this.p.calPairWin * A * this.cal.b[3] * 2 * (x.overlap / A - 0.25) : 0);
+    const pRed = this.winProb(r.np + ov(r) + b.foul, b.np + ov(b) + r.foul, varSum, level);
     if (this.p.cal) {
       r.calX = [1, r.rawNp / A - 1, b.rawNp / A - 1];
       b.calX = [1, b.rawNp / A - 1, r.rawNp / A - 1];
+      if (this.p.calPair) { r.calX.push(2 * (r.overlap / A - 0.25)); b.calX.push(2 * (b.overlap / A - 0.25)); }
       r.np += A * this.calDot(r.calX);
       b.np += A * this.calDot(b.calX);
     }
@@ -325,11 +361,11 @@ export class Model {
   // add one alliance result (residual y, league-average units) and refit
   calStep(x, y) {
     const { XX, XY } = this.cal, a = this.p.calAlpha;
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < x.length; i++) {
       XY[i] += a * (x[i] * y - XY[i]);
-      for (let j = 0; j < 3; j++) XX[i][j] += a * (x[i] * x[j] - XX[i][j]);
+      for (let j = 0; j < x.length; j++) XX[i][j] += a * (x[i] * x[j] - XX[i][j]);
     }
-    this.cal.b = solve3(XX.map((row, i) => row.map((v, j) => v + (i === j ? this.p.calRidge : 0))), XY);
+    this.cal.b = solve(XX.map((row, i) => row.map((v, j) => v + (i === j ? this.p.calRidge : 0))), XY);
   }
 
   // How much of an alliance's error each team takes.
