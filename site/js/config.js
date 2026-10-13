@@ -4,5 +4,5 @@ export const CONFIG = {
   gaMeasurementId: "G-GKQ8FLRNKD",
   // Photo upload service (photo-service/ deployed on Vercel), e.g. "https://ftcstats-photos.vercel.app".
   // Empty: "Add a photo" falls back to the GitHub submission form.
-  photoApi: "",
+  photoApi: "https://ftcstats-photos.vercel.app",
 };

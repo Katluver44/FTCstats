@@ -64,7 +64,7 @@ export async function pendingList() {
 export function isAdmin(req) {
   const token = process.env.ADMIN_TOKEN;
   const got = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
-  return Boolean(token) && token.length >= 16 && got === token;
+  return Boolean(token) && token.length >= 12 && got === token;
 }
 
 export { put, list, del, copy };

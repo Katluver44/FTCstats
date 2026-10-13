@@ -4,3 +4,4 @@ site/data/
 .DS_Store
 .claude/worktrees/
 .env
+.vercel/
