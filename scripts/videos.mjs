@@ -122,7 +122,11 @@ export async function buildVideos(season) {
   // per-stream clock corrections, seconds: how much EARLIER matches appear in the
   // recording than their official start times say (scoring-PC clock wrong, encoder
   // delay); negative = later. Measured by reading the overlay's match clock.
-  const offsets = (await readJson(path.join("site", "videos", "offsets.json"), {}))[season] ?? {};
+  // calibrated.json is written by scripts/calibrate-streams.mjs; offsets.json (hand-measured) wins
+  const offsets = {
+    ...(await readJson(path.join("site", "videos", "calibrated.json"), {}))[season],
+    ...(await readJson(path.join("site", "videos", "offsets.json"), {}))[season],
+  };
 
   const allIds = Object.values(events).flatMap((e) => [...e.streams, ...e.uploads.map((u) => u.id)]);
   const yt = await youtubeDetails(allIds, path.join(".cache", "videos", `${season}.json`));
