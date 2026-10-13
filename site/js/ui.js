@@ -156,7 +156,7 @@ export function matchTable(s, matches, { me } = {}) {
     </tr>`;
   }).join("");
   return `<div class="table-wrap"><table class="mt">
-    <thead><tr>${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c" colspan="${slots}">Red</th><th class="c" colspan="${slots}">Blue</th><th class="c hide-sm">Pred</th><th class="c">Win prob</th><th class="c">Final</th><th></th></tr></thead>
+    <thead><tr>${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c" colspan="${slots}">Red</th><th class="c" colspan="${slots}">Blue</th><th class="c hide-sm">Pred</th><th class="c">Win prob</th><th class="c">Final</th><th class="c" title="Did the pre-match prediction pick the winner? ✓ yes, ✗ upset">Called</th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
 }
 
