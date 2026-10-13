@@ -6,3 +6,4 @@ site/data/
 .env
 .vercel/
 dist/
+dist/
