@@ -3,6 +3,7 @@ import {
   trend, matchTable, mountLineChart, sortableTable, meter, winBar,
 } from "./ui.js";
 import { SEASONS } from "./seasons.js";
+import { initAnalytics, trackPage } from "./analytics.js";
 import { fetchLiveEvent, normalizeLive, replayEvent, forecastRankings, forecastFromRoster, modelFromMeta } from "./live.js";
 
 const app = $("#app");
@@ -34,6 +35,10 @@ async function route() {
     const pages = { "": home, teams, team, events, event, rankings, predict, stats, about };
     const fn = pages[r.page] ?? notFound;
     await fn(r);
+    // tab title from the page heading, e.g. "20265 Heart of RoBots · FTCstats"
+    const h1 = !stale(r) && $("#app h1, #app .hero-title");
+    if (h1) document.title = r.page ? `${h1.textContent.trim().replace(/\s+/g, " ")} · FTCstats` : "FTCstats · FTC ratings & match predictions";
+    if (!stale(r)) trackPage(`/${r.season}/${[r.page, ...r.args].filter(Boolean).join("/")}`, document.title);
   } catch (e) {
     console.error(e);
     if (!stale(r)) app.innerHTML = `<div class="card empty">Couldn't load this page. Check the link, or try another season.</div>`;
@@ -833,6 +838,7 @@ async function about(r) {
 // ---------------- boot ----------------
 
 async function boot() {
+  initAnalytics();
   const theme = (() => { try { return localStorage.getItem("theme"); } catch { return null; } })();
   if (theme) document.documentElement.dataset.theme = theme;
   const isDark = () => document.documentElement.dataset.theme
