@@ -44,7 +44,8 @@ const STOP = new Set(("ftc first tech challenge tournament tournaments qualifier
   "live livestream stream streaming day field fields scrimmage presented by season game decode into deep centerstage powerplay freight frenzy " +
   "ultimate goal skystone vs match matches part final finals playoffs playoff state north south east west central northern southern eastern western upper lower new high school").split(" "));
 // letter-named leagues ("I-League", "I&S League", "X League") are one identifying word: "ileague", "isleague"
-const letterLeagues = (s) => s.replace(/\b([a-z](?:\s*&\s*[a-z])*)[\s-]+(league|division)\b/g, (_, l, kind) => l.replace(/[\s&]/g, "") + kind);
+const letterLeagues = (s) => s.replace(/\b([a-z](?:\s*&\s*[a-z])*)[\s-]+(league|division)\b/g, (_, l, kind) => l.replace(/[\s&]/g, "") + kind)
+  .replace(/\b(group|pool|division|league)\s+([a-z]\d?)\b/g, "$1$2"); // "Group H" vs "Group V"
 const words = (s) => letterLeagues(String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")).split(/[^a-z0-9]+/).filter((w) => w && !STOP.has(w) && !/^20\d\d$/.test(w));
 const numbers = (s) => new Set([...String(s).matchAll(/(?:#|\bno\.?\s*|\b(?:qt|meet|qualifier|tournament|league)\s*)(\d{1,2})\b/gi)].map((m) => m[1]));
 

@@ -137,6 +137,8 @@ for (const c of cands) {
     const pub = Date.parse(v.snippet.publishedAt), from = Date.parse(ev.start) - 864e5, to = Date.parse(ev.end) + 60 * 864e5;
     if (!ev.matchList.some((m) => m.d === d)) { why(c, `${ev.code} has no match ${d}`); continue; }
     if (pub < from || pub > to) { why(c, `published ${v.snippet.publishedAt.slice(0, 10)}, not near ${ev.code} (${ev.start})`); continue; }
+    const owner = Object.entries(ts[season]).find(([code, vids]) => code !== ev.code && vids[c.id]);
+    if (owner) { why(c, `already ${owner[0]}'s video`); continue; }
     (ts[season][ev.code] ??= {})[c.id] = { [d]: 0 };
     tally.perMatch++; console.log(`  ✓ ${ev.code} ${d} ${title}`); continue;
   }

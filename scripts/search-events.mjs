@@ -17,6 +17,8 @@ const limAt = args.indexOf("--limit");
 const limit = limAt >= 0 ? +args.splice(limAt, 2)[1] : 2000;
 const outAt = args.indexOf("--out");
 const outFile = outAt >= 0 ? args.splice(outAt, 2)[1] : null;
+const shardAt = args.indexOf("--shard");
+const [shard, shards] = shardAt >= 0 ? args.splice(shardAt, 2)[1].split("/").map(Number) : [0, 1];
 const season = +args[0];
 const readJson = (f, fallback) => fs.readFile(f, "utf8").then(JSON.parse).catch(() => fallback);
 const UA = { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/126 Safari/537.36", "Accept-Language": "en-US,en", Cookie: "SOCS=CAI; CONSENT=YES+1" };
@@ -40,6 +42,7 @@ const STOP = new Set(("ftc first tech challenge tournament qualifier qualifiers 
   "state north south east west central high school invitational interleague").split(" "));
 const words = (s) => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
   .replace(/\b([a-z](?:\s*&\s*[a-z])*)[\s-]+(league|division)\b/g, (_, l, k) => l.replace(/[\s&]/g, "") + k)
+  .replace(/\b(group|pool|division|league)\s+([a-z]\d?)\b/g, "$1$2") // "Group H" vs "Group V"
   .split(/[^a-z0-9]+/).filter((w) => w && w.length >= 3 && !STOP.has(w) && !/^\d+$/.test(w));
 const seconds = (len) => len.split(":").reduce((a, x) => a * 60 + +x, 0);
 const perMatch = /\b(?:Qualification|Qual|Q)[\s#-]*\d{1,3}\b|\bPlayoff\b|\bElimination\b/i;
@@ -62,9 +65,12 @@ for (const f of await fs.readdir(dir)) {
   }
 }
 evs.sort((a, b) => b.n - a.n);
-const out = { videos: [] };
+const out = { videos: [], searched: [] };
 let done = 0;
-for (const e of evs.slice(0, limit)) {
+const prev = outFile ? await readJson(outFile, { videos: [], searched: [] }) : { videos: [], searched: [] };
+out.videos = prev.videos; out.searched = prev.searched ?? [];
+for (const e of evs.slice(0, limit).filter((e, i) => i % shards === shard && !out.searched.includes(e.code))) {
+  const t0 = Date.now();
   const name = words(e.name), city = words(e.city);
   const seen = new Set();
   for (const q of [`${e.name} FTC`, `${e.name} ${e.city} FTC ${season}`]) {
@@ -79,6 +85,8 @@ for (const e of evs.slice(0, limit)) {
     }
     await sleep(400);
   }
+  out.searched.push(e.code);
+  if (Date.now() - t0 > 15000) process.stderr.write(`  slow: ${e.code} ${Math.round((Date.now() - t0) / 1000)}s\n`);
   if (++done % 10 === 0 && outFile) await fs.writeFile(outFile, JSON.stringify(out)); // partial results survive
   if (done % 50 === 0) process.stderr.write(`  ${done}/${Math.min(limit, evs.length)} events searched, ${out.videos.length} candidates\n`);
 }

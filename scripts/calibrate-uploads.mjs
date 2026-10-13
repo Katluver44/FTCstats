@@ -11,7 +11,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { frames, calibrate } from "./calibrate-streams.mjs";
-import { ocrAlign } from "./ocr-align.mjs";
+import { ocrAlign, ocrSpots } from "./ocr-align.mjs";
 
 const args = process.argv.slice(2);
 const verbose = args.includes("--verbose");
@@ -21,7 +21,7 @@ const LEAD = 20;
 
 const up = await readJson(path.join("site", "videos", "uploads.json"), {});
 const tsFile = path.join("site", "videos", "timestamped.json");
-const ts = await readJson(tsFile, {});
+const ts = {}; // only what this run places; merged into the file at the end
 for (const season of seasons) {
   const cacheFile = path.join(".cache", "calibration", `uploads-${season}.json`);
   const cache = await readJson(cacheFile, {});
@@ -55,7 +55,14 @@ for (const season of seasons) {
       const o = cache[k].ocr;
       const ocrOk = o?.o != null && o.agree >= 5 && o.agree / o.est >= 0.4 && (o.ofMatch == null || o.ofMatch >= 0.6);
       if (verbose) console.log(code, id, JSON.stringify({ ...cache[k], halves: undefined }));
-      if (ocrOk) fits.push({ code, id, r: { ...cache[k], o: o.o, ok: true, score: 1 + o.agree }, ms, pos, via: "overlay" });
+      // edited uploads (gaps cut) have no single shift; the overlay still says where each match is
+      let direct = null;
+      if (!ocrOk && !cache[k].ok && o) {
+        direct = await ocrSpots(id, { matchList: ms });
+        if (!(direct && direct.found >= Math.min(6, ms.length * 0.4) && direct.ordered >= 0.85 && (direct.ofMatch == null || direct.ofMatch >= 0.6))) direct = null;
+      }
+      if (direct) fits.push({ code, id, r: { score: 1 + direct.found, ok: true }, ms, pos, via: "overlay-direct", spots: direct.spots });
+      else if (ocrOk) fits.push({ code, id, r: { ...cache[k], o: o.o, ok: true, score: 1 + o.agree }, ms, pos, via: "overlay" });
       else if (cache[k].ok) fits.push({ code, id, r: cache[k], ms, pos, via: "rhythm" });
     }
   }
@@ -63,17 +70,17 @@ for (const season of seasons) {
   // the one it fits clearly best, or to none
   for (const [id, fs_] of Map.groupBy(fits, (f) => f.id)) {
     // overlay readings beat rhythm; within a kind, the clearly better fit wins
-    fs_.sort((a, b) => (b.via === "overlay") - (a.via === "overlay") || b.r.score - a.r.score);
+    fs_.sort((a, b) => b.via.startsWith("overlay") - a.via.startsWith("overlay") || b.r.score - a.r.score);
     if (fs_[1] && fs_[1].via !== fs_[0].via) fs_.length = 1;
     if (fs_[1] && fs_[1].r.score > fs_[0].r.score * 0.8) { if (verbose) console.log(`  ${id}: fits ${fs_.map((f) => f.code).join(" and ")} about equally, skipped`); continue; }
     const { code, r, ms, pos } = fs_[0];
-    const spots = {};
-    ms.forEach((m, j) => { const at = Math.round(pos[j] - r.o) - LEAD; if (at >= 0 && at < r.len) spots[m.d] = at; });
-    if (Object.keys(spots).length >= Math.min(6, ms.length)) { (ts[season][code] ??= {})[id] = spots; placed++; if (verbose) console.log(`  placed ${id} -> ${code} (${fs_[0].via})`); }
+    let spots = fs_[0].spots;
+    if (!spots) { spots = {}; ms.forEach((m, j) => { const at = Math.round(pos[j] - r.o) - LEAD; if (at >= 0 && at < r.len) spots[m.d] = at; }); }
+    if (Object.keys(spots).length >= Math.min(6, ms.length * 0.4)) { (ts[season][code] ??= {})[id] = spots; placed++; if (verbose) console.log(`  placed ${id} -> ${code} (${fs_[0].via})`); }
   }
   console.log(`${season}: ${placed} of ${tried} uploads placed`);
 }
-// merge into the file as it is now (other scripts add to it while this one runs for hours)
+// merge this run's placements into the file as it is now (other scripts edit it meanwhile)
 const now = await readJson(tsFile, {});
 for (const [s, evs] of Object.entries(ts)) for (const [code, vids] of Object.entries(evs)) Object.assign(((now[s] ??= {})[code] ??= {}), vids);
 await fs.writeFile(tsFile, JSON.stringify(now, null, 1) + "\n");

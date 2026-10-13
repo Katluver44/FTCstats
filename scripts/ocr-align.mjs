@@ -103,3 +103,35 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const ev = JSON.parse(await fs.readFile(path.join("site", "data", season, "event", `${code}.json`), "utf8"));
   console.log(JSON.stringify(await ocrAlign(id, ev)));
 }
+
+// Per-match spots read straight off the overlay, no single shift needed: works for edited
+// uploads (dead time cut) too. A match starts where its label first shows (minus the
+// clock's elapsed time when the auto clock is visible). Trusted when the labels mostly
+// run in order and the "of N" is this event's qual count.
+export async function ocrSpots(id, ev, opts) {
+  const reads = await ocrReads(id, opts);
+  if (!reads?.length) return null;
+  const ms = ev.matchList.filter((m) => m.played);
+  const have = new Set(ms.map((m) => m.d));
+  const quals = ms.filter((m) => m.d.startsWith("Q-")).length;
+  const ofs = reads.map((r) => r.of).filter((x) => x != null);
+  const ofMatch = ofs.length ? ofs.filter((x) => x === quals).length / ofs.length : null;
+  // the clock says how far in a frame is: 2:30-2:00 auto, then 8 s pickup, then teleop 2:00-0:00
+  const elapsed = (left) => (left > 120 ? 150 - left : 158 - left);
+  const byD = {};
+  for (const r of reads.filter((r) => have.has(r.d))) (byD[r.d] ??= []).push(r);
+  const first = {};
+  for (const [d, rs] of Object.entries(byD)) {
+    const timed = rs.filter((r) => r.left != null && r.left > 0 && r.left < 150).map((r) => r.t - elapsed(r.left)).sort((a, b) => a - b);
+    // median of the clock-based starts; with no clock seen, the label's first sighting minus half a match
+    first[d] = timed.length ? timed[timed.length >> 1] : Math.min(...rs.map((r) => r.t)) - 80;
+  }
+  // in order: quals by number, then playoffs, should appear at increasing times
+  const order = (d) => (d.startsWith("Q-") ? +d.slice(2) : 1000 + +d.slice(2));
+  const seq = Object.entries(first).sort((a, b) => order(a[0]) - order(b[0])).map(([, t]) => t);
+  let inOrder = 0;
+  for (let i = 1; i < seq.length; i++) if (seq[i] > seq[i - 1]) inOrder++;
+  const ordered = seq.length > 1 ? inOrder / (seq.length - 1) : 0;
+  const spots = Object.fromEntries(Object.entries(first).map(([d, t]) => [d, Math.max(0, Math.round(t) - 20)]));
+  return { spots, found: Object.keys(spots).length, of: ms.length, ordered, ofMatch };
+}
