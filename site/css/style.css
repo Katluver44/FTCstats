@@ -516,3 +516,16 @@ footer a { text-decoration: underline; }
 .hero-below .grid.cols-2 > div + div .card { border-left: 1px solid var(--line); }
 .hero-below .grid.cols-2 td { height: 58px; }
 @media (max-width: 900px) { .hero-below .grid.cols-2 > div + div .card { border-left: 0; } }
+
+/* team page: season awards beside the rank tiles */
+.tiles-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; gap: 24px; padding: 0 48px; }
+.tiles-row .tiles { grid-column: 2; padding: 0; }
+.awards { grid-column: 1; min-width: 0; }
+.awards ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; max-height: 220px; overflow-y: auto; }
+.awards li { display: flex; gap: 10px; align-items: flex-start; }
+.awards li span:last-child { display: flex; flex-direction: column; line-height: 1.3; }
+.aw-icon { font-size: 18px; line-height: 1.2; }
+@media (max-width: 900px) {
+  .tiles-row { grid-template-columns: 1fr; padding: 0 16px; }
+  .tiles-row .tiles, .awards { grid-column: 1; }
+}

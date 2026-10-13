@@ -359,6 +359,9 @@ export async function build(season, params = {}) {
       epa: epaRow(e), matches: h, events: evs,
     };
   }
+  // season awards per team (from scripts/fetch-awards.mjs), newest event first
+  const awardsBy = await loadAwards(season, events);
+  for (const teams of buckets.values()) for (const t of Object.values(teams)) if (awardsBy.has(t.team)) t.awards = awardsBy.get(t.team);
   for (const [bucket, teams] of buckets) await writeJson(path.join(out, "team", `${bucket}.json`), teams);
 
   // ---- events ----
@@ -489,4 +492,20 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const all = await fs.readdir(path.join("site", "data")).catch(() => []);
   await writeJson(path.join("site", "data", "seasons.json"),
     all.filter((d) => /^\d{4}$/.test(d)).map(Number).sort((a, b) => b - a));
+}
+
+// team number -> [{ ev, evName, start, type, placement }] for the season
+async function loadAwards(season, events) {
+  const dir = path.join(".cache", "awards", String(season));
+  const byTeam = new Map();
+  for (const ev of events) {
+    const list = await fs.readFile(path.join(dir, `${ev.code}.json`), "utf8").then(JSON.parse).catch(() => []);
+    for (const a of list) {
+      if (!a.teamNumber) continue;
+      if (!byTeam.has(a.teamNumber)) byTeam.set(a.teamNumber, []);
+      byTeam.get(a.teamNumber).push({ ev: ev.code, evName: ev.name, start: ev.start, type: a.type, placement: a.placement });
+    }
+  }
+  for (const list of byTeam.values()) list.sort((a, b) => b.start.localeCompare(a.start));
+  return byTeam;
 }

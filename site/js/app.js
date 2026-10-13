@@ -308,7 +308,7 @@ async function team(r) {
         </div>
       </div>
     </div>${teamPhotos(n, photos[n] ?? [])}</div></div>
-    <div class="tiles section">${tiles}</div>
+    <div class="tiles-row section">${teamAwards(season, t.awards ?? [])}<div class="tiles">${tiles}</div></div>
     <div class="row section" style="justify-content:space-between">
       <nav class="seg glass">
         <a href="#/${season}/team/${n}" class="${view === "matches" ? "active" : ""}">Matches</a>
@@ -425,6 +425,32 @@ async function shrinkImage(file, max, quality) {
   c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
   return new Promise((ok, fail) => c.toBlob((b) => (b ? ok(b) : fail()), "image/jpeg", quality));
+}
+
+// Season awards beside the rank tiles, most prestigious first.
+const AWARD_NAMES = {
+  Inspire: "Inspire Award", Think: "Think Award", Connect: "Connect Award", Innovate: "Innovate Award",
+  Control: "Control Award", Motivate: "Motivate Award", Design: "Design Award", Reach: "Reach Award",
+  Sustain: "Sustain Award", Promote: "Promote Award", Compass: "Compass Award", JudgesChoice: "Judges' Choice",
+  Winner: "Winning Alliance", Finalist: "Finalist Alliance", DivisionWinner: "Division Winner",
+  DivisionFinalist: "Division Finalist", ConferenceFinalist: "Conference Finalist", TopRanked: "Top Ranked",
+  DeansListWinner: "Dean's List Winner", DeansListFinalist: "Dean's List Finalist", DeansListSemiFinalist: "Dean's List Semi-Finalist",
+};
+const AWARD_ORDER = ["Inspire", "Winner", "DivisionWinner", "Think", "Connect", "Innovate", "Control", "Motivate", "Design", "Reach", "Sustain", "Finalist", "DivisionFinalist", "ConferenceFinalist", "TopRanked", "JudgesChoice", "Promote", "Compass", "DeansListWinner", "DeansListFinalist", "DeansListSemiFinalist"];
+const ordinal = (n) => {
+  const teen = n % 100 >= 11 && n % 100 <= 13;
+  return `${n}${teen ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
+};
+function teamAwards(season, awards) {
+  if (!awards.length) return `<div class="awards empty-awards"><h3>Awards</h3><p class="small muted">No awards yet this season.</p></div>`;
+  const rank = (a) => (AWARD_ORDER.indexOf(a.type) + 1 || 99) * 10 + (a.placement || 1);
+  const sorted = [...awards].sort((a, b) => rank(a) - rank(b));
+  // alliance placements are pick order, not 1st/2nd place, so only judged awards show a place
+  const place = (a) => (a.placement > 1 && !["Winner", "Finalist", "DivisionWinner", "DivisionFinalist"].includes(a.type) ? ` · ${ordinal(a.placement)}` : "");
+  // trophy for winning an event (every team on the winning alliance) or 1st-place Inspire
+  const icon = (a) => (["Winner", "DivisionWinner"].includes(a.type) || (a.type === "Inspire" && a.placement <= 1) ? "🏆" : "🏅");
+  return `<div class="awards"><h3>Awards <span class="muted small">${awards.length}</span></h3><ul>${sorted.map((a) =>
+    `<li><span class="aw-icon" aria-hidden="true">${icon(a)}</span><span><b>${esc(AWARD_NAMES[a.type] ?? a.type)}${place(a)}</b><a class="small muted" href="#/${season}/event/${encodeURIComponent(a.ev)}">${esc(a.evName)}</a></span></li>`).join("")}</ul></div>`;
 }
 
 const shortEvent = (name) => name.replace(/\s+(Championship|Qualifier|Tournament)$/i, "").trim();
