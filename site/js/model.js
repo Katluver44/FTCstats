@@ -88,8 +88,9 @@ export const DEFAULT_PARAMS = {
 // Scored by research/epa-eval.mjs (how well the pre-event EPA predicts the
 // team's component OPR at that event), not by win-prob Brier.
 //
-// Every component starts as an exact copy of the prediction track, so the two
-// tracks agree until someone tunes this.
+// Every component starts as a copy of the prediction track; the overrides in
+// DEFAULT_EPA_PARAMS below were tuned per component by leave-one-season-out CV
+// on 2019 and 2021-2025 (research/tune-*/, scored by research/epa-eval.mjs).
 const EPA_COMPONENT_START = {
   kalman: DEFAULT_PARAMS.kalman, // 1 = uncertainty-weighted (Kalman) updates; 0 = K ramp below
   kStart: DEFAULT_PARAMS.kStart, kEnd: DEFAULT_PARAMS.kEnd, kRampStart: DEFAULT_PARAMS.kRampStart, kRampEnd: DEFAULT_PARAMS.kRampEnd,
@@ -115,13 +116,35 @@ export const DEFAULT_EPA_PARAMS = {
   shared: {
     offWeight: 0, // off-season events: 0 = excluded, w = each event's rating change counts w once it ends
     offTypes: ["OffSeason"], // event types treated as off-season
-    priorWeights: [1, 0.3, 0.15], // weights of the last 1/2/3 seasons in the starting rating
-    priorRookieZ: -0.5, // starting z for teams with no history
-    priorMinMatches: 5, // matches needed in a past season to count for priors
+    priorWeights: [1, 0.15, 0.05], // weights of the last 1/2/3 seasons in the starting rating (was 1/0.3/0.15: older seasons predicted less than assumed)
+    priorRookieZ: -0.25, // starting z for teams with no history (was -0.5: new teams were started too low)
+    priorMinMatches: 3, // matches needed in a past season to count for priors (was 5: short seasons still say something)
   },
-  auto: { ...EPA_COMPONENT_START },
-  teleop: { ...EPA_COMPONENT_START },
-  endgame: { ...EPA_COMPONENT_START },
+  auto: {
+    ...EPA_COMPONENT_START,
+    initFrac: 0.7, // was 0.3: teams started at 30% of average, so their first events were underrated
+    idleShare: 1, // off: handing the moving partner nearly all of the auto surprise overrated it
+    kSolo: 0.25, // was 0.3: per-robot auto points are noisy match to match
+  },
+  teleop: {
+    ...EPA_COMPONENT_START,
+    initFrac: 0.8, carry: 0.8, // was 0.3 / 1.3: start nearer average, lean less on last season's rank
+    mom: -0.1, // was -0.2: give back less of the last event's change
+    vMatch: 0.08, vEvent: 0, // was 0.01 / 0.2: steady recency within and across events instead of a jump at each event
+    vObs: 3, obsHet: 0.25, // was 2 / 0.75: slower updates, noise grows less with scoring level
+    clipC: 1, // was 1.25: clip breakdown matches harder
+    volK: 0.03, // was 0.1: less extra uncertainty after a surprise
+    elimWeight: 0.8, // was 0.6: elims say more about teleop than the prediction track assumes
+    emaAlpha: 0.001, // was 0.003: slower league-average tracker
+  },
+  endgame: {
+    ...EPA_COMPONENT_START,
+    initFrac: 0.9, carry: 0.3, // was 0.3 / 1.3: endgame skill barely carries between games; start near average
+    kSolo: 0.15, // was 0.3: parking/ascent per robot is noisy match to match
+    vObs: 5, volK: 0.05, // was 2 / 0.1: slower, steadier updates
+    mom: -0.3, // was -0.2: more of a one-event endgame jump is noise
+    elimWeight: 1, // was 0.6: elims count fully
+  },
 };
 const EPA_TRACK_KEYS = ["offWeight", "offTypes"];
 const EPA_SHARED_ONLY = ["priorWeights", "priorRookieZ", "priorMinMatches"];
