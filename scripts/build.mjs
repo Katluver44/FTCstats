@@ -129,17 +129,27 @@ function normInv(p) {
 // (After the FRC predictor's priors.)
 // col: which rating to rank by: "pnp" (prediction track; tie order kept by "prank")
 // or "np" (EPA track). Files from before the split only have "np".
+// table: which of last season's team tables (OFF_TABLES) to rank: "full" (every
+// off-season event at OFF_WEIGHT, minus excluded ones) predicted the next season
+// marginally best (research/tune-shared/). The file name comes from that
+// season's meta.json (offTables).
 export const PRIOR_OPTS = { weights: [1, 0.3, 0.15], rookieZ: -0.5, minMatches: 5 }; // tuned on 2022-2024
-export async function loadPriors(season, opts = PRIOR_OPTS, col = "pnp") {
+export const PRIOR_TABLE = "full";
+async function priorTable(season, table) {
+  const dir = path.join("site", "data", String(season));
+  const meta = await fs.readFile(path.join(dir, "meta.json"), "utf8").then(JSON.parse).catch(() => null);
+  if (!meta) return null; // season not built
+  const file = meta.offTables?.[table];
+  if (!file) throw new Error(`site/data/${season}/meta.json has no offTables.${table}: rebuild ${season} first`);
+  return JSON.parse(await fs.readFile(path.join(dir, file), "utf8"));
+}
+export async function loadPriors(season, opts = PRIOR_OPTS, col = "pnp", table = PRIOR_TABLE) {
   const { weights, rookieZ, minMatches } = { ...PRIOR_OPTS, ...opts };
   const colOf = (t) => (t.cols.includes(col) ? t.cols.indexOf(col) : t.cols.indexOf("np"));
   const past = [];
   for (let k = 1; k <= weights.length; k++) {
     if (!weights[k - 1]) { past.push(null); continue; }
-    // off-season results at OFF_WEIGHT predict next season better than official-only
-    const dir = path.join("site", "data", String(season - k));
-    const prev = await fs.readFile(path.join(dir, "teams-all.json"), "utf8")
-      .catch(() => fs.readFile(path.join(dir, "teams.json"), "utf8")).then(JSON.parse).catch(() => null);
+    const prev = await priorTable(season - k, table);
     if (!prev) { past.push(null); continue; }
     const npI = colOf(prev), mI = prev.cols.indexOf("matches"), rkI = col === "pnp" ? prev.cols.indexOf("prank") : -1;
     const rows = prev.rows.filter((r) => r[mI] >= minMatches).sort((a, b) => b[npI] - a[npI] || (rkI >= 0 ? a[rkI] - b[rkI] : 0));
@@ -180,18 +190,74 @@ export function loadEpaPriors(season, epa = epaParams()) {
 // so ratings still learn within the event (as the live page does).
 export const UNOFFICIAL = new Set(["OffSeason"]);
 // How much an off-season event's rating changes count once it ends, for the
-// "Include off-season matches" table and next season's starting ratings.
+// "Through MTI" / "Full season" tables and next season's starting ratings.
 // 0.4 ranked teams best by their next season (research/offweight.mjs, 2021-2024);
 // counting them fully (1) was the worst of 0 / 0.25 / 0.5 / 0.75 / 1.
 export const OFF_WEIGHT = 0.4;
 
+// The team tables the site offers (EPA shared off-season settings for each).
+//   official: off-season events excluded (scrimmages and post-Worlds Premier events count)
+//   mti: off-season events up to and including MTI (Maryland / Multinational Tech
+//        Invitational, the last big US one) at OFF_WEIGHT
+//   full: every off-season event at OFF_WEIGHT
+// Both off-season tables leave out excluded events (EPA shared.offExclude / offFlag).
+export const OFF_TABLES = {
+  official: { file: "teams.json", shared: { offWeight: 0 } },
+  mti: { file: "teams-mti.json", shared: { offWeight: OFF_WEIGHT, offCutoff: "MTI" } },
+  full: { file: "teams-full.json", shared: { offWeight: OFF_WEIGHT, offCutoff: null } },
+};
+const MTI_NAME = /(Maryland|Multinational) Tech Invitational/i;
+// MTI's event code in a season (USCHSLAOS in 2021-2025, USCHSLHOS in 2020), or null.
+export const mtiCode = (events) => [...events].filter((e) => MTI_NAME.test(e.name)).sort((a, b) => a.start.localeCompare(b.start))[0]?.code ?? null;
+
+// Off-season events whose scores don't fit the teams' ratings: actual average
+// alliance score outside range x the sum of the teams' EPAs (alliances whose
+// teams all have an official rating). Catches modified-rules events, e.g. 2025
+// Robot Rumble Missouri/Illinois divisions, 2024 USMIRHOS / RODEOS.
+//   rate(team): official ratings (EPA track, off-season excluded) at season end.
+export function flagOffseason(matches, rate, offTypes = UNOFFICIAL, range = [0.5, 1.6]) {
+  const out = new Set();
+  if (!range) return out;
+  const acc = new Map();
+  for (const x of matches) {
+    if (!offTypes.has(x.ev.type)) continue;
+    for (const side of ["red", "blue"]) {
+      const nums = x[side];
+      if (nums.some((t) => isPlaceholder(t) || !(rate(t).n > 0))) continue;
+      if (!acc.has(x.ev.code)) acc.set(x.ev.code, [0, 0]);
+      const a = acc.get(x.ev.code);
+      a[0] += x.actual[side].np; a[1] += nums.reduce((s, t) => s + rate(t).np, 0);
+    }
+  }
+  for (const [code, [act, pred]] of acc) if (pred > 0 && (act < range[0] * pred || act > range[1] * pred)) out.add(code);
+  return out;
+}
+
+// Weight of each off-season event's rating changes, from the EPA shared settings:
+// offWeight, unless the event starts after offCutoff (an event code, looked up in
+// this season; a code not played yet means no cutoff) or is excluded by name/code
+// (offExclude) or flagged (a set of codes from flagOffseason).
+export function offWeights(matches, { offWeight = 0, offCutoff = null, offExclude = [] } = {}, flagged = new Set()) {
+  if (!offWeight) return 0;
+  let cut = offCutoff;
+  if (cut && !/^\d{4}-\d{2}-\d{2}/.test(cut)) cut = matches.find((x) => x.ev.code === cut)?.ev.start ?? null;
+  const ex = (offExclude ?? []).map((e) => (/^[A-Z0-9]+$/.test(e) ? (ev) => ev.code === e : ((re) => (ev) => re.test(ev.name ?? ""))(new RegExp(e, "i"))));
+  return (ev) => ((cut && ev.start > cut) || flagged.has(ev.code) || ex.some((f) => f(ev)) ? 0 : offWeight);
+}
+
 // One rating track over a season: a Model, plus a fork for each unofficial event.
+// offWeight: a number, or ev -> weight per event (offWeights).
 function makeTrack(matches, modelArgs, { unofficial = UNOFFICIAL, offWeight = 0 } = {}) {
   const model = new Model(modelArgs);
   const forks = new Map(); // event code -> forked model
-  // when an unofficial event ends, offWeight x its rating changes carry over
+  // when an unofficial event ends, its weight x its rating changes carry over
+  const wOf = new Map();
+  const weight = (ev) => {
+    if (!wOf.has(ev.code)) wOf.set(ev.code, typeof offWeight === "function" ? offWeight(ev) : offWeight);
+    return wOf.get(ev.code);
+  };
   const lastOf = new Map();
-  if (offWeight) matches.forEach((x, i) => unofficial.has(x.ev.type) && lastOf.set(x.ev.code, i));
+  matches.forEach((x, i) => unofficial.has(x.ev.type) && weight(x.ev) && lastOf.set(x.ev.code, i));
   return {
     model,
     // the model a match is played on
@@ -200,7 +266,7 @@ function makeTrack(matches, modelArgs, { unofficial = UNOFFICIAL, offWeight = 0 
       if (!forks.has(x.ev.code)) forks.set(x.ev.code, model.fork());
       return forks.get(x.ev.code);
     },
-    done(x, i) { if (lastOf.get(x.ev.code) === i) this.at(x).merge(offWeight); },
+    done(x, i) { if (lastOf.get(x.ev.code) === i) this.at(x).merge(weight(x.ev)); },
   };
 }
 
@@ -225,12 +291,13 @@ export function simulate(matches, { params, baseline, priors, cv, soloComps, mov
 // here feeds win probabilities.
 //   ctx: prepare()'s output (uses baseline, soloComps, movedSpec, parkedSpec, epaPriors)
 //   epa: full EPA params (epaParams(...)); comps: components to run
-//   offWeight: overrides every component's off-season weight (the "include off-season" table)
+//   offWeight: overrides every component's off-season weight
+//   offFlagged: off-season event codes that count 0 (flagOffseason)
 //   epaPriors: overrides ctx.epaPriors (e.g. loaded with other prior settings)
 //   onBefore(x, view, i) / onMatch(x, view, i): around each match; view.epa(team) reads
 //     the ratings the match is played on (an off-season event's fork, or the main ones)
 // Returns { rate(team), epa: view over the main models, groups }.
-export function simulateEpa(matches, ctx, { epa = epaParams(), comps = COMPONENTS, offWeight, epaPriors, onBefore, onMatch } = {}) {
+export function simulateEpa(matches, ctx, { epa = epaParams(), comps = COMPONENTS, offWeight, offFlagged = new Set(), epaPriors, onBefore, onMatch } = {}) {
   const { priors, cv, rookieZ } = epaPriors ?? ctx.epaPriors;
   const { baseline, soloComps, movedSpec, parkedSpec } = ctx;
   const groups = new Map(), groupOf = {};
@@ -240,7 +307,7 @@ export function simulateEpa(matches, ctx, { epa = epaParams(), comps = COMPONENT
     const key = JSON.stringify(s);
     if (!groups.has(key)) {
       const track = makeTrack(matches, { params: s.model, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ },
-        { unofficial: new Set(s.offTypes), offWeight: s.offWeight });
+        { unofficial: new Set(s.offTypes), offWeight: offWeights(matches, s, offFlagged) });
       groups.set(key, { track, comps: [] });
     }
     groups.get(key).comps.push(c);
@@ -460,24 +527,42 @@ export async function build(season, params = {}, epaOver = {}) {
   const rows = tableRows(ranked, true, predRank(ranked, true));
   await writeJson(path.join(out, "teams.json"), { cols, rows });
 
-  // teams-all.json: the same table with off-season results counted at OFF_WEIGHT,
-  // for the site's "Include off-season matches" switch. Only written when there are any.
-  if (matches.some((x) => UNOFFICIAL.has(x.ev.type))) {
-    const allHist = new Map();
-    const { model: allModel } = simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, offWeight: OFF_WEIGHT });
-    const allEpa = simulateEpa(matches, ctxEpa, {
-      epa, offWeight: OFF_WEIGHT,
-      onMatch: (x, v) => {
-        for (const side of ["red", "blue"]) for (const t of x[side]) {
-          if (!allHist.has(t)) allHist.set(t, []);
-          allHist.get(t).push({ ev: x.ev.code, score: x.actual[side].total, oppScore: x.actual[side === "red" ? "blue" : "red"].total, epa: [r1(v.epa(t).np)] });
-        }
-      },
-    });
-    const rankedAll = [...allHist.keys()].filter((t) => !isPlaceholder(t))
-      .map((t) => ({ t, e: allEpa.rate(t), p: allModel.epa(t), h: allHist.get(t) }))
-      .sort(byRating("e", false));
-    await writeJson(path.join(out, "teams-all.json"), { cols, rows: tableRows(rankedAll, false, predRank(rankedAll, false)) });
+  // Off-season tables (OFF_TABLES): the same table with off-season events counted
+  // at OFF_WEIGHT, through MTI or all of them, minus excluded events. Only written
+  // when the season has off-season matches; meta.offTables names each table's file.
+  const offTables = { official: OFF_TABLES.official.file, mti: OFF_TABLES.official.file, full: OFF_TABLES.official.file };
+  const mti = mtiCode(events);
+  // modified-rules events, judged against the official EPAs at season end
+  const offFlagged = flagOffseason(matches, epaTrack.rate, new Set(epa.shared.offTypes), epa.shared.offFlag);
+  const offEvents = [...new Map(matches.filter((x) => epa.shared.offTypes.includes(x.ev.type)).map((x) => [x.ev.code, x.ev])).values()];
+  const excludeW = offWeights(matches, { offWeight: 1, offExclude: epa.shared.offExclude }, offFlagged);
+  const offExcluded = offEvents.filter((ev) => !excludeW(ev)).map((ev) => ev.code).sort();
+  if (offEvents.length) {
+    for (const key of ["mti", "full"]) {
+      const shared = { ...OFF_TABLES[key].shared, offCutoff: OFF_TABLES[key].shared.offCutoff === "MTI" ? mti : OFF_TABLES[key].shared.offCutoff };
+      const epaT = epaParams({ ...epaOver, shared: { ...epaOver.shared, ...shared } });
+      // prediction-track columns (pnp.., next season's prediction priors): off-season
+      // events at OFF_WEIGHT up to the cutoff, no exclusions (as before the presets)
+      const { model: allModel } = simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ,
+        offWeight: offWeights(matches, { offWeight: shared.offWeight, offCutoff: shared.offCutoff }) });
+      const allHist = new Map();
+      const cutStart = shared.offCutoff ? events.find((e) => e.code === shared.offCutoff)?.start : null;
+      const allEpa = simulateEpa(matches, ctxEpa, {
+        epa: epaT, offFlagged,
+        onMatch: (x, v) => {
+          if (cutStart && x.ev.start > cutStart && UNOFFICIAL.has(x.ev.type)) return; // after the cutoff: not in this table
+          for (const side of ["red", "blue"]) for (const t of x[side]) {
+            if (!allHist.has(t)) allHist.set(t, []);
+            allHist.get(t).push({ ev: x.ev.code, score: x.actual[side].total, oppScore: x.actual[side === "red" ? "blue" : "red"].total, epa: [r1(v.epa(t).np)] });
+          }
+        },
+      });
+      const rankedAll = [...allHist.keys()].filter((t) => !isPlaceholder(t))
+        .map((t) => ({ t, e: allEpa.rate(t), p: allModel.epa(t), h: allHist.get(t) }))
+        .sort(byRating("e", false));
+      offTables[key] = OFF_TABLES[key].file;
+      await writeJson(path.join(out, offTables[key]), { cols, rows: tableRows(rankedAll, false, predRank(rankedAll, false)) });
+    }
   }
 
   // ---- per-team files, bundled 100 teams to a file (team/<number / 100>.json) ----
@@ -619,6 +704,8 @@ export async function build(season, params = {}, epaOver = {}) {
     // prediction track (live replay builds its model from this)
     model: { ...model.p, baseline: { ...baseline, rp: baseline.rp.map(r3) }, cv: r3(cv), priors: priors.size },
     epaModel: { ...epa, priors: ctxEpa.epaPriors.priors.size }, // EPA (display) track
+    // team tables per off-season setting (file names), MTI's code, off-season events left out of them
+    offTables, mti, offExcluded,
     // per-robot scoring elements and their learned point values
     solo: fits.map((f) => ({ comp: f.comp, label: f.label, moved: f.moved, parked: f.parked, robots: f.robots, values: f.values, exact: r3(f.exact) })),
   };

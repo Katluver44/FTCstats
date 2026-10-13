@@ -48,12 +48,11 @@ export const data = {
       return o;
     });
   },
-  // withOff: ratings that count off-season matches (falls back to the official
-  // table for seasons without any off-season events)
-  async teams(s, withOff = false) {
-    const { cols, rows } = withOff
-      ? await getJSON(`data/${s}/teams-all.json`).catch(() => getJSON(`data/${s}/teams.json`))
-      : await getJSON(`data/${s}/teams.json`);
+  // table: "official" | "mti" (off-season through MTI) | "full" (all off-season);
+  // meta.offTables names each one's file (teams.json when a season has no off-season)
+  async teams(s, table = "official") {
+    const file = table === "official" ? "teams.json" : (await getJSON(`data/${s}/meta.json`)).offTables?.[table] ?? "teams.json";
+    const { cols, rows } = await getJSON(`data/${s}/${file}`);
     if (!rows._objs) rows._objs = rows.map((r, i) => {
       const o = { rank: i + 1 };
       cols.forEach((c, j) => (o[c] = r[j]));

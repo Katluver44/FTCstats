@@ -116,6 +116,9 @@ export const DEFAULT_EPA_PARAMS = {
   shared: {
     offWeight: 0, // off-season events: 0 = excluded, w = each event's rating change counts w once it ends
     offTypes: ["OffSeason"], // event types treated as off-season
+    offCutoff: null, // event code or ISO date: off-season events starting after it count 0 (e.g. MTI's code)
+    offExclude: ["Chicago Robotics Invitational"], // event codes or name patterns (regex, any case) that always count 0
+    offFlag: [0.5, 1.6], // also 0: events scoring outside this range x what the teams' EPAs predict (modified rules)
     priorWeights: [1, 0.15, 0.05], // weights of the last 1/2/3 seasons in the starting rating (was 1/0.3/0.15: older seasons predicted less than assumed)
     priorRookieZ: -0.25, // starting z for teams with no history (was -0.5: new teams were started too low)
     priorMinMatches: 3, // matches needed in a past season to count for priors (was 5: short seasons still say something)
@@ -146,7 +149,7 @@ export const DEFAULT_EPA_PARAMS = {
     elimWeight: 1, // was 0.6: elims count fully
   },
 };
-const EPA_TRACK_KEYS = ["offWeight", "offTypes"];
+const EPA_TRACK_KEYS = ["offWeight", "offTypes", "offCutoff", "offExclude", "offFlag"];
 const EPA_SHARED_ONLY = ["priorWeights", "priorRookieZ", "priorMinMatches"];
 
 // Merge an override ({ shared?, auto?, teleop?, endgame? }) onto the defaults.
@@ -164,11 +167,12 @@ export function epaParams(over = {}) {
   return out;
 }
 
-// One component's settings: { model: Model params, offWeight, offTypes }.
+// One component's settings: { model: Model params, offWeight, offTypes, offCutoff, offExclude, offFlag }.
 export function epaComponent(ep, comp) {
-  const { offWeight, offTypes, priorWeights, priorRookieZ, priorMinMatches, ...sharedModel } = ep.shared;
-  const { offWeight: ow, offTypes: ot, ...compModel } = ep[comp];
-  return { model: { ...DEFAULT_PARAMS, ...sharedModel, ...compModel }, offWeight: ow ?? offWeight, offTypes: ot ?? offTypes };
+  const { priorWeights, priorRookieZ, priorMinMatches, ...sharedModel } = ep.shared;
+  const off = {}, compModel = { ...ep[comp] };
+  for (const k of EPA_TRACK_KEYS) { off[k] = compModel[k] ?? sharedModel[k]; delete compModel[k]; delete sharedModel[k]; }
+  return { model: { ...DEFAULT_PARAMS, ...sharedModel, ...compModel }, ...off };
 }
 
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));

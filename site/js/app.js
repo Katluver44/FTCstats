@@ -209,8 +209,10 @@ function eventList(season, meta, evs) {
 
 async function teams(r) {
   const { season, query } = r;
-  const withOff = query.get("off") === "1";
-  const [meta, rows] = await Promise.all([data.meta(season), data.teams(season, withOff)]);
+  // ?off=mti | full (old links: off=1 = full)
+  const off = { 1: "full", mti: "mti", full: "full" }[query.get("off")] ?? "official";
+  const [meta, rows] = await Promise.all([data.meta(season), data.teams(season, off)]);
+  const hasOff = meta.offTables && meta.offTables.full !== meta.offTables.official;
   if (stale(r)) return;
   const rpNames = meta.rpNames;
   const countries = [...new Set(rows.map((r) => r.country).filter(Boolean))].sort();
@@ -220,7 +222,9 @@ async function teams(r) {
         <input id="filter" placeholder="Search teams…" value="${esc(query.get("q") ?? "")}">
         <select id="country" aria-label="Country"><option value="">All countries</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
         <select id="minm" aria-label="Minimum matches played"><option value="1">Any number of matches</option><option value="10">Played 10+ matches</option><option value="25">Played 25+ matches</option></select>
-        <label class="small check" title="Off-season events often use modified rules and lineups, so official ratings leave them out. Switched on, each off-season event counts 40%, the weight that best predicts the next season."><input type="checkbox" id="off" ${withOff ? "checked" : ""}> Include off-season matches</label>
+        ${hasOff ? `<select id="off" aria-label="Off-season events" title="Off-season events often use modified rules and lineups, so the official season leaves them out. Through MTI / Full season count each off-season event at 40% (the weight that best predicts next season), except events with modified rules.">
+          ${[["official", "Official season"], ["mti", "Through MTI"], ["full", "Full season"]].map(([k, l]) => `<option value="${k}" ${k === off ? "selected" : ""}>${l}</option>`).join("")}
+        </select>` : ""}
         <span class="small muted" id="count"></span>
         <a class="small link" href="#/${season}/about" style="margin-left:auto">What's EPA?</a>
       </div>
@@ -242,7 +246,8 @@ async function teams(r) {
   if (query.get("min")) $("#minm").value = query.get("min");
   const apply = () => {
     const q = $("#filter").value.trim().toLowerCase(), c = $("#country").value, m = +$("#minm").value;
-    syncQuery({ q: $("#filter").value.trim(), country: c, min: m > 1 ? m : "", off: $("#off").checked ? "1" : "" });
+    const o = $("#off")?.value ?? "official";
+    syncQuery({ q: $("#filter").value.trim(), country: c, min: m > 1 ? m : "", off: o === "official" ? "" : o });
     const shown = rows.filter((r) =>
       (!c || r.country === c) && r.matches >= m &&
       (!q || String(r.team).startsWith(q) || r.name.toLowerCase().includes(q) || r.loc.toLowerCase().includes(q)));
@@ -250,8 +255,8 @@ async function teams(r) {
     table.setRows(shown);
   };
   $("#filter").oninput = apply; $("#country").onchange = apply; $("#minm").onchange = apply;
-  // switching tables reloads the page with ?off=1 (filters are kept in the query)
-  $("#off").onchange = () => { apply(); teams({ ...r, query: new URLSearchParams(location.hash.split("?")[1] ?? "") }); };
+  // switching tables reloads the page with ?off=mti|full (filters are kept in the query)
+  if ($("#off")) $("#off").onchange = () => { apply(); teams({ ...r, query: new URLSearchParams(location.hash.split("?")[1] ?? "") }); };
   apply();
 }
 
