@@ -343,6 +343,20 @@ export async function build(season, params = {}) {
 
   // ---- per-team files, bundled 100 teams to a file (team/<number / 100>.json) ----
   const rankOf = new Map(ranked.map((x, i) => [x.t, i + 1]));
+  // world / country / state ranks for the team page tiles (so it needn't load teams.json)
+  const stateOf = (t) => { const p = (info.get(t)?.loc ?? "").split(", "); return p.length >= 3 ? p[p.length - 2] : null; };
+  const placeRanks = new Map();
+  for (const [key, group] of [["country", (t) => info.get(t)?.country || null], ["state", (t) => (info.get(t)?.country && stateOf(t) ? `${info.get(t).country}|${stateOf(t)}` : null)]]) {
+    const counts = new Map(), seen = new Map();
+    for (const x of ranked) { const g = group(x.t); if (g) counts.set(g, (counts.get(g) ?? 0) + 1); }
+    for (const x of ranked) {
+      const g = group(x.t);
+      if (!g) continue;
+      seen.set(g, (seen.get(g) ?? 0) + 1);
+      if (!placeRanks.has(x.t)) placeRanks.set(x.t, {});
+      placeRanks.get(x.t)[key] = [key === "state" ? g.split("|")[1] : g, seen.get(g), counts.get(g)];
+    }
+  }
   const buckets = new Map();
   for (const { t, e, h } of ranked) {
     const evs = (teamEvents.get(t) ?? []).map(({ ev, stats }) => {
@@ -358,7 +372,7 @@ export async function build(season, params = {}) {
     const bucket = Math.floor(t / 100);
     if (!buckets.has(bucket)) buckets.set(bucket, {});
     buckets.get(bucket)[t] = {
-      team: t, ...(info.get(t) ?? {}), rank: rankOf.get(t), of: ranked.length,
+      team: t, ...(info.get(t) ?? {}), rank: rankOf.get(t), of: ranked.length, places: placeRanks.get(t) ?? {},
       epa: epaRow(e), matches: h, events: evs,
     };
   }
@@ -464,7 +478,11 @@ export async function build(season, params = {}) {
   // ---- season meta ----
   const nps = rows.map((r) => r[4]);
   const pct = (p) => nps[Math.floor((1 - p) * (nps.length - 1))];
+  // scale for the team page meters: the best values among the top 50 teams
+  const top50 = ranked.slice(0, 50).map((x) => x.e);
+  const meterMax = Object.fromEntries(["np", "auto", "teleop", "endgame"].map((k) => [k, r1(Math.max(...top50.map((e) => e[k]), 1))]));
   const meta = {
+    meterMax,
     season, game: cfg.game, rpNames: cfg.rpNames, generated: new Date().toISOString(),
     teams: rows.length, events: events.length, matches: matches.length,
     accuracy: Object.fromEntries(Object.entries(summarize(acc)).map(([k, v]) => [k, hasRp || k === "calib" ? v : { ...v, rpBrier: null }])),
@@ -493,8 +511,12 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     console.log(JSON.stringify(meta.accuracy, null, 1));
   }
   const all = await fs.readdir(path.join("site", "data")).catch(() => []);
-  await writeJson(path.join("site", "data", "seasons.json"),
-    all.filter((d) => /^\d{4}$/.test(d)).map(Number).sort((a, b) => b - a));
+  const built = all.filter((d) => /^\d{4}$/.test(d)).map(Number).sort((a, b) => b - a);
+  await writeJson(path.join("site", "data", "seasons.json"), built);
+  // which season the site opens on: the newest with enough matches to be useful
+  const metas = await Promise.all(built.map((s) => fs.readFile(path.join("site", "data", String(s), "meta.json"), "utf8").then(JSON.parse)));
+  const def = (metas.find((m) => m.matches >= 1000) ?? metas[0]).season;
+  await writeJson(path.join("site", "data", "index.json"), { seasons: built, default: def, games: Object.fromEntries(metas.map((m) => [m.season, m.matches])) });
 }
 
 // Rating and record counting only official (non off-season) matches.

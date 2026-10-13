@@ -12,9 +12,11 @@ await fs.cp(path.join("photo-service", "public", "admin.html"), path.join(out, "
 await fs.writeFile(path.join(out, "vercel.json"), JSON.stringify({
   headers: [
     { source: "/admin.html", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
-    // data changes hourly; code and styles on each deploy
-    { source: "/data/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=600" }] },
-    { source: "/(js|css)/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }] },
+    // Browsers reuse files for 5 minutes, and serve a stale copy instantly while
+    // fetching a fresh one in the background, instead of checking every file on
+    // every visit. Data changes hourly; code at most every deploy.
+    { source: "/data/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=600, stale-while-revalidate=86400" }] },
+    { source: "/(js|css)/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400" }] },
   ],
 }, null, 2));
 console.log("dist/ ready");

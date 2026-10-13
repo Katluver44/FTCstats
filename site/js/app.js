@@ -1,5 +1,5 @@
 import {
-  $, $$, esc, data, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
+  $, $$, esc, data, getJSON, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
   trend, matchTable, mountLineChart, sortableTable, meter, winBar,
 } from "./ui.js";
 import { SEASONS } from "./seasons.js";
@@ -272,14 +272,14 @@ async function team(r) {
   const { season, args } = r;
   const n = /^\d{1,6}$/.test(args[0] ?? "") ? +args[0] : null, view = args[1] ?? "matches";
   if (n == null) { app.innerHTML = `<div class="card empty">That isn't a team number.</div>`; return; }
-  const [meta, t, events, all, photos] = await Promise.all([
-    data.meta(season), data.team(season, n).catch(() => null), data.events(season), data.teams(season), data.photos(CONFIG.photoApi),
-  ]);
+  // just the season summary and this team's file: ranks and meter scales are precomputed
+  const [meta, t] = await Promise.all([data.meta(season), data.team(season, n).catch(() => null)]);
+  if (stale(r)) return;
   if (!t) {
     app.innerHTML = `<div class="card empty">Team ${n} has no matches in ${season}. ${state.seasons.filter((s) => s !== season).map((s) => `<a class="link" href="#/${s}/team/${n}">Try ${s}</a>`).join(" ")}</div>`;
     return;
   }
-  const evName = new Map(events.map((e) => [e.code, e.name]));
+  const evName = new Map((t.events ?? []).map((e) => [e.code, e.name]));
   const e = t.epa;
   const w = t.matches.filter((m) => m.score > m.oppScore).length;
   const l = t.matches.filter((m) => m.score < m.oppScore).length;
@@ -287,22 +287,18 @@ async function team(r) {
   const decided = t.matches.filter((m) => m.score !== m.oppScore);
   const correct = decided.filter((m) => (m.pWin > 0.5) === (m.score > m.oppScore)).length;
 
-  // rank tiles: world, country, state/province
-  const me = all.find((r) => r.team === n);
-  const parts = (me?.loc ?? "").split(", ");
-  const st = parts.length >= 3 ? parts[parts.length - 2] : null;
-  const stateOf = (r) => { const p = r.loc.split(", "); return p.length >= 3 ? p[p.length - 2] : null; };
-  const inCountry = all.filter((r) => r.country === me?.country);
-  const inState = st ? inCountry.filter((r) => stateOf(r) === st) : [];
+  // rank tiles: world, country, state/province (precomputed by the build)
   const tile = (rank, label, of) => `<div class="tile"><b>#${rank}</b><div class="k">${esc(label)}</div><div class="s">out of ${fmtInt(of)}</div></div>`;
+  const places = t.places ?? {};
   const tiles = [
     tile(t.rank, "World", t.of),
-    me?.country ? tile(inCountry.findIndex((r) => r.team === n) + 1, me.country, inCountry.length) : "",
-    st ? tile(inState.findIndex((r) => r.team === n) + 1, st, inState.length) : "",
+    places.country ? tile(places.country[1], places.country[0], places.country[2]) : "",
+    places.state ? tile(places.state[1], places.state[0], places.state[2]) : "",
   ].join("");
 
-  const max = (k) => Math.max(...all.slice(0, 50).map((r) => r[k]));
-  const top = all[0];
+  const mm = meta.meterMax ?? { np: e.np, auto: e.auto, teleop: e.teleop, endgame: e.endgame };
+  const max = (k) => mm[k];
+  const top = { np: mm.np };
 
   app.innerHTML = `
     <div class="card card-pad"><div class="team-head"><div class="team-main">
@@ -324,7 +320,7 @@ async function team(r) {
           ${meta.rpNames.map((r, i) => meter(`${r} RP`, Math.max(0, e.rp[i]), 1, fmt(Math.max(0, e.rp[i]), 2).replace(/^0/, ""))).join("")}
         </div>
       </div>
-    </div>${teamPhotos(n, photos[n] ?? [])}</div></div>
+    </div>${teamPhotos(n, [])}</div></div>
     <div class="tiles-row section">${trophyCase(season, t.awards ?? []).replace(TILES_SLOT, tiles)}</div>
     <div class="row section" style="justify-content:space-between">
       <nav class="seg glass">
@@ -333,6 +329,12 @@ async function team(r) {
       </nav>
     </div>
     <div id="view"></div>`;
+
+  // photos come from a separate service; show the page now and add them when they arrive
+  data.photos(CONFIG.photoApi).then((p) => {
+    const box = $(".team-photo");
+    if (!stale(r) && box && p[n]?.length) box.outerHTML = teamPhotos(n, p[n]);
+  }).catch(() => {});
 
   if (view === "charts") {
     $("#view").innerHTML = `<div class="card card-pad section"><h2>EPA over the season</h2><div id="chart"></div></div>`;
@@ -851,10 +853,16 @@ async function boot() {
     label();
   };
 
-  state.seasons = await data.seasons();
-  // default to the newest season once it has enough matches to be useful
-  const metas = await Promise.all(state.seasons.map((s) => data.meta(s)));
-  state.defaultSeason = (metas.find((m) => m.matches >= 1000) ?? metas[0]).season;
+  // one small file says which seasons exist and which to open by default
+  const index = await getJSON("data/index.json").catch(() => null);
+  if (index) {
+    state.seasons = index.seasons;
+    state.defaultSeason = index.default;
+  } else {
+    state.seasons = await data.seasons();
+    const metas = await Promise.all(state.seasons.map((s) => data.meta(s)));
+    state.defaultSeason = (metas.find((m) => m.matches >= 1000) ?? metas[0]).season;
+  }
 
   $("#season").onchange = (e) => {
     const r = parseHash();
