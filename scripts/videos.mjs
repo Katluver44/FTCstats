@@ -119,6 +119,11 @@ export async function buildVideos(season) {
   const discovered = (await readJson(path.join("site", "videos", "discovered.json"), {}))[season] ?? {};
   for (const [code, ids] of Object.entries(discovered)) for (const id of ids) add(code).streams.add(id);
 
+  // per-stream clock corrections, seconds: how much EARLIER matches appear in the
+  // recording than their official start times say (scoring-PC clock wrong, encoder
+  // delay); negative = later. Measured by reading the overlay's match clock.
+  const offsets = (await readJson(path.join("site", "videos", "offsets.json"), {}))[season] ?? {};
+
   const allIds = Object.values(events).flatMap((e) => [...e.streams, ...e.uploads.map((u) => u.id)]);
   const yt = await youtubeDetails(allIds, path.join(".cache", "videos", `${season}.json`));
 
@@ -128,6 +133,7 @@ export async function buildVideos(season) {
     const streams = [...e.streams]
       .map((id) => ({ id, ...yt[id] }))
       .filter((v) => v.start && v.embeddable && !v.missing && !v.usBlocked)
+      .map((v) => ({ ...v, start: v.start + (offsets[v.id] ?? 0) * 1000 }))
       .map((v) => ({ id: v.id, start: v.start, end: Math.min(v.end ?? Infinity, v.start + Math.min(v.seconds ?? 43200, 43200) * 1000), title: v.title }));
     const uploads = e.uploads.filter((u) => yt[u.id] && !yt[u.id].missing && yt[u.id].embeddable && !yt[u.id].usBlocked);
     if (streams.length || uploads.length) result[code] = { streams, uploads };
