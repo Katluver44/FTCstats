@@ -91,6 +91,9 @@ export const DEFAULT_PARAMS = {
 // Every component starts as a copy of the prediction track; the overrides in
 // DEFAULT_EPA_PARAMS below were tuned per component by leave-one-season-out CV
 // on 2019 and 2021-2025 (research/tune-*/, scored by research/epa-eval.mjs).
+// auto/teleop initFrac and teleop carry were re-checked by LOSO after rebuilding
+// with these defaults (past seasons' EPAs feed the priors): every fold moved
+// them to the values below.
 const EPA_COMPONENT_START = {
   kalman: DEFAULT_PARAMS.kalman, // 1 = uncertainty-weighted (Kalman) updates; 0 = K ramp below
   kStart: DEFAULT_PARAMS.kStart, kEnd: DEFAULT_PARAMS.kEnd, kRampStart: DEFAULT_PARAMS.kRampStart, kRampEnd: DEFAULT_PARAMS.kRampEnd,
@@ -130,13 +133,13 @@ export const DEFAULT_EPA_PARAMS = {
   },
   auto: {
     ...EPA_COMPONENT_START,
-    initFrac: 0.7, // was 0.3: teams started at 30% of average, so their first events were underrated
+    initFrac: 0.6, // was 0.3: teams started at 30% of average, so their first events were underrated
     idleShare: 1, // off: handing the moving partner nearly all of the auto surprise overrated it
     kSolo: 0.25, // was 0.3: per-robot auto points are noisy match to match
   },
   teleop: {
     ...EPA_COMPONENT_START,
-    initFrac: 0.8, carry: 0.8, // was 0.3 / 1.3: start nearer average, lean less on last season's rank
+    initFrac: 0.7, carry: 1, // was 0.3 / 1.3: start nearer average, lean less on last season's rank
     mom: -0.1, // was -0.2: give back less of the last event's change
     vMatch: 0.08, vEvent: 0, // was 0.01 / 0.2: steady recency within and across events instead of a jump at each event
     vObs: 3, obsHet: 0.25, // was 2 / 0.75: slower updates, noise grows less with scoring level
