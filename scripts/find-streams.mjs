@@ -61,7 +61,8 @@ export async function findStreams(season) {
   for (const e of listing) {
     const ev = await readJson(path.join("site", "data", String(season), "event", `${e.code}.json`), null);
     const times = ev?.matchList?.filter((m) => m.played && m.time).map((m) => m.time) ?? [];
-    if (times.length) evs.push({ ...e, times, hasVideo: !!linked[e.code]?.streams?.length });
+    if (times.length) evs.push({ ...e, times, hasVideo: !!(linked[e.code]?.streams?.length || linked[e.code]?.uploads?.length),
+      linkedWindows: linked[e.code]?.streams ?? [] });
   }
 
   let scanChannels = async () => {};
@@ -143,7 +144,7 @@ export async function findStreams(season) {
     const nums = numbers(e.name);
     for (const s of streams) {
       const inside = e.times.filter((t) => t >= s.start - 60e3 && t <= s.end + 60e3).length / e.times.length;
-      if (inside < 0.25) continue;
+      if (inside < 0.12) continue; // one day of a three-day event can hold under a quarter of it
       const tw = new Set(words(s.title));
       const tn = numbers(s.title);
       if (nums.size && tn.size && ![...nums].some((n) => tn.has(n))) continue; // "#1" vs "#2"
@@ -162,11 +163,19 @@ export async function findStreams(season) {
   // and only if together they cover most of its matches
   const found = {};
   for (const [code, cs] of Map.groupBy(kept, (c) => c.code)) {
-    if (evs.find((x) => x.code === code).hasVideo) continue;
+    const e = evs.find((x) => x.code === code);
     const best = Math.max(...cs.map((c) => c.score));
     const use = cs.filter((c) => c.score === best);
-    const e = evs.find((x) => x.code === code);
     const s = use.map((c) => streams.find((x) => x.id === c.id));
+    const inside = (x) => e.times.filter((t) => t >= x.start - 60e3 && t <= x.end + 60e3);
+    if (e.hasVideo) {
+      // an event with video can still gain its other days: keep streams that cover matches
+      // its current recordings don't
+      const have = new Set(e.linkedWindows.flatMap((w) => e.times.filter((t) => t >= w.start - 60e3 && t <= w.end + 60e3)));
+      const extra = use.filter((c, i) => inside(s[i]).filter((t) => !have.has(t)).length >= Math.max(3, e.times.length * 0.15));
+      if (extra.length) found[code] = extra.map((c) => c.id);
+      continue;
+    }
     const covered = e.times.filter((t) => s.some((x) => t >= x.start - 60e3 && t <= x.end + 60e3)).length / e.times.length;
     if (covered >= 0.5) found[code] = use.map((c) => c.id);
   }
@@ -200,7 +209,8 @@ if (seasons.length) {
   const file = path.join("site", "videos", "discovered.json");
   const all = await readJson(file, {});
   for (const s of seasons) {
-    all[s] = { ...all[s], ...(await findStreams(s)) };
+    all[s] ??= {};
+    for (const [code, ids] of Object.entries(await findStreams(s))) all[s][code] = [...new Set([...(all[s][code] ?? []), ...ids])];
     console.log(s, `${Object.keys(all[s]).length} events matched to a stream (budget left ${budget})`);
   }
   await fs.mkdir(path.dirname(file), { recursive: true });

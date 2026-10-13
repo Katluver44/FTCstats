@@ -31,7 +31,7 @@ async function search(q) {
     const html = await fetch(`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}&sp=EgIQAQ%253D%253D`, { headers: UA, signal: AbortSignal.timeout(15000) })
       .then((r) => r.text()).catch(() => "");
     const m = html.match(/var ytInitialData = (\{.*?\});<\/script>/s);
-    if (m) return walk(JSON.parse(m[1]), "videoRenderer").map((v) => ({ id: v.videoId, title: txt(v.title), when: txt(v.publishedTimeText), len: txt(v.lengthText) }));
+    if (m) return walk(JSON.parse(m[1]), "videoRenderer").map((v) => ({ id: v.videoId, title: txt(v.title), channel: txt(v.ownerText), when: txt(v.publishedTimeText), len: txt(v.lengthText) }));
     await sleep(5000 * (tries + 1)); // blocked or rate-limited: back off
   }
   return [];
@@ -75,11 +75,14 @@ for (const e of evs.slice(0, limit).filter((e, i) => i % shards === shard && !ou
   const seen = new Set();
   for (const q of [`${e.name} FTC`, `${e.name} ${e.city} FTC ${season}`]) {
     for (const r of await search(q)) {
-      if (seen.has(r.id) || NOT_FTC.test(r.title) || !LOOKS_FTC.test(r.title) || otherSeason(r.title)) continue;
+      if (seen.has(r.id) || NOT_FTC.test(r.title) || otherSeason(r.title)) continue;
       seen.add(r.id);
       const tw = new Set(words(r.title));
       const shared = name.filter((w) => tw.has(w)).length + city.filter((w) => tw.has(w) && !name.includes(w)).length;
       const need = Math.min(2, name.length || 1); // "Westfield QT" needs westfield; "Gulf Coast League" needs both
+      // FTC-looking title or channel, or the title carries the event's whole name ("Bucharest Twin Cup 2025 | Day 3")
+      const fullName = name.length >= 2 && name.every((w) => tw.has(w));
+      if (!fullName && !LOOKS_FTC.test(`${r.title} ${r.channel}`)) continue;
       const long = r.len && seconds(r.len) >= 45 * 60, live = !r.len; // no length = livestream page
       if (shared >= need && (long || live || perMatch.test(r.title))) out.videos.push({ videoId: r.id, code: e.code, title: r.title });
     }
