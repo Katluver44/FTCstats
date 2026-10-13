@@ -115,6 +115,15 @@ export async function buildVideos(season) {
   for (const [code, o] of Object.entries(overrides)) {
     for (const url of o.streams ?? []) { const id = youtubeId(url); if (id) add(code).streams.add(id); }
   }
+  // uploads whose description times every match (scripts/find-timestamped.mjs): exact spots
+  const stamped = (await readJson(path.join("site", "videos", "timestamped.json"), {}))[season] ?? {};
+  for (const [code, vids] of Object.entries(stamped)) {
+    const ev = await readJson(path.join("site", "data", String(season), "event", `${code}.json`), null);
+    const time = new Map((ev?.matchList ?? []).filter((m) => m.time).map((m) => [m.d, m.time]));
+    for (const [id, stamps] of Object.entries(vids)) {
+      for (const [d, at] of Object.entries(stamps)) if (time.has(d)) add(code).uploads.push({ t: time.get(d), id, at });
+    }
+  }
   // streams found by scripts/find-streams.mjs for events FIRST has no link for
   const discovered = (await readJson(path.join("site", "videos", "discovered.json"), {}))[season] ?? {};
   for (const [code, ids] of Object.entries(discovered)) for (const id of ids) add(code).streams.add(id);
