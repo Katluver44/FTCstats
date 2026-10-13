@@ -13,6 +13,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const API = "https://www.googleapis.com/youtube/v3";
 const args = process.argv.slice(2);
@@ -112,7 +113,7 @@ async function channelUploads(channel, from, to) {
   return ids;
 }
 
-if (seasons.length) {
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href && seasons.length) {
   if (!key) throw new Error("needs YOUTUBE_API_KEY in .env");
   const file = path.join("site", "videos", "timestamped.json");
   const all = await readJson(file, {});

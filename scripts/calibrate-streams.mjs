@@ -65,20 +65,21 @@ function readBmp(buf) {
 }
 
 const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "storyboard-"));
+let tmpN = 0;
 async function decodeJpeg(bytes) {
-  const jpg = path.join(tmp, "s.jpg"), bmp = path.join(tmp, "s.bmp");
+  const n = tmpN++, jpg = path.join(tmp, `${n}.jpg`), bmp = path.join(tmp, `${n}.bmp`);
   await fs.writeFile(jpg, bytes);
   await run("sips", ["-s", "format", "bmp", jpg, "--out", bmp]);
-  return readBmp(await fs.readFile(bmp));
+  const img = readBmp(await fs.readFile(bmp));
+  await Promise.all([fs.rm(jpg), fs.rm(bmp)]);
+  return img;
 }
 
-// Frames of the 80x45 level, each downsampled 2x to 40x22 RGB. Cached on disk.
-async function frames(id) {
-  const file = path.join(".cache", "storyboards", `${id}.json`);
-  const cached = await readJson(file, null);
-  if (cached) return { ...cached, data: Uint8Array.from(Buffer.from(cached.data, "base64")) };
+// Frames of the 80x45 level, each downsampled 2x to 40x22 RGB. Not kept on disk
+// (5 MB a stream); the per-stream result is what gets cached.
+export async function frames(id) {
   const spec = await storyboardSpec(id);
-  const lv = spec?.find((l) => l.interval > 0 && l.w >= 80) ;
+  const lv = spec?.find((l) => l.interval > 0 && l.w >= 80);
   if (!lv) return null;
   const W = Math.floor(lv.w / 2), H = Math.floor(lv.h / 2), dims = W * H * 3;
   const data = new Uint8Array(lv.count * dims);
@@ -99,10 +100,7 @@ async function frames(id) {
       }
     }
   }
-  const out = { count: lv.count, interval: lv.interval / 1000, dims };
-  await fs.mkdir(path.dirname(file), { recursive: true });
-  await fs.writeFile(file, JSON.stringify({ ...out, data: Buffer.from(data).toString("base64") }));
-  return { ...out, data };
+  return { count: lv.count, interval: lv.interval / 1000, dims, data };
 }
 
 // ---- alignment -------------------------------------------------------------
@@ -110,7 +108,7 @@ async function frames(id) {
 // Score every shift o (seconds) by how strongly the frames separate into
 // "in a match" vs not when match j occupies [pos_j - o, pos_j - o + MATCH_SECONDS).
 // Score = sum over pixels of squared correlation with that in/out labelling.
-function scan(fr, pos) {
+function scan(fr, pos, lo, hi, len = MATCH_SECONDS) {
   const { count: n, interval, dims, data } = fr;
   const mean = new Float64Array(dims), sd = new Float64Array(dims);
   for (let k = 0; k < n; k++) for (let d = 0; d < dims; d++) mean[d] += data[k * dims + d];
@@ -123,10 +121,10 @@ function scan(fr, pos) {
   const sum = new Float64Array(dims);
   let inside = new Uint8Array(n), c = 0;
   const scores = [];
-  for (let o = -RANGE; o <= RANGE; o++) {
+  for (let o = lo; o <= hi; o++) {
     const next = new Uint8Array(n);
     for (const p of pos) {
-      const a = Math.max(0, Math.ceil((p - o) / interval)), b = Math.min(n - 1, Math.ceil((p - o + MATCH_SECONDS) / interval) - 1);
+      const a = Math.max(0, Math.ceil((p - o) / interval)), b = Math.min(n - 1, Math.ceil((p - o + len) / interval) - 1);
       for (let k = a; k <= b; k++) next[k] = 1;
     }
     for (let k = 0; k < n; k++) if (next[k] !== inside[k]) {
@@ -139,27 +137,36 @@ function scan(fr, pos) {
     for (let d = 0; d < dims; d++) s2 += sum[d] * sum[d];
     scores.push(c > 0 && c < n ? s2 / (c * (n - c) / n) / n / dims : 0);
   }
-  return scores; // index i <-> shift i - RANGE
+  return scores; // index i <-> shift lo + i
 }
 
-function peak(scores) {
+function peak(scores, lo) {
   let i = 0;
   for (let j = 1; j < scores.length; j++) if (scores[j] > scores[i]) i = j;
   const sorted = [...scores].sort((a, b) => a - b), median = sorted[sorted.length >> 1];
   let second = 0;
   for (let j = 0; j < scores.length; j++) if (Math.abs(j - i) > 60) second = Math.max(second, scores[j]);
-  return { o: i - RANGE, score: scores[i], lift: (scores[i] - median) / median, rival: second / scores[i] };
+  return { o: lo + i, score: scores[i], lift: (scores[i] - median) / median, rival: second / scores[i] };
 }
 
-export async function calibrate(fr, pos) {
-  const all = peak(scan(fr, pos));
+// lo..hi: shifts to try. A recording can be much shorter than its live window
+// (the pre-show, or a dropped connection, isn't saved), so hi reaches past that gap.
+export async function calibrate(fr, pos, gap = 0, range = null) {
+  const lo = range?.lo ?? -RANGE, hi = range?.hi ?? Math.max(0, Math.round(gap)) + RANGE;
+  // how long a match *looks* like a match varies (some scoreboards stay up minutes
+  // after the buzzer), and a wrong length drags the shift, so fit it too
+  let all, len;
+  for (const L of [158, 220, 300, 400, 500]) {
+    const r = peak(scan(fr, pos, lo, hi, L), lo);
+    if (!all || r.score > all.score) { all = r; len = L; }
+  }
   const half = Math.floor(pos.length / 2);
-  const a = pos.length >= 10 ? peak(scan(fr, pos.slice(0, half))).o : null;
-  const b = pos.length >= 10 ? peak(scan(fr, pos.slice(half))).o : null;
+  const a = pos.length >= 10 ? peak(scan(fr, pos.slice(0, half), lo, hi, len), lo).o : null;
+  const b = pos.length >= 10 ? peak(scan(fr, pos.slice(half), lo, hi, len), lo).o : null;
   const ok = pos.length >= 6 && all.lift > 0.5 && all.rival < 0.9 && // matches every ~7 min make near-rival peaks normal; the halves check is the real test
-    Math.abs(all.o) < RANGE - 30 &&
-    (a == null || (Math.abs(a - all.o) <= 20 && Math.abs(b - all.o) <= 20));
-  return { ...all, halves: [a, b], matches: pos.length, ok };
+    all.o > lo + 30 && all.o < hi - 30 &&
+    (a == null || (Math.abs(a - all.o) <= 60 && Math.abs(b - all.o) <= 60)) // streams drift a little over a day;
+  return { ...all, len, halves: [a, b], matches: pos.length, ok };
 }
 
 // ---- driver ------------------------------------------------------------------
@@ -180,21 +187,26 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         if (!raw?.start || (only && !only.includes(s.id))) continue;
         const end = raw.end ?? raw.start + (raw.seconds ?? 0) * 1000;
         const times = (ev?.matchList ?? []).filter((m) => m.played && m.time && m.time >= raw.start - RANGE * 1000 && m.time <= end + RANGE * 1000).map((m) => m.time);
-        byStream.set(s.id, { start: raw.start, times: [...(byStream.get(s.id)?.times ?? []), ...times] });
+        const gap = raw.end && raw.seconds ? (raw.end - raw.start) / 1000 - raw.seconds : 0; // live longer than the saved video
+        byStream.set(s.id, { start: raw.start, gap, times: [...(byStream.get(s.id)?.times ?? []), ...times] });
       }
     }
     let done = 0, fixed = 0;
-    for (const [id, { start, times }] of byStream) {
-      if (!force && cache[id]) { done++; continue; }
-      const fr = await frames(id).catch((e) => (console.warn(id, e.message), null));
-      if (!fr) { cache[id] = { error: "no storyboard" }; continue; }
-      const pos = times.map((t) => (t - start) / 1000).sort((a, b) => a - b);
-      cache[id] = await calibrate(fr, pos);
-      if (verbose) console.log(id, JSON.stringify(cache[id]));
-      await fs.mkdir(path.dirname(cacheFile), { recursive: true });
-      await fs.writeFile(cacheFile, JSON.stringify(cache));
-      if (++done % 25 === 0) console.log(`  ${season}: ${done}/${byStream.size} streams`);
-    }
+    const todo = [...byStream].filter(([id]) => force || !cache[id]);
+    const saveCache = () => fs.mkdir(path.dirname(cacheFile), { recursive: true }).then(() => fs.writeFile(cacheFile, JSON.stringify(cache)));
+    const worker = async () => {
+      for (let job; (job = todo.shift()); ) {
+        const [id, { start, gap, times }] = job;
+        const fr = await frames(id).catch((e) => (console.warn(id, e.message), null));
+        if (!fr) { cache[id] = { error: "no storyboard" }; continue; }
+        const pos = times.map((t) => (t - start) / 1000).sort((a, b) => a - b);
+        cache[id] = { ...(await calibrate(fr, pos, gap)), gap: Math.round(gap) };
+        if (verbose) console.log(id, JSON.stringify(cache[id]));
+        if (++done % 25 === 0) { await saveCache(); console.log(`  ${season}: ${done} more streams done, ${todo.length} to go`); }
+      }
+    };
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    await saveCache();
     out[season] = {};
     for (const [id, r] of Object.entries(cache)) if (byStream.has(id) && r.ok) { out[season][id] = r.o; fixed++; }
     const big = Object.values(out[season]).filter((o) => Math.abs(o) > 20).length;
