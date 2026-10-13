@@ -286,7 +286,7 @@ td.c, th.c { text-align: center; }
 .meter .v { text-align: right; font-weight: 650; font-variant-numeric: tabular-nums; }
 
 /* rank tiles */
-.tiles { display: flex; gap: 10px; flex-wrap: wrap; }
+.tiles { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .tile {
   min-width: 120px; padding: 12px 16px; border-radius: 8px; text-align: center; color: #fff;
   background: var(--cyan);
