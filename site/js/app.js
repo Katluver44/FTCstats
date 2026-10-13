@@ -211,12 +211,21 @@ async function teams(r) {
   if (stale(r)) return;
   const rpNames = meta.rpNames;
   const countries = [...new Set(rows.map((r) => r.country).filter(Boolean))].sort();
+  // "Season only": ratings and records from official events, ignoring off-season events
+  const seasonRows = rows.filter((r) => r.matchesS > 0)
+    .map((r) => ({ ...r, np: r.npS, auto: r.autoS, teleop: r.teleopS, endgame: r.endgameS, matches: r.matchesS, wins: r.winsS, losses: r.lossesS, ties: r.tiesS, trend: null }))
+    .sort((a, b) => b.np - a.np).map((r, i) => ({ ...r, rank: i + 1 }));
+  let scope = query.get("scope") === "season" ? "season" : "all";
   app.innerHTML = `
     <div class="card">
       <div class="toolbar">
         <input id="filter" placeholder="Search teams…" value="${esc(query.get("q") ?? "")}">
         <select id="country" aria-label="Country"><option value="">All countries</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
         <select id="minm" aria-label="Minimum matches played"><option value="1">Any number of matches</option><option value="10">Played 10+ matches</option><option value="25">Played 25+ matches</option></select>
+        <div class="seg scope" role="group" aria-label="Which events count">
+          <a href="#" data-scope="all" title="Ratings from every event, including off-season ones">All events</a>
+          <a href="#" data-scope="season" title="Ratings as of each team's last official event; off-season events ignored">Season only</a>
+        </div>
         <span class="small muted" id="count"></span>
         <a class="small link" href="#/${season}/about" style="margin-left:auto">What's EPA?</a>
       </div>
@@ -238,14 +247,22 @@ async function teams(r) {
   if (query.get("min")) $("#minm").value = query.get("min");
   const apply = () => {
     const q = $("#filter").value.trim().toLowerCase(), c = $("#country").value, m = +$("#minm").value;
-    syncQuery({ q: $("#filter").value.trim(), country: c, min: m > 1 ? m : "" });
-    const shown = rows.filter((r) =>
+    syncQuery({ q: $("#filter").value.trim(), country: c, min: m > 1 ? m : "", scope: scope === "season" ? "season" : "" });
+    $$(".scope a").forEach((a) => a.classList.toggle("active", a.dataset.scope === scope));
+    const shown = (scope === "season" ? seasonRows : rows).filter((r) =>
       (!c || r.country === c) && r.matches >= m &&
       (!q || String(r.team).startsWith(q) || r.name.toLowerCase().includes(q) || r.loc.toLowerCase().includes(q)));
     $("#count").textContent = `${fmtInt(shown.length)} teams`;
     table.setRows(shown);
   };
   $("#filter").oninput = apply; $("#country").onchange = apply; $("#minm").onchange = apply;
+  $(".scope").onclick = (e) => {
+    const a = e.target.closest("[data-scope]");
+    if (!a) return;
+    e.preventDefault();
+    scope = a.dataset.scope;
+    apply();
+  };
   apply();
 }
 
@@ -308,7 +325,7 @@ async function team(r) {
         </div>
       </div>
     </div>${teamPhotos(n, photos[n] ?? [])}</div></div>
-    <div class="tiles-row section">${teamAwards(season, t.awards ?? [])}<div class="tiles">${tiles}</div></div>
+    <div class="tiles-row section">${teamAwards(season, t.awards ?? [])}${trophyCase(season, t.awards ?? []).replace(TILES_SLOT, tiles)}</div>
     <div class="row section" style="justify-content:space-between">
       <nav class="seg glass">
         <a href="#/${season}/team/${n}" class="${view === "matches" ? "active" : ""}">Matches</a>
@@ -447,11 +464,54 @@ function teamAwards(season, awards) {
   const sorted = [...awards].sort((a, b) => rank(a) - rank(b));
   // alliance placements are pick order, not 1st/2nd place, so only judged awards show a place
   const place = (a) => (a.placement > 1 && !["Winner", "Finalist", "DivisionWinner", "DivisionFinalist"].includes(a.type) ? ` · ${ordinal(a.placement)}` : "");
-  // trophy for winning an event (every team on the winning alliance) or 1st-place Inspire
-  const icon = (a) => (["Winner", "DivisionWinner"].includes(a.type) || (a.type === "Inspire" && a.placement <= 1) ? "🏆" : "🏅");
+  // same symbols as the trophy case: a blue banner for event wins and 1st-place Inspire, a plaque otherwise
+  const icon = (a) => isBanner(a)
+    ? `<svg viewBox="0 0 40 60" width="14" height="21"><path d="M2 2h36v54l-18-9-18 9z" fill="#0066b3"/></svg>`
+    : `<svg viewBox="0 0 40 50" width="16" height="20"><rect x="1" y="1" width="38" height="48" rx="2" fill="${(a.placement || 1) <= 1 && !/Finalist/.test(a.type) ? "#7a4a2a" : "#1d1d1d"}"/><rect x="6" y="6" width="28" height="38" fill="#2e7d84"/><rect x="11" y="15" width="18" height="18" fill="#fff"/></svg>`;
   return `<div class="awards"><h3>Awards <span class="muted small">${awards.length}</span></h3><ul>${sorted.map((a) =>
     `<li><span class="aw-icon" aria-hidden="true">${icon(a)}</span><span><b>${esc(AWARD_NAMES[a.type] ?? a.type)}${place(a)}</b><a class="small muted" href="#/${season}/event/${encodeURIComponent(a.ev)}">${esc(a.evName)}</a></span></li>`).join("")}</ul></div>`;
 }
+
+// Trophy case beside the rank tiles: plaques for judged awards on the left,
+// blue banners (event wins and 1st-place Inspire) on the right, like FIRST's.
+const isBanner = (a) => ["Winner", "DivisionWinner"].includes(a.type) || (a.type === "Inspire" && a.placement <= 1);
+const SHORT = {
+  Inspire: "INSPIRE", Think: "THINK", Connect: "CONNECT", Innovate: "INNOVATE", Control: "CONTROL", Motivate: "MOTIVATE",
+  Design: "DESIGN", Reach: "REACH", Sustain: "SUSTAIN", Promote: "PROMOTE", Compass: "COMPASS", JudgesChoice: "JUDGES",
+  Winner: "WINNER", Finalist: "FINALIST", DivisionWinner: "DIVISION", DivisionFinalist: "DIVISION", ConferenceFinalist: "FINALIST",
+  TopRanked: "TOP SEED", DeansListWinner: "DEAN'S", DeansListFinalist: "DEAN'S", DeansListSemiFinalist: "DEAN'S",
+};
+function banner(a, season) {
+  const label = a.type === "Inspire" ? "INSPIRE" : "WINNER";
+  return `<a class="banner-icon" href="#/${season}/event/${encodeURIComponent(a.ev)}" title="${esc(AWARD_NAMES[a.type] ?? a.type)} · ${esc(a.evName)}">
+    <svg viewBox="0 0 40 60" width="34" height="51" aria-hidden="true">
+      <path d="M2 2h36v54l-18-9-18 9z" fill="#0066b3"/>
+      <rect x="2" y="2" width="36" height="4" fill="#003f73"/>
+      <circle cx="20" cy="17" r="6" fill="none" stroke="#fff" stroke-width="2"/><path d="M17 17l2.2 2.2L23.5 14.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="20" y="34" text-anchor="middle" font-size="5.6" font-weight="800" fill="#fff" letter-spacing=".3">${label}</text>
+      <text x="20" y="42" text-anchor="middle" font-size="5" fill="#cfe3f4">${season}</text>
+    </svg></a>`;
+}
+function plaque(a, season) {
+  const gold = (a.placement || 1) <= 1 && !["Finalist", "DivisionFinalist", "ConferenceFinalist"].includes(a.type);
+  const place = a.placement > 1 && !["Winner", "Finalist", "DivisionWinner", "DivisionFinalist"].includes(a.type) ? ordinal(a.placement) : "";
+  return `<a class="plaque-icon" href="#/${season}/event/${encodeURIComponent(a.ev)}" title="${esc(AWARD_NAMES[a.type] ?? a.type)}${place ? ` · ${place}` : ""} · ${esc(a.evName)}">
+    <svg viewBox="0 0 40 50" width="36" height="45" aria-hidden="true">
+      <rect x="1" y="1" width="38" height="48" rx="2" fill="${gold ? "#7a4a2a" : "#1d1d1d"}"/>
+      <rect x="5" y="5" width="30" height="40" rx="1" fill="#2e7d84"/>
+      <rect x="9" y="14" width="22" height="22" fill="#fff"/>
+      <rect x="9" y="8" width="9" height="4" fill="#f57e25"/>
+      <text x="20" y="25" text-anchor="middle" font-size="4.6" font-weight="800" fill="#1f3a5a">${esc(SHORT[a.type] ?? a.type)}</text>
+      <text x="20" y="31" text-anchor="middle" font-size="4" fill="#4f4c4d">${place || season}</text>
+    </svg></a>`;
+}
+function trophyCase(season, awards) {
+  const banners = awards.filter(isBanner), plaques = awards.filter((a) => !isBanner(a));
+  return `<div class="plaques">${plaques.map((a) => plaque(a, season)).join("")}</div>
+    <div class="tiles">${TILES_SLOT}</div>
+    <div class="banners">${banners.map((a) => banner(a, season)).join("")}</div>`;
+}
+const TILES_SLOT = "%%TILES%%";
 
 const shortEvent = (name) => name.replace(/\s+(Championship|Qualifier|Tournament)$/i, "").trim();
 

@@ -325,7 +325,10 @@ export async function build(season, params = {}) {
     .map((t) => ({ t, e: model.epa(t), h: history.get(t) }))
     .sort((a, b) => b.e.np - a.e.np);
   const cols = ["team", "name", "loc", "country", "np", "auto", "teleop", "endgame", "rp0", "rp1", "rp2",
-    "matches", "wins", "losses", "ties", "events", "trend"];
+    "matches", "wins", "losses", "ties", "events", "trend",
+    // "season only": rating after the team's last official (non off-season) match, and its record
+    "npS", "autoS", "teleopS", "endgameS", "matchesS", "winsS", "lossesS", "tiesS"];
+  const offseason = new Set(events.filter((ev) => ev.type === "OffSeason").map((ev) => ev.code));
   const rows = ranked.map(({ t, e, h }) => {
     let w = 0, l = 0, ti = 0;
     for (const x of h) x.score > x.oppScore ? w++ : x.score < x.oppScore ? l++ : ti++;
@@ -334,7 +337,7 @@ export async function build(season, params = {}) {
     // EPA change over the last 10 matches
     const prev = h.length > 10 ? h[h.length - 11].epa[0] : h[0].epa[0];
     return [t, i.name ?? "", i.loc ?? "", i.country ?? "", r1(e.np), r1(e.auto), r1(e.teleop), r1(e.endgame),
-      ...e.rp.map(r3), h.length, w, l, ti, evs, r1(e.np - prev)];
+      ...e.rp.map(r3), h.length, w, l, ti, evs, r1(e.np - prev), ...seasonOnly(h, offseason)];
   });
   await writeJson(path.join(out, "teams.json"), { cols, rows });
 
@@ -492,6 +495,16 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const all = await fs.readdir(path.join("site", "data")).catch(() => []);
   await writeJson(path.join("site", "data", "seasons.json"),
     all.filter((d) => /^\d{4}$/.test(d)).map(Number).sort((a, b) => b - a));
+}
+
+// Rating and record counting only official (non off-season) matches.
+function seasonOnly(h, offseason) {
+  const on = h.filter((x) => !offseason.has(x.ev));
+  if (!on.length) return [null, null, null, null, 0, 0, 0, 0];
+  const last = on[on.length - 1].epa;
+  let w = 0, l = 0, ti = 0;
+  for (const x of on) x.score > x.oppScore ? w++ : x.score < x.oppScore ? l++ : ti++;
+  return [last[0], last[1], last[2], last[3], on.length, w, l, ti];
 }
 
 // team number -> [{ ev, evName, start, type, placement }] for the season
