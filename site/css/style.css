@@ -521,7 +521,7 @@ footer a { text-decoration: underline; }
 .tiles-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 20px; padding: 0 48px; }
 .tiles-row .tiles { padding: 0; flex-wrap: nowrap; }
 /* trophy case: plaques lean toward the tiles from the left, banners hang to the right */
-.plaques, .banners { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; min-width: 0; }
+.plaques, .banners { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; min-width: 0; }
 .plaques { justify-content: flex-end; }
 .banners { justify-content: flex-start; }
 .plaque-icon, .banner-icon { display: block; line-height: 0; transition: transform .12s; }
@@ -537,3 +537,5 @@ footer a { text-decoration: underline; }
 .toolbar .scope { border-bottom: 0; gap: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .toolbar .scope a { padding: 6px 12px; font-size: 13.5px; border-bottom: 0; margin: 0; }
 .toolbar .scope a.active { background: var(--accent); color: #fff; }
+.plaque-icon svg { filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
+.banner-icon svg { filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }

@@ -161,7 +161,7 @@ async function home(r) {
         <div class="search hero-search mobile-only" id="hero-search">${SEARCH_ICON}<input placeholder="Search teams & events" autocomplete="off"><div class="search-results"></div></div>
         <div class="hero-actions">
           <a class="btn btn-solid" href="#/${season}/teams">Find a team</a>
-          <a class="btn btn-outline" href="#/${season}/about">How predictions work</a>
+          <a class="btn btn-outline" href="#/${season}/about">Our methodology</a>
         </div>
         <div class="hero-stats">
           <div><b>${pct(acc.accuracy, 1)}</b><span>winners called before the match</span></div>
@@ -467,23 +467,47 @@ const SHORT = {
   Winner: "WINNER", Finalist: "FINALIST", DivisionWinner: "DIVISION", DivisionFinalist: "DIVISION", ConferenceFinalist: "FINALIST",
   TopRanked: "TOP SEED", DeansListWinner: "DEAN'S", DeansListFinalist: "DEAN'S", DeansListSemiFinalist: "DEAN'S",
 };
+// Event name split into short lines for a banner, e.g. "Romania" / "Championship".
+function bannerLines(name, max = 12, lines = 3) {
+  const words = name.replace(/^FIRST\s+/i, "").replace(/\s+presented by.*$/i, "").split(/\s+/);
+  const out = [""];
+  for (const w of words) {
+    if ((out[out.length - 1] + " " + w).trim().length > max && out[out.length - 1]) out.push(w);
+    else out[out.length - 1] = (out[out.length - 1] + " " + w).trim();
+  }
+  if (out.length > lines) { out.length = lines; out[lines - 1] = out[lines - 1].replace(/.{0,2}$/, "…"); }
+  return out;
+}
 function banner(a, season) {
-  const label = a.type === "Inspire" ? "INSPIRE" : "WIN";
+  const title = a.type === "Inspire" ? ["INSPIRE", "AWARD"] : a.type === "DivisionWinner" ? ["DIVISION", "WINNER"] : ["EVENT", "WINNER"];
+  const ev = bannerLines(a.evName);
   return `<a class="banner-icon" href="#/${season}/event/${encodeURIComponent(a.ev)}" title="${esc(AWARD_NAMES[a.type] ?? a.type)} · ${esc(a.evName)}">
-    <svg viewBox="0 0 30 44" width="30" height="44" aria-hidden="true">
-      <path d="M0 0h30v44l-15-8-15 8z" fill="#0066b3"/>
-      <text x="15" y="19" text-anchor="middle" font-size="${label.length > 3 ? 5.5 : 7.5}" font-weight="800" fill="#fff">${label}</text>
+    <svg viewBox="0 0 60 96" width="60" height="96" aria-hidden="true">
+      <path d="M0 0h60v96l-30-14-30 14z" fill="#0b4f9c"/>
+      <rect width="60" height="6" fill="#083b75"/>
+      <path d="M30 12l8 8-8 8-8-8z" fill="none" stroke="#fff" stroke-width="2"/>
+      <text x="30" y="40" text-anchor="middle" font-size="7.5" font-weight="900" fill="#fff" letter-spacing=".4">${title[0]}</text>
+      <text x="30" y="49" text-anchor="middle" font-size="7.5" font-weight="900" fill="#fff" letter-spacing=".4">${title[1]}</text>
+      <line x1="14" y1="54" x2="46" y2="54" stroke="#8fb6e3" stroke-width=".8"/>
+      ${ev.map((l, k) => `<text x="30" y="${61 + k * 6.5}" text-anchor="middle" font-size="5.2" fill="#e3eefb">${esc(l)}</text>`).join("")}
+      <text x="30" y="${63 + ev.length * 6.5}" text-anchor="middle" font-size="5.2" font-weight="700" fill="#e3eefb">${season}</text>
     </svg></a>`;
 }
 function plaque(a, season) {
   const first = (a.placement || 1) <= 1 && !/Finalist/.test(a.type);
-  const place = a.placement > 1 && !["Winner", "Finalist", "DivisionWinner", "DivisionFinalist"].includes(a.type) ? ordinal(a.placement) : "";
+  const place = a.placement > 1 && !["Winner", "Finalist", "DivisionWinner", "DivisionFinalist"].includes(a.type) ? `${ordinal(a.placement)} place` : "";
+  const name = (AWARD_NAMES[a.type] ?? a.type).replace(/ Award$/, "");
+  const nameLines = bannerLines(name, 10, 2);
   return `<a class="plaque-icon" href="#/${season}/event/${encodeURIComponent(a.ev)}" title="${esc(AWARD_NAMES[a.type] ?? a.type)}${place ? ` · ${place}` : ""} · ${esc(a.evName)}">
-    <svg viewBox="0 0 32 40" width="32" height="40" aria-hidden="true">
-      <rect width="32" height="40" rx="3" fill="${first ? "#7a4a2a" : "#2a2a2a"}"/>
-      <rect x="4" y="4" width="24" height="32" rx="1.5" fill="#2e7d84"/>
-      <text x="16" y="${place ? 20 : 22.5}" text-anchor="middle" font-size="4.4" font-weight="800" fill="#fff">${esc(SHORT[a.type] ?? a.type)}</text>
-      ${place ? `<text x="16" y="27" text-anchor="middle" font-size="4.2" fill="#d6eef0">${place}</text>` : ""}
+    <svg viewBox="0 0 60 76" width="60" height="76" aria-hidden="true">
+      <rect width="60" height="76" rx="3" fill="${first ? "#6e4024" : "#1b1b1b"}"/>
+      <rect x="2" y="2" width="56" height="72" rx="2" fill="none" stroke="${first ? "#8a5634" : "#333"}"/>
+      <rect x="7" y="7" width="46" height="62" rx="1.5" fill="#2b7b82"/>
+      <rect x="12" y="20" width="36" height="38" fill="#fff"/>
+      <rect x="12" y="12" width="14" height="5" rx="1" fill="#f57e25"/>
+      ${nameLines.map((l, k) => `<text x="30" y="${(place ? 33 : 37) + k * 7 - (nameLines.length - 1) * 3.5}" text-anchor="middle" font-size="6.2" font-weight="800" fill="#163a5f">${esc(l.toUpperCase())}</text>`).join("")}
+      ${place ? `<text x="30" y="47" text-anchor="middle" font-size="5.2" fill="#4f4c4d">${place}</text>` : ""}
+      <text x="30" y="54" text-anchor="middle" font-size="4.6" fill="#7a7a7a">${season}</text>
     </svg></a>`;
 }
 function trophyCase(season, awards) {
