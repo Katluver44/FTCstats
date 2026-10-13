@@ -33,7 +33,7 @@ async function route() {
   window.scrollTo(0, 0);
   app.innerHTML = `<div class="loading">Loading…</div>`;
   try {
-    const pages = { "": home, teams, team, events, event, rankings, about };
+    const pages = { "": home, teams, team, events, event, about };
     const fn = pages[r.page] ?? notFound;
     await fn(r);
     // tab title from the page heading, e.g. "20265 Heart of RoBots · FTCstats"
@@ -649,40 +649,6 @@ function rosterForecast(season, meta, ev) {
   run();
 }
 
-// ---------------- rankings predictor ----------------
-
-async function rankings(r) {
-  const { season } = r;
-  const [meta, evs, bt] = await Promise.all([data.meta(season), data.events(season), data.ranking(season)]);
-  if (stale(r)) return;
-  const upcoming = evs.filter((e) => !e.finished && e.teams >= 4 && e.end >= localToday(-1)).sort((a, b) => a.start.localeCompare(b.start));
-  const recent = evs.filter((e) => e.finished && e.teams >= 12).slice(0, 12);
-  const list = (rows, empty) => rows.length ? `<div class="table-wrap"><table><tbody>${rows.map((e) => `
-    <tr><td>${evCell(season, e.code, e.name, `${fmtRange(e.start, e.end)} · ${esc(e.loc)}`)}</td>
-    <td class="small muted hide-sm">${esc(typeName(e.type))}</td><td class="r hide-sm">${e.teams} teams</td>
-    <td class="r">${e.ongoing ? '<span class="pill live">Live</span> ' : ""}<a class="link" href="#/${season}/event/${encodeURIComponent(e.code)}/forecast">Predict →</a></td></tr>`).join("")}</tbody></table></div>`
-    : `<div class="empty">${empty}</div>`;
-  const pctOrDash = (x) => (x == null ? "–" : pct(x));
-  app.innerHTML = `
-    <div class="card card-pad">
-      <div class="eyebrow">${seasonLabel(season, meta.game)}</div>
-      <h1 style="margin-top:8px">Rankings predictor</h1>
-      <p class="muted" style="max-width:760px;margin:8px 0 0">Who will finish where after qualifications? Before the schedule is out, we simulate thousands of random schedules from the team list. Once it's out, we play the real schedule. During the event, results are locked in as matches finish.</p>
-    </div>
-    ${bt ? `<div class="card card-pad section">
-      <h3>Track record, ${bt.events} events</h3>
-      <p class="small muted" style="margin:6px 0 10px">Predictions made with only what was known the morning each event started, compared with the final rankings.</p>
-      <div class="table-wrap"><table><thead><tr><th></th><th class="r">Rank correlation</th><th class="r">Top 4 found</th><th class="r">Winner in predicted top 4</th></tr></thead><tbody>
-        <tr><td><b>With the real schedule</b></td><td class="r"><b>${fmt(bt.schedule.spearman, 2)}</b></td><td class="r"><b>${pctOrDash(bt.schedule.top4)}</b></td><td class="r"><b>${pctOrDash(bt.schedule.firstInTop4)}</b></td></tr>
-        <tr><td>Team list only (random schedules)</td><td class="r">${fmt((bt.noBonus ?? bt.random).spearman, 2)}</td><td class="r">${pctOrDash((bt.noBonus ?? bt.random).top4)}</td><td class="r">${pctOrDash((bt.noBonus ?? bt.random).firstInTop4)}</td></tr>
-      </tbody></table></div>
-    </div>` : ""}
-    <div class="section-title"><div class="eyebrow">Upcoming</div><h2>Predict an upcoming event</h2></div>
-    <div class="card">${list(upcoming, "No upcoming events with registered teams yet.")}</div>
-    <div class="section-title"><div class="eyebrow">Look back</div><h2>Recent events</h2><p class="muted" style="margin:6px 0 0">Rewind any finished event and compare the forecast with how it turned out.</p></div>
-    <div class="card">${list(recent, "No finished events yet.")}</div>`;
-}
-
 const probCell = (p) => {
   if (p < 0.005) return `<span class="faint">–</span>`;
   // strong odds get solid FIRST blue with white text; weaker odds a light tint with dark text
@@ -764,7 +730,7 @@ async function about(r) {
           <tr><td class="muted">Top 25%</td><td class="r">${epa(meta.percentiles.p75, meta)}</td></tr>
           <tr><td class="muted">Median team</td><td class="r">${epa(meta.percentiles.p50, meta)}</td></tr>
           <tr><td class="muted">Average alliance score now</td><td class="r">${fmt(meta.avgAlliance.np)}</td></tr>
-          ${bt ? `<tr><td class="muted">Ranking forecasts checked on</td><td class="r"><a class="link" href="#/${season}/rankings">${fmtInt(bt.events)} events →</a></td></tr>` : ""}
+          ${bt ? `<tr><td class="muted">Ranking forecasts checked on</td><td class="r">${fmtInt(bt.events)} events</td></tr>` : ""}
           <tr><td class="muted">Data updated</td><td class="r small">${new Date(meta.generated).toLocaleString()}</td></tr>
         </tbody></table>
       </div>
@@ -815,7 +781,7 @@ async function boot() {
     const r = parseHash();
     // stay on the same kind of page; event codes differ by season, so events go to the list
     const keep = {
-      teams: "teams", events: "events", rankings: "rankings", about: "about", event: "events",
+      teams: "teams", events: "events", about: "about", event: "events",
       team: `team/${r.args.join("/")}`,
     }[r.page] ?? "";
     location.hash = `#/${e.target.value}/${keep}`;
