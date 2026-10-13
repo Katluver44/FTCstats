@@ -1,0 +1,3 @@
+{"fold2019": {"teleop":{"mom":0,"initFrac":0.7,"carry":0.8,"vEvent":0.1,"obsHet":0.5,"clipC":1,"volK":0.05,"elimWeight":1,"emaAlpha":0.001,"vMatch":0.03,"vObs":2.5}},
+ "fold2019 emaAlpha=.003": {"teleop":{"mom":0,"initFrac":0.7,"carry":0.8,"vEvent":0.1,"obsHet":0.5,"clipC":1,"volK":0.05,"elimWeight":1,"vMatch":0.03,"vObs":2.5}},
+ "B emaAlpha=.001": {"teleop":{"mom":0,"initFrac":0.8,"emaAlpha":0.001}}}

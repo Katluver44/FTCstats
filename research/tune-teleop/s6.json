@@ -1,0 +1,9 @@
+{"default": {},
+ "g1 (clipC 1)": {"teleop":{"mom":0,"initFrac":0.8,"carry":0.8,"vMatch":0.03,"vEvent":0.1,"vObs":3,"obsHet":0.5,"clipC":1,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.001}},
+ "g2 (clipC .6)": {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":0.8,"vMatch":0.08,"vEvent":0,"vObs":3,"obsHet":0.25,"clipC":0.6,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.001}},
+ "g2 clipC .8": {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":0.8,"vMatch":0.08,"vEvent":0,"vObs":3,"obsHet":0.25,"clipC":0.8,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.001}},
+ "g2 clipC 1": {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":0.8,"vMatch":0.08,"vEvent":0,"vObs":3,"obsHet":0.25,"clipC":1,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.001}},
+ "g2 clipC 1.25": {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":0.8,"vMatch":0.08,"vEvent":0,"vObs":3,"obsHet":0.25,"clipC":1.25,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.001}},
+ "g2 clipC .6 mom0": {"teleop":{"mom":0,"initFrac":0.8,"carry":0.8,"vMatch":0.08,"vEvent":0,"vObs":3,"obsHet":0.25,"clipC":0.6,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.001}},
+ "g2 vMatch .12": {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":0.8,"vMatch":0.12,"vEvent":0,"vObs":3,"obsHet":0.25,"clipC":0.6,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.001}},
+ "g2 clipC .4": {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":0.8,"vMatch":0.08,"vEvent":0,"vObs":3,"obsHet":0.25,"clipC":0.4,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.001}}}

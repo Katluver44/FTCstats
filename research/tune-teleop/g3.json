@@ -1,0 +1,14 @@
+{
+  "base": {"teleop": {"mom": -0.1, "initFrac": 0.8, "carry": 0.8, "vMatch": 0.08, "vEvent": 0, "vObs": 3, "obsHet": 0.25, "clipC": 1, "volK": 0.05, "elimWeight": 0.8, "emaAlpha": 0.001}},
+  "teleop.clipC": [1, 1.25],
+  "teleop.vMatch": [0.05, 0.08, 0.12],
+  "teleop.vEvent": [0, 0.05],
+  "teleop.obsHet": [0, 0.25, 0.5],
+  "teleop.mom": [-0.2, -0.1, 0],
+  "teleop.vObs": [2.5, 3, 4],
+  "teleop.initFrac": [0.7, 0.8, 0.9],
+  "teleop.carry": [0.8, 1],
+  "teleop.elimWeight": [0.6, 0.8, 1],
+  "teleop.emaAlpha": [0.0005, 0.001, 0.002],
+  "teleop.volK": [0.03, 0.05, 0.08]
+}

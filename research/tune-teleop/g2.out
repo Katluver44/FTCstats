@@ -1,0 +1,20 @@
+
+objective (mae) default: 0.49873
+held-out 2019: tuned on 2021,2022,2023,2024,2025 -> {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":0.8,"vMatch":0.08,"vEvent":0,"vObs":3,"obsHet":0.25,"clipC":0.6,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.0005}} (train objective 0.42513)
+held-out 2021: tuned on 2019,2022,2023,2024,2025 -> {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":0.8,"vMatch":0.08,"vEvent":0,"vObs":3,"obsHet":0.25,"clipC":0.6,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.0005}} (train objective 0.44287)
+held-out 2022: tuned on 2019,2021,2023,2024,2025 -> {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":0.8,"vMatch":0.08,"vEvent":0,"vObs":3,"obsHet":0.25,"clipC":0.6,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.0005}} (train objective 0.44048)
+held-out 2023: tuned on 2019,2021,2022,2024,2025 -> {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":0.8,"vMatch":0.08,"vEvent":0,"vObs":3,"obsHet":0.25,"clipC":0.6,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.001}} (train objective 0.45754)
+held-out 2024: tuned on 2019,2021,2022,2023,2025 -> {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":0.8,"vMatch":0.08,"vEvent":0,"vObs":3,"obsHet":0.25,"clipC":0.6,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.001}} (train objective 0.45511)
+held-out 2025: tuned on 2019,2021,2022,2023,2024 -> {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":1,"vMatch":0.08,"vEvent":0,"vObs":3,"obsHet":0.5,"clipC":0.6,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.001}} (train objective 0.46096)
+
+== LOSO (each season scored with params tuned on the other seasons): default -> candidate, weighted MAE (paired event bootstrap 95% CI of the difference; negative = better)
+-- teleop
+2019  wMAE 2.50 -> 2.09  CI -0.441..-0.363  nMAE 0.6656 -> 0.5571  wCorr 0.6807 -> 0.6933  topBias -5.24 -> -4.80  rhoOPR - -> -  rhoPO - -> -
+2021  wMAE 7.52 -> 6.72  CI -0.952..-0.627  nMAE 0.5246 -> 0.4684  wCorr 0.7856 -> 0.8018  topBias -13.76 -> -12.24  rhoOPR 0.946 -> 0.919  rhoPO 0.530 -> 0.538
+2022  wMAE 7.81 -> 6.97  CI -1.026..-0.714  nMAE 0.5381 -> 0.4803  wCorr 0.7892 -> 0.7955  topBias -12.18 -> -10.96  rhoOPR 0.937 -> 0.926  rhoPO 0.622 -> 0.627
+2023  wMAE 5.28 -> 4.96  CI -0.362..-0.257  nMAE 0.4198 -> 0.3948  wCorr 0.8399 -> 0.8405  topBias -10.16 -> -9.26  rhoOPR 0.974 -> 0.964  rhoPO 0.631 -> 0.627
+2024  wMAE 13.70 -> 12.71  CI -1.118..-0.880  nMAE 0.4387 -> 0.4070  wCorr 0.8471 -> 0.8474  topBias -19.86 -> -17.01  rhoOPR 0.962 -> 0.951  rhoPO 0.723 -> 0.735
+2025  wMAE 10.53 -> 9.87  CI -0.780..-0.538  nMAE 0.4056 -> 0.3799  wCorr 0.8555 -> 0.8556  topBias -19.25 -> -17.16  rhoOPR 0.953 -> 0.945  rhoPO 0.738 -> 0.747
+objective (mae) LOSO: 0.44794 vs default 0.49873
+
+runtime: 0.51 s per season per param set (comp teleop, 1 component run); 1782 season-runs total

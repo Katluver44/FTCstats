@@ -1,0 +1,1 @@
+{"teleop": {"mom": -0.1, "initFrac": 0.8, "carry": 0.8, "vMatch": 0.08, "vEvent": 0, "vObs": 3, "obsHet": 0.25, "clipC": 1, "volK": 0.03, "elimWeight": 0.8, "emaAlpha": 0.001}}

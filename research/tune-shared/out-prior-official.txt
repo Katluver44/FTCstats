@@ -1,0 +1,15 @@
+
+== EPA track, DEFAULT_EPA_PARAMS (comp total)
+-- total
+season     n   wMAE   nMAE  wCorr   bias  topMAE topBias wldMAE rhoOPR  rhoPO
+2019    10088   8.82 0.7330 0.6798  -6.38   18.32  -15.83      -      -      -
+2021    11476  19.68 0.6073 0.7916 -14.49   29.18  -23.56  23.27  0.943  0.525
+2022    16985  14.95 0.5306 0.8101  -8.91   24.61  -18.55  16.44  0.961  0.638
+2023    19333  14.18 0.4289 0.8594  -9.60   26.36  -21.33  16.75  0.969  0.660
+2024    22230  18.45 0.4233 0.8591 -11.19   33.56  -26.64  23.11  0.965  0.744
+2025    24158  14.72 0.4079 0.8712  -9.36   26.86  -21.95  24.76  0.953  0.754
+mean   104270  15.13 0.5218 0.8119  -9.99   26.48  -21.31  20.87  0.958  0.664
+
+objective (mae) default: 0.52184
+
+runtime: 1.08 s per season per param set (comp total, 3 component runs, deduplicated when settings match); 6 season-runs total

@@ -1,0 +1,20 @@
+
+objective (mae) default: 0.52122
+held-out 2019: tuned on 2021,2022,2023,2024,2025 -> {"shared":{"priorWeights":[1,0,0],"priorRookieZ":0,"priorMinMatches":1}} (train objective 0.46268)
+held-out 2021: tuned on 2019,2022,2023,2024,2025 -> {"shared":{"priorWeights":[1,0,0],"priorRookieZ":0,"priorMinMatches":1}} (train objective 0.49570)
+held-out 2022: tuned on 2019,2021,2023,2024,2025 -> {"shared":{"priorWeights":[1,0,0],"priorRookieZ":0,"priorMinMatches":1}} (train objective 0.50601)
+held-out 2023: tuned on 2019,2021,2022,2024,2025 -> {"shared":{"priorWeights":[1,0,0],"priorRookieZ":0,"priorMinMatches":1}} (train objective 0.52541)
+held-out 2024: tuned on 2019,2021,2022,2023,2025 -> {"shared":{"priorWeights":[1,0,0],"priorRookieZ":0,"priorMinMatches":1}} (train objective 0.52653)
+held-out 2025: tuned on 2019,2021,2022,2023,2024 -> {"shared":{"priorWeights":[1,0,0],"priorRookieZ":0,"priorMinMatches":1}} (train objective 0.53005)
+
+== LOSO (each season scored with params tuned on the other seasons): default -> candidate, weighted MAE (paired event bootstrap 95% CI of the difference; negative = better)
+-- total
+2019  wMAE 8.82 -> 8.82  CI 0.000..0.000  nMAE 0.7330 -> 0.7330  wCorr 0.6798 -> 0.6798  topBias -15.83 -> -15.83  rhoOPR - -> -  rhoPO - -> -
+2021  wMAE 19.63 -> 18.40  CI -1.475..-1.104  nMAE 0.6058 -> 0.5679  wCorr 0.7940 -> 0.7991  topBias -23.34 -> -23.12  rhoOPR 0.944 -> 0.944  rhoPO 0.525 -> 0.527
+2022  wMAE 14.94 -> 14.55  CI -0.464..-0.342  nMAE 0.5299 -> 0.5163  wCorr 0.8105 -> 0.8132  topBias -18.51 -> -18.24  rhoOPR 0.961 -> 0.962  rhoPO 0.638 -> 0.638
+2023  wMAE 14.16 -> 13.86  CI -0.354..-0.269  nMAE 0.4285 -> 0.4193  wCorr 0.8597 -> 0.8600  topBias -21.30 -> -21.13  rhoOPR 0.969 -> 0.969  rhoPO 0.660 -> 0.660
+2024  wMAE 18.43 -> 18.03  CI -0.460..-0.349  nMAE 0.4228 -> 0.4137  wCorr 0.8597 -> 0.8613  topBias -26.56 -> -26.15  rhoOPR 0.965 -> 0.966  rhoPO 0.744 -> 0.744
+2025  wMAE 14.70 -> 14.29  CI -0.449..-0.346  nMAE 0.4074 -> 0.3961  wCorr 0.8716 -> 0.8741  topBias -21.93 -> -21.77  rhoOPR 0.953 -> 0.953  rhoPO 0.754 -> 0.753
+objective (mae) LOSO: 0.50773 vs default 0.52122
+
+runtime: 0.59 s per season per param set (comp total, 3 component runs, deduplicated when settings match); 1002 season-runs total
