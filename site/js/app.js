@@ -828,6 +828,15 @@ async function boot() {
     e.preventDefault();
     openUpload(link.dataset.upload);
   });
+  // whole-row clicks: a row whose main link is an event or team opens it, so
+  // people don't have to hit the name itself (match rows have several links, so they're left alone)
+  document.addEventListener("click", (e) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    if (e.target.closest("a, button, input, select, label")) return;
+    const row = e.target.closest("#app tbody tr");
+    const link = row?.querySelector("a.ev-cell, a.team-cell");
+    if (link && !getSelection().toString()) location.hash = link.getAttribute("href");
+  });
   // team photos: "N photos ›" cycles through them
   document.addEventListener("click", (e) => {
     const btn = e.target.closest(".photo-next");

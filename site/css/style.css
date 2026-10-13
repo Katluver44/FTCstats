@@ -496,3 +496,6 @@ footer a { text-decoration: underline; }
 .upload-dialog .hp { position: absolute; left: -9999px; width: 1px; height: 1px; }
 .upload-dialog .row { justify-content: flex-end; }
 .upload-dialog .msg:empty { display: none; }
+
+/* rows that open an event or team when clicked */
+#app tbody tr:has(a.ev-cell, a.team-cell) { cursor: pointer; }
