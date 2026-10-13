@@ -107,6 +107,7 @@ const upFile = path.join("site", "videos", "uploads.json");
 const ts = await readJson(tsFile, {}), ov = await readJson(ovFile, {}), chs = await readJson(chFile, []), up = await readJson(upFile, {});
 ts[season] ??= {}; ov[season] ??= {}; up[season] ??= {};
 const lives = {}; // code -> [{ c, title, inside: Set(times), total }]
+const reroute = []; // rejected here, but maybe the same-named event of another season/meet
 const tally = { timestamped: 0, perMatch: 0, livestream: 0, upload: 0, rejected: 0 };
 const why = (c, msg) => { tally.rejected++; console.log(`  ✗ ${c.id} ${c.code ?? ""}: ${msg}`); };
 
@@ -140,8 +141,8 @@ for (const c of cands) {
   const len = seconds ? (+(seconds[1] ?? 0)) * 3600 + (+(seconds[2] ?? 0)) * 60 + +(seconds[3] ?? 0) : 0;
   if (d && len && len < 20 * 60 && ev) {
     const pub = Date.parse(v.snippet.publishedAt), from = Date.parse(ev.start) - 864e5, to = Date.parse(ev.end) + 60 * 864e5;
-    if (!ev.matchList.some((m) => m.d === d)) { why(c, `${ev.code} has no match ${d}`); continue; }
-    if (pub < from || pub > to) { why(c, `published ${v.snippet.publishedAt.slice(0, 10)}, not near ${ev.code} (${ev.start})`); continue; }
+    if (!ev.matchList.some((m) => m.d === d)) { why(c, `${ev.code} has no match ${d}`); reroute.push({ c, v, d }); continue; }
+    if (pub < from || pub > to) { why(c, `published ${v.snippet.publishedAt.slice(0, 10)}, not near ${ev.code} (${ev.start})`); reroute.push({ c, v, d }); continue; }
     const owner = Object.entries(ts[season]).find(([code, vids]) => code !== ev.code && vids[c.id]);
     if (owner) { why(c, `already ${owner[0]}'s video`); continue; }
     (ts[season][ev.code] ??= {})[c.id] = { [d]: 0 };
@@ -153,14 +154,14 @@ for (const c of cands) {
     const s = Date.parse(live.actualStartTime) - 60e3, e = Date.parse(live.actualEndTime) + 60e3;
     const times = ev.matchList.filter((m) => m.played && m.time).map((m) => m.time);
     const inside = new Set(times.filter((t) => t >= s && t <= e));
-    (lives[ev.code] ??= []).push({ c, title, inside, total: times.length });
+    (lives[ev.code] ??= []).push({ c, v, title, inside, total: times.length });
     continue;
   }
   // 4. a long recording with no clock: kept for calibrate-uploads.mjs, which finds where
   // the event's match rhythm sits in it
   if (ev && len > 45 * 60) {
     const pub = Date.parse(v.snippet.publishedAt);
-    if (pub < Date.parse(ev.start) - 864e5 || pub > Date.parse(ev.end) + 120 * 864e5) { why(c, `published ${v.snippet.publishedAt.slice(0, 10)}, not near ${ev.code} (${ev.start})`); continue; }
+    if (pub < Date.parse(ev.start) - 864e5 || pub > Date.parse(ev.end) + 120 * 864e5) { why(c, `published ${v.snippet.publishedAt.slice(0, 10)}, not near ${ev.code} (${ev.start})`); reroute.push({ c, v, long: true }); continue; }
     const u = (up[season][ev.code] ??= []);
     if (!u.includes(c.id)) u.push(c.id);
     tally.upload++; console.log(`  … ${ev.code} long upload, needs calibrate-uploads: ${title}`); continue;
@@ -173,10 +174,63 @@ for (const c of cands) {
 for (const [code, ls] of Object.entries(lives)) {
   for (const l of ls) {
     const need = l.total <= 4 ? 1 : 2;
-    if (l.inside.size < need) { why(l.c, `only ${l.inside.size} of ${code}'s ${l.total} matches happened while it was live`); continue; }
+    if (l.inside.size < need) { why(l.c, `only ${l.inside.size} of ${code}'s ${l.total} matches happened while it was live`); reroute.push({ c: l.c, v: l.v, live: true }); continue; }
     const o = (ov[season][code] ??= {});
     o.streams = [...new Set([...(o.streams ?? []), `https://youtu.be/${l.c.id}`])];
     tally.livestream++; console.log(`  ✓ ${code} livestream, ${l.inside.size} of ${l.total} matches inside: ${l.title}`);
+  }
+}
+// Wrong year / wrong meet isn't wrong video: it's usually the same-named event of another
+// season (or the next meet). File it where it fits: same name, and live during that event's
+// matches (livestream) or published within two months after it (upload / single match).
+if (reroute.length) {
+  const STOP = new Set("ftc first tech challenge tournament qualifier qualifiers qualifying qualification league leagues meet meets championship championships regional region the of at and in event division robotics robot competition live stream livestream day scrimmage presented by season decode premier state north south east west central high school invitational interleague into deep centerstage powerplay power play freight frenzy ultimate goal skystone part".split(" "));
+  const words = (t) => [...new Set(String(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b([a-z](?:\s*&\s*[a-z])*)[\s-]+(league|division)\b/g, (_, l, k) => l.replace(/[\s&]/g, "") + k)
+    .replace(/\b(group|pool|division|league)\s+([a-z]\d?)\b/g, "$1$2")
+    .split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !STOP.has(w) && !/^\d+$/.test(w)))];
+  const nums = (t) => new Set([...String(t).matchAll(/(?:#|\bno\.?\s*|\b(?:qt|meet|qualifier|tournament|league)\s*)(\d{1,2})\b/gi)].map((m) => +m[1]));
+  // a meet's video isn't the league tournament's (and vice versa), nor a qualifier's a scrimmage's
+  const KINDS = ["meet", "tournament", "qualifier|qt\\b", "scrimmage", "championship|champs"];
+  const kinds = (t) => KINDS.filter((k) => new RegExp(`\\b(${k})`, "i").test(t));
+  const idx = [];
+  for (const s2 of await fs.readdir(path.join("site", "data")).then((d) => d.filter((x) => /^\d{4}$/.test(x)))) {
+    for (const f of await fs.readdir(path.join("site", "data", s2, "event")).catch(() => [])) {
+      const e = await readJson(path.join("site", "data", s2, "event", f), null);
+      const times = (e?.matchList ?? []).filter((m) => m.played && m.time).map((m) => m.time);
+      if (times.length) idx.push({ season: +s2, code: e.code, name: e.name, start: e.start, end: e.end, times, ds: new Set(e.matchList.map((m) => m.d)), w: words(e.name), n: nums(e.name) });
+    }
+  }
+  // words in many event names ("norcal", "texas", "iowa") don't identify an event
+  const df = new Map();
+  for (const e of idx) for (const w of e.w) df.set(w, (df.get(w) ?? 0) + 1);
+  const rare = (w) => (df.get(w) ?? 0) <= 12;
+  for (const { c, v, live, d, long } of reroute) {
+    const tw = new Set(words(v.snippet.title)), tn = nums(v.snippet.title);
+    const ls = v.liveStreamingDetails ?? {}, pub = Date.parse(v.snippet.publishedAt);
+    const fits = idx.filter((e) => !(e.season === season && e.code === c.code)).map((e) => {
+      const sharedW = e.w.filter((x) => tw.has(x)), shared = sharedW.length;
+      if (shared < Math.min(2, e.w.length) || !sharedW.some(rare)) return null;
+      if (e.n.size && tn.size && ![...e.n].some((x) => tn.has(x))) return null; // "Meet 3" vs "Meet 2"
+      const ke = kinds(e.name), kt = kinds(v.snippet.title);
+      if (ke.length && kt.length && !ke.some((k) => kt.includes(k))) return null; // "Meet 3" vs "Tournament"
+      if (live) {
+        const a = Date.parse(ls.actualStartTime) - 60e3, b = Date.parse(ls.actualEndTime) + 60e3;
+        if (e.times.filter((t) => t >= a && t <= b).length < (e.times.length <= 4 ? 1 : 2)) return null;
+      } else {
+        if (pub < Date.parse(e.start) - 864e5 || pub > Date.parse(e.end) + 60 * 864e5) return null;
+        if (d && !e.ds.has(d)) return null;
+      }
+      return { e, shared };
+    }).filter(Boolean).sort((a, b) => b.shared - a.shared);
+    if (!fits.length || (fits[1] && fits[1].shared === fits[0].shared)) continue;
+    const { e } = fits[0], s2 = e.season;
+    if (live) { const o = ((ov[s2] ??= {})[e.code] ??= {}); o.streams = [...new Set([...(o.streams ?? []), `https://youtu.be/${c.id}`])]; }
+    else if (d) { if (Object.entries((ts[s2] ??= {})).some(([k, vids]) => k !== e.code && vids[c.id])) continue; (ts[s2][e.code] ??= {})[c.id] = { [d]: 0 }; }
+    else if (long) { const u = ((up[s2] ??= {})[e.code] ??= []); if (!u.includes(c.id)) u.push(c.id); }
+    else continue;
+    tally.rerouted = (tally.rerouted ?? 0) + 1;
+    console.log(`  ↪ ${c.id} is ${s2} ${e.code} (${e.name}), not ${season} ${c.code}: ${v.snippet.title.slice(0, 70)}`);
   }
 }
 let newCh = 0;
@@ -187,5 +241,5 @@ if (!dry) await fs.writeFile(tsFile, JSON.stringify(ts, null, 1) + "\n");
 if (!dry) await fs.writeFile(ovFile, JSON.stringify(ov, null, 1) + "\n");
 if (!dry) await fs.writeFile(chFile, JSON.stringify(chs, null, 1) + "\n");
 if (!dry) await fs.writeFile(upFile, JSON.stringify(up, null, 1) + "\n");
-console.log(`${season}: ${tally.timestamped} timestamped, ${tally.perMatch} single-match, ${tally.livestream} livestreams added, ${tally.upload} uploads to calibrate; ${tally.rejected} rejected; ${newCh} new channels`);
+console.log(`${season}: ${tally.timestamped} timestamped, ${tally.perMatch} single-match, ${tally.livestream} livestreams added, ${tally.upload} uploads to calibrate; ${tally.rejected} rejected, ${tally.rerouted ?? 0} of those filed under another season/event; ${newCh} new channels`);
 console.log("next: node scripts/videos.mjs", season);

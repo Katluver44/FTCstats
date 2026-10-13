@@ -1,6 +1,138 @@
 {
- "2022": {},
- "2023": {},
+ "2019": {
+  "63713064000.6815COLL": {
+   "streams": [
+    "https://youtu.be/zyu0GMGQJsE"
+   ]
+  }
+ },
+ "2021": {
+  "USUTPCQ": {
+   "streams": [
+    "https://youtu.be/P0wfPVAPPOI"
+   ]
+  },
+  "USFLCMPSCO": {
+   "streams": [
+    "https://youtu.be/Hsi5fAyutwg"
+   ]
+  },
+  "USCANOSCQ": {
+   "streams": [
+    "https://youtu.be/eXfH6cxEfwE"
+   ]
+  },
+  "USCANOSQ2": {
+   "streams": [
+    "https://youtu.be/UkYYRo5NjQk"
+   ]
+  }
+ },
+ "2022": {
+  "USCASDSDEUM2": {
+   "streams": [
+    "https://youtu.be/zp5izddQoRM"
+   ]
+  },
+  "USCASDSDDEM2": {
+   "streams": [
+    "https://youtu.be/CiBeR-whtd4"
+   ]
+  },
+  "USCOLIQ": {
+   "streams": [
+    "https://youtu.be/xk3NTs2JXnI"
+   ]
+  },
+  "USCANOPIQ": {
+   "streams": [
+    "https://youtu.be/yRD0dmQwr-Q"
+   ]
+  },
+  "USCANOSJQ": {
+   "streams": [
+    "https://youtu.be/0zt56oE-XJQ"
+   ]
+  },
+  "USWABAM1": {
+   "streams": [
+    "https://youtu.be/hKS-dJ58XMM"
+   ]
+  },
+  "USCOBRQ": {
+   "streams": [
+    "https://youtu.be/glqqjtiMdvc"
+   ]
+  },
+  "USCASDSDGAM2": {
+   "streams": [
+    "https://youtu.be/eZbf2H5jg_E"
+   ]
+  },
+  "USCANOSJQ2": {
+   "streams": [
+    "https://youtu.be/OVqYKAiEYWw"
+   ]
+  },
+  "USCANOSJQ1": {
+   "streams": [
+    "https://youtu.be/HUhseW8HTtQ"
+   ]
+  }
+ },
+ "2023": {
+  "USCALAC1M2": {
+   "streams": [
+    "https://youtu.be/4MjDgndhAVs"
+   ]
+  },
+  "USUTCMP": {
+   "streams": [
+    "https://youtu.be/JSqRE3zYEtI"
+   ]
+  },
+  "CAONWIQ": {
+   "streams": [
+    "https://youtu.be/GZr52jKWono"
+   ]
+  },
+  "USCTWIQ": {
+   "streams": [
+    "https://youtu.be/2q9lVPBW1Oo"
+   ]
+  },
+  "USCALAC1M3": {
+   "streams": [
+    "https://youtu.be/YISRcPeKvSI"
+   ]
+  },
+  "USIACMPBLAC": {
+   "streams": [
+    "https://youtu.be/5aKb-Qz8b7Y",
+    "https://youtu.be/ifxX9isdYaE"
+   ]
+  },
+  "USMICMPCUR": {
+   "streams": [
+    "https://youtu.be/COmq1bAxErM"
+   ]
+  },
+  "USFLCMPLAWR": {
+   "streams": [
+    "https://youtu.be/seDdbdEDI5A"
+   ]
+  },
+  "USFLCMPSCOT": {
+   "streams": [
+    "https://youtu.be/uIT2WFvpXbg"
+   ]
+  },
+  "USCOLIQ": {
+   "streams": [
+    "https://youtu.be/ITB0jwAN_Wg"
+   ]
+  }
+ },
  "2024": {
   "USMAWAQ": {
    "streams": [
@@ -217,7 +349,8 @@
   },
   "FPERRMOW": {
    "streams": [
-    "https://youtu.be/J8nikGM9CSM"
+    "https://youtu.be/J8nikGM9CSM",
+    "https://youtu.be/6ehjHv_pakQ"
    ]
   },
   "USGAAMLT": {
@@ -298,7 +431,8 @@
   },
   "FPERRSEC": {
    "streams": [
-    "https://youtu.be/_TLJhAsCx7g"
+    "https://youtu.be/_TLJhAsCx7g",
+    "https://youtu.be/_RWQvtkDOqQ"
    ]
   },
   "VNCMP": {
@@ -359,7 +493,10 @@
   },
   "ROBUOS1": {
    "streams": [
-    "https://youtu.be/9YpUHEGDVzM"
+    "https://youtu.be/9YpUHEGDVzM",
+    "https://youtu.be/ouR3JktVBVY",
+    "https://youtu.be/_mQIVF5Ntto",
+    "https://youtu.be/3yoMormYIFM"
    ]
   },
   "INCMP": {
@@ -389,6 +526,481 @@
   "USHICMP": {
    "streams": [
     "https://youtu.be/d6EZ4zASZAo"
+   ]
+  },
+  "USTXDTQ2": {
+   "streams": [
+    "https://youtu.be/5jNwwB2YuTU"
+   ]
+  },
+  "USTXDAQ": {
+   "streams": [
+    "https://youtu.be/SqUbpJvDmNE"
+   ]
+  },
+  "USTXNAGLT": {
+   "streams": [
+    "https://youtu.be/MXJRkl4kxbI"
+   ]
+  },
+  "USTXNFTLT": {
+   "streams": [
+    "https://youtu.be/f3wvXvjvnug"
+   ]
+  },
+  "USTXNESLT": {
+   "streams": [
+    "https://youtu.be/iPNkwYQX-aA"
+   ]
+  },
+  "USTXNXLT": {
+   "streams": [
+    "https://youtu.be/aUyKCGAdW70"
+   ]
+  },
+  "USTXNULT": {
+   "streams": [
+    "https://youtu.be/3rxYgUti63A"
+   ]
+  },
+  "USTXNINLT": {
+   "streams": [
+    "https://youtu.be/F6aO8OW3l-0"
+   ]
+  },
+  "USTXNTM1": {
+   "streams": [
+    "https://youtu.be/2NNPENepHnQ"
+   ]
+  },
+  "USTXNEM1": {
+   "streams": [
+    "https://youtu.be/l5cf4uSuEK8"
+   ]
+  },
+  "USTXNEM2": {
+   "streams": [
+    "https://youtu.be/ME3VNEMbklM"
+   ]
+  },
+  "USTXNXM1": {
+   "streams": [
+    "https://youtu.be/ryHAcV5K9Zw"
+   ]
+  },
+  "USTXNXM2": {
+   "streams": [
+    "https://youtu.be/ryHAcV5K9Zw"
+   ]
+  },
+  "USTXNXM3": {
+   "streams": [
+    "https://youtu.be/pG4ncL2h_RE"
+   ]
+  },
+  "USTXNXM4": {
+   "streams": [
+    "https://youtu.be/pG4ncL2h_RE"
+   ]
+  },
+  "USTXNXM5": {
+   "streams": [
+    "https://youtu.be/9S7WYwrdktM"
+   ]
+  },
+  "USTXNINM1": {
+   "streams": [
+    "https://youtu.be/yX4BHf_tQg4"
+   ]
+  },
+  "USTXCAM2": {
+   "streams": [
+    "https://youtu.be/NBoiS-PrVo4",
+    "https://youtu.be/URvygjzZpY4"
+   ]
+  },
+  "USTXCAM4": {
+   "streams": [
+    "https://youtu.be/t_33-Hf9qa8"
+   ]
+  },
+  "USTXTBSQLM": {
+   "streams": [
+    "https://youtu.be/ML6T8T1g_1s"
+   ]
+  },
+  "USMACMP": {
+   "streams": [
+    "https://youtu.be/ymsYz02ZYRg"
+   ]
+  },
+  "USMABRQ": {
+   "streams": [
+    "https://youtu.be/Bl0kwBKxw8Q"
+   ]
+  },
+  "USMABRQ1": {
+   "streams": [
+    "https://youtu.be/-yJuL2NFXko"
+   ]
+  },
+  "USNYEXCMP": {
+   "streams": [
+    "https://youtu.be/qkzoGaXEc6w",
+    "https://youtu.be/o8dO6Jv82TM",
+    "https://youtu.be/Dw7t4qXfrak"
+   ]
+  },
+  "USCTCMP": {
+   "streams": [
+    "https://youtu.be/xy2mpS2PIxU",
+    "https://youtu.be/69W6vFu0c5U"
+   ]
+  },
+  "USCTSTOS1": {
+   "streams": [
+    "https://youtu.be/HVLiWkPfZ6k"
+   ]
+  },
+  "USCTWIQ": {
+   "streams": [
+    "https://youtu.be/WJprFRqklyc"
+   ]
+  },
+  "USIAADRM4": {
+   "streams": [
+    "https://youtu.be/Ugfb7pUw7W4"
+   ]
+  },
+  "USIABALM6": {
+   "streams": [
+    "https://youtu.be/nGgL5NFg4Ec"
+   ]
+  },
+  "USMTCMP": {
+   "streams": [
+    "https://youtu.be/vn3mSf5v47k"
+   ]
+  },
+  "USMTBUQ": {
+   "streams": [
+    "https://youtu.be/qY48xuLlr0A"
+   ]
+  },
+  "USMTHEQ": {
+   "streams": [
+    "https://youtu.be/bloW1Y5Zrek"
+   ]
+  },
+  "USMOKSSTLSM7": {
+   "streams": [
+    "https://youtu.be/wYiPDWPXm94"
+   ]
+  },
+  "USMOKSSTLNM3": {
+   "streams": [
+    "https://youtu.be/9i9krw6Filw"
+   ]
+  },
+  "USMOKSSTLNM1": {
+   "streams": [
+    "https://youtu.be/XDeeKNXKdFY"
+   ]
+  },
+  "FPEMITHO": {
+   "streams": [
+    "https://youtu.be/_VaklXxwE5c",
+    "https://youtu.be/lHUi_EbEXt4",
+    "https://youtu.be/lxK14e7XYzE",
+    "https://youtu.be/ZNanuYqENR4",
+    "https://youtu.be/fSi2N5BKheQ"
+   ]
+  },
+  "FPEMICLA": {
+   "streams": [
+    "https://youtu.be/h3z0IwC6-P8",
+    "https://youtu.be/uCitmKPlhiM",
+    "https://youtu.be/DmPpy64EreI"
+   ]
+  },
+  "USFLFLORM1": {
+   "streams": [
+    "https://youtu.be/_SHMVK7w4Ow"
+   ]
+  },
+  "USFLFLORM2": {
+   "streams": [
+    "https://youtu.be/vwtjo3lM3TI"
+   ]
+  },
+  "USFLFLORM3": {
+   "streams": [
+    "https://youtu.be/S2YFqkV4_ho"
+   ]
+  },
+  "USFLFLORLT": {
+   "streams": [
+    "https://youtu.be/ATO5973RRz0"
+   ]
+  },
+  "USFLFLSPLT": {
+   "streams": [
+    "https://youtu.be/xBfz7sBJ1tU"
+   ]
+  },
+  "USFLFLROM4": {
+   "streams": [
+    "https://youtu.be/WSCEvWWhv78"
+   ]
+  },
+  "USCANOSJQ5": {
+   "streams": [
+    "https://youtu.be/w3vFvEHODG4",
+    "https://youtu.be/ubnt1wD5DCE"
+   ]
+  },
+  "USCASDSDMLM1": {
+   "streams": [
+    "https://youtu.be/16MsQYW8xVY"
+   ]
+  },
+  "USCASDSDMLM4": {
+   "streams": [
+    "https://youtu.be/sEoMBy864Ho"
+   ]
+  },
+  "USCANOSMOSDIV1": {
+   "streams": [
+    "https://youtu.be/JQ2HkSNCDEM"
+   ]
+  },
+  "USCANOCMPAU": {
+   "streams": [
+    "https://youtu.be/Ga4KK7u3eyY"
+   ]
+  },
+  "USCANOCMPSI": {
+   "streams": [
+    "https://youtu.be/5GHC7XZEDzU"
+   ]
+  },
+  "USWATELT": {
+   "streams": [
+    "https://youtu.be/2wFgknxFL2o"
+   ]
+  },
+  "USWAHALT": {
+   "streams": [
+    "https://youtu.be/4p14r6YbN8o"
+   ]
+  },
+  "USWAPALT1": {
+   "streams": [
+    "https://youtu.be/5qkFrx-GZxY"
+   ]
+  },
+  "USWABAM1": {
+   "streams": [
+    "https://youtu.be/F0caNUelJS4"
+   ]
+  },
+  "USWABES1": {
+   "streams": [
+    "https://youtu.be/GntVMSsTzsA"
+   ]
+  },
+  "USWACMP": {
+   "streams": [
+    "https://youtu.be/YyaL8DwY2kE"
+   ]
+  },
+  "USWAFELT1": {
+   "streams": [
+    "https://youtu.be/bh76PN2sC0c"
+   ]
+  },
+  "USWAMVSQ1": {
+   "streams": [
+    "https://youtu.be/bk6L7yV46k0"
+   ]
+  },
+  "USWABRM1": {
+   "streams": [
+    "https://youtu.be/euo4xfI06_g"
+   ]
+  },
+  "USWAWULT": {
+   "streams": [
+    "https://youtu.be/hE8VfHFS3lc"
+   ]
+  },
+  "USWAMVSQ2": {
+   "streams": [
+    "https://youtu.be/xouJCgLDhf0"
+   ]
+  },
+  "USOKTUS": {
+   "streams": [
+    "https://youtu.be/CDZvEuYkmg0"
+   ]
+  },
+  "USOKTUS2": {
+   "streams": [
+    "https://youtu.be/MAeWCNZBfvg"
+   ]
+  },
+  "USOKOKPRLT": {
+   "streams": [
+    "https://youtu.be/ipIeH72xkRg"
+   ]
+  },
+  "USOKOKMGLT": {
+   "streams": [
+    "https://youtu.be/xia8mw-p6mE"
+   ]
+  },
+  "USOKOKBCLT": {
+   "streams": [
+    "https://youtu.be/WDi0Ycvpj-c",
+    "https://youtu.be/270FF0iiOeM"
+   ]
+  },
+  "USOKOKMSM1": {
+   "streams": [
+    "https://youtu.be/PRUrAecDmyU"
+   ]
+  },
+  "USOKOKMSM2": {
+   "streams": [
+    "https://youtu.be/IxU-PzxWU8g"
+   ]
+  },
+  "USOKOKMSM3": {
+   "streams": [
+    "https://youtu.be/aXqVxd9iZI8"
+   ]
+  },
+  "USOKOKDVM3": {
+   "streams": [
+    "https://youtu.be/Fb6hDpb-MwQ"
+   ]
+  },
+  "USOKOKDVM4": {
+   "streams": [
+    "https://youtu.be/Lxg-sZQadBE"
+   ]
+  },
+  "USMNVRM1": {
+   "streams": [
+    "https://youtu.be/39NIxHN-IqI"
+   ]
+  },
+  "USMNVRM2": {
+   "streams": [
+    "https://youtu.be/Rlybc4K2Gpo"
+   ]
+  },
+  "USMNVRM3": {
+   "streams": [
+    "https://youtu.be/fRLtn9JeaBY"
+   ]
+  },
+  "ROCMP": {
+   "streams": [
+    "https://youtu.be/JWcVGDTtHVM",
+    "https://youtu.be/OAI9Ewi8hMw"
+   ]
+  },
+  "CABCCMP": {
+   "streams": [
+    "https://youtu.be/u_FkjGmOPu8",
+    "https://youtu.be/YdhLrbGYR2A"
+   ]
+  },
+  "CABCSUQ1": {
+   "streams": [
+    "https://youtu.be/l5pDd2JT9LQ",
+    "https://youtu.be/4yELlTKymf4"
+   ]
+  },
+  "USGACMP": {
+   "streams": [
+    "https://youtu.be/cmFW938Ekyw"
+   ]
+  },
+  "USGAMARIM1": {
+   "streams": [
+    "https://youtu.be/3jBNdnyIbL8",
+    "https://youtu.be/icuAqIOogLY"
+   ]
+  },
+  "USCALAGM1": {
+   "streams": [
+    "https://youtu.be/2PKJiU7_vuQ"
+   ]
+  },
+  "USCALAGM2": {
+   "streams": [
+    "https://youtu.be/cJYP0zQX8xk"
+   ]
+  },
+  "USFLCMPDIVB": {
+   "streams": [
+    "https://youtu.be/ANSzUjceUuQ",
+    "https://youtu.be/Umyakrs-4qw"
+   ]
+  },
+  "USFLCMPDIVA": {
+   "streams": [
+    "https://youtu.be/VpNYfP_6Txg",
+    "https://youtu.be/Jd6Vg9WyX-8"
+   ]
+  },
+  "USIACMPBLA": {
+   "streams": [
+    "https://youtu.be/JzlM84IoIBg"
+   ]
+  },
+  "USORCMPGOLD": {
+   "streams": [
+    "https://youtu.be/CLd8CR98m7k"
+   ]
+  },
+  "USNCELS": {
+   "streams": [
+    "https://youtu.be/4fT08QlFcXE"
+   ]
+  },
+  "ROCNOS": {
+   "streams": [
+    "https://youtu.be/HjC6iywG3Wc",
+    "https://youtu.be/3CgzfJ7KUJ4"
+   ]
+  },
+  "USMNCMPGLXY": {
+   "streams": [
+    "https://youtu.be/crOMKg1SQZU"
+   ]
+  },
+  "USMNCMPNANO": {
+   "streams": [
+    "https://youtu.be/-2KIKOBaKd0"
+   ]
+  },
+  "BRCUOS": {
+   "streams": [
+    "https://youtu.be/g32VPvNu5Kw"
+   ]
+  },
+  "ROBUOS3": {
+   "streams": [
+    "https://youtu.be/DEmSAjo-x7M",
+    "https://youtu.be/0t8J9yn0CRw"
+   ]
+  },
+  "USTXTBSQJB": {
+   "streams": [
+    "https://youtu.be/hxWqkLAuVAY"
    ]
   }
  },
@@ -641,7 +1253,8 @@
   "USGANWLT": {
    "streams": [
     "https://youtu.be/uYabNfVC-Aw",
-    "https://youtu.be/fEF8q9Basaw"
+    "https://youtu.be/fEF8q9Basaw",
+    "https://youtu.be/12kdHHG3omE"
    ]
   },
   "USGADUGM1": {
@@ -750,12 +1363,14 @@
   "USCTHAQ": {
    "streams": [
     "https://youtu.be/F_6l5afcMU8",
-    "https://youtu.be/9PnvT8n647s"
+    "https://youtu.be/9PnvT8n647s",
+    "https://youtu.be/3ozzBv53KYc"
    ]
   },
   "USCTVES1": {
    "streams": [
-    "https://youtu.be/Be4_TItJpLE"
+    "https://youtu.be/Be4_TItJpLE",
+    "https://youtu.be/8R7vTvGr-BE"
    ]
   },
   "USMAWEQ": {
@@ -1326,7 +1941,10 @@
   "IDCMP": {
    "streams": [
     "https://youtu.be/xgetRJgMPBA",
-    "https://youtu.be/-7bzEpWzviE"
+    "https://youtu.be/-7bzEpWzviE",
+    "https://youtu.be/s0HU7ZCgFmw",
+    "https://youtu.be/gq-Rc_0yVVA",
+    "https://youtu.be/chpP7kt_tgc"
    ]
   },
   "USNYLICMP": {
@@ -1342,6 +1960,462 @@
   "USMISCM5": {
    "streams": [
     "https://youtu.be/OdT7MmydN-s"
+   ]
+  },
+  "USTXNFM2": {
+   "streams": [
+    "https://youtu.be/EOy_35Yv5IE"
+   ]
+  },
+  "USTXCHNM2": {
+   "streams": [
+    "https://youtu.be/oqY-OZ3-juk",
+    "https://youtu.be/9qDRuJWWblw"
+   ]
+  },
+  "HKGCMP": {
+   "streams": [
+    "https://youtu.be/AZVMiqD9VuE",
+    "https://youtu.be/HFAmpPrk5kM"
+   ]
+  },
+  "MDCMP": {
+   "streams": [
+    "https://youtu.be/u4MOl1ieJtg"
+   ]
+  },
+  "USFCTCMP": {
+   "streams": [
+    "https://youtu.be/yXbtJgh--Fs"
+   ]
+  },
+  "USOKOKMNM4": {
+   "streams": [
+    "https://youtu.be/Cx0D5Oh_OTM"
+   ]
+  },
+  "USOKOKMNM2": {
+   "streams": [
+    "https://youtu.be/PMJqc3BUEsw"
+   ]
+  },
+  "ZACMP2": {
+   "streams": [
+    "https://youtu.be/8Jf67JK3NEQ"
+   ]
+  },
+  "NLHAQ": {
+   "streams": [
+    "https://youtu.be/pk-G3ORxxZ0"
+   ]
+  },
+  "USCTSTQ": {
+   "streams": [
+    "https://youtu.be/8kclJl_AowA",
+    "https://youtu.be/pL_VU2jKtyg"
+   ]
+  },
+  "FPEWESEA": {
+   "streams": [
+    "https://youtu.be/mfEK4qhAC8c"
+   ]
+  },
+  "FPEWESND": {
+   "streams": [
+    "https://youtu.be/mfEK4qhAC8c"
+   ]
+  },
+  "USWABAM1": {
+   "streams": [
+    "https://youtu.be/3mtZiUD4zzo",
+    "https://youtu.be/3qVxio14lTs"
+   ]
+  },
+  "KZCMPKER1": {
+   "streams": [
+    "https://youtu.be/2V7r9Z5fyJU"
+   ]
+  },
+  "USFLSCLT": {
+   "streams": [
+    "https://youtu.be/bTQaf-3p3bE"
+   ]
+  },
+  "USFLCMP": {
+   "streams": [
+    "https://youtu.be/lye3rnFKGbA",
+    "https://youtu.be/z4WN1ltZg-Y"
+   ]
+  },
+  "ROCM3": {
+   "streams": [
+    "https://youtu.be/h6hHan1CyjA"
+   ]
+  },
+  "ROCNOS2": {
+   "streams": [
+    "https://youtu.be/3g1tYWzm8aw",
+    "https://youtu.be/is6qecKVmsE",
+    "https://youtu.be/E8UATW1W3-s",
+    "https://youtu.be/SMLG_L1SU20",
+    "https://youtu.be/AsIMC44ouYg"
+   ]
+  },
+  "ROSEM8": {
+   "streams": [
+    "https://youtu.be/kUdH8-w1_d8"
+   ]
+  },
+  "ROSEM1": {
+   "streams": [
+    "https://youtu.be/t9VM4rjYxOc"
+   ]
+  },
+  "ROPLS": {
+   "streams": [
+    "https://youtu.be/nh_0t95vRDA"
+   ]
+  },
+  "ROSVM10": {
+   "streams": [
+    "https://youtu.be/ueo5sIVNNhU"
+   ]
+  },
+  "ROSVM5": {
+   "streams": [
+    "https://youtu.be/Y5AL7OzfhOY",
+    "https://youtu.be/zv7uF7jG3PA"
+   ]
+  },
+  "ROSVM3": {
+   "streams": [
+    "https://youtu.be/gdjfwI7LTnc"
+   ]
+  },
+  "RONM7": {
+   "streams": [
+    "https://youtu.be/JmPwefFeTTU"
+   ]
+  },
+  "ROCM7": {
+   "streams": [
+    "https://youtu.be/fq8i1DuSuEE",
+    "https://youtu.be/gz18vW3WSiQ",
+    "https://youtu.be/LIXIC64JT1Y"
+   ]
+  },
+  "ROVM5": {
+   "streams": [
+    "https://youtu.be/WykqrM9-ws0"
+   ]
+  },
+  "ROVM4": {
+   "streams": [
+    "https://youtu.be/4qhfQ8j9RtY"
+   ]
+  },
+  "ROSM3": {
+   "streams": [
+    "https://youtu.be/R0lyh70Ap1o"
+   ]
+  },
+  "ROVM6": {
+   "streams": [
+    "https://youtu.be/Zae1aRD1kno"
+   ]
+  },
+  "ROTIS": {
+   "streams": [
+    "https://youtu.be/ZHixG_CTi4U"
+   ]
+  },
+  "USFLCMPLAWR": {
+   "streams": [
+    "https://youtu.be/NP2EZxOiMTk"
+   ]
+  },
+  "USFLCMPSCOT": {
+   "streams": [
+    "https://youtu.be/0PFGVNSbmRg"
+   ]
+  },
+  "ROSM2": {
+   "streams": [
+    "https://youtu.be/ZCgtWFj0vlo"
+   ]
+  },
+  "ROSM8": {
+   "streams": [
+    "https://youtu.be/xalm2Sf9ZVw"
+   ]
+  },
+  "USCALADBQ1": {
+   "streams": [
+    "https://youtu.be/89Mc4BfDUHE"
+   ]
+  },
+  "USCALADBQ2": {
+   "streams": [
+    "https://youtu.be/eyuIQZnd-jE"
+   ]
+  },
+  "USCALASOQ": {
+   "streams": [
+    "https://youtu.be/7nwUcJqYEMM"
+   ]
+  },
+  "USCALAESQ": {
+   "streams": [
+    "https://youtu.be/jjso9v1cW7M"
+   ]
+  },
+  "USCALACAS1": {
+   "streams": [
+    "https://youtu.be/Jqbef7nl4zY"
+   ]
+  },
+  "USCALACAS4": {
+   "streams": [
+    "https://youtu.be/yeqnzU5C7OM"
+   ]
+  },
+  "USCALACAS3": {
+   "streams": [
+    "https://youtu.be/CirTePTbhEc"
+   ]
+  },
+  "USCALAESSH": {
+   "streams": [
+    "https://youtu.be/NQBypZhpBBs"
+   ]
+  },
+  "USCALAMVS2": {
+   "streams": [
+    "https://youtu.be/BHJ62jN50Ik"
+   ]
+  },
+  "USCALAMVS3": {
+   "streams": [
+    "https://youtu.be/11YIDQm41AQ"
+   ]
+  },
+  "USCALAVM1": {
+   "streams": [
+    "https://youtu.be/-yfqn12VUIw"
+   ]
+  },
+  "USCALAOJS2": {
+   "streams": [
+    "https://youtu.be/Z97DXINcmk8"
+   ]
+  },
+  "USCALAOJS3": {
+   "streams": [
+    "https://youtu.be/N0v0iOn25Ts"
+   ]
+  },
+  "USCALAPAS3": {
+   "streams": [
+    "https://youtu.be/rLbcrSDohII"
+   ]
+  },
+  "USCALALAS2": {
+   "streams": [
+    "https://youtu.be/q5P-kWzsgQs"
+   ]
+  },
+  "USCALALAS8": {
+   "streams": [
+    "https://youtu.be/ZhZtBQ2tsyw"
+   ]
+  },
+  "NLCMPJAC1": {
+   "streams": [
+    "https://youtu.be/i3ojqygkQlI"
+   ]
+  },
+  "USOHCLQ": {
+   "streams": [
+    "https://youtu.be/ARFsdCcOukA"
+   ]
+  },
+  "USMICMPMC": {
+   "streams": [
+    "https://youtu.be/eEwLP2DOy4o"
+   ]
+  },
+  "USMICMP2MC": {
+   "streams": [
+    "https://youtu.be/5AV-nzXyhQs",
+    "https://youtu.be/J9UmCUel6EA"
+   ]
+  },
+  "CABCCMP": {
+   "streams": [
+    "https://youtu.be/EzJv8q1l2ZQ",
+    "https://youtu.be/NFxRnirPwMo"
+   ]
+  },
+  "USMIFRQ": {
+   "streams": [
+    "https://youtu.be/d0Evd2Mc7rU"
+   ]
+  },
+  "USMIKEQ": {
+   "streams": [
+    "https://youtu.be/rNXn5fO0kLs"
+   ]
+  },
+  "AUSYQ2": {
+   "streams": [
+    "https://youtu.be/TA1tHFlvTVQ"
+   ]
+  },
+  "NLCMPOCK1": {
+   "streams": [
+    "https://youtu.be/TVG3KE05RVE"
+   ]
+  },
+  "USNEOMS2": {
+   "streams": [
+    "https://youtu.be/rPGstSi1nGo"
+   ]
+  },
+  "ROCNOS1": {
+   "streams": [
+    "https://youtu.be/tdZHEWZBW0A"
+   ]
+  },
+  "USMICMPWF": {
+   "streams": [
+    "https://youtu.be/zmrdeJ7wQBA"
+   ]
+  },
+  "USMICMP2WF": {
+   "streams": [
+    "https://youtu.be/oUAUA9i7yZM",
+    "https://youtu.be/rcEI1sCx_qc"
+   ]
+  },
+  "USMINOQ": {
+   "streams": [
+    "https://youtu.be/Bg8GJx0hoaE"
+   ]
+  },
+  "USMIGRQ": {
+   "streams": [
+    "https://youtu.be/bktUyNzvGWY"
+   ]
+  },
+  "CAONWIQ": {
+   "streams": [
+    "https://youtu.be/V3iCSLtvkFc"
+   ]
+  },
+  "USCTWIQ": {
+   "streams": [
+    "https://youtu.be/BD9CkO9Gt9w"
+   ]
+  },
+  "USMIHOQ2": {
+   "streams": [
+    "https://youtu.be/Qp587pfeaAc"
+   ]
+  },
+  "USNEOMS1": {
+   "streams": [
+    "https://youtu.be/zTV86A6ryC0"
+   ]
+  },
+  "USIACMPBLA": {
+   "streams": [
+    "https://youtu.be/qLUMqTUFc_4",
+    "https://youtu.be/HMkzAl9ZXQg"
+   ]
+  },
+  "USMIAAQ": {
+   "streams": [
+    "https://youtu.be/UU9JIw5mJqE"
+   ]
+  },
+  "USMITEQ": {
+   "streams": [
+    "https://youtu.be/Wof_Gaq0TB4"
+   ]
+  },
+  "USNEOMQ2": {
+   "streams": [
+    "https://youtu.be/-HN8CHCm-nw"
+   ]
+  },
+  "USMIGOQ": {
+   "streams": [
+    "https://youtu.be/J1vGA_eihb8"
+   ]
+  },
+  "USMICOQ": {
+   "streams": [
+    "https://youtu.be/Oy-3jx_UZSs"
+   ]
+  },
+  "USMIPEQ": {
+   "streams": [
+    "https://youtu.be/QVCe6VBS3C0"
+   ]
+  },
+  "USOHDAQ": {
+   "streams": [
+    "https://youtu.be/74Tul5FS76Q"
+   ]
+  },
+  "ILGBQ2": {
+   "streams": [
+    "https://youtu.be/dJIg2dqj0OQ"
+   ]
+  },
+  "FPENE2": {
+   "streams": [
+    "https://youtu.be/cfk9HtRVfuc"
+   ]
+  },
+  "FPENE1": {
+   "streams": [
+    "https://youtu.be/ZGQHuKQDPIA"
+   ]
+  },
+  "USUTMIQ": {
+   "streams": [
+    "https://youtu.be/cjrO1nzOVbE"
+   ]
+  },
+  "USMOKSSELT": {
+   "streams": [
+    "https://youtu.be/9sfwv8HUD5Q"
+   ]
+  },
+  "USMOKSSTLMM7": {
+   "streams": [
+    "https://youtu.be/GR6luBpywmU"
+   ]
+  },
+  "USGAATLLT": {
+   "streams": [
+    "https://youtu.be/H4Grgjbl150"
+   ]
+  },
+  "GBLOQ1": {
+   "streams": [
+    "https://youtu.be/1Hvn_XDceQM"
+   ]
+  },
+  "ILGBQ1": {
+   "streams": [
+    "https://youtu.be/YoFwV0cLtzA"
+   ]
+  },
+  "ILGBQ3": {
+   "streams": [
+    "https://youtu.be/Ge7tKGAk9iE"
    ]
   }
  }

@@ -784,7 +784,7 @@ async function event(r) {
             ${liveAt ? `<span class="pill live">Live · updated ${liveAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>` : ""}
             <span class="pill">${ev.teams} teams</span><span class="pill">${played.length}/${matches.length} matches played</span>
             <a class="pill" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}" target="_blank" rel="noopener">FTCScout ↗</a>
-            ${videos?.[code]?.streams?.[0] ? `<button class="pill" data-video="${videos[code].streams[0].id}" data-t="0" data-title="${esc(ev.name)}">▶ Event stream</button>` : ""}
+            ${videos?.[code]?.streams?.[0] ? `<button class="pill" data-video="${videos[code].streams[0].id}" data-t="0"${videos[code].streams[0].ext ? ' data-ext="1"' : ""} data-title="${esc(ev.name)}">▶ Event stream</button>` : ""}
           </div>
         </div>
         <div class="big-epa"><div class="label">Winner predicted</div><b>${decided.length ? pct(correct / decided.length) : "–"}</b><div class="label">${correct} of ${decided.length} matches</div></div>
@@ -845,7 +845,7 @@ function eventPlayoffs(season, meta, ev, matches, official, video) {
       ${line(s.red, "red")}${line(s.blue, "blue")}
       ${games ? `<div class="bgames">${games}</div>` : ""}
       <div class="bf"><a class="bk match-link" href="${matchHref(season, ev.code, (last ?? s.games[0]).d)}" title="Match details">${esc(s.key)}${series ? " · best of 3" : ""}</a>
-        <span class="bf-r">${pred}${v ? `<button class="play" data-video="${v.id}" data-t="${v.t}" data-title="${esc(`${ev.name} · ${last.d}`)}" aria-label="Watch ${esc(s.key)}" title="Watch">${PLAY_ICON}</button>` : ""}</span></div>
+        <span class="bf-r">${pred}${v ? `<button class="play" data-video="${v.id}" data-t="${v.t}"${v.ext ? ' data-ext="1"' : ""} data-title="${esc(`${ev.name} · ${last.d}`)}" aria-label="Watch ${esc(s.key)}" title="Watch">${PLAY_ICON}</button>` : ""}</span></div>
     </div>`;
   };
 
@@ -1081,6 +1081,10 @@ async function match(r) {
     : winner === "tie" ? `<div class="big-epa"><div class="label">Result</div><b>Tie</b><div class="label">${Side(fav)} was favoured ${pct(favP)}</div></div>`
     : `<div class="big-epa"><div class="label">Prediction</div><b class="${winner === fav ? "good-text" : "bad-text"}">${winner === fav ? "Correct" : "Upset"}</b><div class="label">${Side(fav)} was favoured ${pct(favP)}</div></div>`;
 
+  const verdictLine = !p ? "No prediction for this match."
+    : !played ? `${Side(fav)} favoured to win, ${pct(favP)}.`
+    : winner === "tie" ? `<b>Tie</b> · ${Side(fav)} was favoured ${pct(favP)}`
+    : `<b class="${winner === fav ? "good-text" : "bad-text"}">${winner === fav ? "Prediction correct" : "Upset"}</b> · ${Side(fav)} was favoured ${pct(favP)}`;
   // scoreboard: teams either side, the final (or predicted) score in the middle
   const onField = (side) => m[`${side}On`] ?? m[side];
   const side = (s) => `<div class="feature-side ${s}">${m[s].map((t) => `<a href="#/${season}/team/${t}" class="${onField(s).includes(t) ? "" : "sat-out"}">${t}</a><small>${esc(team.get(t)?.name ?? "")}${onField(s).includes(t) ? "" : " · didn't play"}</small>`).join("")}</div>`;
@@ -1093,33 +1097,31 @@ async function match(r) {
         ${played && p ? `<div class="small muted pred-line">Predicted ${fmt(p.red.total, 0)}–${fmt(p.blue.total, 0)}</div>` : ""}</div>
       ${side("blue")}
     </div>
-    <div class="feature-foot">${winBar(p?.pRed)}<p>${p ? `Before the match: red ${pct(p.pRed)}, blue ${pct(1 - p.pRed)} to win.` : "No prediction for this match."}</p></div>
+    <div class="feature-foot">${winBar(p?.pRed)}<p>${p ? `Before the match: red ${pct(p.pRed)}, blue ${pct(1 - p.pRed)} to win.` : "No prediction for this match."}${v && played && p ? ` <span class="stage-verdict">${verdictLine}</span>` : ""}</p></div>
   </div>`;
 
   // with a video the page is built around it: player on the left, a compact
   // scoreboard beside it; the verdict moves into that scoreboard
   const clock = (t) => { const h = Math.floor(t / 3600), mm = Math.floor((t % 3600) / 60), ss = t % 60;
     return h ? `${h}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}` : `${mm}:${String(ss).padStart(2, "0")}`; };
-  const verdictLine = !p ? "No prediction for this match."
-    : !played ? `${Side(fav)} favoured to win, ${pct(favP)}.`
-    : winner === "tie" ? `<b>Tie</b> · ${Side(fav)} was favoured ${pct(favP)}`
-    : `<b class="${winner === fav ? "good-text" : "bad-text"}">${winner === fav ? "Prediction correct" : "Upset"}</b> · ${Side(fav)} was favoured ${pct(favP)}`;
+  const ytUrl = v ? `https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}&t=${v.t}s` : "";
   const stage = v ? `<div class="match-stage section">
     <div class="stage-video" id="stage-video" data-id="${esc(v.id)}" data-t="${v.t}" data-title="${esc(`${ev.name} · ${m.d}`)}">
-      <button class="stage-play" data-play-inline aria-label="Play ${esc(matchTitle(m.d))}">
+      ${v.ext
+        // the owner turned off embedding: same spot, on YouTube
+        ? `<a class="stage-play" href="${ytUrl}" target="_blank" rel="noopener">
+        <span class="stage-play-icon">${PLAY_ICON}</span>
+        <span class="stage-play-text"><b>Watch ${esc(matchTitle(m.d))} on YouTube ↗</b>
+          <small>${v.t ? `From ${clock(v.t)} · ` : ""}this video's owner doesn't allow playing it here</small></span>
+      </a>`
+        : `<button class="stage-play" data-play-inline aria-label="Play ${esc(matchTitle(m.d))}">
         <span class="stage-play-icon">${PLAY_ICON}</span>
         <span class="stage-play-text"><b>Watch ${esc(matchTitle(m.d))}</b>
           <small>${v.t ? `Event video, from ${clock(v.t)}` : "Match video"}</small></span>
-      </button>
+      </button>`}
     </div>
-    <div class="feature stage-board">
-      <div class="feature-head"><b>${played ? "Final score" : "Predicted score"}</b><span>${winner ? (winner === "tie" ? "Tie" : `${Side(winner)} wins`) : "Not played yet"}</span></div>
-      <div class="stage-score">${played ? `${big("red", rs.total)}<span class="faint">–</span>${big("blue", bs.total)}` : p ? `${big("red", fmt(p.red.total, 0))}<span class="faint">–</span>${big("blue", fmt(p.blue.total, 0))}` : "–"}
-        ${played && p ? `<div class="small muted pred-line">Predicted ${fmt(p.red.total, 0)}–${fmt(p.blue.total, 0)}</div>` : ""}</div>
-      <div class="stage-teams">${side("red")}${side("blue")}</div>
-      <div class="feature-foot">${winBar(p?.pRed)}<p class="stage-verdict">${verdictLine}</p></div>
-    </div>
-  </div>` : `<div class="section">${board}</div>`;
+  </div>
+  <div class="section">${board}</div>` : `<div class="section">${board}</div>`;
 
   // score breakdown: predicted vs actual per period, with a bar for each
   const rows = [["auto", "Auto"], ["teleop", "Teleop"], ["endgame", "Endgame"], ["np", "No-penalty total"], ["pen", "Penalty points"], ["total", "Final"]];
@@ -1186,7 +1188,8 @@ async function match(r) {
           <a class="pill" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}/matches" target="_blank" rel="noopener">FTCScout ↗</a>
         </div>
       </div>
-      ${v ? `<button class="btn btn-solid watch-cta" data-play-inline>${PLAY_ICON} Watch match</button>` : verdict}
+      ${v ? (v.ext ? `<a class="btn btn-solid watch-cta" href="${ytUrl}" target="_blank" rel="noopener">${PLAY_ICON} Watch on YouTube ↗</a>`
+        : `<button class="btn btn-solid watch-cta" data-play-inline>${PLAY_ICON} Watch match</button>`) : verdict}
     </div></div>
 
     <div class="match-nav section">
@@ -1355,6 +1358,8 @@ async function boot() {
     const b = e.target.closest("[data-video]");
     if (!b) return;
     e.preventDefault();
+    // the owner turned off embedding: open it on YouTube at the same moment
+    if (b.dataset.ext) { open(`https://www.youtube.com/watch?v=${encodeURIComponent(b.dataset.video)}&t=${+b.dataset.t || 0}s`, "_blank", "noopener"); return; }
     openVideo(b.dataset.video, +b.dataset.t || 0, b.dataset.title);
   });
   addEventListener("hashchange", () => $$(".video-dialog").forEach((d) => d.close()));
