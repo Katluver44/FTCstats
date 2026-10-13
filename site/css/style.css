@@ -499,3 +499,13 @@ footer a { text-decoration: underline; }
 
 /* rows that open an event or team when clicked */
 #app tbody tr:has(a.ev-cell, a.team-cell) { cursor: pointer; }
+
+/* instant hover explanations: column headings and RP dots */
+[data-tip] { position: relative; cursor: help; }
+.th-tip { border-bottom: 1px dotted var(--faint); }
+[data-tip]:hover::after {
+  content: attr(data-tip); position: absolute; z-index: 40; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: 260px; white-space: normal; text-align: left; text-transform: none; letter-spacing: 0;
+  font-size: 12.5px; font-weight: 500; line-height: 1.4; color: var(--page);
+  background: var(--text); border-radius: 8px; padding: 8px 10px; box-shadow: 0 8px 24px rgba(0,0,0,.25);
+}

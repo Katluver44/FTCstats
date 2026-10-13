@@ -112,8 +112,12 @@ export function meter(label, value, max, display) {
   return `<div class="meter"><span class="k">${esc(label)}</span>${dots(value, max)}<span class="v">${display ?? fmt(value)}</span></div>`;
 }
 
-// Bonus-RP dots: filled = earned (or predicted > 50%)
-const rpDots = (side, arr) => arr ? `<span class="rpd ${side}">${arr.map((x) => `<i class="${x ? "on" : ""}"></i>`).join("")}</span>` : "";
+// Bonus-RP dots: filled = earned (or predicted > 50%). Hovering names each RP.
+const rpDots = (side, arr, names = [], verb = "earned") => {
+  if (!arr) return "";
+  const tip = names.length ? `${side === "red" ? "Red" : "Blue"} ${verb}: ${arr.map((x, i) => `${names[i] ?? `RP ${i + 1}`} ${x ? "✓" : "✗"}`).join(" · ")}` : "";
+  return `<span class="rpd ${side}"${tip ? ` data-tip="${esc(tip)}"` : ""}>${arr.map((x) => `<i class="${x ? "on" : ""}"></i>`).join("")}</span>`;
+};
 
 // Slim red/blue bar with the favourite's chance beside it, always in the same place.
 export function winBar(pRed) {
@@ -125,25 +129,21 @@ export function winBar(pRed) {
 
 // One row per match.
 // m: { d, red, blue, played, redScore:{np, rp}, blueScore, pred:{pRed, red:{np, rp}, blue:{np, rp}} }
-export function matchTable(s, matches, { me } = {}) {
+export function matchTable(s, matches, { me, rpNames = [] } = {}) {
   if (!matches.length) return `<div class="empty">No matches yet.</div>`;
   const slots = Math.max(2, ...matches.map((m) => Math.max(m.red.length, m.blue.length)));
   const teams = (side, nums) => Array.from({ length: slots }, (_, i) =>
     nums[i] != null ? `<td class="c"><a class="tn ${side} ${nums[i] === me ? "me" : ""}" href="#/${s}/team/${nums[i]}">${nums[i]}</a></td>` : "<td></td>").join("");
   const rows = matches.map((m) => {
     const rs = m.redScore?.total ?? m.redScore?.np, bs = m.blueScore?.total ?? m.blueScore?.np;
-    let mark = "", upset = false;
-    if (m.played && m.pred && rs !== bs) {
-      const ok = (m.pred.pRed > 0.5) === (rs > bs);
-      upset = !ok;
-      mark = ok ? `<span class="mark ok" title="Prediction correct">✓</span>` : `<span class="mark no" title="Upset">✗</span>`;
-    }
+    // upsets (the favourite lost) get a faint red row
+    const upset = m.played && m.pred && rs !== bs && (m.pred.pRed > 0.5) !== (rs > bs);
     const pr = m.pred?.red?.rp?.map((p) => p > 0.5), pb = m.pred?.blue?.rp?.map((p) => p > 0.5);
     const pred = m.pred?.red?.np != null
-      ? `${rpDots("red", pr)} <span class="pscore">${fmt(m.pred.red.total ?? m.pred.red.np, 0)}–${fmt(m.pred.blue.total ?? m.pred.blue.np, 0)}</span> ${rpDots("blue", pb)}`
+      ? `${rpDots("red", pr, rpNames, "likely to earn")} <span class="pscore">${fmt(m.pred.red.total ?? m.pred.red.np, 0)}–${fmt(m.pred.blue.total ?? m.pred.blue.np, 0)}</span> ${rpDots("blue", pb, rpNames, "likely to earn")}`
       : "";
     const final = m.played
-      ? `${rpDots("red", m.redScore.rp)} <span class="final"><span class="${rs > bs ? "w" : "l"}">${rs}</span><span class="faint">–</span><span class="${bs > rs ? "w" : "l"}">${bs}</span></span> ${rpDots("blue", m.blueScore.rp)}`
+      ? `${rpDots("red", m.redScore.rp, rpNames)} <span class="final"><span class="${rs > bs ? "w" : "l"}">${rs}</span><span class="faint">–</span><span class="${bs > rs ? "w" : "l"}">${bs}</span></span> ${rpDots("blue", m.blueScore.rp, rpNames)}`
       : `<span class="faint small">upcoming</span>`;
     return `<tr class="${upset ? "upset" : ""}">
       ${m.evName ? `<td class="small"><a href="#/${s}/event/${m.ev}">${esc(m.evName)}</a></td>` : ""}
@@ -152,11 +152,10 @@ export function matchTable(s, matches, { me } = {}) {
       <td class="c hide-sm">${pred}</td>
       <td class="c">${winBar(m.pred?.pRed)}</td>
       <td class="c">${final}</td>
-      <td class="c">${mark}</td>
     </tr>`;
   }).join("");
   return `<div class="table-wrap"><table class="mt">
-    <thead><tr>${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c" colspan="${slots}">Red</th><th class="c" colspan="${slots}">Blue</th><th class="c hide-sm">Pred</th><th class="c">Win prob</th><th class="c">Final</th><th class="c" title="Did the pre-match prediction pick the winner? ✓ yes, ✗ upset">Called</th></tr></thead>
+    <thead><tr>${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c" colspan="${slots}">Red</th><th class="c" colspan="${slots}">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Dots: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue. A faint red row means the favourite lost.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Dots: bonus RPs earned (hover a set to see which)." : ""}">Final</span></th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
 }
 

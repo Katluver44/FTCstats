@@ -355,7 +355,7 @@ async function team(r) {
           <div><span class="k">EPA out</span><b>${fmt(ev.epaEnd)}${ev.epaStart != null && ev.epaEnd != null && Math.abs(ev.epaEnd - ev.epaStart) >= 0.5 ? `<span class="delta ${ev.epaEnd > ev.epaStart ? "trend-up" : "trend-down"}">${ev.epaEnd > ev.epaStart ? "▲" : "▼"}</span>` : ""}</b></div>
         </div>
       </div>
-      ${matchTable(season, ms, { me: n })}
+      ${matchTable(season, ms, { me: n, rpNames: meta.rpNames })}
     </div>`;
   }).join("");
 }
@@ -539,7 +539,7 @@ async function event(r) {
       <div id="tab"></div>`;
     if (tab === "teams") eventTeams(season, meta, ev);
     else if (tab === "forecast" && canForecast) eventForecast(season, meta, ev, matches);
-    else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches)}</div>`;
+    else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames })}</div>`;
   };
 
   draw();
