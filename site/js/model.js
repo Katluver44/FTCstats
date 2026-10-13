@@ -73,6 +73,81 @@ export const DEFAULT_PARAMS = {
   calRidge: 0.02, // ridge penalty
 };
 
+// ---- Two tracks ----
+// The parameters above are the PREDICTION track ("Pred. rating"): tuned only for
+// match-prediction Brier, used for win probabilities, predicted scores and
+// ranking forecasts. Some of what helps prediction (event-change reversion,
+// shortfall clipping, slow K once established) distorts the strength number
+// people read, so the team lists show a separate EPA track instead.
+//
+// The EPA (display) track runs the same update mechanics, one Model per
+// component, each with its own knobs, so Auto, Teleop and Endgame can be tuned
+// independently; Total = Auto + Teleop + Endgame (per-robot elements are folded
+// into their component). Effective params for a component:
+//   DEFAULT_PARAMS < EPA.shared < EPA[component].
+// Scored by research/epa-eval.mjs (how well the pre-event EPA predicts the
+// team's component OPR at that event), not by win-prob Brier.
+//
+// Every component starts as an exact copy of the prediction track, so the two
+// tracks agree until someone tunes this.
+const EPA_COMPONENT_START = {
+  kalman: DEFAULT_PARAMS.kalman, // 1 = uncertainty-weighted (Kalman) updates; 0 = K ramp below
+  kStart: DEFAULT_PARAMS.kStart, kEnd: DEFAULT_PARAMS.kEnd, kRampStart: DEFAULT_PARAMS.kRampStart, kRampEnd: DEFAULT_PARAMS.kRampEnd,
+  v0: DEFAULT_PARAMS.v0, // starting variance: higher = the prior from past seasons fades faster
+  vObs: DEFAULT_PARAMS.vObs, // match noise: higher = slower updates
+  obsHet: DEFAULT_PARAMS.obsHet, // match noise grows with the alliance's level
+  vMatch: DEFAULT_PARAMS.vMatch, // recency: variance added per match (old matches count less)
+  vEvent: DEFAULT_PARAMS.vEvent, // recency: variance added at each new event
+  volK: DEFAULT_PARAMS.volK, volThr: DEFAULT_PARAMS.volThr, // extra variance after a big surprise
+  mom: DEFAULT_PARAMS.mom, // event-change reversion (<0 gives back part of the last event's change)
+  clipC: DEFAULT_PARAMS.clipC, // clip alliance errors at clipC running SDs (0 = off)
+  clipUp: DEFAULT_PARAMS.clipUp, // 0 = clip only shortfalls, 1 = both directions
+  errAlpha: DEFAULT_PARAMS.errAlpha,
+  elimWeight: DEFAULT_PARAMS.elimWeight, // how much elim matches count
+  initFrac: DEFAULT_PARAMS.initFrac, // new teams start at this fraction of an average team
+  carry: DEFAULT_PARAMS.carry, // how strongly past seasons set the starting rating
+  kSolo: DEFAULT_PARAMS.kSolo, // K for per-robot elements in this component
+  idleShare: DEFAULT_PARAMS.idleShare, endIdleShare: DEFAULT_PARAMS.endIdleShare, deadShare: DEFAULT_PARAMS.deadShare,
+  emaAlpha: DEFAULT_PARAMS.emaAlpha,
+};
+export const DEFAULT_EPA_PARAMS = {
+  // Track-level settings (any component key above may also go here, for all three).
+  shared: {
+    offWeight: 0, // off-season events: 0 = excluded, w = each event's rating change counts w once it ends
+    offTypes: ["OffSeason"], // event types treated as off-season
+    priorWeights: [1, 0.3, 0.15], // weights of the last 1/2/3 seasons in the starting rating
+    priorRookieZ: -0.5, // starting z for teams with no history
+    priorMinMatches: 5, // matches needed in a past season to count for priors
+  },
+  auto: { ...EPA_COMPONENT_START },
+  teleop: { ...EPA_COMPONENT_START },
+  endgame: { ...EPA_COMPONENT_START },
+};
+const EPA_TRACK_KEYS = ["offWeight", "offTypes"];
+const EPA_SHARED_ONLY = ["priorWeights", "priorRookieZ", "priorMinMatches"];
+
+// Merge an override ({ shared?, auto?, teleop?, endgame? }) onto the defaults.
+// Unknown keys throw, so a typo in a tuning grid can't silently do nothing.
+export function epaParams(over = {}) {
+  const out = structuredClone(DEFAULT_EPA_PARAMS);
+  for (const [sec, vals] of Object.entries(over ?? {})) {
+    if (!(sec in out)) throw new Error(`EPA params: unknown section "${sec}" (use shared/auto/teleop/endgame)`);
+    for (const [k, v] of Object.entries(vals ?? {})) {
+      const ok = k in DEFAULT_PARAMS || EPA_TRACK_KEYS.includes(k) || (sec === "shared" && EPA_SHARED_ONLY.includes(k));
+      if (!ok) throw new Error(`EPA params: unknown key "${sec}.${k}"`);
+      out[sec][k] = v;
+    }
+  }
+  return out;
+}
+
+// One component's settings: { model: Model params, offWeight, offTypes }.
+export function epaComponent(ep, comp) {
+  const { offWeight, offTypes, priorWeights, priorRookieZ, priorMinMatches, ...sharedModel } = ep.shared;
+  const { offWeight: ow, offTypes: ot, ...compModel } = ep[comp];
+  return { model: { ...DEFAULT_PARAMS, ...sharedModel, ...compModel }, offWeight: ow ?? offWeight, offTypes: ot ?? offTypes };
+}
+
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 
 // 3x3 linear solve (Cramer's rule).

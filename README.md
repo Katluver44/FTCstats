@@ -18,6 +18,26 @@ alternative to FTCScout. Live at https://katluver44.github.io/FTCstats/.
   from FTCScout in the browser every 60 s and replay them with the same model.
 
 ## The model
+Two rating tracks run side by side over the same matches (`site/js/model.js`):
+- **EPA** (what team lists, team pages and "Top teams" show): meant to say how
+  strong each robot is. One model per component (Auto, Teleop, Endgame;
+  per-robot elements folded in; Total = sum), each with its own knobs in
+  `DEFAULT_EPA_PARAMS = { shared, auto, teleop, endgame }`. Scored by
+  `research/epa-eval.mjs`: does the EPA a team brings to an event predict its
+  component OPR there (extra weight on Worlds/Premier/top-scoring events), and
+  does the end-of-season list agree with Worlds? It starts as an exact copy of
+  the prediction track.
+- **Prediction rating** (`DEFAULT_PARAMS`): tuned only for match-prediction
+  Brier; drives win chances, predicted scores and ranking forecasts.
+
+Tuning the EPA track (about 0.3 s per season per parameter set and component):
+
+    node research/epa-eval.mjs --comp auto            # auto | teleop | endgame | total | all
+    node research/epa-eval.mjs --comp all --params p.json    # p.json = {"teleop": {"mom": 0}}
+    node research/epa-eval.mjs --comp teleop --grid g.json   # g.json = {"teleop.mom": [0, -0.1]}: LOSO tuning
+    EPA_PARAMS=p.json node scripts/build.mjs 2025     # trial build with EPA overrides
+
+What the prediction rating does:
 - **EPA**: points each team adds to its alliance, split into auto / teleop /
   endgame, plus each team's share of bonus ranking points.
 - **Per-robot scoring from the game manuals**: elements scored per robot

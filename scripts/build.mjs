@@ -8,7 +8,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { SEASONS, soloPoints } from "../site/js/seasons.js";
 import { fitSoloValues } from "./solo-values.mjs";
-import { Model, COMPONENTS, onField, allianceTeams, isElim } from "../site/js/model.js";
+import { Model, COMPONENTS, onField, allianceTeams, isElim, epaParams, epaComponent } from "../site/js/model.js";
 import { oprPredictions } from "./opr.mjs";
 import { elo, avgScore } from "./baselines.mjs";
 
@@ -74,8 +74,10 @@ export async function prepare(season, events, priorOpts) {
   const parkedSpec = fits.findIndex((f) => f.parked);
   const matches = playedMatches(season, events, fits);
   const baseline = baselineOf(matches, soloComps);
-  const { priors, cv, rookieZ } = await loadPriors(season, priorOpts);
-  return { events, fits, soloComps, movedSpec, parkedSpec, matches, baseline, priors, cv, rookieZ };
+  // prediction track's priors come from last seasons' prediction ratings, the EPA track's from their EPAs
+  const { priors, cv, rookieZ } = await loadPriors(season, priorOpts, "pnp");
+  const epaPriors = await loadEpaPriors(season);
+  return { season, events, fits, soloComps, movedSpec, parkedSpec, matches, baseline, priors, cv, rookieZ, epaPriors };
 }
 
 // Average alliance values over the first matches; components exclude per-robot points.
@@ -125,9 +127,12 @@ function normInv(p) {
 // become rank-based z-scores (so different games compare fairly); they're
 // blended with decaying weights, and a missing season counts as `rookieZ`.
 // (After the FRC predictor's priors.)
+// col: which rating to rank by: "pnp" (prediction track; tie order kept by "prank")
+// or "np" (EPA track). Files from before the split only have "np".
 export const PRIOR_OPTS = { weights: [1, 0.3, 0.15], rookieZ: -0.5, minMatches: 5 }; // tuned on 2022-2024
-export async function loadPriors(season, opts = PRIOR_OPTS) {
+export async function loadPriors(season, opts = PRIOR_OPTS, col = "pnp") {
   const { weights, rookieZ, minMatches } = { ...PRIOR_OPTS, ...opts };
+  const colOf = (t) => (t.cols.includes(col) ? t.cols.indexOf(col) : t.cols.indexOf("np"));
   const past = [];
   for (let k = 1; k <= weights.length; k++) {
     if (!weights[k - 1]) { past.push(null); continue; }
@@ -136,8 +141,8 @@ export async function loadPriors(season, opts = PRIOR_OPTS) {
     const prev = await fs.readFile(path.join(dir, "teams-all.json"), "utf8")
       .catch(() => fs.readFile(path.join(dir, "teams.json"), "utf8")).then(JSON.parse).catch(() => null);
     if (!prev) { past.push(null); continue; }
-    const npI = prev.cols.indexOf("np"), mI = prev.cols.indexOf("matches");
-    const rows = prev.rows.filter((r) => r[mI] >= minMatches).sort((a, b) => b[npI] - a[npI]);
+    const npI = colOf(prev), mI = prev.cols.indexOf("matches"), rkI = col === "pnp" ? prev.cols.indexOf("prank") : -1;
+    const rows = prev.rows.filter((r) => r[mI] >= minMatches).sort((a, b) => b[npI] - a[npI] || (rkI >= 0 ? a[rkI] - b[rkI] : 0));
     const z = new Map(rows.map((r, i) => [r[0], -normInv((i + 0.5) / rows.length)]));
     past.push(z);
   }
@@ -155,12 +160,18 @@ export async function loadPriors(season, opts = PRIOR_OPTS) {
   }
   // spread of last season's EPAs relative to its mean, to turn z into points
   const prev = JSON.parse(await fs.readFile(path.join("site", "data", String(season - 1), "teams.json"), "utf8"));
-  const npI = prev.cols.indexOf("np"), mI = prev.cols.indexOf("matches");
+  const npI = colOf(prev), mI = prev.cols.indexOf("matches");
   const vals = prev.rows.filter((r) => r[mI] >= minMatches).map((r) => r[npI]);
   if (vals.length < 10) return { priors: new Map(), cv: 0.5 };
   const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
   const sd = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length);
   return { priors, cv: sd / mean, rookieZ };
+}
+
+// The EPA track's priors, with its own prior settings (EPA params `shared`).
+export function loadEpaPriors(season, epa = epaParams()) {
+  const { priorWeights, priorRookieZ, priorMinMatches } = epa.shared;
+  return loadPriors(season, { weights: priorWeights, rookieZ: priorRookieZ, minMatches: priorMinMatches }, "np");
 }
 
 // Runs the model and scores its pre-match predictions.
@@ -174,27 +185,90 @@ export const UNOFFICIAL = new Set(["OffSeason"]);
 // counting them fully (1) was the worst of 0 / 0.25 / 0.5 / 0.75 / 1.
 export const OFF_WEIGHT = 0.4;
 
-export function simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, unofficial = UNOFFICIAL, offWeight = 0 }, onMatch) {
-  const model = new Model({ params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ });
+// One rating track over a season: a Model, plus a fork for each unofficial event.
+function makeTrack(matches, modelArgs, { unofficial = UNOFFICIAL, offWeight = 0 } = {}) {
+  const model = new Model(modelArgs);
   const forks = new Map(); // event code -> forked model
   // when an unofficial event ends, offWeight x its rating changes carry over
   const lastOf = new Map();
   if (offWeight) matches.forEach((x, i) => unofficial.has(x.ev.type) && lastOf.set(x.ev.code, i));
+  return {
+    model,
+    // the model a match is played on
+    at(x) {
+      if (!unofficial.has(x.ev.type)) return model;
+      if (!forks.has(x.ev.code)) forks.set(x.ev.code, model.fork());
+      return forks.get(x.ev.code);
+    },
+    done(x, i) { if (lastOf.get(x.ev.code) === i) this.at(x).merge(offWeight); },
+  };
+}
+
+// The prediction track.
+export function simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, unofficial = UNOFFICIAL, offWeight = 0 }, onMatch) {
+  const track = makeTrack(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ }, { unofficial, offWeight });
   const acc = newAcc();
   for (const [i, x] of matches.entries()) {
-    let m = model;
-    if (unofficial.has(x.ev.type)) {
-      if (!forks.has(x.ev.code)) forks.set(x.ev.code, model.fork());
-      m = forks.get(x.ev.code);
-    }
+    const m = track.at(x);
     const before = onMatch ? new Map([...x.red, ...x.blue].map((t) => [t, m.epa(t)])) : null;
     const avgBefore = onMatch ? { ...m.avg, rp: [...m.avg.rp], solo: [...m.avg.solo], clipVar: { ...m.errVar }, cal: structuredClone(m.cal) } : null;
     const pre = m.update(x.red, x.blue, x.actual, x.elim, x.ev.code);
     score(acc, x, pre);
     onMatch?.(x, pre, m, before, avgBefore);
-    if (lastOf.get(x.ev.code) === i) m.merge(offWeight);
+    track.done(x, i);
   }
-  return { model, acc };
+  return { model: track.model, acc };
+}
+
+// The EPA (display) track: one Model per component, each with its own settings
+// (components with identical settings share one run). Ratings only; nothing
+// here feeds win probabilities.
+//   ctx: prepare()'s output (uses baseline, soloComps, movedSpec, parkedSpec, epaPriors)
+//   epa: full EPA params (epaParams(...)); comps: components to run
+//   offWeight: overrides every component's off-season weight (the "include off-season" table)
+//   epaPriors: overrides ctx.epaPriors (e.g. loaded with other prior settings)
+//   onBefore(x, view, i) / onMatch(x, view, i): around each match; view.epa(team) reads
+//     the ratings the match is played on (an off-season event's fork, or the main ones)
+// Returns { rate(team), epa: view over the main models, groups }.
+export function simulateEpa(matches, ctx, { epa = epaParams(), comps = COMPONENTS, offWeight, epaPriors, onBefore, onMatch } = {}) {
+  const { priors, cv, rookieZ } = epaPriors ?? ctx.epaPriors;
+  const { baseline, soloComps, movedSpec, parkedSpec } = ctx;
+  const groups = new Map(), groupOf = {};
+  for (const c of comps) {
+    const s = epaComponent(epa, c);
+    if (offWeight != null) s.offWeight = offWeight;
+    const key = JSON.stringify(s);
+    if (!groups.has(key)) {
+      const track = makeTrack(matches, { params: s.model, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ },
+        { unofficial: new Set(s.offTypes), offWeight: s.offWeight });
+      groups.set(key, { track, comps: [] });
+    }
+    groups.get(key).comps.push(c);
+    groupOf[c] = groups.get(key);
+  }
+  const gs = [...groups.values()];
+  // ratings as of now, on the models match x is played on (main models when x is null)
+  const view = (x) => {
+    const ms = new Map(gs.map((g) => [g, x ? g.track.at(x) : g.track.model]));
+    return {
+      epa(t) {
+        const out = { n: ms.get(gs[0]).team(t).n, np: 0 };
+        for (const c of comps) {
+          const v = ms.get(groupOf[c]).epa(t)[c];
+          out[c] = v; out.np += v;
+        }
+        return out;
+      },
+    };
+  };
+  for (const [i, x] of matches.entries()) {
+    if (onBefore) onBefore(x, view(x), i);
+    for (const g of gs) g.track.at(x).update(x.red, x.blue, x.actual, x.elim, x.ev.code);
+    if (onMatch) onMatch(x, view(x), i);
+    for (const g of gs) g.track.done(x, i);
+  }
+  const main = view(null);
+  return { rate: (t) => main.epa(t), epa: main, groups: gs };
 }
 
 function newAcc() {
@@ -257,12 +331,28 @@ async function writeJson(file, data) {
   await fs.writeFile(file, JSON.stringify(data));
 }
 
-export async function build(season, params = {}) {
+// params: prediction-track overrides; epaOver: EPA-track overrides ({ shared, auto, teleop, endgame }).
+export async function build(season, params = {}, epaOver = {}) {
   const cfg = SEASONS[season];
   const hasRp = cfg.rpNames.length > 0;
   const events = await loadSeason(season);
   const ctx = await prepare(season, events);
   const { matches, baseline, priors, cv, soloComps, movedSpec, parkedSpec, fits, rookieZ } = ctx;
+  const epa = epaParams(epaOver);
+  const ctxEpa = { ...ctx, epaPriors: await loadEpaPriors(season, epa) };
+
+  // ---- EPA track (what the team lists show): each team's EPA after every match,
+  // and entering every event ----
+  const epaVec = (e) => [r1(e.np), r1(e.auto), r1(e.teleop), r1(e.endgame)];
+  const epaAfter = new Map(); // match -> Map(team -> [np, auto, teleop, endgame])
+  const epaStart = new Map(); // `${code}:${team}` -> np entering the event
+  const epaTrack = simulateEpa(matches, ctxEpa, {
+    epa,
+    onBefore: (x, v) => {
+      for (const t of [...x.red, ...x.blue]) if (!epaStart.has(`${x.ev.code}:${t}`)) epaStart.set(`${x.ev.code}:${t}`, v.epa(t).np);
+    },
+    onMatch: (x, v) => epaAfter.set(x, new Map([...x.red, ...x.blue].map((t) => [t, epaVec(v.epa(t))]))),
+  });
 
   const history = new Map(); // team -> [entries]
   const eventStart = new Map(); // `${code}:${team}` -> epa before first match there
@@ -277,7 +367,6 @@ export async function build(season, params = {}) {
       for (const t of mine) {
         const key = `${x.ev.code}:${t}`;
         if (!eventStart.has(key)) eventStart.set(key, before.get(t));
-        const e = model.epa(t);
         if (!history.has(t)) history.set(t, []);
         history.get(t).push({
           ev: x.ev.code, m: x.m.description, elim: x.elim, time: x.time, ...(UNOFFICIAL.has(x.ev.type) ? { off: 1 } : {}),
@@ -287,7 +376,7 @@ export async function build(season, params = {}) {
           // bonus RPs: [predicted chance >50%, earned] per RP, for the dot display
           rp: x.elim || !hasRp ? null : pre[side].rp.map((p, i) => (p > 0.5 ? 1 : 0) + (x.actual[side].rp[i] ? 2 : 0)),
           orp: x.elim || !hasRp ? null : pre[side === "red" ? "blue" : "red"].rp.map((p, i) => (p > 0.5 ? 1 : 0) + (x.actual[side === "red" ? "blue" : "red"].rp[i] ? 2 : 0)),
-          epa: [r1(e.np), r1(e.auto), r1(e.teleop), r1(e.endgame)],
+          epa: epaAfter.get(x).get(t), // EPA track (pWin / pred above are the prediction track)
         });
       }
     }
@@ -343,14 +432,20 @@ export async function build(season, params = {}) {
   }
 
   // ---- teams.json: compact table of every team that played ----
-  // Official ratings: off-season matches don't count (see UNOFFICIAL).
+  // Ranked by the EPA track (e); p is the prediction track, kept for priors and the
+  // home page's predicted dream match. Official ratings: off-season matches don't
+  // count unless the EPA params say so (see UNOFFICIAL, EPA shared.offWeight).
+  const byRating = (k, split) => (a, b) => (split ? (b[k].n > 0) - (a[k].n > 0) : 0) || b[k].np - a[k].np;
   const ranked = [...history.keys()].filter((t) => !isPlaceholder(t))
-    .map((t) => ({ t, e: model.epa(t), h: history.get(t) }))
+    .map((t) => ({ t, e: epaTrack.rate(t), p: model.epa(t), h: history.get(t) }))
     // teams with only off-season matches have no official rating yet: list them last
-    .sort((a, b) => (b.e.n > 0) - (a.e.n > 0) || b.e.np - a.e.np);
+    .sort(byRating("e", true));
+  // np/auto/teleop/endgame: EPA track. pnp..pendgame, rp0-2: prediction track;
+  // prank: order by prediction rating (ties in the rounded pnp keep it, for priors)
   const cols = ["team", "name", "loc", "country", "np", "auto", "teleop", "endgame", "rp0", "rp1", "rp2",
-    "matches", "wins", "losses", "ties", "events", "trend"];
-  const tableRows = (list, official) => list.map(({ t, e, h }) => {
+    "matches", "wins", "losses", "ties", "events", "trend", "pnp", "pauto", "pteleop", "pendgame", "prank"];
+  const predRank = (list, split) => new Map([...list].sort(byRating("p", split)).map((x, i) => [x.t, i]));
+  const tableRows = (list, official, prank) => list.map(({ t, e, p, h }) => {
     const hh = official ? h.filter((x) => !x.off) : h;
     let w = 0, l = 0, ti = 0;
     for (const x of hh) x.score > x.oppScore ? w++ : x.score < x.oppScore ? l++ : ti++;
@@ -359,38 +454,43 @@ export async function build(season, params = {}) {
     // EPA change over the last 10 matches
     const prev = hh.length > 10 ? hh[hh.length - 11].epa[0] : hh.length ? hh[0].epa[0] : e.np;
     return [t, i.name ?? "", i.loc ?? "", i.country ?? "", r1(e.np), r1(e.auto), r1(e.teleop), r1(e.endgame),
-      ...e.rp.map(r3), hh.length, w, l, ti, evs, r1(e.np - prev)];
+      ...p.rp.map(r3), hh.length, w, l, ti, evs, r1(e.np - prev),
+      r1(p.np), r1(p.auto), r1(p.teleop), r1(p.endgame), prank.get(t)];
   });
-  const rows = tableRows(ranked, true);
+  const rows = tableRows(ranked, true, predRank(ranked, true));
   await writeJson(path.join(out, "teams.json"), { cols, rows });
 
   // teams-all.json: the same table with off-season results counted at OFF_WEIGHT,
   // for the site's "Include off-season matches" switch. Only written when there are any.
   if (matches.some((x) => UNOFFICIAL.has(x.ev.type))) {
     const allHist = new Map();
-    const { model: allModel } = simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, offWeight: OFF_WEIGHT }, (x, pre, m) => {
-      for (const side of ["red", "blue"]) for (const t of x[side]) {
-        if (!allHist.has(t)) allHist.set(t, []);
-        allHist.get(t).push({ ev: x.ev.code, score: x.actual[side].total, oppScore: x.actual[side === "red" ? "blue" : "red"].total, epa: [r1(m.epa(t).np)] });
-      }
+    const { model: allModel } = simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, offWeight: OFF_WEIGHT });
+    const allEpa = simulateEpa(matches, ctxEpa, {
+      epa, offWeight: OFF_WEIGHT,
+      onMatch: (x, v) => {
+        for (const side of ["red", "blue"]) for (const t of x[side]) {
+          if (!allHist.has(t)) allHist.set(t, []);
+          allHist.get(t).push({ ev: x.ev.code, score: x.actual[side].total, oppScore: x.actual[side === "red" ? "blue" : "red"].total, epa: [r1(v.epa(t).np)] });
+        }
+      },
     });
     const rankedAll = [...allHist.keys()].filter((t) => !isPlaceholder(t))
-      .map((t) => ({ t, e: allModel.epa(t), h: allHist.get(t) }))
-      .sort((a, b) => b.e.np - a.e.np);
-    await writeJson(path.join(out, "teams-all.json"), { cols, rows: tableRows(rankedAll, false) });
+      .map((t) => ({ t, e: allEpa.rate(t), p: allModel.epa(t), h: allHist.get(t) }))
+      .sort(byRating("e", false));
+    await writeJson(path.join(out, "teams-all.json"), { cols, rows: tableRows(rankedAll, false, predRank(rankedAll, false)) });
   }
 
   // ---- per-team files, bundled 100 teams to a file (team/<number / 100>.json) ----
   const rankOf = new Map(ranked.map((x, i) => [x.t, i + 1]));
   const buckets = new Map();
-  for (const { t, e, h } of ranked) {
+  for (const { t, e, p, h } of ranked) {
     const evs = (teamEvents.get(t) ?? []).map(({ ev, stats }) => {
       const mine = h.filter((x) => x.ev === ev.code);
-      const startEpa = eventStart.get(`${ev.code}:${t}`);
+      const startEpa = epaStart.get(`${ev.code}:${t}`);
       return {
         code: ev.code, name: ev.name, type: ev.type, start: ev.start,
         rank: stats?.rank ?? null, wins: stats?.wins ?? null, losses: stats?.losses ?? null, ties: stats?.ties ?? null,
-        epaStart: startEpa ? r1(startEpa.np) : null,
+        epaStart: startEpa != null ? r1(startEpa) : null,
         epaEnd: mine.length ? mine[mine.length - 1].epa[0] : null,
       };
     });
@@ -398,7 +498,8 @@ export async function build(season, params = {}) {
     if (!buckets.has(bucket)) buckets.set(bucket, {});
     buckets.get(bucket)[t] = {
       team: t, ...(info.get(t) ?? {}), rank: rankOf.get(t), of: ranked.length,
-      epa: epaRow(e), matches: h, events: evs,
+      // epa: EPA track (bonus-RP chances from the prediction track); pred: prediction track
+      epa: { ...epaRow({ ...e, rp: p.rp }) }, pred: epaRow(p), matches: h, events: evs,
     };
   }
   for (const [bucket, teams] of buckets) await writeJson(path.join(out, "team", `${bucket}.json`), teams);
@@ -411,24 +512,25 @@ export async function build(season, params = {}) {
     const inMatches = new Set(ev.matches.flatMap((m) => m.teams.map((t) => t.teamNumber)));
     const roster = inMatches.size ? ev.teams.filter((tp) => inMatches.has(tp.teamNumber)) : ev.teams;
     const teams = roster.filter((tp) => !isPlaceholder(tp.teamNumber)).map((tp) => {
-      const e = history.has(tp.teamNumber) ? model.epa(tp.teamNumber) : null;
-      // rating entering the event; for teams that haven't played here yet, their current rating
+      const e = history.has(tp.teamNumber) ? epaTrack.rate(tp.teamNumber) : null;
+      // prediction rating entering the event; for teams that haven't played here yet, their current rating
       // teams yet to play this season get their starting rating from past seasons
       const start = eventStart.get(`${ev.code}:${tp.teamNumber}`) ?? model.epa(tp.teamNumber);
+      const eStart = epaStart.get(`${ev.code}:${tp.teamNumber}`) ?? epaTrack.rate(tp.teamNumber).np;
       const h = history.get(tp.teamNumber)?.filter((x) => x.ev === ev.code) ?? [];
       return {
         team: tp.teamNumber, name: tp.team?.name ?? "",
         rank: tp.stats?.rank ?? null, rp: tp.stats?.rp ?? null,
         wins: tp.stats?.wins ?? null, losses: tp.stats?.losses ?? null, ties: tp.stats?.ties ?? null,
-        epaStart: start ? r1(start.np) : null,
-        // full model state entering the event, so the site can replay it live
+        epaStart: r1(eStart), // EPA track
+        // full prediction-model state entering the event, so the site can replay it live
         state: start ? {
           auto: r1(start.shared.auto), teleop: r1(start.shared.teleop), endgame: r1(start.shared.endgame),
           solo: start.solo.map(r1), n: start.n, v: r3(start.v), rp: start.rp.map(r3), ev: start.ev ?? null,
           evStart: start.evStart ? Object.fromEntries(Object.entries(start.evStart).map(([k, v]) => [k, r1(v)])) : null,
         } : null,
         epaEnd: h.length ? h[h.length - 1].epa[0] : null,
-        epaNow: e ? epaRow(e) : null,
+        epaNow: e ? { np: r1(e.np), auto: r1(e.auto), teleop: r1(e.teleop), endgame: r1(e.endgame) } : null,
       };
     });
     const read = cfg.read;
@@ -514,7 +616,9 @@ export async function build(season, params = {}) {
       solo: model.avg.solo.map(r1),
       np: r1(model.avgAllianceNp()), rp: model.avg.rp.map(r3),
     },
+    // prediction track (live replay builds its model from this)
     model: { ...model.p, baseline: { ...baseline, rp: baseline.rp.map(r3) }, cv: r3(cv), priors: priors.size },
+    epaModel: { ...epa, priors: ctxEpa.epaPriors.priors.size }, // EPA (display) track
     // per-robot scoring elements and their learned point values
     solo: fits.map((f) => ({ comp: f.comp, label: f.label, moved: f.moved, parked: f.parked, robots: f.robots, values: f.values, exact: r3(f.exact) })),
   };
@@ -524,8 +628,10 @@ export async function build(season, params = {}) {
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const seasons = process.argv.slice(2).map(Number);
+  // EPA_PARAMS=file.json: EPA-track overrides ({ shared, auto, teleop, endgame }) for a trial build
+  const epaOver = process.env.EPA_PARAMS ? JSON.parse(await fs.readFile(process.env.EPA_PARAMS, "utf8")) : {};
   for (const s of seasons.length ? seasons : [2025, 2026]) {
-    const meta = await build(s);
+    const meta = await build(s, {}, epaOver);
     console.log(s, `${meta.teams} teams, ${meta.events} events, ${meta.matches} matches`);
     console.log(JSON.stringify(meta.accuracy, null, 1));
   }
