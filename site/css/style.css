@@ -447,3 +447,18 @@ footer a { text-decoration: underline; }
   .meter { grid-template-columns: 84px 1fr 44px; }
   .tile { min-width: 0; flex: 1 1 40%; }
 }
+
+/* home: the two side-by-side lists end level, with their "All …" links at the bottom */
+.hero-below .grid.cols-2 > div { display: flex; flex-direction: column; }
+.hero-below .grid.cols-2 > div > .card { flex: 1; display: flex; flex-direction: column; }
+.hero-below .grid.cols-2 .more { margin-top: auto; }
+
+/* compact filter dropdowns, matching the season picker */
+.toolbar select, .card-pad select, .row select {
+  appearance: none; cursor: pointer; font-size: 13.5px; font-weight: 500;
+  padding: 7px 28px 7px 10px; border: 1px solid var(--line); border-radius: 6px; max-width: 220px;
+  background: var(--surface) linear-gradient(45deg, transparent 50%, var(--muted) 50%) calc(100% - 14px) 52% / 4px 4px no-repeat,
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%) calc(100% - 10px) 52% / 4px 4px no-repeat;
+}
+.toolbar input { padding: 7px 12px; font-size: 14px; border: 1px solid var(--line); }
+.toolbar select:focus, .toolbar input:focus, .season-select:focus { outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 1px; }
