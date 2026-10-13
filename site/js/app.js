@@ -31,7 +31,7 @@ async function route() {
   window.scrollTo(0, 0);
   app.innerHTML = `<div class="loading">Loading…</div>`;
   try {
-    const pages = { "": home, teams, team, events, event, rankings, predict, about };
+    const pages = { "": home, teams, team, events, event, rankings, predict, stats, about };
     const fn = pages[r.page] ?? notFound;
     await fn(r);
   } catch (e) {
@@ -685,6 +685,50 @@ async function predict(r) {
   };
   $$(".predictor input").forEach((el) => (el.oninput = run));
   run();
+}
+
+// ---------------- season stats ----------------
+
+async function stats(r) {
+  const { season } = r;
+  const [meta, st] = await Promise.all([data.meta(season), data.stats(season).catch(() => null)]);
+  if (stale(r)) return;
+  if (!st) { app.innerHTML = `<div class="card empty">No stats for this season yet.</div>`; return; }
+  const ev = (x) => `<a href="#/${season}/event/${encodeURIComponent(x.ev)}" class="small muted">${esc(x.evName)} · ${esc(x.d)}</a>`;
+  const tl = (nums, side) => `<span class="alliance">${nums.map((n) => `<a class="tn ${side}" href="#/${season}/team/${n}">${n}</a>`).join(" ")}</span>`;
+  const score = (x) => `<span class="final"><span class="${x.rs > x.bs ? "w" : "l"}">${x.rs}</span><span class="faint">–</span><span class="${x.bs > x.rs ? "w" : "l"}">${x.bs}</span></span>`;
+  const chance = (p) => (p < 0.001 ? "under 0.1%" : pct(p, p < 0.1 ? 1 : 0));
+  const card = (eyebrow, title, note, body) => `<div class="card stat-card">
+    <div class="card-head"><div><div class="eyebrow">${eyebrow}</div><h2 style="margin-top:4px">${title}</h2>${note ? `<div class="small muted" style="margin-top:2px">${note}</div>` : ""}</div></div>
+    <div class="table-wrap"><table><tbody>${body}</tbody></table></div></div>`;
+  const teamList = (rows, val) => rows.map((t, i) => `<tr><td class="faint num" style="width:28px">${i + 1}</td><td>${teamCell(season, t.team, t.name)}</td><td class="r">${val(t)}</td></tr>`).join("");
+  const matchRows = (rows, val) => rows.map((x) => `<tr><td>${ev(x)}<div>${tl(x.red, "red")} <span class="faint">vs</span> ${tl(x.blue, "blue")}</div></td><td class="r">${val(x)}</td></tr>`).join("");
+  const sideRows = (rows) => rows.map((x) => `<tr><td>${ev(x)}<div>${tl(x.teams, x.side)}</div></td><td class="r"><b>${x.value}</b></td></tr>`).join("");
+  const evRows = (rows) => rows.map((e) => `<tr><td>${evCell(season, e.code, e.name, `${e.played} matches`)}</td><td class="r"><b>${pct(e.accuracy)}</b></td></tr>`).join("");
+
+  app.innerHTML = `
+    <div class="card card-pad">
+      <div class="eyebrow">${seasonLabel(season, meta.game)}</div>
+      <h1 style="margin-top:8px">Season stats</h1>
+      <p class="muted" style="margin:8px 0 0;max-width:760px">Records, leaders and surprises from ${fmtInt(meta.matches)} matches. Scores here leave out penalty points, so records are what alliances actually scored.</p>
+    </div>
+    <div class="grid cols-2 section stats-grid">
+      ${card("Upsets", "Biggest upsets", "the winner's chance before the match", matchRows(st.upsets, (x) => `${score(x)}<div class="small"><b>${chance(x.pWin)}</b></div>`))}
+      ${card("Records", "Highest alliance scores", "without penalty points", sideRows(st.highest.np))}
+      ${card("Records", "Highest auto scores", "", sideRows(st.highest.auto))}
+      ${card("Records", "Biggest blowouts", "winning margin without penalties", matchRows(st.blowouts, (x) => `${score(x)}<div class="small"><b>+${x.margin}</b></div>`))}
+      ${card("Playoffs", "Closest playoff matches", "", matchRows(st.closest, score))}
+      ${card("Leaders", "Best auto", "auto EPA", teamList(st.leaders.auto, (t) => epa(t.value, meta)))}
+      ${card("Leaders", "Best teleop", "teleop EPA", teamList(st.leaders.teleop, (t) => epa(t.value, meta)))}
+      ${card("Leaders", "Best endgame", "endgame EPA", teamList(st.leaders.endgame, (t) => epa(t.value, meta)))}
+      ${card("Improvement", "Biggest improvers", "EPA after their 3rd match → now", teamList(st.risers, (t) => `${fmt(t.from)} → <b>${fmt(t.to)}</b>`))}
+      ${card("Records", "Best records", "20+ matches, all match types", teamList(st.records, (t) => `<b>${t.wins}-${t.losses}${t.ties ? `-${t.ties}` : ""}</b> <span class="faint">${pct(t.pct)}</span>`))}
+      ${card("Luck or clutch?", "Won more than expected", "actual wins vs the sum of their pre-match win chances", teamList(st.over, (t) => `<b class="trend-up">+${fmt(t.diff)}</b> <span class="faint small">${t.wins} vs ${fmt(t.expected)}</span>`))}
+      ${card("Luck or clutch?", "Won fewer than expected", "", teamList(st.under, (t) => `<b class="trend-down">${fmt(t.diff)}</b> <span class="faint small">${t.wins} vs ${fmt(t.expected)}</span>`))}
+      ${card("Regions", "Strongest countries", "median EPA, countries with 15+ active teams", st.countries.map((c, i) => `<tr><td class="faint num" style="width:28px">${i + 1}</td><td><b>${esc(c.country)}</b> <span class="small muted">${c.teams} teams</span></td><td class="r">${epa(c.median, meta)}</td></tr>`).join(""))}
+      ${card("Events", "Most unpredictable events", "share of winners called, 30+ matches", evRows(st.events.unpredictable))}
+      ${card("Events", "Most predictable events", "", evRows(st.events.predictable))}
+    </div>`;
 }
 
 // ---------------- about / accuracy ----------------

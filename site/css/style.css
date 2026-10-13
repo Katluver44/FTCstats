@@ -468,3 +468,11 @@ footer a { text-decoration: underline; }
 .card-pad table td:last-child, .card-pad table th:last-child { padding-right: 0; }
 .prose ul { padding-left: 20px; margin: 8px 0 0; }
 .prose li { margin: 6px 0; }
+
+/* season stats: a grid of leaderboard cards with gaps between them */
+.stats-grid { gap: 14px; padding: 0 16px; }
+.stats-grid .card { border: 1px solid var(--line); border-radius: 8px; }
+.stats-grid .card td:first-child, .stats-grid .card th:first-child { padding-left: 18px; }
+.stats-grid .card td:last-child, .stats-grid .card th:last-child { padding-right: 18px; }
+.stats-grid .card-head { padding-left: 18px !important; padding-right: 18px !important; }
+.alliance .tn { min-width: 0; margin-right: 6px; }

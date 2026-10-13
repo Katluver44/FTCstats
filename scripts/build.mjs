@@ -452,6 +452,9 @@ export async function build(season, params = {}) {
     strongest: [...evList].filter((e) => e.teams >= 10).sort((a, b) => b.strength - a.strength).slice(0, 8),
   });
 
+  // ---- season stats page ----
+  await writeJson(path.join(out, "stats.json"), seasonStats({ matches, predByMatch, ranked, info, evList, cfg }));
+
   // ---- season meta ----
   const nps = rows.map((r) => r[4]);
   const pct = (p) => nps[Math.floor((1 - p) * (nps.length - 1))];
@@ -484,4 +487,79 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const all = await fs.readdir(path.join("site", "data")).catch(() => []);
   await writeJson(path.join("site", "data", "seasons.json"),
     all.filter((d) => /^\d{4}$/.test(d)).map(Number).sort((a, b) => b - a));
+}
+
+// Records and leaderboards for the Season Stats page.
+function seasonStats({ matches, predByMatch, ranked, info, evList, cfg }) {
+  const evName = new Map(evList.map((e) => [e.code, e.name]));
+  const m = matches.map((x) => {
+    const pre = predByMatch.get(`${x.ev.code}:${x.m.id}`);
+    const r = x.actual.red, b = x.actual.blue;
+    return {
+      ev: x.ev.code, d: x.m.description, elim: x.elim, red: x.red, blue: x.blue,
+      rs: r.total, bs: b.total, rnp: r.np, bnp: b.np, ra: r.auto, ba: b.auto, pRed: pre ? r3(pre.pRed) : null,
+    };
+  });
+  const top = (arr, key, n = 10) => [...arr].sort((a, b) => key(b) - key(a)).slice(0, n);
+  const slim = (x) => ({ ev: x.ev, evName: evName.get(x.ev) ?? x.ev, d: x.d, red: x.red, blue: x.blue, rs: x.rs, bs: x.bs, pRed: x.pRed });
+
+  // the winner's pre-match chance, for upsets
+  const decided = m.filter((x) => x.rs !== x.bs && x.pRed != null);
+  const winnerP = (x) => (x.rs > x.bs ? x.pRed : 1 - x.pRed);
+  const upsets = top(decided, (x) => -winnerP(x)).map((x) => ({ ...slim(x), pWin: r3(winnerP(x)) }));
+
+  // best single-alliance performances
+  const sides = m.flatMap((x) => [
+    { x, teams: x.red, total: x.rs, np: x.rnp, auto: x.ra, side: "red" },
+    { x, teams: x.blue, total: x.bs, np: x.bnp, auto: x.ba, side: "blue" },
+  ]);
+  const perf = (k) => top(sides, (s) => s[k]).map((s) => ({ ...slim(s.x), side: s.side, teams: s.teams, value: s[k] }));
+  const blowouts = top(m, (x) => Math.abs(x.rnp - x.bnp)).map((x) => ({ ...slim(x), margin: Math.abs(x.rnp - x.bnp) }));
+  const closest = m.filter((x) => x.elim && x.rs !== x.bs && x.rs + x.bs > 0)
+    .sort((a, b) => Math.abs(a.rs - b.rs) - Math.abs(b.rs - b.bs) || (b.rs + b.bs) - (a.rs + a.bs))
+    .sort((a, b) => Math.abs(a.rs - a.bs) - Math.abs(b.rs - b.bs)).slice(0, 10).map(slim);
+
+  // team leaderboards
+  const teamRow = ({ t, e }) => ({ team: t, name: info.get(t)?.name ?? "", loc: info.get(t)?.loc ?? "" });
+  const leaders = Object.fromEntries(["auto", "teleop", "endgame"].map((c) =>
+    [c, top(ranked, (r) => r.e[c]).map((r) => ({ ...teamRow(r), value: r1(r.e[c]) }))]));
+  const enough = ranked.filter((r) => r.h.length >= 20);
+  const risers = top(ranked.filter((r) => r.h.length >= 15), (r) => r.h[r.h.length - 1].epa[0] - r.h[2].epa[0])
+    .map((r) => ({ ...teamRow(r), from: r.h[2].epa[0], to: r.h[r.h.length - 1].epa[0] }));
+  const vsExpected = enough.map((r) => {
+    const w = r.h.filter((x) => x.score > x.oppScore).length;
+    const exp = r.h.reduce((a, x) => a + x.pWin, 0);
+    return { ...teamRow(r), wins: w, expected: r1(exp), matches: r.h.length, diff: r1(w - exp) };
+  });
+  const records = top(enough.map((r) => {
+    const w = r.h.filter((x) => x.score > x.oppScore).length, l = r.h.filter((x) => x.score < x.oppScore).length;
+    return { ...teamRow(r), wins: w, losses: l, ties: r.h.length - w - l, pct: r3(w / r.h.length) };
+  }), (r) => r.pct + r.wins / 1e4);
+
+  // countries: median EPA of teams with a real season
+  const byCountry = new Map();
+  for (const r of ranked.filter((r) => r.h.length >= 8)) {
+    const c = info.get(r.t)?.country;
+    if (!c) continue;
+    if (!byCountry.has(c)) byCountry.set(c, []);
+    byCountry.get(c).push(r.e.np);
+  }
+  const countries = [...byCountry].filter(([, v]) => v.length >= 15).map(([country, v]) => {
+    const s = [...v].sort((a, b) => a - b);
+    return { country, teams: v.length, median: r1(s[Math.floor(s.length / 2)]), best: r1(s[s.length - 1]) };
+  }).sort((a, b) => b.median - a.median).slice(0, 12);
+
+  const evAcc = evList.filter((e) => e.accuracy != null && e.played >= 30 && e.teams >= 12);
+  const events = {
+    unpredictable: [...evAcc].sort((a, b) => a.accuracy - b.accuracy).slice(0, 8).map((e) => ({ code: e.code, name: e.name, accuracy: e.accuracy, played: e.played })),
+    predictable: [...evAcc].sort((a, b) => b.accuracy - a.accuracy).slice(0, 8).map((e) => ({ code: e.code, name: e.name, accuracy: e.accuracy, played: e.played })),
+  };
+
+  return {
+    // scores without penalties: a few "records" are hundreds of foul points
+    upsets, highest: { np: perf("np"), auto: perf("auto") }, blowouts, closest,
+    leaders, risers, records,
+    over: top(vsExpected, (r) => r.diff), under: top(vsExpected, (r) => -r.diff),
+    countries, events,
+  };
 }

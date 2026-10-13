@@ -34,8 +34,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .cache
-          key: ftc-cache-${{ steps.day.outputs.day }}
-          restore-keys: ftc-cache-
+          key: ftc-cache-v2-${{ steps.day.outputs.day }}
+          restore-keys: ftc-cache-v2-
       - run: npm run update
       - run: npm run check
       - uses: actions/upload-pages-artifact@v3

@@ -7,6 +7,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { createHash } from "node:crypto";
 import { SEASONS, eventQuery } from "../site/js/seasons.js";
 
 const API = "https://api.ftcscout.org/graphql";
@@ -67,18 +68,21 @@ export async function fetchSeason(season) {
   if (withTeams.length) console.log(`  + ${withTeams.length} upcoming events with team lists`);
   eventsSearch.push(...withTeams);
 
+  // Cached files remember which query produced them; when the fields we ask
+  // for change, everything is refetched so no file is missing new fields.
+  const q = eventQuery(season);
+  const qHash = createHash("sha1").update(q).digest("hex").slice(0, 10);
   const todo = [];
   for (const ev of eventsSearch) {
     const file = path.join(dir, `${ev.code}.json`);
     const cached = await fs.readFile(file, "utf8").then(JSON.parse).catch(() => null);
-    if (!cached || !cached.finished) todo.push(ev.code);
+    if (!cached || !cached.finished || cached._q !== qHash) todo.push(ev.code);
   }
   console.log(`  fetching ${todo.length} (rest cached)`);
 
-  const q = eventQuery(season);
   await pool(todo, CONCURRENCY, async (code) => {
     const { eventByCode } = await gql(q, { season, code });
-    if (eventByCode) await fs.writeFile(path.join(dir, `${code}.json`), JSON.stringify(eventByCode));
+    if (eventByCode) await fs.writeFile(path.join(dir, `${code}.json`), JSON.stringify({ ...eventByCode, _q: qHash }));
   });
 }
 
