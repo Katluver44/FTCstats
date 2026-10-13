@@ -95,7 +95,7 @@ export async function findStreams(season) {
           const usBlocked = (region.blocked ?? []).includes("US") || (region.allowed ? !region.allowed.includes("US") : false);
           cache.videos[v.id] = { checked: true, channel: id, title: v.snippet.title,
             start: live.actualStartTime ? Date.parse(live.actualStartTime) : null, end: live.actualEndTime ? Date.parse(live.actualEndTime) : null,
-            ok: v.status.embeddable !== false && !usBlocked };
+            ok: !usBlocked }; // embedding off is fine: the site opens those on YouTube
         }
       }
       ch.scanned = Date.now();

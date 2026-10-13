@@ -164,15 +164,17 @@ export async function buildVideos(season) {
   const allIds = Object.values(events).flatMap((e) => [...e.streams, ...e.uploads.map((u) => u.id)]);
   const yt = await youtubeDetails(allIds, path.join(".cache", "videos", `${season}.json`));
 
-  // keep only recordings we can place matches in (start and end known, embeddable)
+  // keep recordings we can place matches in (start and end known); ones whose owner
+  // turned off embedding are kept with ext: 1 and open on YouTube instead
   const result = {};
   for (const [code, e] of Object.entries(events)) {
     const streams = [...e.streams]
       .map((id) => ({ id, ...yt[id] }))
-      .filter((v) => v.start && v.embeddable && !v.missing && !v.usBlocked)
+      .filter((v) => v.start && !v.missing && !v.usBlocked)
       .map((v) => ({ ...v, start: v.start + (offsets[v.id] ?? 0) * 1000 }))
-      .map((v) => ({ id: v.id, start: v.start, end: Math.min(v.end ?? Infinity, v.start + Math.min(v.seconds ?? 43200, 43200) * 1000), title: v.title }));
-    const uploads = e.uploads.filter((u) => yt[u.id] && !yt[u.id].missing && yt[u.id].embeddable && !yt[u.id].usBlocked);
+      .map((v) => ({ id: v.id, start: v.start, end: Math.min(v.end ?? Infinity, v.start + Math.min(v.seconds ?? 43200, 43200) * 1000), title: v.title, ...(v.embeddable ? {} : { ext: 1 }) }));
+    const uploads = e.uploads.filter((u) => yt[u.id] && !yt[u.id].missing && !yt[u.id].usBlocked)
+      .map((u) => (yt[u.id].embeddable ? u : { ...u, ext: 1 }));
     if (streams.length || uploads.length) result[code] = { streams, uploads };
   }
   await fs.mkdir(path.dirname(out), { recursive: true });

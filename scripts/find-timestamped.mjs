@@ -131,7 +131,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href && seasons.len
             const stamps = parseTimestamps(v.snippet.description);
             const region = v.contentDetails?.regionRestriction ?? {};
             const usBlocked = (region.blocked ?? []).includes("US") || (region.allowed ? !region.allowed.includes("US") : false);
-            const code = stamps.length && v.status.embeddable !== false && !usBlocked ? await matchEvent(season, stamps) : null;
+            const code = stamps.length && !usBlocked ? await matchEvent(season, stamps) : null;
             const rec = { title: v.snippet.title, stamps: Object.fromEntries(stamps.map((s) => [s.d, s.at])) };
             cache[v.id] = code ? { code, ...rec } : stamps.length ? { none: true, ...rec } : { none: true };
             if (code) console.log(`  ${season} ${code} <= ${v.id} ${v.snippet.title} (${stamps.length} timestamps)`);

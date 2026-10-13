@@ -38,8 +38,9 @@ for (const season of seasons) {
         const fr = await frames(id).catch(() => null);
         if (!fr) { cache[id] = { error: "no storyboard" }; continue; }
         const len = fr.count * fr.interval;
-        // first match sits somewhere in the video: shift o puts it at -o, so o in [-len, 0]
-        cache[id] = { ...(await calibrate(fr, pos, 0, { lo: -Math.round(len), hi: 600 })), len: Math.round(len) };
+        // match j sits at pos[j] - o in the video. A full recording starts before the first
+        // match (o in [-len, 0]); a later part ("Part 4") starts mid-event (o up to the event's span)
+        cache[id] = { ...(await calibrate(fr, pos, 0, { lo: -Math.round(len), hi: Math.round(pos.at(-1)) + 600 })), len: Math.round(len) };
         await fs.mkdir(path.dirname(cacheFile), { recursive: true });
         await fs.writeFile(cacheFile, JSON.stringify(cache));
       }

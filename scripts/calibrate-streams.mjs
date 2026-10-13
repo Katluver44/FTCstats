@@ -160,13 +160,17 @@ export async function calibrate(fr, pos, gap = 0, range = null) {
     const r = peak(scan(fr, pos, lo, hi, L), lo);
     if (!all || r.score > all.score) { all = r; len = L; }
   }
-  const half = Math.floor(pos.length / 2);
-  const a = pos.length >= 10 ? peak(scan(fr, pos.slice(0, half), lo, hi, len), lo).o : null;
-  const b = pos.length >= 10 ? peak(scan(fr, pos.slice(half), lo, hi, len), lo).o : null;
-  const ok = pos.length >= 6 && all.lift > 0.5 && all.rival < 0.9 && // matches every ~7 min make near-rival peaks normal; the halves check is the real test
+  // both halves of the matches that land inside the video, refit near the best shift, must agree
+  // (matches outside a partial video would make a half-day fit meaningless)
+  const inVideo = pos.filter((p) => p - all.o >= 0 && p - all.o <= fr.count * fr.interval);
+  const half = Math.floor(inVideo.length / 2);
+  const near = { lo: all.o - 300, hi: all.o + 300 };
+  const a = inVideo.length >= 10 ? peak(scan(fr, inVideo.slice(0, half), near.lo, near.hi, len), near.lo).o : null;
+  const b = inVideo.length >= 10 ? peak(scan(fr, inVideo.slice(half), near.lo, near.hi, len), near.lo).o : null;
+  const ok = inVideo.length >= 6 && all.lift > 0.5 && all.rival < 0.9 && // matches every ~7 min make near-rival peaks normal; the halves check is the real test
     all.o > lo + 30 && all.o < hi - 30 &&
-    (a == null || (Math.abs(a - all.o) <= 60 && Math.abs(b - all.o) <= 60)) // streams drift a little over a day;
-  return { ...all, len, halves: [a, b], matches: pos.length, ok };
+    (a == null || (Math.abs(a - all.o) <= 60 && Math.abs(b - all.o) <= 60)); // streams drift a little over a day
+  return { ...all, len, halves: [a, b], matches: inVideo.length, ok };
 }
 
 // ---- driver ------------------------------------------------------------------
