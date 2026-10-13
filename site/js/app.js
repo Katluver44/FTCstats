@@ -1,6 +1,6 @@
 import {
   $, $$, esc, data, getJSON, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
-  trend, matchTable, mountLineChart, sortableTable, meter, winBar, videoFor, PLAY_ICON } from "./ui.js";
+  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, PLAY_ICON } from "./ui.js";
 import { SEASONS } from "./seasons.js";
 import { playoffs } from "./playoffs.js";
 import { initAnalytics, trackPage } from "./analytics.js";
@@ -367,7 +367,7 @@ async function team(r) {
   const { season, args } = r;
   const n = /^\d{1,6}$/.test(args[0] ?? "") ? +args[0] : null, view = args[1] ?? "matches";
   if (n == null) { app.innerHTML = `<div class="card empty">That isn't a team number.</div>`; return; }
-  // just the season summary and this team's file: ranks and meter scales are precomputed
+  // just the season summary and this team's file (ranks are precomputed); the radar fills in from the team list after
   const [meta, t, videos] = await Promise.all([data.meta(season), data.team(season, n).catch(() => null), data.videos(season)]);
   if (stale(r)) return;
   if (!t) {
@@ -391,32 +391,48 @@ async function team(r) {
     places.state ? tile(places.state[1], places.state[0], places.state[2]) : "",
   ].join("");
 
-  const mm = meta.meterMax ?? { np: e.np, auto: e.auto, teleop: e.teleop, endgame: e.endgame };
-  const max = (k) => mm[k];
-  const top = { np: mm.np };
 
+  // header: who they are and their EPA on top; then the radar, its numbers and the
+  // rank tiles side by side (plus photos when there are any); awards along the bottom
+  const awards = t.awards ?? [];
+  const plaques = awards.filter((a) => !isBanner(a)), banners = awards.filter(isBanner);
+  const fact = (b, k) => `<span class="th-fact"><b>${b}</b> ${k}</span>`;
   app.innerHTML = `
-    <div class="card card-pad"><div class="team-head"><div class="team-main">
-      <div class="page-head">
-        <div>
+    <div class="card card-pad team-hero">
+      <div class="th-top">
+        <div class="th-id">
           <h1><span class="team-num">${n}</span> ${esc(t.name)}</h1>
-          <div class="muted" style="margin-top:4px">${esc(t.loc)}${t.rookie ? ` · Rookie year ${t.rookie}` : ""}</div>
-          <div class="small muted" style="margin-top:2px">#${fmtInt(t.rank)} of ${fmtInt(t.of)} · ${w}-${l}${ti ? `-${ti}` : ""} · ${t.matches.length ? pct(w / t.matches.length) : "–"} win rate · predicted ${decided.length ? pct(correct / decided.length) : "–"} of its matches</div>
+          <div class="muted">${esc(t.loc)}${t.rookie ? ` · Rookie year ${t.rookie}` : ""}</div>
+          <div class="th-facts">
+            ${fact(`${w}-${l}${ti ? `-${ti}` : ""}`, "record")}
+            ${fact(t.matches.length ? pct(w / t.matches.length) : "–", "win rate")}
+            ${fact(decided.length ? pct(correct / decided.length) : "–", "of its matches predicted")}
+            ${addPhotoLink(n)}
+          </div>
+        </div>
+        <div class="th-epa">
+          <div class="label">EPA</div>
+          <b>${fmt(e.np)}</b>
+          <div class="label">points added per match</div>
         </div>
       </div>
-      <div class="meters section">
-        <div>
-          ${meter("EPA", e.np, top.np)}
-          ${meter("Auto", e.auto, max("auto"))}
-          ${meter("Teleop", e.teleop, max("teleop"))}
-          ${meter("Endgame", e.endgame, max("endgame"))}
+      <div class="th-body">
+        <div class="radar-box" id="radar"></div>
+        <div class="th-col">
+          <div class="th-h">Compared with this season's teams (5+ matches)</div>
+          <table class="radar-list"><tbody id="radar-list"></tbody></table>
         </div>
-        <div>
-          ${meta.rpNames.map((r, i) => meter(`${r} RP`, Math.max(0, e.rp[i]), 1, fmt(Math.max(0, e.rp[i]), 2).replace(/^0/, ""))).join("")}
+        <div class="th-col">
+          <div class="th-h">Rank by EPA</div>
+          <div class="th-ranks">${tiles}</div>
         </div>
+        <div class="th-photo" id="photo-slot" hidden></div>
       </div>
-    </div>${teamPhotos(n, [])}</div></div>
-    <div class="tiles-row section">${trophyCase(season, t.awards ?? []).replace(TILES_SLOT, tiles)}</div>
+      ${awards.length ? `<div class="th-awards">
+        <div class="th-h">Awards</div>
+        <div class="th-award-row"><div class="plaques">${plaques.map((a) => plaque(a, season)).join("")}</div><div class="banners">${banners.map((a) => banner(a, season)).join("")}</div></div>
+      </div>` : ""}
+    </div>
     <div class="row section" style="justify-content:space-between">
       <nav class="seg glass">
         <a href="#/${season}/team/${n}" class="${view === "matches" ? "active" : ""}">Matches</a>
@@ -425,10 +441,21 @@ async function team(r) {
     </div>
     <div id="view"></div>`;
 
+  data.teams(season).then((rows) => {
+    if (stale(r) || !$("#radar")) return;
+    const axes = teamAxes(meta, t, rows);
+    $("#radar").innerHTML = radar(axes);
+    $("#radar-list").innerHTML = axes.map((ax) => `<tr title="${esc(ax.tip)}"><td class="muted">${esc(ax.label)}</td><td class="r"><b>${ax.display}</b></td>
+      <td class="r small ${ax.value >= 0.9 ? "trend-up" : "faint"}">${ax.value == null ? "–" : `top ${Math.max(1, Math.round((1 - ax.value) * 100))}%`}</td></tr>`).join("");
+  }).catch(() => {});
+
   // photos come from a separate service; show the page now and add them when they arrive
   data.photos(CONFIG.photoApi).then((p) => {
-    const box = $(".team-photo");
-    if (!stale(r) && box && p[n]?.length) box.outerHTML = teamPhotos(n, p[n]);
+    const slot = $("#photo-slot");
+    if (stale(r) || !slot || !p[n]?.length) return;
+    slot.innerHTML = teamPhotos(n, p[n]);
+    slot.hidden = false;
+    slot.closest(".th-body").classList.add("has-photo");
   }).catch(() => {});
 
   if (view === "charts") {
@@ -475,6 +502,46 @@ async function team(r) {
       ${matchTable(season, ms, { me: n, rpNames: meta.rpNames, video, href: (m) => matchHref(season, ev.code, m.d) })}
     </div>`;
   }).join("");
+}
+
+// The radar's five attributes, each the team's percentile among this season's
+// teams with 5+ matches: points from auto, teleop and endgame, then bonus ranking
+// points as one axis (seasons that have them; consistency otherwise), then win rate.
+function teamAxes(meta, t, rows) {
+  const e = t.epa;
+  const pool = rows.filter((x) => x.matches >= 5);
+  const pctile = (v, all) => {
+    const xs = all.filter((x) => x != null && !Number.isNaN(x));
+    if (v == null || !xs.length) return null;
+    let below = 0, same = 0;
+    for (const x of xs) { if (x < v) below++; else if (x === v) same++; }
+    return (below + same / 2) / xs.length;
+  };
+  const col = (k) => pool.map((x) => x[k]);
+  const period = (k, label) => ({ label, value: pctile(e[k], col(k)), display: fmt(e[k]), tip: `${label}: ${fmt(e[k])} points a match` });
+  // bonus RPs: how many of the season's bonus RPs it earns in an average match
+  const nRp = meta.rpNames.length;
+  const rpSum = (get) => meta.rpNames.reduce((sum, _, i) => sum + Math.min(1, Math.max(0, get(i) ?? 0)), 0);
+  const rate = (x) => (x.matches ? (x.wins + x.ties / 2) / x.matches : null);
+  const w = t.matches.filter((m) => m.score > m.oppScore).length, ti = t.matches.filter((m) => m.score === m.oppScore).length;
+  const myRate = t.matches.length ? (w + ti / 2) / t.matches.length : null;
+  const cons = rows.find((x) => x.team === t.team)?.cons ?? null;
+  const myRp = rpSum((i) => e.rp[i]);
+  return [
+    period("auto", "Auto"), period("teleop", "Teleop"), period("endgame", "Endgame"),
+    nRp
+      ? { label: "Bonus RPs", value: pctile(myRp, pool.map((x) => rpSum((i) => x[`rp${i}`]))), display: `${fmt(myRp)} / ${nRp}`,
+        tip: `Bonus RPs a match: ${fmt(myRp)} of ${nRp} (${meta.rpNames.map((nm, i) => `${nm} ${pct(Math.min(1, Math.max(0, e.rp[i])))}`).join(", ")})` }
+      // steadier is better, so rank by the negative of the typical miss
+      : { label: "Consistency", value: cons == null ? null : pctile(-cons, pool.filter((x) => x.cons != null).map((x) => -x.cons)),
+        display: cons == null ? "–" : `±${pct(cons)}`, tip: cons == null ? "Consistency: needs 5+ matches" : `Consistency: its alliance's score typically lands within ±${pct(cons)} of the prediction` },
+    { label: "Win rate", value: pctile(myRate, pool.map(rate)), display: pct(myRate), tip: `Won ${pct(myRate)} of its matches (partners count too)` },
+  ];
+}
+
+function addPhotoLink(n) {
+  const href = CONFIG.photoApi ? `#upload-${n}` : `${PHOTO_FORM}&title=${encodeURIComponent(`Photo for team ${n}`)}&team=${n}`;
+  return `<a class="th-fact th-add" href="${href}" data-upload="${n}"${CONFIG.photoApi ? "" : ' target="_blank" rel="noopener"'}>＋ Add a photo</a>`;
 }
 
 // Team photo area: approved photos (click to see the next one), or an invite to add one.
@@ -601,13 +668,6 @@ function plaque(a, season) {
       <text x="30" y="54" text-anchor="middle" font-size="4.6" fill="#7a7a7a">${season}</text>
     </svg></a>`;
 }
-function trophyCase(season, awards) {
-  const banners = awards.filter(isBanner), plaques = awards.filter((a) => !isBanner(a));
-  return `<div class="plaques">${plaques.map((a) => plaque(a, season)).join("")}</div>
-    <div class="tiles">${TILES_SLOT}</div>
-    <div class="banners">${banners.map((a) => banner(a, season)).join("")}</div>`;
-}
-const TILES_SLOT = "%%TILES%%";
 
 // YouTube's privacy-enhanced player: no cookies until the viewer presses play.
 function openVideo(id, t, title) {

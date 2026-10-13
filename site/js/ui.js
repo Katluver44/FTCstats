@@ -107,16 +107,6 @@ export function trend(v, d = 1) {
   return v > 0 ? `<span class="trend-up">▲ ${fmt(v, d)}</span>` : `<span class="trend-down">▼ ${fmt(-v, d)}</span>`;
 }
 
-// Dot meter: value out of max, as `n` dots.
-export function dots(value, max, n = 20) {
-  const on = Math.max(0, Math.min(n, Math.round((value / Math.max(1e-9, max)) * n)));
-  return `<span class="dots">${"<i class=on></i>".repeat(on)}${"<i></i>".repeat(n - on)}</span>`;
-}
-
-export function meter(label, value, max, display) {
-  return `<div class="meter"><span class="k">${esc(label)}</span>${dots(value, max)}<span class="v">${display ?? fmt(value)}</span></div>`;
-}
-
 // Bonus-RP icons: one per ranking point, in the alliance colour when earned
 // (or predicted > 50%), faded when not. Hovering names each RP.
 const RP_ICONS = {
@@ -306,3 +296,26 @@ export function sortableTable(el, rows, cols, { sortKey, desc = true, pageSize =
   return { setRows(r) { rows = r; shown = pageSize; draw(); } };
 }
 
+
+// ---------- radar chart ----------
+// axes: [{ label, value (0-1, the team's season percentile), tip }]. Rings at every 20%.
+export function radar(axes, { size = 300 } = {}) {
+  const n = axes.length, c = size / 2, R = size / 2 - 58;
+  const pt = (i, r) => {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+    return [c + Math.cos(a) * r, c + Math.sin(a) * r];
+  };
+  const poly = (r) => axes.map((_, i) => pt(i, r).map((v) => v.toFixed(1)).join(",")).join(" ");
+  const rings = [0.2, 0.4, 0.6, 0.8, 1].map((f) => `<polygon points="${poly(R * f)}" class="rd-ring"/>`).join("");
+  const spokes = axes.map((_, i) => { const [x, y] = pt(i, R); return `<line x1="${c}" y1="${c}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" class="rd-ring"/>`; }).join("");
+  const shape = axes.map((ax, i) => pt(i, R * Math.max(0.03, ax.value)).map((v) => v.toFixed(1)).join(",")).join(" ");
+  const dots = axes.map((ax, i) => { const [x, y] = pt(i, R * Math.max(0.03, ax.value)); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" class="rd-dot"><title>${esc(ax.tip)}</title></circle>`; }).join("");
+  const labels = axes.map((ax, i) => {
+    const [x, y] = pt(i, R + 16);
+    const anchor = Math.abs(x - c) < 4 ? "middle" : x > c ? "start" : "end";
+    const dy = y < c - R * 0.6 ? -6 : y > c + R * 0.6 ? 12 : 4;
+    return `<text x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="${anchor}" class="rd-label">${esc(ax.label)}<tspan x="${x.toFixed(1)}" dy="13" class="rd-val">${ax.value == null ? "–" : `top ${Math.max(1, Math.round((1 - ax.value) * 100))}%`}</tspan><title>${esc(ax.tip)}</title></text>`;
+  }).join("");
+  return `<svg class="radar" viewBox="0 0 ${size} ${size}" role="img" aria-label="${esc(axes.map((a) => `${a.label}: ${a.tip}`).join("; "))}">
+    ${rings}${spokes}<polygon points="${shape}" class="rd-shape"/>${dots}${labels}</svg>`;
+}

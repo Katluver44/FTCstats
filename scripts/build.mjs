@@ -518,7 +518,7 @@ export async function build(season, params = {}, epaOver = {}) {
   // np/auto/teleop/endgame: EPA track. pnp..pendgame, rp0-2: prediction track;
   // prank: order by prediction rating (ties in the rounded pnp keep it, for priors)
   const cols = ["team", "name", "loc", "country", "np", "auto", "teleop", "endgame", "rp0", "rp1", "rp2",
-    "matches", "wins", "losses", "ties", "events", "trend", "pnp", "pauto", "pteleop", "pendgame", "prank"];
+    "matches", "wins", "losses", "ties", "events", "trend", "pnp", "pauto", "pteleop", "pendgame", "prank", "cons"];
   const predRank = (list, split) => new Map([...list].sort(byRating("p", split)).map((x, i) => [x.t, i]));
   const tableRows = (list, official, prank) => list.map(({ t, e, p, h }) => {
     const hh = official ? h.filter((x) => !x.off) : h;
@@ -528,9 +528,15 @@ export async function build(season, params = {}, epaOver = {}) {
     const evs = new Set(hh.map((x) => x.ev)).size;
     // EPA change over the last 10 matches
     const prev = hh.length > 10 ? hh[hh.length - 11].epa[0] : hh.length ? hh[0].epa[0] : e.np;
+    // consistency: how far its alliance's score typically lands from our prediction,
+    // as a share of the predicted score (lower = steadier); needs 5+ predicted matches
+    const fit = hh.filter((x) => x.pred && x.pred[0] > 0);
+    const cons = fit.length >= 5
+      ? Math.sqrt(fit.reduce((s, x) => s + (x.score - x.pred[0]) ** 2, 0) / fit.length) / (fit.reduce((s, x) => s + x.pred[0], 0) / fit.length)
+      : null;
     return [t, i.name ?? "", i.loc ?? "", i.country ?? "", r1(e.np), r1(e.auto), r1(e.teleop), r1(e.endgame),
       ...p.rp.map(r3), hh.length, w, l, ti, evs, r1(e.np - prev),
-      r1(p.np), r1(p.auto), r1(p.teleop), r1(p.endgame), prank.get(t)];
+      r1(p.np), r1(p.auto), r1(p.teleop), r1(p.endgame), prank.get(t), cons == null ? null : r3(cons)];
   });
   const rows = tableRows(ranked, true, predRank(ranked, true));
   await writeJson(path.join(out, "teams.json"), { cols, rows });
