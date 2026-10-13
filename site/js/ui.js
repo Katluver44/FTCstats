@@ -23,7 +23,18 @@ export const data = {
   events: (s) => getJSON(`data/${s}/events.json`),
   event: (s, code) => getJSON(`data/${s}/event/${code}.json`),
   summary: (s) => getJSON(`data/${s}/summary.json`),
-  photos: () => getJSON("photos/index.json").catch(() => ({})),
+  // approved photos: from the upload service when configured, plus any stored in the repo
+  async photos(api) {
+    const [repo, svc] = await Promise.all([
+      getJSON("photos/index.json").catch(() => ({})),
+      api ? getJSON(`${api}/api/photos`).catch(() => ({})) : {},
+    ]);
+    const out = { ...repo };
+    for (const [team, list] of Object.entries(svc)) {
+      out[team] = [...(out[team] ?? []), ...list.map((p) => ({ file: p.url, caption: p.caption, credit: "" }))];
+    }
+    return out;
+  },
   ranking: (s) => getJSON(`data/${s}/ranking.json`).catch(() => null),
   async team(s, n) {
     const bucket = await getJSON(`data/${s}/team/${Math.floor(n / 100)}.json`).catch(() => ({}));

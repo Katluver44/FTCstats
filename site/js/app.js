@@ -4,6 +4,7 @@ import {
 } from "./ui.js";
 import { SEASONS } from "./seasons.js";
 import { initAnalytics, trackPage } from "./analytics.js";
+import { CONFIG } from "./config.js";
 import { fetchLiveEvent, normalizeLive, replayEvent, forecastRankings, forecastFromRoster, modelFromMeta } from "./live.js";
 
 const app = $("#app");
@@ -253,7 +254,7 @@ async function team(r) {
   const n = /^\d{1,6}$/.test(args[0] ?? "") ? +args[0] : null, view = args[1] ?? "matches";
   if (n == null) { app.innerHTML = `<div class="card empty">That isn't a team number.</div>`; return; }
   const [meta, t, events, all, photos] = await Promise.all([
-    data.meta(season), data.team(season, n).catch(() => null), data.events(season), data.teams(season), data.photos(),
+    data.meta(season), data.team(season, n).catch(() => null), data.events(season), data.teams(season), data.photos(CONFIG.photoApi),
   ]);
   if (!t) {
     app.innerHTML = `<div class="card empty">Team ${n} has no matches in ${season}. ${state.seasons.filter((s) => s !== season).map((s) => `<a class="link" href="#/${s}/team/${n}">Try ${s}</a>`).join(" ")}</div>`;
@@ -362,15 +363,66 @@ async function team(r) {
 // Team photo area: approved photos (click to see the next one), or an invite to add one.
 const PHOTO_FORM = "https://github.com/Katluver44/FTCstats/issues/new?template=team-photo.yml";
 function teamPhotos(n, list) {
-  const add = `${PHOTO_FORM}&title=${encodeURIComponent(`Photo for team ${n}`)}&team=${n}`;
+  const add = CONFIG.photoApi ? `#upload-${n}` : `${PHOTO_FORM}&title=${encodeURIComponent(`Photo for team ${n}`)}&team=${n}`;
+  const target = CONFIG.photoApi ? "" : ' target="_blank" rel="noopener"';
   if (!list.length) {
-    return `<aside class="team-photo empty-photo"><a href="${add}" target="_blank" rel="noopener">
+    return `<aside class="team-photo empty-photo"><a href="${add}" data-upload="${n}"${target}>
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg>
       <b>Add a photo</b><span class="small muted">Robot photos welcome. Shown after review.</span></a></aside>`;
   }
-  const items = list.map((p, i) => `<figure class="${i ? "" : "on"}"><img src="${esc(p.file)}" alt="Team ${n}${p.caption ? `: ${esc(p.caption)}` : ""}" loading="lazy"><figcaption>${p.caption ? `${esc(p.caption)} · ` : ""}photo by ${esc(p.credit)}</figcaption></figure>`).join("");
+  const items = list.map((p, i) => `<figure class="${i ? "" : "on"}"><img src="${esc(p.file)}" alt="Team ${n}${p.caption ? `: ${esc(p.caption)}` : ""}" loading="lazy"><figcaption>${[p.caption && esc(p.caption), p.credit && `photo by ${esc(p.credit)}`].filter(Boolean).join(" · ")}</figcaption></figure>`).join("");
   return `<aside class="team-photo" data-count="${list.length}">${items}
-    <div class="photo-bar">${list.length > 1 ? `<button class="photo-next" aria-label="Next photo">${list.length} photos ›</button>` : ""}<a class="small link" href="${add}" target="_blank" rel="noopener">Add a photo</a></div></aside>`;
+    <div class="photo-bar">${list.length > 1 ? `<button class="photo-next" aria-label="Next photo">${list.length} photos ›</button>` : ""}<a class="small link" href="${add}" data-upload="${n}"${target}>Add a photo</a></div></aside>`;
+}
+
+// Upload dialog: shrink the photo in the browser (which also drops GPS and
+// other metadata), then send it to the photo service for review.
+function openUpload(team) {
+  const dlg = document.createElement("dialog");
+  dlg.className = "upload-dialog";
+  dlg.innerHTML = `<form method="dialog">
+    <h2>Add a photo for team ${esc(team)}</h2>
+    <p class="small muted">Robot photos are best. Only post people who agreed to it (a parent or guardian for anyone under 18). Photos appear after review.</p>
+    <input type="file" accept="image/jpeg,image/png,image/webp" required>
+    <input type="text" maxlength="140" placeholder="Caption (optional)" class="cap">
+    <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <label class="small"><input type="checkbox" required> I took this photo or have permission to share it.</label>
+    <div class="msg small"></div>
+    <div class="row"><button value="cancel" formnovalidate class="btn btn-outline">Cancel</button><button value="send" class="btn btn-solid">Upload</button></div>
+  </form>`;
+  document.body.appendChild(dlg);
+  dlg.showModal();
+  const form = dlg.querySelector("form"), msg = dlg.querySelector(".msg");
+  form.addEventListener("submit", async (e) => {
+    if (e.submitter?.value !== "send") return;
+    e.preventDefault();
+    const file = form.querySelector('input[type="file"]').files[0];
+    if (!file) return;
+    msg.textContent = "Uploading…";
+    try {
+      const blob = await shrinkImage(file, 1600, 0.85);
+      const res = await fetch(`${CONFIG.photoApi}/api/upload`, {
+        method: "POST", body: blob,
+        headers: { "Content-Type": "image/jpeg", "X-Team": team, "X-Caption": encodeURIComponent(form.querySelector(".cap").value), "X-Website": form.querySelector(".hp").value },
+      });
+      const out = await res.json().catch(() => ({}));
+      msg.textContent = res.ok ? out.message ?? "Thanks! Your photo will appear after review." : out.error ?? "Upload failed.";
+      if (res.ok) setTimeout(() => dlg.close(), 2500);
+    } catch {
+      msg.textContent = "Couldn't read that image. Try a JPG or PNG.";
+    }
+  });
+  dlg.addEventListener("close", () => dlg.remove());
+}
+
+// Draw the photo at most `max` px wide/tall and re-encode as JPEG.
+async function shrinkImage(file, max, quality) {
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise((ok, fail) => c.toBlob((b) => (b ? ok(b) : fail()), "image/jpeg", quality));
 }
 
 const shortEvent = (name) => name.replace(/\s+(Championship|Qualifier|Tournament)$/i, "").trim();
@@ -769,6 +821,13 @@ async function boot() {
     location.hash = `#/${e.target.value}/${keep}`;
   };
   wireSearch($(".nav-search"));
+  // team photos: upload dialog when the photo service is configured
+  document.addEventListener("click", (e) => {
+    const link = e.target.closest("[data-upload]");
+    if (!link || !CONFIG.photoApi) return;
+    e.preventDefault();
+    openUpload(link.dataset.upload);
+  });
   // team photos: "N photos ›" cycles through them
   document.addEventListener("click", (e) => {
     const btn = e.target.closest(".photo-next");
