@@ -149,7 +149,7 @@ export function winBar(pRed) {
 // m: { d, red, blue, played, redScore:{np, rp}, blueScore, pred:{pRed, red:{np, rp}, blue:{np, rp}} }
 // Video for a match: FIRST's own per-match upload if there is one, otherwise
 // the event's livestream recording at the moment the match started.
-const LEAD_SECONDS = 15; // start a little early so the field is visible before "go"
+const LEAD_SECONDS = 4; // FIRST stamps the match at the scorekeeper's "start"; the stream shows it a few seconds later
 export function videoFor(videos, evCode, time) {
   const v = videos?.[evCode];
   if (!v || !time) return null;
