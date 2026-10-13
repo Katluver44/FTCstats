@@ -329,6 +329,7 @@ export function simulateEpa(matches, ctx, { epa = epaParams(), comps = COMPONENT
     };
   };
   for (const [i, x] of matches.entries()) {
+    for (const g of gs) g.track.at(x).enter([...x.red, ...x.blue], x.ev.code); // between-event growth (off by default)
     if (onBefore) onBefore(x, view(x), i);
     for (const g of gs) g.track.at(x).update(x.red, x.blue, x.actual, x.elim, x.ev.code);
     if (onMatch) onMatch(x, view(x), i);

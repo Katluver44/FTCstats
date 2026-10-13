@@ -110,6 +110,11 @@ const EPA_COMPONENT_START = {
   kSolo: DEFAULT_PARAMS.kSolo, // K for per-robot elements in this component
   idleShare: DEFAULT_PARAMS.idleShare, endIdleShare: DEFAULT_PARAMS.endIdleShare, deadShare: DEFAULT_PARAMS.deadShare,
   emaAlpha: DEFAULT_PARAMS.emaAlpha,
+  // Between-event growth (EPA track only): at a team's next event, add grow x the
+  // rise in the league-average component (per robot) since the team's last match.
+  // Off: in-sample it lowered MAE but overrated the top of the list (see README).
+  grow: 0,
+  growHead: 0, // growth x (1 + growHead x (1 - rating / average robot)), clamped to [0, 2]: weaker teams grow more
 };
 export const DEFAULT_EPA_PARAMS = {
   // Track-level settings (any component key above may also go here, for all three).
@@ -159,10 +164,17 @@ export function epaParams(over = {}) {
   for (const [sec, vals] of Object.entries(over ?? {})) {
     if (!(sec in out)) throw new Error(`EPA params: unknown section "${sec}" (use shared/auto/teleop/endgame)`);
     for (const [k, v] of Object.entries(vals ?? {})) {
-      const ok = k in DEFAULT_PARAMS || EPA_TRACK_KEYS.includes(k) || (sec === "shared" && EPA_SHARED_ONLY.includes(k));
+      const ok = k in DEFAULT_PARAMS || k in EPA_COMPONENT_START || EPA_TRACK_KEYS.includes(k) || (sec === "shared" && EPA_SHARED_ONLY.includes(k));
       if (!ok) throw new Error(`EPA params: unknown key "${sec}.${k}"`);
       out[sec][k] = v;
     }
+  }
+  // a component key set in shared applies to all three components, unless the
+  // override also sets it for that component (each component carries its own
+  // copy of every key, which would otherwise shadow shared)
+  for (const [k, v] of Object.entries(over?.shared ?? {})) {
+    if (!(k in EPA_COMPONENT_START)) continue;
+    for (const c of COMPONENTS) if (!(over?.[c] && k in over[c])) out[c][k] = v;
   }
   return out;
 }
@@ -359,6 +371,23 @@ export class Model {
     this.cal.b = solve3(XX.map((row, i) => row.map((v, j) => v + (i === j ? this.p.calRidge : 0))), XY);
   }
 
+  // Between-event growth (p.grow, EPA track): call before a match is predicted.
+  // At a team's first match of a new event, its components rise by grow x the
+  // league-average rise (per robot) since its last match.
+  enter(nums, eventCode) {
+    if (!this.p.grow) return;
+    for (const n of nums) {
+      const t = this.team(n);
+      if (t.gEv === eventCode) continue;
+      if (!t.gAvg) { t.gEv = eventCode; continue; }
+      // headroom factor from the team's whole rating vs an average robot, in [0, 2]
+      const np = this.epa(n).np, avgRobot = Math.max(1, this.avgAllianceNp() / 2);
+      const f = clamp(1 + (this.p.growHead ?? 0) * (1 - np / avgRobot), 0, 2);
+      for (const c of COMPONENTS) t[c] += (f * this.p.grow * (this.avg[c] - t.gAvg[c])) / 2;
+      t.gEv = eventCode;
+    }
+  }
+
   // How much of an alliance's error each team takes.
   // level: the alliance's predicted score / league average (match noise grows with it).
   shares(nums, eventCode, level = 1) {
@@ -461,6 +490,7 @@ export class Model {
       this.avg.foul += a * (foulsMade - this.avg.foul);
       if (!isElim) this.avg.rp = this.avg.rp.map((r, j) => r + a * ((act.rp?.[j] ? 1 : 0) - r));
     }
+    if (this.p.grow) for (const n of [...red, ...blue]) this.team(n).gAvg = { auto: this.avg.auto, teleop: this.avg.teleop, endgame: this.avg.endgame };
     if (this.p.cal && !isElim) {
       const A = Math.max(10, this.avgAllianceNp());
       for (const side of ["red", "blue"]) this.calStep(pred[side].calX, (actual[side].np - pred[side].rawNp) / A);
