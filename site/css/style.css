@@ -219,7 +219,9 @@ main { padding: 16px 0 48px; }
 .feature-side small { color: var(--muted); font-size: 12.5px; }
 .feature-score { text-align: center; font-size: 40px; font-weight: 900; letter-spacing: -0.03em; white-space: nowrap; }
 .feature-foot { padding: 0 22px 22px; }
-.feature-foot .wp { width: 100%; height: 26px; font-size: 12.5px; border-radius: 6px; }
+.feature-foot .wp { display: flex; }
+.feature-foot .wp-track { flex: 1; height: 12px; border-radius: 6px; }
+.feature-foot .wp-label { font-size: 15px; }
 .feature-foot p { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
 .hero-below { padding: 0 0 20px; }
 .section-title { padding: 40px 48px 14px; }
@@ -318,10 +320,12 @@ td.c, th.c { text-align: center; }
 .rpd i.on { background: currentColor; opacity: 1; }
 .rpd.red { color: var(--red); }
 .rpd.blue { color: var(--blue); }
-.wp { display: flex; align-items: center; height: 18px; width: 92px; border-radius: 999px; overflow: hidden; background: var(--line); font-size: 10.5px; font-weight: 750; color: #fff; }
-.wp span { height: 100%; display: flex; align-items: center; padding: 0 7px; }
-.wp .r { background: var(--red); }
-.wp .b { background: var(--blue); justify-content: flex-end; }
+.wp { display: inline-flex; align-items: center; gap: 8px; vertical-align: middle; }
+.wp-track { position: relative; width: 72px; height: 8px; border-radius: 4px; overflow: hidden; background: var(--blue); }
+.wp-red { position: absolute; inset: 0 auto 0 0; background: var(--red); }
+.wp-label { min-width: 34px; text-align: right; font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+.wp-label.red { color: var(--red); }
+.wp-label.blue { color: var(--blue); }
 .mark { font-weight: 800; }
 .mark.ok { color: var(--good); }
 .mark.no { color: var(--bad); }
@@ -454,3 +458,6 @@ footer a { text-decoration: underline; }
 .prose ul { padding-left: 20px; margin: 8px 0 0; }
 .prose li { margin: 6px 0; }
 
+
+/* small change arrow next to "EPA out" in the team page event box */
+.ev-box .delta { font-size: 11px; margin-left: 4px; vertical-align: 2px; }

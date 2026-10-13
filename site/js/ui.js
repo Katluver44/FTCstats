@@ -103,10 +103,12 @@ export function meter(label, value, max, display) {
 // Bonus-RP dots: filled = earned (or predicted > 50%)
 const rpDots = (side, arr) => arr ? `<span class="rpd ${side}">${arr.map((x) => `<i class="${x ? "on" : ""}"></i>`).join("")}</span>` : "";
 
+// Slim red/blue bar with the favourite's chance beside it, always in the same place.
 export function winBar(pRed) {
   if (pRed == null) return `<span class="faint">–</span>`;
   const r = Math.round(pRed * 100);
-  return `<div class="wp" title="Red ${r}% · Blue ${100 - r}%"><span class="r" style="width:${r}%">${r >= 50 ? `${r}%` : ""}</span><span class="b" style="width:${100 - r}%">${r < 50 ? `${100 - r}%` : ""}</span></div>`;
+  const fav = r >= 50 ? "red" : "blue";
+  return `<span class="wp" title="Red ${r}% · Blue ${100 - r}%"><span class="wp-track"><span class="wp-red" style="width:${r}%"></span></span><span class="wp-label ${fav}">${Math.max(r, 100 - r)}%</span></span>`;
 }
 
 // One row per match.
