@@ -122,6 +122,12 @@ export class Model {
 
   team(num) {
     let t = this.teams.get(num);
+    if (!t && this.parent) {
+      // a fork copies a team from its parent the first time it's used
+      t = structuredClone(this.parent.team(num));
+      this.teams.set(num, t);
+      this.base.set(num, structuredClone(t));
+    }
     if (!t) {
       const z = this.priors.get(num) ?? (this.priors.size ? this.rookieZ : 0);
       const f = Math.max(0.15, this.p.initFrac * (1 + this.p.carry * z * this.cv)) / 2;
@@ -136,6 +142,28 @@ export class Model {
       this.teams.set(num, t);
     }
     return t;
+  }
+
+  // A copy that learns on its own without changing this model, e.g. for an
+  // off-season event: its results shouldn't move official ratings.
+  fork() {
+    const f = Object.create(Model.prototype);
+    Object.assign(f, this, {
+      parent: this, teams: new Map(), base: new Map(),
+      avg: structuredClone(this.avg), errVar: { ...this.errVar }, cal: structuredClone(this.cal),
+    });
+    return f;
+  }
+
+  // Fold w x each team's rating change on this fork back into the parent.
+  merge(w) {
+    if (!w) return;
+    for (const [num, t] of this.teams) {
+      const b = this.base.get(num), p = this.parent.team(num);
+      for (const c of COMPONENTS) p[c] += w * (t[c] - b[c]);
+      p.solo = p.solo.map((x, j) => x + w * (t.solo[j] - b.solo[j]));
+      p.rp = p.rp.map((x, j) => x + w * (t.rp[j] - b.rp[j]));
+    }
   }
 
   // Restore a team's state, e.g. its rating entering an event.

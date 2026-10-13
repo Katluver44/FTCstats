@@ -131,8 +131,10 @@ export async function loadPriors(season, opts = PRIOR_OPTS) {
   const past = [];
   for (let k = 1; k <= weights.length; k++) {
     if (!weights[k - 1]) { past.push(null); continue; }
-    const file = path.join("site", "data", String(season - k), "teams.json");
-    const prev = await fs.readFile(file, "utf8").then(JSON.parse).catch(() => null);
+    // off-season results at OFF_WEIGHT predict next season better than official-only
+    const dir = path.join("site", "data", String(season - k));
+    const prev = await fs.readFile(path.join(dir, "teams-all.json"), "utf8")
+      .catch(() => fs.readFile(path.join(dir, "teams.json"), "utf8")).then(JSON.parse).catch(() => null);
     if (!prev) { past.push(null); continue; }
     const npI = prev.cols.indexOf("np"), mI = prev.cols.indexOf("matches");
     const rows = prev.rows.filter((r) => r[mI] >= minMatches).sort((a, b) => b[npI] - a[npI]);
@@ -162,15 +164,35 @@ export async function loadPriors(season, opts = PRIOR_OPTS) {
 }
 
 // Runs the model and scores its pre-match predictions.
-export function simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ }, onMatch) {
+// Event types whose results don't change official ratings: off-season events
+// often play modified rules and lineups. Each runs on its own fork of the model,
+// so ratings still learn within the event (as the live page does).
+export const UNOFFICIAL = new Set(["OffSeason"]);
+// How much an off-season event's rating changes count once it ends, for the
+// "Include off-season matches" table and next season's starting ratings.
+// 0.4 ranked teams best by their next season (research/offweight.mjs, 2021-2024);
+// counting them fully (1) was the worst of 0 / 0.25 / 0.5 / 0.75 / 1.
+export const OFF_WEIGHT = 0.4;
+
+export function simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, unofficial = UNOFFICIAL, offWeight = 0 }, onMatch) {
   const model = new Model({ params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ });
+  const forks = new Map(); // event code -> forked model
+  // when an unofficial event ends, offWeight x its rating changes carry over
+  const lastOf = new Map();
+  if (offWeight) matches.forEach((x, i) => unofficial.has(x.ev.type) && lastOf.set(x.ev.code, i));
   const acc = newAcc();
-  for (const x of matches) {
-    const before = onMatch ? new Map([...x.red, ...x.blue].map((t) => [t, model.epa(t)])) : null;
-    const avgBefore = onMatch ? { ...model.avg, rp: [...model.avg.rp], solo: [...model.avg.solo], clipVar: { ...model.errVar }, cal: structuredClone(model.cal) } : null;
-    const pre = model.update(x.red, x.blue, x.actual, x.elim, x.ev.code);
+  for (const [i, x] of matches.entries()) {
+    let m = model;
+    if (unofficial.has(x.ev.type)) {
+      if (!forks.has(x.ev.code)) forks.set(x.ev.code, model.fork());
+      m = forks.get(x.ev.code);
+    }
+    const before = onMatch ? new Map([...x.red, ...x.blue].map((t) => [t, m.epa(t)])) : null;
+    const avgBefore = onMatch ? { ...m.avg, rp: [...m.avg.rp], solo: [...m.avg.solo], clipVar: { ...m.errVar }, cal: structuredClone(m.cal) } : null;
+    const pre = m.update(x.red, x.blue, x.actual, x.elim, x.ev.code);
     score(acc, x, pre);
-    onMatch?.(x, pre, model, before, avgBefore);
+    onMatch?.(x, pre, m, before, avgBefore);
+    if (lastOf.get(x.ev.code) === i) m.merge(offWeight);
   }
   return { model, acc };
 }
@@ -258,7 +280,7 @@ export async function build(season, params = {}) {
         const e = model.epa(t);
         if (!history.has(t)) history.set(t, []);
         history.get(t).push({
-          ev: x.ev.code, m: x.m.description, elim: x.elim, time: x.time,
+          ev: x.ev.code, m: x.m.description, elim: x.elim, time: x.time, ...(UNOFFICIAL.has(x.ev.type) ? { off: 1 } : {}),
           side, partners: mine.filter((n) => n !== t), opps: theirs,
           pWin: r3(pWin), score: x.actual[side].total, oppScore: x.actual[side === "red" ? "blue" : "red"].total,
           pred: [r1(pre[side].total), r1(pre[side === "red" ? "blue" : "red"].total)],
@@ -321,22 +343,42 @@ export async function build(season, params = {}) {
   }
 
   // ---- teams.json: compact table of every team that played ----
+  // Official ratings: off-season matches don't count (see UNOFFICIAL).
   const ranked = [...history.keys()].filter((t) => !isPlaceholder(t))
     .map((t) => ({ t, e: model.epa(t), h: history.get(t) }))
-    .sort((a, b) => b.e.np - a.e.np);
+    // teams with only off-season matches have no official rating yet: list them last
+    .sort((a, b) => (b.e.n > 0) - (a.e.n > 0) || b.e.np - a.e.np);
   const cols = ["team", "name", "loc", "country", "np", "auto", "teleop", "endgame", "rp0", "rp1", "rp2",
     "matches", "wins", "losses", "ties", "events", "trend"];
-  const rows = ranked.map(({ t, e, h }) => {
+  const tableRows = (list, official) => list.map(({ t, e, h }) => {
+    const hh = official ? h.filter((x) => !x.off) : h;
     let w = 0, l = 0, ti = 0;
-    for (const x of h) x.score > x.oppScore ? w++ : x.score < x.oppScore ? l++ : ti++;
+    for (const x of hh) x.score > x.oppScore ? w++ : x.score < x.oppScore ? l++ : ti++;
     const i = info.get(t) ?? {};
-    const evs = new Set(h.map((x) => x.ev)).size;
+    const evs = new Set(hh.map((x) => x.ev)).size;
     // EPA change over the last 10 matches
-    const prev = h.length > 10 ? h[h.length - 11].epa[0] : h[0].epa[0];
+    const prev = hh.length > 10 ? hh[hh.length - 11].epa[0] : hh.length ? hh[0].epa[0] : e.np;
     return [t, i.name ?? "", i.loc ?? "", i.country ?? "", r1(e.np), r1(e.auto), r1(e.teleop), r1(e.endgame),
-      ...e.rp.map(r3), h.length, w, l, ti, evs, r1(e.np - prev)];
+      ...e.rp.map(r3), hh.length, w, l, ti, evs, r1(e.np - prev)];
   });
+  const rows = tableRows(ranked, true);
   await writeJson(path.join(out, "teams.json"), { cols, rows });
+
+  // teams-all.json: the same table with off-season results counted at OFF_WEIGHT,
+  // for the site's "Include off-season matches" switch. Only written when there are any.
+  if (matches.some((x) => UNOFFICIAL.has(x.ev.type))) {
+    const allHist = new Map();
+    const { model: allModel } = simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, offWeight: OFF_WEIGHT }, (x, pre, m) => {
+      for (const side of ["red", "blue"]) for (const t of x[side]) {
+        if (!allHist.has(t)) allHist.set(t, []);
+        allHist.get(t).push({ ev: x.ev.code, score: x.actual[side].total, oppScore: x.actual[side === "red" ? "blue" : "red"].total, epa: [r1(m.epa(t).np)] });
+      }
+    });
+    const rankedAll = [...allHist.keys()].filter((t) => !isPlaceholder(t))
+      .map((t) => ({ t, e: allModel.epa(t), h: allHist.get(t) }))
+      .sort((a, b) => b.e.np - a.e.np);
+    await writeJson(path.join(out, "teams-all.json"), { cols, rows: tableRows(rankedAll, false) });
+  }
 
   // ---- per-team files, bundled 100 teams to a file (team/<number / 100>.json) ----
   const rankOf = new Map(ranked.map((x, i) => [x.t, i + 1]));

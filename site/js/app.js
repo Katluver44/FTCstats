@@ -205,7 +205,8 @@ function eventList(season, meta, evs) {
 
 async function teams(r) {
   const { season, query } = r;
-  const [meta, rows] = await Promise.all([data.meta(season), data.teams(season)]);
+  const withOff = query.get("off") === "1";
+  const [meta, rows] = await Promise.all([data.meta(season), data.teams(season, withOff)]);
   if (stale(r)) return;
   const rpNames = meta.rpNames;
   const countries = [...new Set(rows.map((r) => r.country).filter(Boolean))].sort();
@@ -215,6 +216,7 @@ async function teams(r) {
         <input id="filter" placeholder="Search teams…" value="${esc(query.get("q") ?? "")}">
         <select id="country" aria-label="Country"><option value="">All countries</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
         <select id="minm" aria-label="Minimum matches played"><option value="1">Any number of matches</option><option value="10">Played 10+ matches</option><option value="25">Played 25+ matches</option></select>
+        <label class="small check" title="Off-season events often use modified rules and lineups, so official ratings leave them out. Switched on, each off-season event counts 40%, the weight that best predicts the next season."><input type="checkbox" id="off" ${withOff ? "checked" : ""}> Include off-season matches</label>
         <span class="small muted" id="count"></span>
         <a class="small link" href="#/${season}/about" style="margin-left:auto">What's EPA?</a>
       </div>
@@ -236,7 +238,7 @@ async function teams(r) {
   if (query.get("min")) $("#minm").value = query.get("min");
   const apply = () => {
     const q = $("#filter").value.trim().toLowerCase(), c = $("#country").value, m = +$("#minm").value;
-    syncQuery({ q: $("#filter").value.trim(), country: c, min: m > 1 ? m : "" });
+    syncQuery({ q: $("#filter").value.trim(), country: c, min: m > 1 ? m : "", off: $("#off").checked ? "1" : "" });
     const shown = rows.filter((r) =>
       (!c || r.country === c) && r.matches >= m &&
       (!q || String(r.team).startsWith(q) || r.name.toLowerCase().includes(q) || r.loc.toLowerCase().includes(q)));
@@ -244,6 +246,8 @@ async function teams(r) {
     table.setRows(shown);
   };
   $("#filter").oninput = apply; $("#country").onchange = apply; $("#minm").onchange = apply;
+  // switching tables reloads the page with ?off=1 (filters are kept in the query)
+  $("#off").onchange = () => { apply(); teams({ ...r, query: new URLSearchParams(location.hash.split("?")[1] ?? "") }); };
   apply();
 }
 
@@ -807,9 +811,13 @@ async function boot() {
   };
 
   state.seasons = await data.seasons();
-  // default to the newest season once it has enough matches to be useful
-  const metas = await Promise.all(state.seasons.map((s) => data.meta(s)));
-  state.defaultSeason = (metas.find((m) => m.matches >= 1000) ?? metas[0]).season;
+  // default to the newest season once it has enough matches to be useful. Only
+  // the newest two can be it, and a link that names a season doesn't need to wait.
+  const findDefault = Promise.all(state.seasons.slice(0, 2).map((s) => data.meta(s)))
+    .then((metas) => (metas.find((m) => m.matches >= 1000) ?? metas[0]).season);
+  const named = +(location.hash.match(/^#\/(\d{4})(\/|$)/)?.[1] ?? 0);
+  state.defaultSeason = state.seasons.includes(named) ? named : await findDefault;
+  if (state.seasons.includes(named)) findDefault.then((s) => (state.defaultSeason = s)).catch(() => {});
 
   $("#season").onchange = (e) => {
     const r = parseHash();

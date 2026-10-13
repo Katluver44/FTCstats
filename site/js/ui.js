@@ -48,8 +48,12 @@ export const data = {
       return o;
     });
   },
-  async teams(s) {
-    const { cols, rows } = await getJSON(`data/${s}/teams.json`);
+  // withOff: ratings that count off-season matches (falls back to the official
+  // table for seasons without any off-season events)
+  async teams(s, withOff = false) {
+    const { cols, rows } = withOff
+      ? await getJSON(`data/${s}/teams-all.json`).catch(() => getJSON(`data/${s}/teams.json`))
+      : await getJSON(`data/${s}/teams.json`);
     if (!rows._objs) rows._objs = rows.map((r, i) => {
       const o = { rank: i + 1 };
       cols.forEach((c, j) => (o[c] = r[j]));
