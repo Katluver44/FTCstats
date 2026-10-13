@@ -618,6 +618,7 @@ function eventForecast(season, meta, ev, matches) {
 
 // Before the schedule is out: simulate random FTC schedules from the team list.
 function rosterForecast(season, meta, ev) {
+  const unrated = ev.teamList.filter((t) => !t.state || t.state.n === 0).length;
   let perTeam = 5;
   $("#tab").innerHTML = `
     <div class="card card-pad">
@@ -630,7 +631,6 @@ function rosterForecast(season, meta, ev) {
     </div>
     <div class="card section" id="fc"></div>`;
   const names = new Map(ev.teamList.map((t) => [t.team, t.name]));
-  const unrated = ev.teamList.filter((t) => !t.state || t.state.n === 0).length;
   const run = () => {
     const rows = forecastFromRoster(season, meta, ev, { perTeam });
     $("#fc").innerHTML = rows.length ? `<div class="table-wrap"><table>
