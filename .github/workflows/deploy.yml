@@ -1,4 +1,6 @@
-# Refreshes match data from FTCScout, rebuilds ratings, and deploys to GitHub Pages.
+# Refreshes match data, rebuilds ratings, and deploys the site (with the photo
+# service) to Vercel. GitHub Pages now only serves a redirect to the Vercel site,
+# so old links keep working.
 # Runs hourly; during an event, live pages also pull fresh results in the browser.
 name: Update and deploy
 
@@ -17,6 +19,12 @@ permissions:
 concurrency:
   group: pages
   cancel-in-progress: false
+
+env:
+  SITE_URL: https://ftcstats-photos.vercel.app
+  # not secrets: they only say which Vercel project to deploy to
+  VERCEL_ORG_ID: team_r1o66OZwsgZCXGjollpuMNFZ
+  VERCEL_PROJECT_ID: prj_EYnS7Q15FgxkYGBeqF5AyCkwb0iF
 
 jobs:
   build:
@@ -38,9 +46,25 @@ jobs:
           restore-keys: ftc-cache-v2-
       - run: npm run update
       - run: npm run check
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          node scripts/package-vercel.mjs
+          npx -y vercel@63.1.2 deploy dist --prod --yes --archive=tgz --token "$VERCEL_TOKEN"
+      # GitHub Pages: a tiny page that forwards to the same page on Vercel
+      - name: Build redirect page
+        run: |
+          mkdir -p redirect
+          cat > redirect/index.html <<HTML
+          <!doctype html><meta charset="utf-8"><title>FTCstats has moved</title>
+          <meta name="robots" content="noindex">
+          <script>location.replace("${SITE_URL}/" + location.hash)</script>
+          <p>FTCstats has moved to <a href="${SITE_URL}/">${SITE_URL}</a>.</p>
+          HTML
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: redirect
   deploy:
     needs: build
     runs-on: ubuntu-latest
