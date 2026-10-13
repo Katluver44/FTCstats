@@ -24,6 +24,7 @@ export const data = {
   event: (s, code) => getJSON(`data/${s}/event/${code}.json`),
   summary: (s) => getJSON(`data/${s}/summary.json`),
   videos: (s) => getJSON(`data/${s}/videos.json`).catch(() => ({})),
+  alliances: (s) => getJSON(`data/${s}/alliances.json`).catch(() => ({})),
   // approved photos: from the upload service when configured, plus any stored in the repo
   async photos(api) {
     const [repo, svc] = await Promise.all([
@@ -158,7 +159,7 @@ export function videoFor(videos, evCode, time) {
   return s ? { id: s.id, t: Math.max(0, Math.round((time - s.start) / 1000) - LEAD_SECONDS) } : null;
 }
 
-const PLAY_ICON = '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1.2v7.6L8.6 5Z" fill="currentColor"/></svg>';
+export const PLAY_ICON = '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1.2v7.6L8.6 5Z" fill="currentColor"/></svg>';
 
 export function matchTable(s, matches, { me, rpNames = [], video } = {}) {
   if (!matches.length) return `<div class="empty">No matches yet.</div>`;

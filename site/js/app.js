@@ -1,7 +1,8 @@
 import {
   $, $$, esc, data, getJSON, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
-  trend, matchTable, mountLineChart, sortableTable, meter, winBar, videoFor } from "./ui.js";
+  trend, matchTable, mountLineChart, sortableTable, meter, winBar, videoFor, PLAY_ICON } from "./ui.js";
 import { SEASONS } from "./seasons.js";
+import { playoffs } from "./playoffs.js";
 import { initAnalytics, trackPage } from "./analytics.js";
 import { CONFIG } from "./config.js";
 import { fetchLiveEvent, normalizeLive, replayEvent, forecastRankings, forecastFromRoster, modelFromMeta } from "./live.js";
@@ -586,7 +587,7 @@ async function events(r) {
 async function event(r) {
   const { season, args } = r;
   const code = args[0], tab = args[1] ?? "matches";
-  const [meta, ev, videos] = await Promise.all([data.meta(season), data.event(season, code).catch(() => null), data.videos(season)]);
+  const [meta, ev, videos, official] = await Promise.all([data.meta(season), data.event(season, code).catch(() => null), data.videos(season), data.alliances(season)]);
   if (stale(r)) return;
   if (!ev) {
     app.innerHTML = `<div class="card empty">No event with code “${esc(code)}” in ${seasonLabel(season, meta.game)}. <a class="link" href="#/${season}/events">Browse events →</a></div>`;
@@ -619,7 +620,8 @@ async function event(r) {
     const hasQuals = matches.some((m) => m.level === "Quals");
     // forecast needs a quals schedule, or no matches yet (pre-event); playoff-only events get none
     const canForecast = hasQuals || (!matches.length && ev.teamList.length >= 4);
-    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(canForecast ? [["forecast", "Rankings forecast"]] : [])];
+    const hasPlayoffs = matches.some((m) => m.level && m.level !== "Quals");
+    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(hasPlayoffs ? [["playoffs", "Playoffs"]] : []), ...(canForecast ? [["forecast", "Rankings forecast"]] : [])];
     app.innerHTML = `
       <div class="card card-pad"><div class="page-head">
         <div>
@@ -637,6 +639,7 @@ async function event(r) {
       <nav class="tabs seg glass">${tabs.map(([k, label]) => `<a href="#/${season}/event/${code}/${k}" class="${k === tab ? "active" : ""}">${label}</a>`).join("")}</nav>
       <div id="tab"></div>`;
     if (tab === "teams") eventTeams(season, meta, ev);
+    else if (tab === "playoffs" && hasPlayoffs) eventPlayoffs(season, meta, ev, matches, official[code], (m) => videoFor(videos, code, m.time));
     else if (tab === "forecast" && canForecast) eventForecast(season, meta, ev, matches);
     else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time) })}</div>`;
   };
@@ -646,6 +649,61 @@ async function event(r) {
     refresh();
     state.liveTimer = setInterval(() => document.visibilityState === "visible" && refresh(), 60_000);
   }
+}
+
+// Alliance selections and the bracket (see playoffs.js for how they're worked out).
+function eventPlayoffs(season, meta, ev, matches, official, video) {
+  const p = playoffs(matches, ev.teamList, official, { finished: ev.finished });
+  const team = new Map(ev.teamList.map((t) => [t.team, t]));
+  const name = (n) => team.get(n)?.name ?? "";
+  // alliance strength: the two best robots play, so add their EPAs at the end of the event
+  const strength = (a) => a.teams.map((t) => team.get(t)?.epaEnd ?? 0).sort((x, y) => y - x).slice(0, 2).reduce((x, y) => x + y, 0);
+  const tn = (n, side = "") => `<a class="tn ${side}" href="#/${season}/team/${n}" title="${esc(name(n))}">${n}</a>`;
+  const record = (a) => `${a.wins}-${a.losses}${a.ties ? `-${a.ties}` : ""}`;
+
+  const allianceRows = p.alliances.map((a) => `<tr class="${a.result === "Winner" ? "champ" : ""}">
+    <td class="num"><span class="seed">A${a.seed}</span></td>
+    <td>${teamCell(season, a.captain, name(a.captain))}</td>
+    <td class="small">${a.teams.slice(1).map((t) => `${tn(t)} <span class="muted hide-sm">${esc(name(t))}</span>`).join("<br>") || '<span class="faint">–</span>'}</td>
+    <td class="c"><b>${fmt(strength(a))}</b></td>
+    <td class="c small">${record(a)}</td>
+    <td class="small ${a.result === "Winner" ? "res-win" : a.result === "Finalist" ? "res-final" : "muted"}">${a.result === "Winner" ? "🏆 Winner" : esc(a.result)}</td>
+  </tr>`).join("");
+
+  // one bracket box: two alliance lines with the score (or series wins)
+  const box = (s) => {
+    const last = s.games.filter((g) => g.played).at(-1);
+    const v = last && video(last);
+    const series = s.games.length > 1;
+    const pRed = s.games[0].pred?.pRed;
+    const line = (a, side) => {
+      const won = s.winner === a, lost = s.winner && !won;
+      const score = !last ? "" : series ? (side === "red" ? s.redWins : s.blueWins) : (side === "red" ? last.redScore.total : last.blueScore.total);
+      return `<div class="bl ${side} ${won ? "won" : ""} ${lost ? "lost" : ""}">
+        <span class="seed">A${a.seed}</span><span class="bt">${a.teams.map((t) => tn(t, side)).join("")}</span><b class="bs">${score}</b></div>`;
+    };
+    const games = series ? s.games.filter((g) => g.played).map((g) => `${g.redScore.total}–${g.blueScore.total}`).join(", ") : "";
+    return `<div class="bbox">
+      <div class="bh"><span>${esc(s.key)}${series ? " · best of 3" : ""}</span>
+        ${v ? `<button class="play" data-video="${v.id}" data-t="${v.t}" data-title="${esc(`${ev.name} · ${last.d}`)}" aria-label="Watch ${esc(s.key)}" title="Watch">${PLAY_ICON}</button>` : ""}</div>
+      ${line(s.red, "red")}${line(s.blue, "blue")}
+      <div class="bf">${games ? `<span>${games}</span>` : ""}${pRed != null ? `<span class="faint" title="Our pre-match win probability">Pred ${pRed >= 0.5 ? `A${s.red.seed}` : `A${s.blue.seed}`} ${Math.round(Math.max(pRed, 1 - pRed) * 100)}%</span>` : ""}</div>
+    </div>`;
+  };
+
+  const sections = p.sections.map((sec) => sec.roundRobin
+    ? `<div class="bsec"><h3>${esc(sec.name)}</h3><div class="rr">${sec.rounds[0].slots.map(box).join("")}</div></div>`
+    : `<div class="bsec">${sec.name ? `<h3>${esc(sec.name)}</h3>` : ""}<div class="bracket" style="--cols:${sec.rounds.length}">
+        ${sec.rounds.map((r) => `<div class="bcol"><div class="bcol-h">${esc(r.name)}</div><div class="bcol-b">${r.slots.map(box).join("")}</div></div>`).join("")}
+      </div></div>`).join("");
+
+  $("#tab").innerHTML = `
+    <div class="section-title"><h2>Alliances</h2><p class="muted" style="margin:6px 0 0">Strength adds the EPAs of each alliance's two best robots.${official ? "" : " Seeds worked out from qualification ranks until FIRST publishes the official list."}</p></div>
+    <div class="card"><div class="table-wrap"><table class="alliances">
+      <thead><tr><th>Seed</th><th>Captain</th><th>Picks</th><th class="c">Strength</th><th class="c">Record</th><th>Result</th></tr></thead>
+      <tbody>${allianceRows}</tbody></table></div></div>
+    <div class="section-title"><h2>Bracket</h2></div>
+    <div class="card card-pad bracket-wrap">${sections}</div>`;
 }
 
 function eventTeams(season, meta, ev) {
