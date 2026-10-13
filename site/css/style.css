@@ -510,3 +510,9 @@ footer a { text-decoration: underline; }
   font-size: 12.5px; font-weight: 500; line-height: 1.4; color: var(--page);
   background: var(--text); border-radius: 8px; padding: 8px 10px; box-shadow: 0 8px 24px rgba(0,0,0,.25);
 }
+
+/* home: the two lists sit flush with one divider, and their rows line up */
+.hero-below .grid.cols-2 { gap: 0; }
+.hero-below .grid.cols-2 > div + div .card { border-left: 1px solid var(--line); }
+.hero-below .grid.cols-2 td { height: 58px; }
+@media (max-width: 900px) { .hero-below .grid.cols-2 > div + div .card { border-left: 0; } }

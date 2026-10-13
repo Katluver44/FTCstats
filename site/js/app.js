@@ -179,16 +179,18 @@ async function home(r) {
         </div>
         <div>
           <div class="section-title"><div class="eyebrow">${live.length ? "Live" : "Results"}</div><h2>${live.length ? "Happening now" : "Recent events"}</h2></div>
-          <div class="card">${eventList(season, meta, live.length ? live : recent)}<a class="more" href="#/${season}/events">All events →</a></div>
+          <div class="card">${eventList(season, meta, (live.length ? live : recent).slice(0, 8))}<a class="more" href="#/${season}/events">All events →</a></div>
         </div>
       </div>
       <div class="section-title"><div class="eyebrow">Competition</div><h2>Strongest events</h2><p class="muted" style="margin:6px 0 0">Ranked by the average EPA of each event's top 8 teams.</p></div>
       <div class="card">${eventList(season, meta, strongest)}</div>
     </div>`;
   wireSearch($("#hero-search"));
-  $("#top-teams").innerHTML = `<div class="table-wrap"><table><tbody>${teams.slice(0, 10).map((t) => `
-    <tr><td class="faint num" style="width:32px">${t.rank}</td><td>${teamCell(season, t.team, t.name)}</td>
-    <td class="small muted hide-sm">${esc(t.loc)}</td><td class="r">${epa(t.np, meta)}</td></tr>`).join("")}</tbody></table></div>`;
+  // two-line rows (team, then location) so they line up with the events list beside it
+  $("#top-teams").innerHTML = `<div class="table-wrap"><table class="home-list"><tbody>${teams.slice(0, 8).map((t) => `
+    <tr><td class="faint num" style="width:32px">${t.rank}</td>
+    <td><a class="ev-cell" href="#/${season}/team/${t.team}"><span class="n">${t.team} ${esc(t.name)}</span><span class="nm">${esc(t.loc)}</span></a></td>
+    <td class="r">${epa(t.np, meta)}</td></tr>`).join("")}</tbody></table></div>`;
 }
 
 function eventList(season, meta, evs) {
