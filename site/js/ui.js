@@ -23,6 +23,7 @@ export const data = {
   events: (s) => getJSON(`data/${s}/events.json`),
   event: (s, code) => getJSON(`data/${s}/event/${code}.json`),
   summary: (s) => getJSON(`data/${s}/summary.json`),
+  ranking: (s) => getJSON(`data/${s}/ranking.json`).catch(() => null),
   async team(s, n) {
     const bucket = await getJSON(`data/${s}/team/${Math.floor(n / 100)}.json`).catch(() => ({}));
     if (!bucket[n]) throw new Error(`no team ${n}`);
@@ -174,7 +175,12 @@ export function mountLineChart(el, { series, bands = [], tooltip, zero = true })
     bands.forEach((b, i) => {
       const x0 = x(b.from) - (b.from ? (x(1) - x(0)) / 2 : 0), x1 = x(b.to) + (b.to < n - 1 ? (x(1) - x(0)) / 2 : 0);
       if (i % 2) g += `<rect x="${x0}" y="${P.t}" width="${Math.max(0, x1 - x0)}" height="${H - P.t - P.b}" fill="var(--surface-2)" opacity=".6"/>`;
-      if (x1 - x0 > 44) g += `<text x="${(x0 + x1) / 2}" y="${H - 6}" text-anchor="middle">${esc(b.label)}</text>`;
+      // fit the label to its band (about 6px per character), or skip it
+      const fit = Math.floor((x1 - x0 - 6) / 6);
+      if (fit >= 4) {
+        const text = b.label.length > fit ? `${b.label.slice(0, fit - 1)}…` : b.label;
+        g += `<text x="${(x0 + x1) / 2}" y="${H - 6}" text-anchor="middle">${esc(text)}<title>${esc(b.label)}</title></text>`;
+      }
     });
     const paths = vis.map((s) => {
       const d = s.values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");

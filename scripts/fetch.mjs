@@ -49,10 +49,23 @@ export async function fetchSeason(season) {
   await fs.mkdir(dir, { recursive: true });
 
   const { eventsSearch } = await gql(
-    `query($season: Int!) { eventsSearch(season: $season, hasMatches: true) { code finished } }`,
+    `query($season: Int!) { eventsSearch(season: $season, hasMatches: true) { code finished remote } }`,
     { season }
   );
+  // remote (single-team) events can't be used for 2v2 ratings
+  for (let i = eventsSearch.length - 1; i >= 0; i--) if (eventsSearch[i].remote) eventsSearch.splice(i, 1);
   console.log(`${season}: ${eventsSearch.length} events with matches`);
+
+  // upcoming events (next 3 weeks) with registered teams, for pre-event ranking predictions
+  const today = new Date().toISOString().slice(0, 10);
+  const soon = new Date(Date.now() + 21 * 864e5).toISOString().slice(0, 10);
+  const { eventsSearch: upcoming } = await gql(
+    `query($season: Int!, $start: Date!, $end: Date!) { eventsSearch(season: $season, hasMatches: false, start: $start, end: $end) { code finished teams { teamNumber } } }`,
+    { season, start: today, end: soon }
+  ).catch(() => ({ eventsSearch: [] }));
+  const withTeams = upcoming.filter((e) => e.teams.length >= 4);
+  if (withTeams.length) console.log(`  + ${withTeams.length} upcoming events with team lists`);
+  eventsSearch.push(...withTeams);
 
   const todo = [];
   for (const ev of eventsSearch) {

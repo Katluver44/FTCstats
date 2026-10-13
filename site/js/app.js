@@ -2,12 +2,15 @@ import {
   $, $$, esc, data, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
   trend, matchTable, mountLineChart, sortableTable, meter, winBar,
 } from "./ui.js";
-import { Model } from "./model.js";
 import { SEASONS } from "./seasons.js";
-import { fetchLiveEvent, normalizeLive, replayEvent, forecastRankings } from "./live.js";
+import { fetchLiveEvent, normalizeLive, replayEvent, forecastRankings, forecastFromRoster, modelFromMeta } from "./live.js";
 
 const app = $("#app");
-const state = { seasons: [], defaultSeason: null, season: null, liveTimer: null };
+const state = { seasons: [], defaultSeason: null, season: null, liveTimer: null, nav: 0 };
+// true once the user has navigated away from the page that started loading
+const stale = (r) => r.nav !== state.nav;
+// today's date in the viewer's time zone, as YYYY-MM-DD
+const localToday = (offsetDays = 0) => new Date(Date.now() + offsetDays * 864e5).toLocaleDateString("en-CA");
 
 // ---------------- routing ----------------
 
@@ -22,23 +25,24 @@ function parseHash() {
 async function route() {
   clearInterval(state.liveTimer);
   const r = parseHash();
+  r.nav = ++state.nav;
   state.season = r.season;
   renderNav(r);
   window.scrollTo(0, 0);
   app.innerHTML = `<div class="loading">Loading…</div>`;
   try {
-    const pages = { "": home, teams, team, events, event, predict, about };
+    const pages = { "": home, teams, team, events, event, rankings, predict, about };
     const fn = pages[r.page] ?? notFound;
     await fn(r);
   } catch (e) {
     console.error(e);
-    app.innerHTML = `<div class="empty">Couldn't load this page. ${esc(e.message)}</div>`;
+    if (!stale(r)) app.innerHTML = `<div class="card empty">Couldn't load this page. Check the link, or try another season.</div>`;
   }
 }
 
 function renderNav({ season, page }) {
   $("#season").innerHTML = state.seasons
-    .map((s) => `<option value="${s}" ${s === season ? "selected" : ""}>${s}–${String(s + 1).slice(2)} · ${esc(SEASONS[s]?.game ?? "")}</option>`)
+    .map((s) => `<option value="${s}" ${s === season ? "selected" : ""}>${s}–${String(s + 1).slice(2)}${SEASONS[s]?.game ? ` · ${esc(SEASONS[s].game)}` : ""}</option>`)
     .join("");
   $$("header [data-page]").forEach((a) => {
     a.href = `#/${season}/${a.dataset.page}`;
@@ -46,6 +50,16 @@ function renderNav({ season, page }) {
   });
   $(".logo").href = `#/${season}/`;
 }
+
+// Keep a page's filters in the URL so reloads and shared links keep them.
+function syncQuery(params) {
+  const [path] = location.hash.split("?");
+  const q = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== "" && v != null));
+  history.replaceState(null, "", `${path}${q.toString() ? `?${q}` : ""}`);
+}
+
+// "2025–26 · DECODE", or just "2026–27" before the game name is known
+const seasonLabel = (s, game) => `${s}–${String(s + 1).slice(2)}${game ? ` · ${esc(game)}` : ""}`;
 
 const notFound = () => (app.innerHTML = `<div class="empty">Page not found.</div>`);
 
@@ -90,15 +104,20 @@ function wireSearch(wrap) {
   };
   const close = () => { input.value = ""; items = []; box.classList.remove("open"); input.blur(); };
   box.onclick = () => close();
-  document.addEventListener("click", (e) => { if (!wrap.contains(e.target)) box.classList.remove("open"); });
+  if (!wrap.dataset.wired) {
+    wrap.dataset.wired = "1";
+    document.addEventListener("click", (e) => { if (!wrap.contains(e.target)) box.classList.remove("open"); });
+  }
 }
 
 // ---------------- home ----------------
 
 const SEARCH_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`;
 
-async function home({ season }) {
+async function home(r) {
+  const { season } = r;
   const [meta, sum] = await Promise.all([data.meta(season), data.summary(season)]);
+  if (stale(r)) return;
   const teams = data.rows(sum.cols, sum.top);
   const acc = meta.accuracy.all;
   const newest = state.seasons[0];
@@ -111,13 +130,12 @@ async function home({ season }) {
   const [t1, t2, t3, t4] = teams;
   let feature = "";
   if (t4) {
-    const a = meta.avgAlliance;
-    const model = new Model({ baseline: { auto: a.auto, teleop: a.teleop, endgame: a.endgame, foul: a.foul, rp: a.rp } });
+    const model = modelFromMeta(meta);
     for (const t of [t1, t2, t3, t4]) model.setTeam(t.team, { auto: t.auto, teleop: t.teleop, endgame: t.endgame, foul: t.foul, n: t.matches, rp: [t.rp0, t.rp1, t.rp2] });
     const p = model.predict([t1.team, t4.team], [t2.team, t3.team]);
     const side = (cls, ts) => `<div class="feature-side ${cls}">${ts.map((t) => `<a href="#/${season}/team/${t.team}">${t.team}</a><small>${esc(t.name)}</small>`).join("")}</div>`;
     feature = `<div class="feature">
-      <div class="feature-head"><b>Dream match: the top 4, predicted</b><span>${esc(meta.game)}</span></div>
+      <div class="feature-head"><b>Dream match: the top 4, predicted</b><span>${seasonLabel(season, meta.game)}</span></div>
       <div class="feature-body">
         ${side("red", [t1, t4])}
         <div class="feature-score"><span class="score red">${fmt(p.red.total, 0)}</span><span class="faint">–</span><span class="score blue">${fmt(p.blue.total, 0)}</span></div>
@@ -131,7 +149,7 @@ async function home({ season }) {
     <section class="hero">
       <div>
         ${banner}
-        <div class="eyebrow">${season}–${String(season + 1).slice(2)} season · ${esc(meta.game)}</div>
+        <div class="eyebrow">${seasonLabel(season, meta.game)} season</div>
         <div class="hero-title">Every FTC match, predicted.</div>
         <div class="hero-sub">Team ratings that update after every match, win chances you can check against real results, and ranking forecasts for live events.</div>
         <div class="search hero-search mobile-only" id="hero-search">${SEARCH_ICON}<input placeholder="Search teams & events" autocomplete="off"><div class="search-results"></div></div>
@@ -172,23 +190,25 @@ function eventList(season, meta, evs) {
   return `<div class="table-wrap"><table><tbody>${evs.map((e) => `
     <tr>
       <td>${evCell(season, e.code, e.name, `${fmtRange(e.start, e.end)} · ${esc(e.loc)}`)}</td>
-      <td class="small muted hide-sm">${typeName(e.type)}</td>
+      <td class="small muted hide-sm">${esc(typeName(e.type))}</td>
       <td class="r">${e.ongoing ? '<span class="pill live">Live</span>' : epa(e.strength, meta)}</td>
     </tr>`).join("")}</tbody></table></div>`;
 }
 
 // ---------------- teams ----------------
 
-async function teams({ season, query }) {
+async function teams(r) {
+  const { season, query } = r;
   const [meta, rows] = await Promise.all([data.meta(season), data.teams(season)]);
+  if (stale(r)) return;
   const rpNames = meta.rpNames;
   const countries = [...new Set(rows.map((r) => r.country).filter(Boolean))].sort();
   app.innerHTML = `
     <div class="card">
       <div class="toolbar">
         <input id="filter" placeholder="Search teams…" value="${esc(query.get("q") ?? "")}">
-        <select id="country"><option value="">Country</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
-        <select id="minm"><option value="1">All teams</option><option value="10">10+ matches</option><option value="25">25+ matches</option></select>
+        <select id="country" aria-label="Country"><option value="">All countries</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
+        <select id="minm" aria-label="Minimum matches played"><option value="1">Any number of matches</option><option value="10">Played 10+ matches</option><option value="25">Played 25+ matches</option></select>
         <span class="small muted" id="count"></span>
         <a class="small link" href="#/${season}/about" style="margin-left:auto">What's EPA?</a>
       </div>
@@ -204,11 +224,13 @@ async function teams({ season, query }) {
     { key: "endgame", label: "Endgame", cls: "r", render: (r) => fmt(r.endgame) },
     ...rpNames.map((n, i) => ({ key: `rp${i}`, label: `${n} RP`, cls: "r small hide-sm", render: (r) => pct(Math.max(0, r[`rp${i}`])) })),
     { key: "wins", label: "Record", cls: "r small", render: (r) => `${r.wins}-${r.losses}${r.ties ? `-${r.ties}` : ""}` },
-    { key: "trend", label: "Last 10", cls: "r small", render: (r) => trend(r.trend) },
+    { key: "trend", label: "Trend", cls: "r small", render: (r) => `<span title="EPA change over the last 10 matches">${trend(r.trend)}</span>` },
   ];
   const table = sortableTable($("#tbl"), rows, cols, { sortKey: "np" });
+  if (query.get("min")) $("#minm").value = query.get("min");
   const apply = () => {
     const q = $("#filter").value.trim().toLowerCase(), c = $("#country").value, m = +$("#minm").value;
+    syncQuery({ q: $("#filter").value.trim(), country: c, min: m > 1 ? m : "" });
     const shown = rows.filter((r) =>
       (!c || r.country === c) && r.matches >= m &&
       (!q || String(r.team).startsWith(q) || r.name.toLowerCase().includes(q) || r.loc.toLowerCase().includes(q)));
@@ -221,8 +243,10 @@ async function teams({ season, query }) {
 
 // ---------------- team ----------------
 
-async function team({ season, args }) {
-  const n = +args[0], view = args[1] ?? "matches";
+async function team(r) {
+  const { season, args } = r;
+  const n = /^\d{1,6}$/.test(args[0] ?? "") ? +args[0] : null, view = args[1] ?? "matches";
+  if (n == null) { app.innerHTML = `<div class="card empty">That isn't a team number.</div>`; return; }
   const [meta, t, events, all] = await Promise.all([
     data.meta(season), data.team(season, n).catch(() => null), data.events(season), data.teams(season),
   ]);
@@ -331,7 +355,7 @@ async function team({ season, args }) {
   }).join("");
 }
 
-const shortEvent = (name) => name.replace(/\b(Championship|Qualifier|Tournament|League|Meet|Scrimmage)\b/g, (w) => w.slice(0, 5) + ".");
+const shortEvent = (name) => name.replace(/\s+(Championship|Qualifier|Tournament)$/i, "").trim();
 
 function toMatch(m, me) {
   const mine = [me, ...m.partners];
@@ -349,21 +373,24 @@ function toMatch(m, me) {
 
 // ---------------- events ----------------
 
-async function events({ season, query }) {
+async function events(r) {
+  const { season, query } = r;
   const [meta, evs] = await Promise.all([data.meta(season), data.events(season)]);
+  if (stale(r)) return;
+  if (stale(r)) return;
   const types = [...new Set(evs.map((e) => e.type))];
   app.innerHTML = `
     <div class="card">
       <div class="toolbar">
         <input id="filter" placeholder="Search events…" value="${esc(query.get("q") ?? "")}">
-        <select id="type"><option value="">Type</option>${types.map((t) => `<option value="${t}">${typeName(t)}</option>`).join("")}</select>
+        <select id="type"><option value="">All types</option>${types.map((t) => `<option value="${esc(t)}" ${t === query.get("type") ? "selected" : ""}>${esc(typeName(t))}</option>`).join("")}</select>
       </div>
       <div id="tbl"></div>
     </div>`;
   const cols = [
     { key: "name", label: "Event", sort: false, render: (e) => evCell(season, e.code, e.name, `${esc(e.loc)} ${e.ongoing ? '<span class="pill live">Live</span>' : ""}`) },
     { key: "start", label: "Date", cls: "small muted", render: (e) => fmtDate(e.start) },
-    { key: "type", label: "Type", cls: "small muted hide-sm", render: (e) => typeName(e.type) },
+    { key: "type", label: "Type", cls: "small muted hide-sm", render: (e) => esc(typeName(e.type)) },
     { key: "teams", label: "Teams", cls: "r hide-sm" },
     { key: "strength", label: "Strength", cls: "r", render: (e) => epa(e.strength, meta) },
     { key: "accuracy", label: "Called", cls: "r small hide-sm", render: (e) => pct(e.accuracy) },
@@ -371,6 +398,7 @@ async function events({ season, query }) {
   const table = sortableTable($("#tbl"), evs, cols, { sortKey: "start" });
   const apply = () => {
     const q = $("#filter").value.trim().toLowerCase(), ty = $("#type").value;
+    syncQuery({ q: $("#filter").value.trim(), type: ty });
     table.setRows(evs.filter((e) => (!ty || e.type === ty) &&
       (!q || e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q) || e.loc.toLowerCase().includes(q))));
   };
@@ -380,24 +408,32 @@ async function events({ season, query }) {
 
 // ---------------- event ----------------
 
-async function event({ season, args }) {
+async function event(r) {
+  const { season, args } = r;
   const code = args[0], tab = args[1] ?? "matches";
-  const [meta, ev] = await Promise.all([data.meta(season), data.event(season, code)]);
+  const [meta, ev] = await Promise.all([data.meta(season), data.event(season, code).catch(() => null)]);
+  if (stale(r)) return;
+  if (!ev) {
+    app.innerHTML = `<div class="card empty">No event with code “${esc(code)}” in ${seasonLabel(season, meta.game)}. <a class="link" href="#/${season}/events">Browse events →</a></div>`;
+    return;
+  }
   let matches = ev.matchList;
   let liveAt = null;
 
-  const today = new Date().toISOString().slice(0, 10);
-  const maybeLive = !ev.finished && ev.start <= today && today <= ev.end;
+  // allow a day either side: event dates are local to the event, not the viewer
+  const maybeLive = !ev.finished && ev.start <= localToday(1) && localToday(-1) <= ev.end;
   const refresh = async () => {
     try {
       const raw = await fetchLiveEvent(season, code);
-      matches = replayEvent(meta, ev, normalizeLive(season, raw)).matches;
+      if (stale(r)) return clearInterval(state.liveTimer);
+      matches = replayEvent(meta, ev, normalizeLive(season, raw, meta)).matches;
       for (const tp of raw.teams) {
         const row = ev.teamList.find((x) => x.team === tp.teamNumber);
         if (row && tp.stats) Object.assign(row, { rank: tp.stats.rank, wins: tp.stats.wins, losses: tp.stats.losses, ties: tp.stats.ties });
       }
       liveAt = new Date();
-      draw();
+      // don't reset a forecast someone is looking at; it picks up new results on the next visit
+      if (tab !== "forecast") draw();
     } catch (e) { console.warn(e); }
   };
 
@@ -408,16 +444,18 @@ async function event({ season, args }) {
     const upsets = decided.filter((m) => (m.pred.pRed > 0.5) !== (m.redScore.total > m.blueScore.total))
       .sort((a, b) => Math.abs(b.pred.pRed - 0.5) - Math.abs(a.pred.pRed - 0.5)).slice(0, 3);
     const hasQuals = matches.some((m) => m.level === "Quals");
-    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(hasQuals ? [["forecast", "Rankings forecast"]] : [])];
+    // forecast needs a quals schedule, or no matches yet (pre-event); playoff-only events get none
+    const canForecast = hasQuals || (!matches.length && ev.teamList.length >= 4);
+    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(canForecast ? [["forecast", "Rankings forecast"]] : [])];
     app.innerHTML = `
       <div class="card card-pad"><div class="page-head">
         <div>
-          <div class="kicker">${typeName(ev.type)} · ${fmtRange(ev.start, ev.end)} · ${esc(ev.loc)}</div>
+          <div class="kicker">${esc(typeName(ev.type))} · ${fmtRange(ev.start, ev.end)} · ${esc(ev.loc)}</div>
           <h1>${esc(ev.name)}</h1>
           <div class="row" style="margin-top:8px">
             ${liveAt ? `<span class="pill live">Live · updated ${liveAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>` : ""}
             <span class="pill">${ev.teams} teams</span><span class="pill">${played.length}/${matches.length} matches played</span>
-            <a class="pill" href="https://ftcscout.org/events/${season}/${code}" target="_blank" rel="noopener">FTCScout ↗</a>
+            <a class="pill" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}" target="_blank" rel="noopener">FTCScout ↗</a>
           </div>
         </div>
         <div class="big-epa"><div class="label">Winner predicted</div><b>${decided.length ? pct(correct / decided.length) : "–"}</b><div class="label">${correct} of ${decided.length} matches</div></div>
@@ -430,7 +468,7 @@ async function event({ season, args }) {
       <nav class="tabs seg glass">${tabs.map(([k, label]) => `<a href="#/${season}/event/${code}/${k}" class="${k === tab ? "active" : ""}">${label}</a>`).join("")}</nav>
       <div id="tab"></div>`;
     if (tab === "teams") eventTeams(season, meta, ev);
-    else if (tab === "forecast") eventForecast(season, meta, ev, matches);
+    else if (tab === "forecast" && canForecast) eventForecast(season, meta, ev, matches);
     else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches)}</div>`;
   };
 
@@ -457,6 +495,7 @@ function eventTeams(season, meta, ev) {
 
 function eventForecast(season, meta, ev, matches) {
   const quals = matches.filter((m) => m.level === "Quals");
+  if (!quals.length) return rosterForecast(season, meta, ev);
   const playedQuals = quals.filter((m) => m.actuallyPlayed ?? m.played).length;
   const finished = playedQuals === quals.length;
   // default: forecast from now; for a finished event, rewind to the halfway point
@@ -468,23 +507,27 @@ function eventForecast(season, meta, ev, matches) {
   $("#tab").innerHTML = `
     <div class="card card-pad">
       <div class="row" style="justify-content:space-between">
-        <div><b>Forecast after <span id="cut-label"></span></b><div class="small muted">${fmtInt(3000)} simulations of the remaining qualification matches, using ratings as of that moment.${finished ? " Drag back in time to see how the forecast compared to the final rankings." : ""}</div></div>
+        <div><b id="cut-title"></b><div class="small muted">${fmtInt(3000)} simulations of the qualification matches still to play, using ratings as of that moment. RS is ranking score.${finished ? " Drag back in time to see how the forecast compared to the final rankings." : ""}</div></div>
         <input type="range" id="cut" min="0" max="${quals.length}" value="${cutoff}" style="width:min(320px,100%)">
       </div>
     </div>
     <div class="card section" id="fc"></div>`;
 
+  const title = () => {
+    $("#cut-title").textContent = cutoff === 0 ? "Forecast when the schedule was released"
+      : cutoff >= quals.length ? `All ${quals.length} qualification matches played` : `Forecast after ${quals[cutoff - 1].d}`;
+  };
   const run = () => {
-    $("#cut-label").textContent = cutoff === 0 ? "the schedule was released" : `${quals[cutoff - 1].d}`;
+    title();
     const replayed = replayEvent(meta, ev, matches.map((m) => ({ ...m, played: m.actuallyPlayed ?? m.played })), cutoff).matches;
     const rows = forecastRankings(season, teams, replayed);
-    const showFinal = cutoff < playedQuals;
+    const showFinal = ev.teamList.some((t) => t.rank != null) && playedQuals > 0;
     $("#fc").innerHTML = `<div class="table-wrap"><table>
       <thead><tr><th>Proj.</th><th>Team</th><th class="r">Current RS</th><th class="r">Proj. RS</th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th>${showFinal ? '<th class="r">Actual rank</th>' : ""}</tr></thead>
       <tbody>${rows.map((r, i) => `<tr>
         <td class="faint num">${i + 1}</td>
         <td>${teamCell(season, r.team, names.get(r.team))}</td>
-        <td class="r small">${r.currentRs != null ? fmt(r.currentRs, 2) : "–"} <span class="faint">(${r.played})</span></td>
+        <td class="r small">${r.currentRs != null ? fmt(r.currentRs, 2) : "–"} <span class="faint" title="matches played">(${r.played} played)</span></td>
         <td class="r">${fmt(r.meanRs, 2)}</td>
         <td class="r">${fmt(r.meanRank, 1)}</td>
         <td class="r">${probCell(r.p1)}</td>
@@ -496,23 +539,93 @@ function eventForecast(season, meta, ev, matches) {
   let pending;
   $("#cut").oninput = (e) => {
     cutoff = +e.target.value;
-    $("#cut-label").textContent = cutoff === 0 ? "the schedule was released" : `${quals[cutoff - 1].d}`;
+    title();
     clearTimeout(pending);
     pending = setTimeout(run, 60);
   };
   run();
 }
 
+// Before the schedule is out: simulate random FTC schedules from the team list.
+function rosterForecast(season, meta, ev) {
+  let perTeam = 5;
+  $("#tab").innerHTML = `
+    <div class="card card-pad">
+      <div class="row" style="justify-content:space-between">
+        <div><b>Predicted rankings before the schedule is released</b>
+          <div class="small muted">2,000 random qualification schedules, each played out from every team's rating entering the event.${unrated ? ` ${unrated} of ${ev.teamList.length} teams haven't played this season yet, so their rating comes from past seasons (rookies start just below average). Expect early forecasts to be rough.` : ""}</div></div>
+        <label class="row small">Matches per team
+          <select id="per">${[4, 5, 6, 7, 8].map((n) => `<option ${n === perTeam ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+      </div>
+    </div>
+    <div class="card section" id="fc"></div>`;
+  const names = new Map(ev.teamList.map((t) => [t.team, t.name]));
+  const unrated = ev.teamList.filter((t) => !t.state || t.state.n === 0).length;
+  const run = () => {
+    const rows = forecastFromRoster(season, meta, ev, { perTeam });
+    $("#fc").innerHTML = rows.length ? `<div class="table-wrap"><table>
+      <thead><tr><th>Proj.</th><th>Team</th><th class="r">EPA</th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th></tr></thead>
+      <tbody>${rows.map((r, i) => `<tr>
+        <td class="faint num">${i + 1}</td>
+        <td>${teamCell(season, r.team, names.get(r.team))}</td>
+        <td class="r">${epa(r.epa, meta)}</td>
+        <td class="r">${fmt(r.meanRank, 1)}</td>
+        <td class="r">${probCell(r.p1)}</td>
+        <td class="r">${probCell(r.p4)}</td>
+        <td class="r hide-sm">${probCell(r.p8)}</td>
+      </tr>`).join("")}</tbody></table></div>` : `<div class="empty">Not enough teams registered yet.</div>`;
+  };
+  $("#per").onchange = (e) => { perTeam = +e.target.value; run(); };
+  run();
+}
+
+// ---------------- rankings predictor ----------------
+
+async function rankings(r) {
+  const { season } = r;
+  const [meta, evs, bt] = await Promise.all([data.meta(season), data.events(season), data.ranking(season)]);
+  if (stale(r)) return;
+  const upcoming = evs.filter((e) => !e.finished && e.teams >= 4 && e.end >= localToday(-1)).sort((a, b) => a.start.localeCompare(b.start));
+  const recent = evs.filter((e) => e.finished && e.teams >= 12).slice(0, 12);
+  const list = (rows, empty) => rows.length ? `<div class="table-wrap"><table><tbody>${rows.map((e) => `
+    <tr><td>${evCell(season, e.code, e.name, `${fmtRange(e.start, e.end)} · ${esc(e.loc)}`)}</td>
+    <td class="small muted hide-sm">${esc(typeName(e.type))}</td><td class="r hide-sm">${e.teams} teams</td>
+    <td class="r">${e.ongoing ? '<span class="pill live">Live</span> ' : ""}<a class="link" href="#/${season}/event/${encodeURIComponent(e.code)}/forecast">Predict →</a></td></tr>`).join("")}</tbody></table></div>`
+    : `<div class="empty">${empty}</div>`;
+  const pctOrDash = (x) => (x == null ? "–" : pct(x));
+  app.innerHTML = `
+    <div class="card card-pad">
+      <div class="eyebrow">${seasonLabel(season, meta.game)}</div>
+      <h1 style="margin-top:8px">Rankings predictor</h1>
+      <p class="muted" style="max-width:760px;margin:8px 0 0">Who will finish where after qualifications? Before the schedule is out, we simulate thousands of random schedules from the team list. Once it's out, we play the real schedule. During the event, results are locked in as matches finish.</p>
+    </div>
+    ${bt ? `<div class="card card-pad section">
+      <h3>Track record, ${bt.events} events</h3>
+      <p class="small muted" style="margin:6px 0 10px">Predictions made with only what was known the morning each event started, compared with the final rankings.</p>
+      <div class="table-wrap"><table><thead><tr><th></th><th class="r">Rank correlation</th><th class="r">Top 4 found</th><th class="r">Winner in predicted top 4</th></tr></thead><tbody>
+        <tr><td><b>With the real schedule</b></td><td class="r"><b>${fmt(bt.schedule.spearman, 2)}</b></td><td class="r"><b>${pctOrDash(bt.schedule.top4)}</b></td><td class="r"><b>${pctOrDash(bt.schedule.firstInTop4)}</b></td></tr>
+        <tr><td>Team list only (random schedules)</td><td class="r">${fmt((bt.noBonus ?? bt.random).spearman, 2)}</td><td class="r">${pctOrDash((bt.noBonus ?? bt.random).top4)}</td><td class="r">${pctOrDash((bt.noBonus ?? bt.random).firstInTop4)}</td></tr>
+      </tbody></table></div>
+    </div>` : ""}
+    <div class="section-title"><div class="eyebrow">Upcoming</div><h2>Predict an upcoming event</h2></div>
+    <div class="card">${list(upcoming, "No upcoming events with registered teams yet.")}</div>
+    <div class="section-title"><div class="eyebrow">Look back</div><h2>Recent events</h2><p class="muted" style="margin:6px 0 0">Rewind any finished event and compare the forecast with how it turned out.</p></div>
+    <div class="card">${list(recent, "No finished events yet.")}</div>`;
+}
+
 const probCell = (p) => {
   if (p < 0.005) return `<span class="faint">–</span>`;
-  const a = Math.round(15 + p * 70);
-  return `<span class="epa" style="background:color-mix(in srgb,var(--accent) ${a}%,transparent);color:${p > 0.5 ? "#fff" : "var(--text)"}">${pct(p)}</span>`;
+  // strong odds get solid FIRST blue with white text; weaker odds a light tint with dark text
+  const style = p >= 0.5 ? "background:#0066b3;color:#fff" : `background:color-mix(in srgb,#0066b3 ${Math.round(8 + p * 40)}%,transparent);color:var(--text)`;
+  return `<span class="epa" style="${style}">${pct(p)}</span>`;
 };
 
 // ---------------- predictor ----------------
 
-async function predict({ season, query }) {
+async function predict(r) {
+  const { season, query } = r;
   const [meta, teams] = await Promise.all([data.meta(season), data.teams(season)]);
+  if (stale(r)) return;
   const byNum = new Map(teams.map((t) => [t.team, t]));
   const slots = { r: (query.get("r") ?? "").split(","), b: (query.get("b") ?? "").split(",") };
   const input = (side, i) => `<input inputmode="numeric" placeholder="Team #" data-side="${side}" data-i="${i}" value="${esc(slots[side][i] ?? "")}"><div class="who" id="who-${side}${i}"></div>`;
@@ -526,19 +639,25 @@ async function predict({ season, query }) {
     <div id="out" class="section"></div>`;
 
   const run = () => {
-    const nums = { r: [], b: [] };
+    const nums = { r: [], b: [] }, raw = { r: [], b: [] }, seen = new Set();
     $$(".predictor input").forEach((el) => {
-      const n = +el.value, t = byNum.get(n);
-      $(`#who-${el.dataset.side}${el.dataset.i}`).innerHTML = el.value ? (t ? `${esc(t.name)} · EPA ${fmt(t.np)}` : `<span class="faint">no ${season} matches</span>`) : "";
-      if (t) nums[el.dataset.side].push(n);
+      const v = el.value.trim(), side = el.dataset.side;
+      raw[side].push(v);
+      const t = /^\d{1,6}$/.test(v) ? byNum.get(+v) : null;
+      let msg = "";
+      if (!v) msg = "";
+      else if (!/^\d{1,6}$/.test(v)) msg = `<span class="faint">Not a team number</span>`;
+      else if (!t) msg = `<span class="faint">No ${season} matches for team ${esc(v)}</span>`;
+      else if (seen.has(+v)) msg = `<span class="faint">Already picked</span>`;
+      else { msg = `${esc(t.name)} · EPA ${fmt(t.np)}`; nums[side].push(+v); seen.add(+v); }
+      $(`#who-${side}${el.dataset.i}`).innerHTML = msg;
     });
-    history.replaceState(null, "", `#/${season}/predict?r=${nums.r.join(",")}&b=${nums.b.join(",")}`);
+    syncQuery({ r: raw.r.filter(Boolean).join(","), b: raw.b.filter(Boolean).join(",") });
     if (!nums.r.length || !nums.b.length) {
       $("#out").innerHTML = `<div class="card empty">Enter at least one team on each side.</div>`;
       return;
     }
-    const a = meta.avgAlliance;
-    const model = new Model({ baseline: { auto: a.auto, teleop: a.teleop, endgame: a.endgame, foul: a.foul, rp: a.rp } });
+    const model = modelFromMeta(meta);
     for (const n of [...nums.r, ...nums.b]) {
       const t = byNum.get(n);
       model.setTeam(n, { auto: t.auto, teleop: t.teleop, endgame: t.endgame, foul: t.foul, n: t.matches, rp: [t.rp0, t.rp1, t.rp2] });
@@ -570,8 +689,10 @@ async function predict({ season, query }) {
 
 // ---------------- about / accuracy ----------------
 
-async function about({ season }) {
+async function about(r) {
+  const { season } = r;
   const meta = await data.meta(season);
+  if (stale(r)) return;
   const a = meta.accuracy;
   const row = (k, label) => a[k] ? `<tr><td>${label}</td><td class="r">${fmtInt(a[k].matches)}</td><td class="r"><b>${pct(a[k].accuracy, 1)}</b></td><td class="r">${fmt(a[k].brier, 3)}</td><td class="r">${fmt(a[k].scoreMae)}</td><td class="r hide-sm">${a[k].rpBrier != null ? fmt(a[k].rpBrier, 3) : "–"}</td></tr>` : "";
   const W = 300, H = 300;
@@ -581,11 +702,13 @@ async function about({ season }) {
   }).join("");
   app.innerHTML = `
     <div class="card card-pad"><div class="prose">
-      <div class="kicker muted small">${season}–${String(season + 1).slice(2)} · ${esc(meta.game)}</div>
+      <div class="kicker muted small">${seasonLabel(season, meta.game)}</div>
       <h1>How the predictions work</h1>
       <p>Every team has an <b>EPA</b>, short for Expected Points Added: the points it adds to its alliance's score in an average match. An alliance's predicted score is the sum of its two teams' EPAs, and the gap between the two predicted scores gives the win chance.</p>
-      <p>After each match, every team's EPA moves toward what actually happened. New teams move fast; teams with a long record move less. Auto, teleop and endgame are tracked separately, and so is each team's share of every bonus ranking point. Penalty points are left out because they say more about the opponent than the team.</p>
-      <p>This is the approach <a href="https://www.statbotics.io" style="color:var(--accent)">Statbotics</a> uses for FRC, adapted to FTC's 2v2 alliances. OPR, which FTCScout shows, is computed separately for each event and can't predict a team's first match at its next event. EPA carries over across events and seasons.</p>
+      <p>After each match, every team's EPA moves toward what actually happened. How far depends on how sure we are: a team we've seen a lot moves a little, a new team or one at its first event in weeks (robots get rebuilt) moves more, and a well-known partner doesn't soak up its unknown partner's surprise. Auto, teleop and endgame are tracked separately, and so is each team's share of every bonus ranking point. Penalty points are left out because they say more about the opponent than the team.</p>
+      <p><b>Per-robot scoring from the game manuals.</b> Some points are earned by one robot alone: parking, ascent level, drone landing, leaving the start zone. Results record which robot did what, so those points go to that robot instead of being split in half. Point values are learned from the data and match each season's game manual exactly${meta.solo?.length ? `; this season: ${meta.solo.map((x) => esc(x.robots[0].replace(/_?1$/, ""))).join(", ")}` : ""}.</p>
+      <p><b>Starting ratings</b> come from the last three seasons, weighted toward the most recent, so known teams start near their level and rookies start a little below average.</p>
+      <p>This builds on the approach <a class="link" href="https://www.statbotics.io">Statbotics</a> uses for FRC, adapted to FTC's 2v2 alliances. OPR, which FTCScout shows, is computed separately for each event and can't predict a team's first match at its next event. EPA carries over across events and seasons.</p>
     </div></div>
     <div class="card card-pad section"><h2>Track record, ${season}</h2>
     <p class="muted small" style="margin:4px 0 0">Every prediction below was made <i>before</i> the match was played, using only earlier matches. Brier score measures how good the probabilities are: 0.25 is a coin flip, lower is better.</p></div>
@@ -650,12 +773,15 @@ async function about({ season }) {
 async function boot() {
   const theme = (() => { try { return localStorage.getItem("theme"); } catch { return null; } })();
   if (theme) document.documentElement.dataset.theme = theme;
+  const isDark = () => document.documentElement.dataset.theme
+    ? document.documentElement.dataset.theme === "dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  const label = () => $("#theme").setAttribute("aria-label", isDark() ? "Switch to light mode" : "Switch to dark mode");
+  label();
   $("#theme").onclick = () => {
-    const dark = document.documentElement.dataset.theme
-      ? document.documentElement.dataset.theme === "dark"
-      : matchMedia("(prefers-color-scheme: dark)").matches;
-    document.documentElement.dataset.theme = dark ? "light" : "dark";
+    document.documentElement.dataset.theme = isDark() ? "light" : "dark";
     try { localStorage.setItem("theme", document.documentElement.dataset.theme); } catch {}
+    label();
   };
 
   state.seasons = await data.seasons();
@@ -665,7 +791,13 @@ async function boot() {
 
   $("#season").onchange = (e) => {
     const r = parseHash();
-    const keep = ["teams", "events", "predict", "about"].includes(r.page) ? r.page : r.page === "team" ? `team/${r.args[0]}` : "";
+    // stay on the same kind of page; event codes differ by season, so events go to the list
+    const q = r.query.toString();
+    const keep = {
+      teams: "teams", events: "events", rankings: "rankings", about: "about", event: "events",
+      predict: `predict${q ? `?${q}` : ""}`,
+      team: `team/${r.args.join("/")}`,
+    }[r.page] ?? "";
     location.hash = `#/${e.target.value}/${keep}`;
   };
   wireSearch($(".nav-search"));

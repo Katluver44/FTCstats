@@ -1,12 +1,10 @@
 // EPA vs OPR on the same matches, each with its best win-probability spread.
 //   node scripts/compare.mjs 2025
-import { loadSeason, playedMatches, baselineOf, loadPriors, simulate } from "./build.mjs";
+import { prepare, simulate } from "./build.mjs";
 import { oprPredictions } from "./opr.mjs";
 
 const season = Number(process.argv[2] ?? 2025);
-const matches = playedMatches(season, await loadSeason(season));
-const baseline = baselineOf(matches);
-const { priors, cv } = await loadPriors(season);
+const { matches, baseline, priors, cv, soloComps } = await prepare(season);
 
 const outcome = (x) => (x.actual.red.total === x.actual.blue.total ? 0.5 : x.actual.red.total > x.actual.blue.total ? 1 : 0);
 const grade = (preds) => {
@@ -20,7 +18,7 @@ const grade = (preds) => {
 };
 
 const epa = new Map();
-simulate(matches, { baseline, priors, cv }, (x, pre) => epa.set(x, pre.pRed));
+simulate(matches, { baseline, priors, cv, soloComps }, (x, pre) => epa.set(x, pre.pRed));
 console.log("EPA", grade(epa));
 const bt = (baseline.auto + baseline.teleop + baseline.endgame) / 2;
 for (const ws of [0.2, 0.28, 0.36, 0.45]) {
@@ -30,7 +28,7 @@ for (const ws of [0.2, 0.28, 0.36, 0.45]) {
 
 for (const params of [{ margin: 0.1 }, { margin: 0.2 }, { margin: 0.35 }, { matchScale: 0.5 }, { matchScale: 1 }, { matchScale: 1, winScale: 0.22 }, { matchScale: 1, winScale: 0.34 }]) {
   const e = new Map();
-  simulate(matches, { baseline, priors, cv, params }, (x, pre) => e.set(x, pre.pRed));
+  simulate(matches, { baseline, priors, cv, soloComps, params }, (x, pre) => e.set(x, pre.pRed));
   console.log("EPA", JSON.stringify(params), grade(e));
 }
 // blend EPA and OPR in log-odds space

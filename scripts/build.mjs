@@ -6,11 +6,20 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { SEASONS } from "../site/js/seasons.js";
-import { Model, COMPONENTS, onField, isElim } from "../site/js/model.js";
+import { SEASONS, soloPoints } from "../site/js/seasons.js";
+import { fitSoloValues } from "./solo-values.mjs";
+import { Model, COMPONENTS, onField, allianceTeams, isElim } from "../site/js/model.js";
 import { oprPredictions } from "./opr.mjs";
 
 const r1 = (x) => Math.round(x * 10) / 10;
+
+// A match counts as played only with real scores: some scrimmages mark
+// unplayed matches as played with a 0-0 score.
+export const isPlayed = (m) =>
+  m.hasBeenPlayed && !!m.scores?.red && (m.scores.red.totalPoints > 0 || m.scores.blue.totalPoints > 0);
+
+// Off-season demo/placeholder teams (99xxx) play in matches but aren't real teams.
+export const isPlaceholder = (team) => team >= 99000;
 const r3 = (x) => Math.round(x * 1000) / 1000;
 
 export async function loadSeason(season) {
@@ -32,63 +41,133 @@ function matchTime(ev, m) {
 }
 
 // Flattened, time-sorted list of played matches with usable scores.
-export function playedMatches(season, events) {
+export function playedMatches(season, events, fits = []) {
   const read = SEASONS[season].read;
+  // per-robot points, only in quals: elim alliances have 3 teams and the
+  // per-robot fields can't be matched to them reliably
+  const withSolo = (a, raw, elim) => ({ ...a, solo: !elim && fits.length ? soloPoints(season, raw, fits) : null });
   const out = [];
   for (const ev of events) {
     for (const m of ev.matches) {
-      if (!m.hasBeenPlayed || !m.scores?.red) continue;
+      if (!isPlayed(m)) continue;
       const red = onField(m, "Red"), blue = onField(m, "Blue");
       if (!red.length || !blue.length) continue;
       out.push({
         ev, m, red, blue, elim: isElim(m), time: matchTime(ev, m),
-        actual: { red: read(m.scores.red), blue: read(m.scores.blue) },
+        actual: {
+          red: withSolo(read(m.scores.red), m.scores.red, isElim(m)),
+          blue: withSolo(read(m.scores.blue), m.scores.blue, isElim(m)),
+        },
       });
     }
   }
   return out.sort((a, b) => a.time - b.time || a.m.id - b.m.id);
 }
 
-export function baselineOf(matches) {
+// Everything a model run needs for a season.
+export async function prepare(season, events, priorOpts) {
+  events ??= await loadSeason(season);
+  const fits = fitSoloValues(season, events);
+  const soloComps = fits.map((f) => f.comp);
+  const movedSpec = fits.findIndex((f) => f.moved);
+  const parkedSpec = fits.findIndex((f) => f.parked);
+  const matches = playedMatches(season, events, fits);
+  const baseline = baselineOf(matches, soloComps);
+  const { priors, cv, rookieZ } = await loadPriors(season, priorOpts);
+  return { events, fits, soloComps, movedSpec, parkedSpec, matches, baseline, priors, cv, rookieZ };
+}
+
+// Average alliance values over the first matches; components exclude per-robot points.
+export function baselineOf(matches, soloComps = []) {
   const first = matches.slice(0, 400);
-  const b = { auto: 0, teleop: 0, endgame: 0, foul: 0, rp: [0, 0, 0] };
+  const b = { auto: 0, teleop: 0, endgame: 0, foul: 0, rp: [0, 0, 0], solo: soloComps.map(() => 0) };
   let n = 0;
   for (const { actual, elim } of first) {
     for (const a of [actual.red, actual.blue]) {
       for (const c of COMPONENTS) b[c] += a[c];
+      soloComps.forEach((c, j) => {
+        const s = a.solo?.[j] ? a.solo[j].reduce((x, y) => x + y, 0) : 0;
+        b[c] -= s; b.solo[j] += s;
+      });
       b.foul += a.total - a.np;
       if (!elim) a.rp.forEach((x, i) => (b.rp[i] += x ? 1 : 0));
       n++;
     }
   }
   for (const c of [...COMPONENTS, "foul"]) b[c] /= n || 1;
+  b.solo = b.solo.map((x) => x / (n || 1));
   b.rp = b.rp.map((x) => x / (n || 1));
   return b;
 }
 
-// Last season's final EPAs as z-scores, to seed this season.
-export async function loadPriors(season) {
-  const file = path.join("site", "data", String(season - 1), "teams.json");
-  const prev = await fs.readFile(file, "utf8").then(JSON.parse).catch(() => null);
-  if (!prev) return { priors: new Map(), cv: 0.5 };
-  const rows = prev.rows.filter((r) => r[prev.cols.indexOf("matches")] >= 5);
-  const npI = prev.cols.indexOf("np");
-  const vals = rows.map((r) => r[npI]);
+// Inverse normal CDF (Acklam's approximation), for rank-based z-scores.
+function normInv(p) {
+  const a = [-39.6968302866538, 220.946098424521, -275.928510446969, 138.357751867269, -30.6647980661472, 2.50662827745924];
+  const b = [-54.4760987982241, 161.585836858041, -155.698979859887, 66.8013118877197, -13.2806815528857];
+  const c = [-0.00778489400243029, -0.322396458041136, -2.40075827716184, -2.54973253934373, 4.37466414146497, 2.93816398269878];
+  const d = [0.00778469570904146, 0.32246712907004, 2.445134137143, 3.75440866190742];
+  const q = Math.min(p, 1 - p);
+  let x;
+  if (q < 0.02425) {
+    const r = Math.sqrt(-2 * Math.log(q));
+    x = (((((c[0] * r + c[1]) * r + c[2]) * r + c[3]) * r + c[4]) * r + c[5]) / ((((d[0] * r + d[1]) * r + d[2]) * r + d[3]) * r + 1);
+    return p < 0.5 ? x : -x;
+  }
+  const r = (p - 0.5) ** 2;
+  return ((((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * (p - 0.5)) /
+    (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+}
+
+// Starting ratings from up to three earlier seasons. Each season's final EPAs
+// become rank-based z-scores (so different games compare fairly); they're
+// blended with decaying weights, and a missing season counts as `rookieZ`.
+// (After the FRC predictor's priors.)
+export const PRIOR_OPTS = { weights: [1, 0.3, 0.15], rookieZ: -0.5, minMatches: 5 }; // tuned on 2022-2024
+export async function loadPriors(season, opts = PRIOR_OPTS) {
+  const { weights, rookieZ, minMatches } = { ...PRIOR_OPTS, ...opts };
+  const past = [];
+  for (let k = 1; k <= weights.length; k++) {
+    if (!weights[k - 1]) { past.push(null); continue; }
+    const file = path.join("site", "data", String(season - k), "teams.json");
+    const prev = await fs.readFile(file, "utf8").then(JSON.parse).catch(() => null);
+    if (!prev) { past.push(null); continue; }
+    const npI = prev.cols.indexOf("np"), mI = prev.cols.indexOf("matches");
+    const rows = prev.rows.filter((r) => r[mI] >= minMatches).sort((a, b) => b[npI] - a[npI]);
+    const z = new Map(rows.map((r, i) => [r[0], -normInv((i + 0.5) / rows.length)]));
+    past.push(z);
+  }
+  if (!past[0]) return { priors: new Map(), cv: 0.5 };
+  const teams = new Set(past.flatMap((m) => (m ? [...m.keys()] : [])));
+  const priors = new Map();
+  for (const t of teams) {
+    let sum = 0, wsum = 0;
+    past.forEach((m, i) => {
+      if (!weights[i] || !m) return;
+      sum += weights[i] * (m.get(t) ?? rookieZ);
+      wsum += weights[i];
+    });
+    priors.set(t, sum / wsum);
+  }
+  // spread of last season's EPAs relative to its mean, to turn z into points
+  const prev = JSON.parse(await fs.readFile(path.join("site", "data", String(season - 1), "teams.json"), "utf8"));
+  const npI = prev.cols.indexOf("np"), mI = prev.cols.indexOf("matches");
+  const vals = prev.rows.filter((r) => r[mI] >= minMatches).map((r) => r[npI]);
+  if (vals.length < 10) return { priors: new Map(), cv: 0.5 };
   const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
   const sd = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length);
-  const priors = new Map(rows.map((r) => [r[0], Math.max(-2.5, Math.min(2.5, (r[npI] - mean) / sd))]));
-  return { priors, cv: sd / mean };
+  return { priors, cv: sd / mean, rookieZ };
 }
 
 // Runs the model and scores its pre-match predictions.
-export function simulate(matches, { params, baseline, priors, cv }, onMatch) {
-  const model = new Model({ params, baseline, priors, cv });
+export function simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ }, onMatch) {
+  const model = new Model({ params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ });
   const acc = newAcc();
   for (const x of matches) {
     const before = onMatch ? new Map([...x.red, ...x.blue].map((t) => [t, model.epa(t)])) : null;
+    const avgBefore = onMatch ? { ...model.avg, rp: [...model.avg.rp], solo: [...model.avg.solo] } : null;
     const pre = model.update(x.red, x.blue, x.actual, x.elim, x.ev.code);
     score(acc, x, pre);
-    onMatch?.(x, pre, model, before);
+    onMatch?.(x, pre, model, before, avgBefore);
   }
   return { model, acc };
 }
@@ -157,15 +236,16 @@ export async function build(season, params = {}) {
   const cfg = SEASONS[season];
   const hasRp = cfg.rpNames.length > 0;
   const events = await loadSeason(season);
-  const matches = playedMatches(season, events);
-  const baseline = baselineOf(matches);
-  const { priors, cv } = await loadPriors(season);
+  const ctx = await prepare(season, events);
+  const { matches, baseline, priors, cv, soloComps, movedSpec, parkedSpec, fits, rookieZ } = ctx;
 
   const history = new Map(); // team -> [entries]
   const eventStart = new Map(); // `${code}:${team}` -> epa before first match there
   const predByMatch = new Map(); // `${code}:${id}` -> pre-match prediction
 
-  const { model, acc } = simulate(matches, { params, baseline, priors, cv }, (x, pre, model, before) => {
+  const eventAvg = new Map(); // event code -> season averages when the event started
+  const { model, acc } = simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ }, (x, pre, model, before, avgBefore) => {
+    if (!eventAvg.has(x.ev.code)) eventAvg.set(x.ev.code, avgBefore);
     predByMatch.set(`${x.ev.code}:${x.m.id}`, pre);
     for (const [side, mine, theirs] of [["red", x.red, x.blue], ["blue", x.blue, x.red]]) {
       const pWin = side === "red" ? pre.pRed : 1 - pre.pRed;
@@ -235,11 +315,11 @@ export async function build(season, params = {}) {
   }
 
   // ---- teams.json: compact table of every team that played ----
-  const ranked = [...history.keys()]
+  const ranked = [...history.keys()].filter((t) => !isPlaceholder(t))
     .map((t) => ({ t, e: model.epa(t), h: history.get(t) }))
     .sort((a, b) => b.e.np - a.e.np);
   const cols = ["team", "name", "loc", "country", "np", "auto", "teleop", "endgame", "rp0", "rp1", "rp2",
-    "matches", "wins", "losses", "ties", "events", "trend", "foul"];
+    "matches", "wins", "losses", "ties", "events", "trend"];
   const rows = ranked.map(({ t, e, h }) => {
     let w = 0, l = 0, ti = 0;
     for (const x of h) x.score > x.oppScore ? w++ : x.score < x.oppScore ? l++ : ti++;
@@ -248,7 +328,7 @@ export async function build(season, params = {}) {
     // EPA change over the last 10 matches
     const prev = h.length > 10 ? h[h.length - 11].epa[0] : h[0].epa[0];
     return [t, i.name ?? "", i.loc ?? "", i.country ?? "", r1(e.np), r1(e.auto), r1(e.teleop), r1(e.endgame),
-      ...e.rp.map(r3), h.length, w, l, ti, evs, r1(e.np - prev), r1(e.foul)];
+      ...e.rp.map(r3), h.length, w, l, ti, evs, r1(e.np - prev)];
   });
   await writeJson(path.join(out, "teams.json"), { cols, rows });
 
@@ -278,9 +358,15 @@ export async function build(season, params = {}) {
   // ---- events ----
   const evList = [];
   for (const ev of events) {
-    const teams = ev.teams.map((tp) => {
+    // parent events with divisions list every division's teams; keep only the
+    // teams that actually played in this event's own matches
+    const inMatches = new Set(ev.matches.flatMap((m) => m.teams.map((t) => t.teamNumber)));
+    const roster = inMatches.size ? ev.teams.filter((tp) => inMatches.has(tp.teamNumber)) : ev.teams;
+    const teams = roster.filter((tp) => !isPlaceholder(tp.teamNumber)).map((tp) => {
       const e = history.has(tp.teamNumber) ? model.epa(tp.teamNumber) : null;
-      const start = eventStart.get(`${ev.code}:${tp.teamNumber}`);
+      // rating entering the event; for teams that haven't played here yet, their current rating
+      // teams yet to play this season get their starting rating from past seasons
+      const start = eventStart.get(`${ev.code}:${tp.teamNumber}`) ?? model.epa(tp.teamNumber);
       const h = history.get(tp.teamNumber)?.filter((x) => x.ev === ev.code) ?? [];
       return {
         team: tp.teamNumber, name: tp.team?.name ?? "",
@@ -288,7 +374,10 @@ export async function build(season, params = {}) {
         wins: tp.stats?.wins ?? null, losses: tp.stats?.losses ?? null, ties: tp.stats?.ties ?? null,
         epaStart: start ? r1(start.np) : null,
         // full model state entering the event, so the site can replay it live
-        state: start ? [r1(start.auto), r1(start.teleop), r1(start.endgame), r1(start.foul), start.n, ...start.rp.map(r3)] : null,
+        state: start ? {
+          auto: r1(start.shared.auto), teleop: r1(start.shared.teleop), endgame: r1(start.shared.endgame),
+          solo: start.solo.map(r1), n: start.n, v: r3(start.v), rp: start.rp.map(r3), ev: start.ev ?? null,
+        } : null,
         epaEnd: h.length ? h[h.length - 1].epa[0] : null,
         epaNow: e ? epaRow(e) : null,
       };
@@ -299,24 +388,33 @@ export async function build(season, params = {}) {
       .slice()
       .sort((a, b) => matchTime(ev, a) - matchTime(ev, b) || a.id - b.id)
       .map((m) => {
-        const red = m.teams.filter((t) => t.alliance === "Red").map((t) => t.teamNumber);
-        const blue = m.teams.filter((t) => t.alliance === "Blue").map((t) => t.teamNumber);
-        const played = m.hasBeenPlayed && !!m.scores?.red;
+        const red = allianceTeams(m, "Red"), blue = allianceTeams(m, "Blue");
+        const redOn = onField(m, "Red"), blueOn = onField(m, "Blue");
+        const played = isPlayed(m);
         let pre = predByMatch.get(`${ev.code}:${m.id}`);
-        if (!pre && red.length && blue.length) pre = model.predict(onField(m, "Red"), onField(m, "Blue"));
+        // unplayed matches get a prediction from current ratings; a played match the
+        // model skipped (bad on-field data) gets none, rather than one that knows the result
+        if (!pre && !played && redOn.length && blueOn.length) pre = model.predict(redOn, blueOn);
         const res = played ? { red: read(m.scores.red), blue: read(m.scores.blue) } : null;
         if (res && pre && res.red.total !== res.blue.total) {
           decided++;
           if ((pre.pRed > 0.5) === (res.red.total > res.blue.total)) correct++;
         }
-        const sc = (a) => ({ np: a.np, total: a.total, auto: a.auto, teleop: a.teleop, endgame: a.endgame, rp: hasRp ? a.rp : null });
+        const isQual = m.tournamentLevel === "Quals";
+        const sc = (a, raw) => ({
+          np: a.np, total: a.total, auto: a.auto, teleop: a.teleop, endgame: a.endgame, rp: hasRp ? a.rp : null,
+          ...(isQual && fits.length ? { solo: soloPoints(season, raw, fits) } : {}),
+        });
+        const same = (a, b) => a.length === b.length && a.every((t, i) => t === b[i]);
+        const surr = m.teams.filter((t) => t.surrogate).map((t) => t.teamNumber);
         return {
           id: m.id, d: m.description, level: m.tournamentLevel, time: matchTime(ev, m),
           red, blue, played,
-          // elim alliances have 3 teams but only 2 play each match
-          ...(red.length > 2 || blue.length > 2 ? { redOn: onField(m, "Red"), blueOn: onField(m, "Blue") } : {}),
-          redScore: res ? sc(res.red) : null,
-          blueScore: res ? sc(res.blue) : null,
+          // who actually played, when that differs from the alliance (elims, no-shows)
+          ...(!same(red, redOn) || !same(blue, blueOn) ? { redOn, blueOn } : {}),
+          ...(surr.length ? { surr } : {}), // surrogate appearances don't count for ranking
+          redScore: res ? sc(res.red, m.scores.red) : null,
+          blueScore: res ? sc(res.blue, m.scores.blue) : null,
           pred: pre ? {
             pRed: r3(pre.pRed),
             red: { np: r1(pre.red.np), total: r1(pre.red.total), auto: r1(pre.red.auto), teleop: r1(pre.red.teleop), endgame: r1(pre.red.endgame), rp: hasRp ? pre.red.rp.map(r3) : null },
@@ -335,7 +433,10 @@ export async function build(season, params = {}) {
       topTeam: teams.reduce((b, t) => ((t.epaNow?.np ?? -1) > (b?.epaNow?.np ?? -1) ? t : b), null)?.team ?? null,
     };
     evList.push(summary);
-    await writeJson(path.join(out, "event", `${ev.code}.json`), { ...summary, timezone: ev.timezone, teamList: teams, matchList: ms });
+    const av = eventAvg.get(ev.code) ?? model.avg;
+    // season averages when the event started, so the browser can replay it exactly
+    const avg = { auto: r1(av.auto), teleop: r1(av.teleop), endgame: r1(av.endgame), foul: r1(av.foul), solo: av.solo.map(r1), rp: av.rp.map(r3) };
+    await writeJson(path.join(out, "event", `${ev.code}.json`), { ...summary, timezone: ev.timezone, avg, teamList: teams, matchList: ms });
   }
   evList.sort((a, b) => b.start.localeCompare(a.start) || b.strength - a.strength);
   await writeJson(path.join(out, "events.json"), evList);
@@ -358,9 +459,12 @@ export async function build(season, params = {}) {
     percentiles: { p99: pct(0.99), p90: pct(0.9), p75: pct(0.75), p50: pct(0.5), p25: pct(0.25) },
     avgAlliance: {
       auto: r1(model.avg.auto), teleop: r1(model.avg.teleop), endgame: r1(model.avg.endgame), foul: r1(model.avg.foul),
+      solo: model.avg.solo.map(r1),
       np: r1(model.avgAllianceNp()), rp: model.avg.rp.map(r3),
     },
     model: { ...model.p, baseline: { ...baseline, rp: baseline.rp.map(r3) }, cv: r3(cv), priors: priors.size },
+    // per-robot scoring elements and their learned point values
+    solo: fits.map((f) => ({ comp: f.comp, moved: f.moved, parked: f.parked, robots: f.robots, values: f.values, exact: r3(f.exact) })),
   };
   await writeJson(path.join(out, "meta.json"), meta);
   return meta;

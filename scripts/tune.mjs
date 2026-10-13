@@ -4,19 +4,17 @@
 //
 //   node scripts/tune.mjs 2025
 
-import { loadSeason, playedMatches, baselineOf, loadPriors, simulate, summarize } from "./build.mjs";
+import { prepare, simulate, summarize } from "./build.mjs";
 import { DEFAULT_PARAMS } from "../site/js/model.js";
 
 const season = Number(process.argv[2] ?? 2025);
-const matches = playedMatches(season, await loadSeason(season));
-const baseline = baselineOf(matches);
-const { priors, cv } = await loadPriors(season);
+const { matches, baseline, priors, cv, soloComps } = await prepare(season);
 const cut = Math.floor(matches.length * 0.7);
 const train = matches.slice(0, cut);
 
 // Loss = win-prob Brier + score error (scaled) so both get tuned.
 const loss = (params, ms) => {
-  const s = summarize(simulate(ms, { params, baseline, priors, cv }).acc).all;
+  const s = summarize(simulate(ms, { params, baseline, priors, cv, soloComps }).acc).all;
   return s.brier + s.scoreMae / 1000;
 };
 
@@ -52,7 +50,7 @@ const evalHoldout = (params) => {
   // but only score the last 30%
   let i = 0;
   const g = { n: 0, correct: 0, brier: 0, mae: 0 };
-  simulate(matches, { params, baseline, priors, cv }, (x, pre) => {
+  simulate(matches, { params, baseline, priors, cv, soloComps }, (x, pre) => {
     if (i++ < cut) return;
     const o = x.actual.red.total === x.actual.blue.total ? 0.5 : x.actual.red.total > x.actual.blue.total ? 1 : 0;
     g.n++;

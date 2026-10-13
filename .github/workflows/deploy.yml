@@ -23,15 +23,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
-      # finished events never change, so keep the raw API cache between runs
+      # finished events never change, so keep the raw API cache between runs.
+      # One cache per day (saved only when the day's key is new) keeps storage small.
+      - id: day
+        run: echo "day=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v4
         with:
           path: .cache
-          key: ftc-cache-${{ github.run_id }}
+          key: ftc-cache-${{ steps.day.outputs.day }}
           restore-keys: ftc-cache-
       - run: npm run update
       - run: npm run check

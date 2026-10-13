@@ -9,7 +9,7 @@
   --glass-border: #e2e2e2;
   --text: #231f20;
   --muted: #4f4c4d;
-  --faint: #9a989a;
+  --faint: #707070; /* 4.9:1 on white */
   --line: #e8e8e8;
   --hover: #f4f7fb;
   --accent: #0066b3; /* FIRST blue */
@@ -126,13 +126,6 @@ h3, .eyebrow { font-size: 13px; font-weight: 700; color: var(--accent); text-tra
 .more { border-radius: 0; }
 
 /* ---------- header: dark utility strip + white nav ---------- */
-.utility { background: #231f20; color: #fff; font-size: 14px; }
-.utility-inner { display: flex; align-items: center; justify-content: flex-end; gap: 22px; padding: 8px 48px; font-weight: 500; }
-.utility-note { margin-right: auto; opacity: .75; }
-.utility-season { display: flex; align-items: center; gap: 8px; }
-.utility select { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; padding: 3px 8px; font-weight: 500; }
-.utility select option { color: #231f20; }
-.utility-btn { background: none; border: 0; color: #fff; padding: 4px; display: grid; place-items: center; }
 .nav { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); }
 .nav-inner { display: flex; align-items: center; gap: 8px; padding: 0 48px; height: 84px; }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 22px; letter-spacing: -0.02em; white-space: nowrap; margin-right: auto; }
@@ -142,6 +135,10 @@ h3, .eyebrow { font-size: 13px; font-weight: 700; color: var(--accent); text-tra
 .nav-links a { padding: 8px 14px; color: var(--text); font-weight: 500; font-size: 17px; }
 .nav-links a:hover, .nav-links a.active { color: var(--accent); }
 .nav-side { display: flex; gap: 8px; align-items: center; }
+.season-select { margin-left: 4px; padding: 6px 26px 6px 10px; border: 1px solid var(--line); border-radius: 6px; font-weight: 500; font-size: 13px; appearance: none; cursor: pointer; max-width: 170px;
+  background: var(--surface) linear-gradient(45deg, transparent 50%, var(--muted) 50%) calc(100% - 13px) 52% / 4px 4px no-repeat,
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%) calc(100% - 9px) 52% / 4px 4px no-repeat; }
+#theme { background: none; border: 0; color: var(--text); }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 22px; border-radius: 6px; font-weight: 700; font-size: 16px; border: 2px solid var(--text); white-space: nowrap; }
 .btn-solid { background: var(--text); color: var(--page); }
 .btn-solid:hover { color: var(--page); opacity: .88; }
@@ -401,6 +398,11 @@ footer a { text-decoration: underline; }
 }
 @media (max-width: 900px) {
   .mobile-only { display: block; margin-bottom: 18px; }
+  /* header wraps: logo + links on top, search + season + theme below */
+  .nav-inner { flex-wrap: wrap; height: auto; padding-top: 10px; padding-bottom: 10px; row-gap: 8px; }
+  .nav-search { display: block !important; order: 10; flex: 1 1 100%; margin-left: 0; }
+  .nav-search input { width: 100%; }
+  .hero-search.mobile-only { display: none; }
   .grid.cols-2 > .card + .card { border-left: 0; }
   .cols-3, .cols-4 { grid-template-columns: 1fr 1fr; }
   .cols-2 { grid-template-columns: 1fr; }
@@ -417,16 +419,12 @@ footer a { text-decoration: underline; }
   .hero-inner { padding: 9vh 16px 0; }
   .grid.cols-2 > .card + .card { border-left: 0; }
   .nav-inner { padding: 0 16px; gap: 4px; height: 60px; }
-  .utility-inner { padding: 6px 16px; gap: 12px; }
-  .utility-note { display: none; }
+  .season-select { padding: 5px 22px 5px 8px; font-size: 12px; max-width: 86px; margin-left: 2px; }
+  #theme { width: 30px; }
   .logo { font-size: 18px; }
   .nav-links { margin-right: 0; }
   .nav-links a { padding: 6px 7px; font-size: 15px; }
   .nav-links a[data-page="about"] { display: none; }
-  .nav-cta { padding: 7px 12px; font-size: 14px; border-width: 2px; }
-  .nav-cta::before { content: "Predict"; }
-  .nav-cta { font-size: 0; }
-  .nav-cta::before { font-size: 14px; }
   .hero { padding: 32px 16px 40px; }
   .hero-sub { font-size: 17px; }
   .feature { margin-right: 0; }
