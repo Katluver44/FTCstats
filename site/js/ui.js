@@ -155,12 +155,15 @@ export function videoFor(videos, evCode, time) {
   const v = videos?.[evCode];
   if (!v || !time) return null;
   const up = v.uploads.find((u) => Math.abs(u.t - time) < 90e3);
-  if (up) return { id: up.id, t: up.at ?? 0 }; // at: the match's listed spot in a longer video (these lists run ~40 s early already)
+  if (up) return { id: up.id, t: up.at ?? 0, ext: up.ext }; // at: the match's listed spot in a longer video (these lists run ~40 s early already)
   const s = v.streams.find((s) => time >= s.start && time <= s.end);
-  return s ? { id: s.id, t: Math.max(0, Math.round((time - s.start) / 1000) - LEAD_SECONDS) } : null;
+  return s ? { id: s.id, t: Math.max(0, Math.round((time - s.start) / 1000) - LEAD_SECONDS), ext: s.ext } : null;
 }
 
 export const PLAY_ICON = '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1.2v7.6L8.6 5Z" fill="currentColor"/></svg>';
+
+// outline play-circle, as in Statbotics' video column
+const VIDEO_ICON = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.3"/><path d="M7.1 5.6v6.8L12.4 9Z" fill="currentColor"/></svg>';
 
 export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
   if (!matches.length) return `<div class="empty">No matches yet.</div>`;
@@ -180,11 +183,13 @@ export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
       : `<span class="faint small">upcoming</span>`;
     return `<tr class="${upset ? "upset" : ""}">
       ${m.evName ? `<td class="small"><a href="#/${s}/event/${m.ev}">${esc(m.evName)}</a></td>` : ""}
-      <td class="lvl">${(() => {
-        const v = m.played && video?.(m);
-        const label = href ? `<a class="match-link" href="${href(m)}">${esc(m.d)}</a>` : esc(m.d);
-        return `<span class="lvl-cell">${label}${v ? `<button class="play" data-video="${v.id}" data-t="${v.t}" data-title="${esc(m.d)}" aria-label="Watch ${esc(m.d)}" title="Watch this match">${PLAY_ICON}</button>` : ""}</span>`;
-      })()}</td>
+      ${video ? `<td class="vid-cell">${(() => {
+        if (!m.played) return "";
+        const v = video(m);
+        return v ? `<button class="vid" data-video="${v.id}" data-t="${v.t}"${v.ext ? ' data-ext="1"' : ""} data-title="${esc(m.d)}" aria-label="Watch ${esc(m.d)}" title="Watch this match">${VIDEO_ICON}</button>`
+          : `<span class="vid none" title="No video found for this match">${VIDEO_ICON}</span>`;
+      })()}</td>` : ""}
+      <td class="lvl">${href ? `<a class="match-link" href="${href(m)}">${esc(m.d)}</a>` : esc(m.d)}</td>
       ${teams("red", m.red)}${teams("blue", m.blue)}
       <td class="c hide-sm">${pred}</td>
       <td class="c">${winBar(m.pred?.pRed)}</td>
@@ -192,7 +197,7 @@ export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
     </tr>`;
   }).join("");
   return `<div class="table-wrap"><table class="mt">
-    <thead><tr>${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c" colspan="${slots}">Red</th><th class="c" colspan="${slots}">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Icons: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue. A faint red row means the favourite lost.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Icons: bonus RPs earned (hover them to see which)." : ""}">Final</span></th></tr></thead>
+    <thead><tr>${video ? '<th class="c vid-cell">Video</th>' : ""}${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c" colspan="${slots}">Red</th><th class="c" colspan="${slots}">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Icons: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue. A faint red row means the favourite lost.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Icons: bonus RPs earned (hover them to see which)." : ""}">Final</span></th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
 }
 
