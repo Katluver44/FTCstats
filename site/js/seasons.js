@@ -124,6 +124,10 @@ export const SEASONS = {
     statsType: "TeamEventStats2025",
     fields: "autoPoints dcPoints dcBasePoints totalPointsNp totalPoints movementRp goalRp patternRp autoLeave1 autoLeave2 autoLeavePoints dcBase1 dcBase2 dcBaseBonus",
     rpNames: ["Movement", "Goal", "Pattern"],
+    // Movement RP = leave + base points >= 16, or 21 at championships and Premier
+    // events (checked: never mixed within an event in 2025-26). Predicted from
+    // each robot's zone habits (model.js, zoneRp).
+    zoneRp: { rp: 0, leave: 3, base: [0, 5, 10], bonus: 10, thr: (type) => (/Championship|Premier/.test(type ?? "") ? 21 : 16) },
     winRp: 3,
     tieRp: 1,
     tiebreak: "np", // average match points without fouls (100% of tied pairs)

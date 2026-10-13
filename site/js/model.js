@@ -71,6 +71,7 @@ export const DEFAULT_PARAMS = {
   cal: 1,
   calAlpha: 0.002, // weight of each new alliance result in the moments
   calRidge: 0.02, // ridge penalty
+  zoneAlpha: 0.2, // speed of each robot's zone-habit tracker (zone RPs)
   // Alliance overlap (diminishing returns): two robots strong in the same phase
   // get in each other's way, so an alliance scores less than the sum of its
   // robots. Overlap = sum over phases of the weaker robot's points; it is a 4th
@@ -225,8 +226,12 @@ export class Model {
   // priors: Map(teamNumber -> z-score from earlier seasons), optional.
   // rookieZ: starting z for teams with no history, once priors exist at all.
   // movedSpec: index of the solo spec that records auto movement (-1 if none).
-  constructor({ params = {}, baseline, priors = new Map(), cv = 0.5, soloComps = [], movedSpec = -1, parkedSpec = -1, rookieZ = 0 } = {}) {
+  // zoneRp: { rp, thr(eventType), leave, base, bonus } from the season config, or null.
+  // eventType(code) -> the event's type, for zone-RP thresholds.
+  constructor({ params = {}, baseline, priors = new Map(), cv = 0.5, soloComps = [], movedSpec = -1, parkedSpec = -1, rookieZ = 0, zoneRp = null, eventType = () => null } = {}) {
     this.p = { ...DEFAULT_PARAMS, ...params };
+    this.zoneRp = zoneRp && movedSpec >= 0 && parkedSpec >= 0 ? zoneRp : null;
+    this.eventType = eventType;
     this.soloComps = soloComps;
     this.movedSpec = movedSpec;
     this.parkedSpec = parkedSpec;
@@ -235,6 +240,8 @@ export class Model {
       rp: [...baseline.rp],
       solo: soloComps.map((_, j) => baseline.solo?.[j] ?? 0),
     };
+    // league zone habits (start values for new robots): P(leave), P(base none / partial / full)
+    if (this.zoneRp) for (const [k, v] of Object.entries({ zLeave: 0.7, zB0: 0.25, zB1: 0.45, zB2: 0.3 })) this.avg[k] ??= v;
     // variance of the foul differential, and of the non-foul score-difference
     // error (starts where the default spread would be)
     this.avg.foulDiffVar ??= 2 * (baseline.foulVar ?? (baseline.foul ?? 0) ** 2);
@@ -276,6 +283,7 @@ export class Model {
         solo: this.avg.solo.map((s) => s * f),
         rp: this.avg.rp.map((r) => r / 2),
       };
+      if (this.zoneRp) t.zone = [this.avg.zLeave, this.avg.zB0, this.avg.zB1, this.avg.zB2];
       this.teams.set(num, t);
     }
     return t;
@@ -304,10 +312,11 @@ export class Model {
   }
 
   // Restore a team's state, e.g. its rating entering an event.
-  setTeam(num, { auto, teleop, endgame, n, rp, solo, v, ev, evStart }) {
+  setTeam(num, { auto, teleop, endgame, n, rp, solo, v, ev, evStart, zone }) {
     this.teams.set(num, {
       n, v: v ?? this.p.v0, ev: ev ?? null, evStart: evStart ?? null, auto, teleop, endgame,
       solo: this.soloComps.map((_, j) => solo?.[j] ?? 0), rp: [...rp],
+      ...(this.zoneRp ? { zone: zone ? [...zone] : [this.avg.zLeave, this.avg.zB0, this.avg.zB1, this.avg.zB2] } : {}),
     });
   }
 
@@ -382,6 +391,12 @@ export class Model {
     // the overlap part of the recalibration can also move the win probability
     const ov = (x) => (this.p.cal && this.p.calPair ? this.p.calPairWin * A * this.cal.b[3] * 2 * (x.overlap / A - 0.25) : 0);
     const pRed = this.winProb(r.np + ov(r) + b.foul, b.np + ov(b) + r.foul, varSum, level);
+    if (this.zoneRp) {
+      const thr = this.zoneRp.thr(this.eventType(eventCode));
+      for (const [al, nums] of [[r, red], [b, blue]]) {
+        if (nums.length === 2) al.rp[this.zoneRp.rp] = clamp(this.zoneChance(nums, thr), 0.01, 0.99);
+      }
+    }
     if (this.p.cal) {
       r.calX = [1, r.rawNp / A - 1, b.rawNp / A - 1];
       b.calX = [1, b.rawNp / A - 1, r.rawNp / A - 1];
@@ -395,6 +410,35 @@ export class Model {
     return { red: r, blue: b, varSum, level, pRed };
   }
 
+
+  // P(two robots' zone points >= thr): enumerate leave x base outcomes.
+  zoneChance(nums, thr) {
+    const [a, b] = nums.map((n) => this.team(n).zone);
+    const { leave, base, bonus } = this.zoneRp;
+    let p = 0;
+    for (let l1 = 0; l1 < 2; l1++) for (let l2 = 0; l2 < 2; l2++) for (let b1 = 0; b1 < 3; b1++) for (let b2 = 0; b2 < 3; b2++) {
+      const pts = leave * (l1 + l2) + base[b1] + base[b2] + (b1 === 2 && b2 === 2 ? bonus : 0);
+      if (pts >= thr) p += (l1 ? a[0] : 1 - a[0]) * (l2 ? b[0] : 1 - b[0]) * a[1 + b1] * b[1 + b2];
+    }
+    return p;
+  }
+
+  // learn each robot's zone habits from its per-robot leave / base points
+  zoneStep(nums, act) {
+    const lv = act.solo?.[this.movedSpec], bs = act.solo?.[this.parkedSpec];
+    if (!lv || !bs || lv.length !== nums.length || bs.length !== nums.length) return;
+    const full = this.zoneRp.base[2];
+    nums.forEach((num, i) => {
+      const z = this.team(num).zone;
+      const k = bs[i] >= 0.75 * full ? 2 : bs[i] > 0 ? 1 : 0;
+      const y = [lv[i] > 0 ? 1 : 0, k === 0 ? 1 : 0, k === 1 ? 1 : 0, k === 2 ? 1 : 0];
+      for (let j = 0; j < 4; j++) {
+        z[j] += this.p.zoneAlpha * (y[j] - z[j]);
+        const key = ["zLeave", "zB0", "zB1", "zB2"][j];
+        this.avg[key] += this.p.emaAlpha * (y[j] - this.avg[key]);
+      }
+    });
+  }
 
   calDot(x) {
     return x.reduce((s, xi, i) => s + xi * this.cal.b[i], 0);
@@ -530,6 +574,7 @@ export class Model {
       if (!isElim) this.avg.rp = this.avg.rp.map((r, j) => r + a * ((act.rp?.[j] ? 1 : 0) - r));
     }
     if (this.p.grow) for (const n of [...red, ...blue]) this.team(n).gAvg = { auto: this.avg.auto, teleop: this.avg.teleop, endgame: this.avg.endgame };
+    if (this.zoneRp && !isElim) { this.zoneStep(red, actual.red); this.zoneStep(blue, actual.blue); }
     if (this.p.cal && !isElim) {
       const A = Math.max(10, this.avgAllianceNp());
       for (const side of ["red", "blue"]) this.calStep(pred[side].calX, (actual[side].np - pred[side].rawNp) / A);
@@ -546,7 +591,7 @@ export class Model {
 
   epa(num) {
     const t = this.team(num);
-    const e = { n: t.n, v: t.v, ev: t.ev, evStart: t.evStart ?? null, auto: t.auto, teleop: t.teleop, endgame: t.endgame, rp: [...t.rp], solo: [...t.solo] };
+    const e = { n: t.n, v: t.v, ev: t.ev, evStart: t.evStart ?? null, ...(t.zone ? { zone: [...t.zone] } : {}), auto: t.auto, teleop: t.teleop, endgame: t.endgame, rp: [...t.rp], solo: [...t.solo] };
     const shared = { auto: t.auto, teleop: t.teleop, endgame: t.endgame };
     t.solo.forEach((s, j) => (e[this.soloComps[j]] += s));
     e.np = e.auto + e.teleop + e.endgame;

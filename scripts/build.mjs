@@ -271,8 +271,10 @@ function makeTrack(matches, modelArgs, { unofficial = UNOFFICIAL, offWeight = 0 
 }
 
 // The prediction track.
-export function simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, unofficial = UNOFFICIAL, offWeight = 0 }, onMatch) {
-  const track = makeTrack(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ }, { unofficial, offWeight });
+export function simulate(matches, { season, params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, unofficial = UNOFFICIAL, offWeight = 0, zone = true }, onMatch) {
+  const types = new Map(matches.map((x) => [x.ev.code, x.ev.type]));
+  const track = makeTrack(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ,
+    zoneRp: zone ? SEASONS[season]?.zoneRp : null, eventType: (code) => types.get(code) }, { unofficial, offWeight });
   const acc = newAcc();
   for (const [i, x] of matches.entries()) {
     const m = track.at(x);
@@ -427,7 +429,7 @@ export async function build(season, params = {}, epaOver = {}) {
   const predByMatch = new Map(); // `${code}:${id}` -> pre-match prediction
 
   const eventAvg = new Map(); // event code -> season averages when the event started
-  const { model, acc } = simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ }, (x, pre, model, before, avgBefore) => {
+  const { model, acc } = simulate(matches, { season, params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ }, (x, pre, model, before, avgBefore) => {
     if (!eventAvg.has(x.ev.code)) eventAvg.set(x.ev.code, avgBefore);
     predByMatch.set(`${x.ev.code}:${x.m.id}`, pre);
     for (const [side, mine, theirs] of [["red", x.red, x.blue], ["blue", x.blue, x.red]]) {
@@ -549,7 +551,7 @@ export async function build(season, params = {}, epaOver = {}) {
       const epaT = epaParams({ ...epaOver, shared: { ...epaOver.shared, ...shared } });
       // prediction-track columns (pnp.., next season's prediction priors): off-season
       // events at OFF_WEIGHT up to the cutoff, no exclusions (as before the presets)
-      const { model: allModel } = simulate(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ,
+      const { model: allModel } = simulate(matches, { season, params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ,
         offWeight: offWeights(matches, { offWeight: shared.offWeight, offCutoff: shared.offCutoff }) });
       const allHist = new Map();
       const cutStart = shared.offCutoff ? events.find((e) => e.code === shared.offCutoff)?.start : null;
@@ -636,6 +638,7 @@ export async function build(season, params = {}, epaOver = {}) {
           auto: r1(start.shared.auto), teleop: r1(start.shared.teleop), endgame: r1(start.shared.endgame),
           solo: start.solo.map(r1), n: start.n, v: r3(start.v), rp: start.rp.map(r3), ev: start.ev ?? null,
           evStart: start.evStart ? Object.fromEntries(Object.entries(start.evStart).map(([k, v]) => [k, r1(v)])) : null,
+          ...(start.zone ? { zone: start.zone.map(r3) } : {}),
         } : null,
         epaEnd: h.length ? h[h.length - 1].epa[0] : null,
         epaNow: e ? { np: r1(e.np), auto: r1(e.auto), teleop: r1(e.teleop), endgame: r1(e.endgame) } : null,
@@ -695,7 +698,8 @@ export async function build(season, params = {}, epaOver = {}) {
     const av = eventAvg.get(ev.code) ?? model.avg;
     // season averages when the event started, so the browser can replay it exactly
     const avg = { auto: r1(av.auto), teleop: r1(av.teleop), endgame: r1(av.endgame), foul: r1(av.foul), errVar: r1(av.errVar), foulDiffVar: r1(av.foulDiffVar), solo: av.solo.map(r1), rp: av.rp.map(r3),
-      clipVar: Object.fromEntries(Object.entries(av.clipVar ?? model.errVar).map(([k, v]) => [k, r1(v)])), cal: av.cal ?? model.cal };
+      clipVar: Object.fromEntries(Object.entries(av.clipVar ?? model.errVar).map(([k, v]) => [k, r1(v)])), cal: av.cal ?? model.cal,
+      ...(av.zLeave != null ? { zLeave: r3(av.zLeave), zB0: r3(av.zB0), zB1: r3(av.zB1), zB2: r3(av.zB2) } : {}) };
     await writeJson(path.join(out, "event", `${ev.code}.json`), { ...summary, timezone: ev.timezone, avg, teamList: teams, matchList: ms });
   }
   evList.sort((a, b) => b.start.localeCompare(a.start) || b.strength - a.strength);
@@ -727,6 +731,7 @@ export async function build(season, params = {}, epaOver = {}) {
       clipVar: Object.fromEntries(Object.entries(model.errVar).map(([k, v]) => [k, r1(v)])), cal: model.cal,
       solo: model.avg.solo.map(r1),
       np: r1(model.avgAllianceNp()), rp: model.avg.rp.map(r3),
+      ...(model.avg.zLeave != null ? { zLeave: r3(model.avg.zLeave), zB0: r3(model.avg.zB0), zB1: r3(model.avg.zB1), zB2: r3(model.avg.zB2) } : {}),
     },
     // prediction track (live replay builds its model from this)
     model: { ...model.p, baseline: { ...baseline, rp: baseline.rp.map(r3) }, cv: r3(cv), priors: priors.size },

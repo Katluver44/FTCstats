@@ -16,10 +16,14 @@ export async function fetchLiveEvent(season, code) {
 
 // A model set up like the build's, from a season's meta.json. Pass `avg` (an
 // event file's season averages at its start) to replay that event exactly.
-export function modelFromMeta(meta, avg) {
+// `evType`: the event's type (zone-RP thresholds differ at championships).
+export function modelFromMeta(meta, avg, evType = null) {
   const a = avg ?? meta.avgAlliance;
   return new Model({
-    baseline: { auto: a.auto, teleop: a.teleop, endgame: a.endgame, foul: a.foul, errVar: a.errVar, foulDiffVar: a.foulDiffVar, rp: a.rp, solo: a.solo ?? [], clipVar: a.clipVar, cal: a.cal },
+    baseline: { auto: a.auto, teleop: a.teleop, endgame: a.endgame, foul: a.foul, errVar: a.errVar, foulDiffVar: a.foulDiffVar, rp: a.rp, solo: a.solo ?? [], clipVar: a.clipVar, cal: a.cal,
+      ...(a.zLeave != null ? { zLeave: a.zLeave, zB0: a.zB0, zB1: a.zB1, zB2: a.zB2 } : {}) },
+    zoneRp: SEASONS[meta.season]?.zoneRp ?? null,
+    eventType: () => evType,
     soloComps: (meta.solo ?? []).map((s) => s.comp),
     movedSpec: (meta.solo ?? []).findIndex((s) => s.moved),
     parkedSpec: (meta.solo ?? []).findIndex((s) => s.parked),
@@ -55,7 +59,7 @@ export function normalizeLive(season, ev, meta) {
 // entering the event. Only the first `cutoff` quals count as played; later
 // matches are predicted with ratings frozen at that point.
 export function replayEvent(meta, ev, matches, cutoff = Infinity) {
-  const model = modelFromMeta(meta, ev.avg);
+  const model = modelFromMeta(meta, ev.avg, ev.type);
   for (const t of ev.teamList) if (t.state) model.setTeam(t.team, t.state);
   let quals = 0, frozen = false;
   const out = matches.map((m) => {
@@ -337,7 +341,7 @@ export function forecastFromRoster(season, meta, ev, { perTeam = 5, sims = 2000,
   reseed(ev.teamList.length * 7919 + perTeam);
   const { rankBy } = SEASONS[season];
   const byScore = rankBy === "score";
-  const model = modelFromMeta(meta);
+  const model = modelFromMeta(meta, null, ev.type);
   const teams = ev.teamList.map((t) => t.team);
   for (const t of ev.teamList) if (t.state) model.setTeam(t.team, t.state);
   const N = teams.length;
