@@ -90,6 +90,57 @@ const TB_NOISE = { auto: 0.65, np: 0.4 };
 //   probability unchanged.
 // - The tiebreaker is played out from simulated alliance scores in the field
 //   the season actually breaks ties on (SEASONS[season].tiebreak).
+// Ranking points an alliance earned in a played qual (its score, in seasons ranked by score).
+function earnedRp(season, own, opp) {
+  const { winRp, tieRp, rankBy } = SEASONS[season];
+  if (rankBy === "score") return own.total;
+  return (own.total > opp.total ? winRp : own.total === opp.total ? tieRp : 0) + (own.rp ?? []).filter(Boolean).length;
+}
+// The tiebreaker points an alliance earned in a played match.
+function earnedTb(season, own, opp) {
+  const field = SEASONS[season].tiebreak ?? "np";
+  return field === "losingNp" ? Math.min(own.np, opp.np) : own[field] ?? own.np;
+}
+
+// Qualification standings from the quals played so far in `matches`, by the
+// season's rules: ranking score (average RP, or total score where `rankBy` is
+// "score"), then the average tiebreaker. Surrogate appearances don't count.
+// Deeper tiebreakers aren't modelled, so teams still tied fall back to their
+// official final rank (`finalRank`, team -> rank) when it's known. Checked on
+// every saved event: final standings match the official ranks for 98-99.98%
+// of teams in each finished season (2019-2025), and W-L-T records for 99.8%.
+// -> Map team -> { rank, rs, played, wins, losses, ties }; teams yet to play have rank null.
+export function standings(season, teams, matches, finalRank = new Map()) {
+  const { rankBy, dropLowestTb } = SEASONS[season];
+  const byScore = rankBy === "score";
+  const st = new Map(teams.map((t) => [t, { rp: 0, tbs: [], played: 0, wins: 0, losses: 0, ties: 0 }]));
+  for (const m of matches) {
+    if (m.level !== "Quals" || !m.played || !m.redScore || !m.blueScore) continue;
+    const r = m.redScore, b = m.blueScore;
+    for (const [side, own, opp] of [["red", r, b], ["blue", b, r]]) {
+      for (const t of m[side]) {
+        const s = st.get(t);
+        if (!s || (m.surr ?? []).includes(t)) continue;
+        s.rp += earnedRp(season, own, opp);
+        s.tbs.push(earnedTb(season, own, opp));
+        s.played++;
+        if (own.total > opp.total) s.wins++; else if (own.total < opp.total) s.losses++; else s.ties++;
+      }
+    }
+  }
+  for (const s of st.values()) {
+    s.rs = !s.played ? null : byScore ? s.rp : s.rp / s.played;
+    const tbs = dropLowestTb && s.tbs.length >= dropLowestTb ? [...s.tbs].sort((x, y) => x - y).slice(1) : s.tbs;
+    s.tb = tbs.length ? tbs.reduce((x, y) => x + y, 0) / tbs.length : 0;
+    s.rank = null;
+  }
+  const last = (t) => finalRank.get(t) ?? 1e9;
+  [...st].filter(([, s]) => s.played)
+    .sort(([ta, a], [tb, b]) => b.rs - a.rs || b.tb - a.tb || last(ta) - last(tb))
+    .forEach(([, s], i) => (s.rank = i + 1));
+  return st;
+}
+
 function makeSim(season, model, { corr = 1, tb = "sim" } = {}) {
   const { winRp, rpNames } = SEASONS[season];
   const field = SEASONS[season].tiebreak ?? "np";
@@ -104,7 +155,7 @@ function makeSim(season, model, { corr = 1, tb = "sim" } = {}) {
   const sim = {
     field,
     // the actual tiebreaker points an alliance earned in a played match
-    actualTb: (own, opp) => (field === "losingNp" ? Math.min(own.np, opp.np) : own[field] ?? own.np),
+    actualTb: (own, opp) => earnedTb(season, own, opp),
     expectedTb: (pOwn, pOpp) => (field === "losingNp" ? Math.min(pOwn.np, pOpp.np) : pOwn[field] ?? pOwn.np),
     setup(teams, avgField) {
       avgTb = avgField;
@@ -149,7 +200,7 @@ function makeSim(season, model, { corr = 1, tb = "sim" } = {}) {
 // Pass the replay's `model` to draw correlated team strengths (see makeSim).
 export function forecastRankings(season, teams, matches, sims = 3000, { model = null, corr = 1, tb = "sim" } = {}) {
   reseed(teams.length * 7919 + matches.length);
-  const { winRp, tieRp, rankBy } = SEASONS[season];
+  const { rankBy } = SEASONS[season];
   const byScore = rankBy === "score";
   const sim = makeSim(season, model, { corr, tb });
   const idx = new Map(teams.map((t, i) => [t, i]));
@@ -165,8 +216,7 @@ export function forecastRankings(season, teams, matches, sims = 3000, { model = 
     const red = m.red.filter(counts), blue = m.blue.filter(counts);
     if (m.played) {
       const r = m.redScore, b = m.blueScore;
-      const rr = byScore ? r.total : (r.total > b.total ? winRp : r.total === b.total ? tieRp : 0) + (r.rp ?? []).filter(Boolean).length;
-      const br = byScore ? b.total : (b.total > r.total ? winRp : r.total === b.total ? tieRp : 0) + (b.rp ?? []).filter(Boolean).length;
+      const rr = earnedRp(season, r, b), br = earnedRp(season, b, r);
       const tr = tb === "legacy" ? r.np : sim.actualTb(r, b), tbb = tb === "legacy" ? b.np : sim.actualTb(b, r);
       for (const t of red) { baseRp[idx.get(t)] += rr; basePlayed[idx.get(t)]++; baseTb[idx.get(t)] += tr; }
       for (const t of blue) { baseRp[idx.get(t)] += br; basePlayed[idx.get(t)]++; baseTb[idx.get(t)] += tbb; }

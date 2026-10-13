@@ -27,6 +27,9 @@ export const SEASONS = {
     // what breaks ranking-score ties, checked on tied teams' official ranks:
     // the losing alliance's points without fouls (95% of tied pairs)
     tiebreak: "losingNp",
+    // and each team's lowest tiebreak score is dropped once it has played 5 quals
+    // (with it, computed final standings match the official ranks for 99.98% of teams)
+    dropLowestTb: 5,
     solo: [
       { comp: "auto", moved: true, label: "auto navigation", robots: ["autoNav2019_1", "autoNav2019_2"], total: "autoNavPoints" },
       { comp: "endgame", parked: true, label: "endgame parking", robots: ["egParked1", "egParked2"], total: "egParkPoints" },

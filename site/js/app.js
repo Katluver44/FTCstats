@@ -5,7 +5,7 @@ import { SEASONS } from "./seasons.js";
 import { playoffs } from "./playoffs.js";
 import { initAnalytics, trackPage } from "./analytics.js";
 import { CONFIG } from "./config.js";
-import { fetchLiveEvent, normalizeLive, replayEvent, forecastRankings, forecastFromRoster, modelFromMeta } from "./live.js";
+import { fetchLiveEvent, normalizeLive, replayEvent, forecastRankings, forecastFromRoster, modelFromMeta, standings } from "./live.js";
 
 const app = $("#app");
 const state = { seasons: [], defaultSeason: null, season: null, liveTimer: null, nav: 0 };
@@ -24,6 +24,10 @@ function parseHash() {
   return { season, page: parts[0] ?? "", args: parts.slice(1), query: new URLSearchParams(query) };
 }
 
+// tab title for pages with no heading (the lists, "not found" messages) and while loading
+const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", about: "Our methodology" };
+const setTitle = (name) => (document.title = name ? `${name} · FTCstats` : "FTCstats · FTC ratings & match predictions");
+
 async function route() {
   clearInterval(state.liveTimer);
   const r = parseHash();
@@ -32,13 +36,14 @@ async function route() {
   renderNav(r);
   window.scrollTo(0, 0);
   app.innerHTML = `<div class="loading">Loading…</div>`;
+  const pages = { "": home, teams, team, events, event, match, about };
+  const fn = pages[r.page] ?? notFound;
+  setTitle(r.page && (PAGE_TITLES[r.page] ?? "Page not found"));
   try {
-    const pages = { "": home, teams, team, events, event, about };
-    const fn = pages[r.page] ?? notFound;
     await fn(r);
-    // tab title from the page heading, e.g. "20265 Heart of RoBots · FTCstats"
-    const h1 = !stale(r) && $("#app h1, #app .hero-title");
-    if (h1) document.title = r.page ? `${h1.textContent.trim().replace(/\s+/g, " ")} · FTCstats` : "FTCstats · FTC ratings & match predictions";
+    // a heading names the page better, e.g. "20265 Heart of RoBots · FTCstats"
+    const h1 = !stale(r) && r.page && $("#app h1");
+    if (h1) setTitle(h1.textContent.trim().replace(/\s+/g, " "));
     if (!stale(r)) trackPage(`/${r.season}/${[r.page, ...r.args].filter(Boolean).join("/")}`, document.title);
   } catch (e) {
     console.error(e);
@@ -46,15 +51,104 @@ async function route() {
   }
 }
 
-function renderNav({ season, page }) {
-  $("#season").innerHTML = state.seasons
-    .map((s) => `<option value="${s}" ${s === season ? "selected" : ""}>${s}–${String(s + 1).slice(2)}${SEASONS[s]?.game ? ` · ${esc(SEASONS[s].game)}` : ""}</option>`)
+// the same kind of page in another season; event codes differ by season, so events go to the list
+function seasonHref(s, { page, args }) {
+  const keep = {
+    teams: "teams", events: "events", about: "about", event: "events", match: "events",
+    team: `team/${args.join("/")}`,
+  }[page] ?? "";
+  return `#/${s}/${keep}`;
+}
+
+function renderNav(r) {
+  const { season, page } = r;
+  const years = (s) => `${s}–${String(s + 1).slice(2)}`;
+  $("#season .season-cur").textContent = years(season);
+  $("#season .season-btn").setAttribute("aria-label", `Season: ${years(season)}. Change season`);
+  $("#season-menu").innerHTML = state.seasons
+    .map((s) => `<a href="${seasonHref(s, r)}" ${s === season ? 'aria-current="true"' : ""}>
+      <b>${years(s)}</b>${s === state.defaultSeason ? '<span class="now">Latest</span>' : ""}
+      <span class="game">${esc(SEASONS[s]?.game ?? "")}</span></a>`)
     .join("");
+  closeSeasonMenu(false);
   $$("header [data-page]").forEach((a) => {
     a.href = `#/${season}/${a.dataset.page}`;
     a.classList.toggle("active", a.dataset.page === page);
   });
   $(".logo").href = `#/${season}/`;
+}
+
+// season picker: a button that shows/hides a list of links, one per season
+function closeSeasonMenu(refocus) {
+  const btn = $("#season .season-btn");
+  $("#season-menu").hidden = true;
+  btn.setAttribute("aria-expanded", "false");
+  if (refocus) btn.focus();
+}
+
+function wireSeasonPicker() {
+  const root = $("#season"), btn = $(".season-btn", root), menu = $("#season-menu");
+  const links = () => $$("a", menu);
+  // keep the list inside the viewport, whatever row the button wrapped onto
+  const place = () => {
+    menu.style.transform = "";
+    const r = menu.getBoundingClientRect();
+    const dx = r.right > innerWidth - 8 ? innerWidth - 8 - r.right : r.left < 8 ? 8 - r.left : 0;
+    if (dx) menu.style.transform = `translateX(${dx}px)`;
+  };
+  // focus a row without scrolling the page; scroll only the list
+  const focusRow = (a) => {
+    if (!a) return;
+    a.focus({ preventScroll: true });
+    if (a.offsetTop < menu.scrollTop) menu.scrollTop = a.offsetTop - 6;
+    else if (a.offsetTop + a.offsetHeight > menu.scrollTop + menu.clientHeight) menu.scrollTop = a.offsetTop + a.offsetHeight - menu.clientHeight + 6;
+  };
+  const open = (which) => {
+    menu.hidden = false;
+    btn.setAttribute("aria-expanded", "true");
+    place();
+    const ls = links(), cur = ls.findIndex((a) => a.hasAttribute("aria-current"));
+    focusRow(ls[which === "last" ? ls.length - 1 : Math.max(cur, 0)]);
+  };
+  btn.onclick = () => (menu.hidden ? open() : closeSeasonMenu(false));
+  btn.onkeydown = (e) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); open(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); open("last"); }
+    else if (e.key === "Escape" && !menu.hidden) closeSeasonMenu(true);
+  };
+  // arrows, Home/End and Esc inside the list; Tab moves through the links as usual
+  menu.onkeydown = (e) => {
+    const ls = links(), i = ls.indexOf(document.activeElement);
+    const go = (j) => { e.preventDefault(); focusRow(ls[(j + ls.length) % ls.length]); };
+    if (e.key === "ArrowDown") go(i + 1);
+    else if (e.key === "ArrowUp") go(i - 1);
+    else if (e.key === "Home") go(0);
+    else if (e.key === "End") go(ls.length - 1);
+    else if (e.key === "Escape") { e.preventDefault(); closeSeasonMenu(true); }
+  };
+  // picking a season closes the list and puts focus back on the button (which
+  // then names the new season); the season you're already in just closes it
+  menu.onclick = (e) => {
+    const a = e.target.closest("a");
+    if (!a) return;
+    if (a.hasAttribute("aria-current")) e.preventDefault();
+    closeSeasonMenu(true);
+  };
+  // a click outside closes the list and is swallowed, like a native dropdown,
+  // so dismissing it can't also open whatever was underneath
+  let swallow = false;
+  document.addEventListener("pointerdown", (e) => {
+    swallow = !menu.hidden && !root.contains(e.target);
+    if (swallow) closeSeasonMenu(false);
+  }, true);
+  document.addEventListener("click", (e) => {
+    if (!swallow) return;
+    swallow = false;
+    e.preventDefault();
+    e.stopPropagation();
+  }, true);
+  root.addEventListener("focusout", (e) => { if (!menu.hidden && e.relatedTarget && !root.contains(e.relatedTarget)) closeSeasonMenu(false); });
+  addEventListener("resize", () => { if (!menu.hidden) place(); });
 }
 
 // Keep a page's filters in the URL so reloads and shared links keep them.
@@ -213,7 +307,7 @@ async function teams(r) {
   const countries = [...new Set(rows.map((r) => r.country).filter(Boolean))].sort();
   // "Season only": ratings and records from official events, ignoring off-season events
   const seasonRows = rows.filter((r) => r.matchesS > 0)
-    .map((r) => ({ ...r, np: r.npS, auto: r.autoS, teleop: r.teleopS, endgame: r.endgameS, matches: r.matchesS, wins: r.winsS, losses: r.lossesS, ties: r.tiesS, trend: null }))
+    .map((r) => ({ ...r, np: r.npS, auto: r.autoS, teleop: r.teleopS, endgame: r.endgameS, matches: r.matchesS, wins: r.winsS, losses: r.lossesS, ties: r.tiesS, trend: r.trendS }))
     .sort((a, b) => b.np - a.np).map((r, i) => ({ ...r, rank: i + 1 }));
   let scope = query.get("scope") === "all" ? "all" : "season"; // official events by default
   app.innerHTML = `
@@ -226,8 +320,6 @@ async function teams(r) {
           <a href="#" data-scope="season" title="Ratings as of each team's last official event; off-season events ignored">Season only</a>
           <a href="#" data-scope="all" title="Ratings from every event, including off-season ones">All events</a>
         </div>
-        <span class="small muted" id="count"></span>
-        <a class="small link" href="#/${season}/about" style="margin-left:auto">Our methodology</a>
       </div>
       <div id="tbl"></div>
     </div>`;
@@ -252,7 +344,6 @@ async function teams(r) {
     const shown = (scope === "season" ? seasonRows : rows).filter((r) =>
       (!c || r.country === c) && r.matches >= m &&
       (!q || String(r.team).startsWith(q) || r.name.toLowerCase().includes(q) || r.loc.toLowerCase().includes(q)));
-    $("#count").textContent = `${fmtInt(shown.length)} teams`;
     table.setRows(shown);
   };
   $("#filter").oninput = apply; $("#country").onchange = apply; $("#minm").onchange = apply;
@@ -377,7 +468,7 @@ async function team(r) {
           <div><span class="k">EPA out</span><b>${fmt(ev.epaEnd)}${ev.epaStart != null && ev.epaEnd != null && Math.abs(ev.epaEnd - ev.epaStart) >= 0.5 ? `<span class="delta ${ev.epaEnd > ev.epaStart ? "trend-up" : "trend-down"}">${ev.epaEnd > ev.epaStart ? "▲" : "▼"}</span>` : ""}</b></div>
         </div>
       </div>
-      ${matchTable(season, ms, { me: n, rpNames: meta.rpNames, video })}
+      ${matchTable(season, ms, { me: n, rpNames: meta.rpNames, video, href: (m) => matchHref(season, ev.code, m.d) })}
     </div>`;
   }).join("");
 }
@@ -539,7 +630,7 @@ function toMatch(m, me) {
   const bits = (arr, bit) => arr?.map((x) => (x & bit ? 1 : 0));
   const mySide = { np: m.pred[0], rp: bits(m.rp, 1) }, oppSide = { np: m.pred[1], rp: bits(m.orp, 1) };
   return {
-    d: m.m, played: true, time: m.time,
+    d: m.m, ev: m.ev, played: true, time: m.time,
     red: isRed ? mine : m.opps, blue: isRed ? m.opps : mine,
     redScore: { total: isRed ? m.score : m.oppScore, rp: bits(isRed ? m.rp : m.orp, 2) },
     blueScore: { total: isRed ? m.oppScore : m.score, rp: bits(isRed ? m.orp : m.rp, 2) },
@@ -618,8 +709,10 @@ async function event(r) {
     const decided = played.filter((m) => m.pred && m.redScore.total !== m.blueScore.total);
     const correct = decided.filter((m) => (m.pred.pRed > 0.5) === (m.redScore.total > m.blueScore.total)).length;
     const hasQuals = matches.some((m) => m.level === "Quals");
-    // forecast needs a quals schedule, or no matches yet (pre-event); playoff-only events get none
-    const canForecast = hasQuals || (!matches.length && ev.teamList.length >= 4);
+    // forecast needs a quals schedule, or no matches yet (pre-event); playoff-only events get none,
+    // and once every qual is played the rankings are settled, so there's nothing left to forecast
+    const qualsDone = hasQuals && matches.every((m) => m.level !== "Quals" || (m.actuallyPlayed ?? m.played));
+    const canForecast = (hasQuals && !qualsDone) || (!matches.length && ev.teamList.length >= 4);
     const hasPlayoffs = matches.some((m) => m.level && m.level !== "Quals");
     const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(hasPlayoffs ? [["playoffs", "Playoffs"]] : []), ...(canForecast ? [["forecast", "Rankings forecast"]] : [])];
     app.innerHTML = `
@@ -636,12 +729,12 @@ async function event(r) {
         </div>
         <div class="big-epa"><div class="label">Winner predicted</div><b>${decided.length ? pct(correct / decided.length) : "–"}</b><div class="label">${correct} of ${decided.length} matches</div></div>
       </div></div>
-      <nav class="tabs seg glass">${tabs.map(([k, label]) => `<a href="#/${season}/event/${code}/${k}" class="${k === tab ? "active" : ""}">${label}</a>`).join("")}</nav>
+      <nav class="tabs seg glass">${tabs.map(([k, label]) => `<a href="#/${season}/event/${code}/${k}" class="${k === (tabs.some(([t]) => t === tab) ? tab : "matches") ? "active" : ""}">${label}</a>`).join("")}</nav>
       <div id="tab"></div>`;
     if (tab === "teams") eventTeams(season, meta, ev);
     else if (tab === "playoffs" && hasPlayoffs) eventPlayoffs(season, meta, ev, matches, official[code], (m) => videoFor(videos, code, m.time));
     else if (tab === "forecast" && canForecast) eventForecast(season, meta, ev, matches);
-    else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time) })}</div>`;
+    else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
   };
 
   draw();
@@ -663,11 +756,10 @@ function eventPlayoffs(season, meta, ev, matches, official, video) {
 
   const allianceRows = p.alliances.map((a) => `<tr class="${a.result === "Winner" ? "champ" : ""}">
     <td class="num"><span class="seed">A${a.seed}</span></td>
-    <td>${teamCell(season, a.captain, name(a.captain))}</td>
-    <td class="small">${a.teams.slice(1).map((t) => `${tn(t)} <span class="muted hide-sm">${esc(name(t))}</span>`).join("<br>") || '<span class="faint">–</span>'}</td>
-    <td class="c"><b>${fmt(strength(a))}</b></td>
-    <td class="c small">${record(a)}</td>
-    <td class="small ${a.result === "Winner" ? "res-win" : a.result === "Finalist" ? "res-final" : "muted"}">${a.result === "Winner" ? "🏆 Winner" : esc(a.result)}</td>
+    <td><div class="al-teams">${a.teams.map((t) => tn(t)).join("")}</div><div class="al-name">${esc(name(a.captain))}</div></td>
+    <td class="r"><b>${fmt(strength(a))}</b></td>
+    <td class="r small muted">${record(a)}</td>
+    <td class="small res ${a.result === "Winner" ? "res-win" : a.result === "Finalist" ? "res-final" : "muted"}">${a.result === "Winner" ? "🏆 Winner" : esc(a.result)}</td>
   </tr>`).join("");
 
   // one bracket box: two alliance lines with the score (or series wins)
@@ -682,28 +774,100 @@ function eventPlayoffs(season, meta, ev, matches, official, video) {
       return `<div class="bl ${side} ${won ? "won" : ""} ${lost ? "lost" : ""}">
         <span class="seed">A${a.seed}</span><span class="bt">${a.teams.map((t) => tn(t, side)).join("")}</span><b class="bs">${score}</b></div>`;
     };
-    const games = series ? s.games.filter((g) => g.played).map((g) => `${g.redScore.total}–${g.blueScore.total}`).join(", ") : "";
+    // series: every game's score, tinted by who won it
+    const games = series ? s.games.filter((g) => g.played).map((g) => {
+      const w = g.redScore.total > g.blueScore.total ? "red" : g.blueScore.total > g.redScore.total ? "blue" : "";
+      return `<a class="bgame ${w}" href="${matchHref(season, ev.code, g.d)}" title="${esc(g.d)}">${g.redScore.total}–${g.blueScore.total}</a>`;
+    }).join("") : "";
+    const noShow = last && ((last.redOn && !last.redOn.length) || (last.blueOn && !last.blueOn.length));
+    const pred = noShow ? `<span class="faint" title="One alliance had no robots on the field">forfeit</span>` : pRed != null ? `<span class="faint" title="Our pre-match win probability">Pred A${pRed >= 0.5 ? s.red.seed : s.blue.seed} ${Math.round(Math.max(pRed, 1 - pRed) * 100)}%</span>` : "";
     return `<div class="bbox">
-      <div class="bh"><span>${esc(s.key)}${series ? " · best of 3" : ""}</span>
-        ${v ? `<button class="play" data-video="${v.id}" data-t="${v.t}" data-title="${esc(`${ev.name} · ${last.d}`)}" aria-label="Watch ${esc(s.key)}" title="Watch">${PLAY_ICON}</button>` : ""}</div>
       ${line(s.red, "red")}${line(s.blue, "blue")}
-      <div class="bf">${games ? `<span>${games}</span>` : ""}${pRed != null ? `<span class="faint" title="Our pre-match win probability">Pred ${pRed >= 0.5 ? `A${s.red.seed}` : `A${s.blue.seed}`} ${Math.round(Math.max(pRed, 1 - pRed) * 100)}%</span>` : ""}</div>
+      ${games ? `<div class="bgames">${games}</div>` : ""}
+      <div class="bf"><a class="bk match-link" href="${matchHref(season, ev.code, (last ?? s.games[0]).d)}" title="Match details">${esc(s.key)}${series ? " · best of 3" : ""}</a>
+        <span class="bf-r">${pred}${v ? `<button class="play" data-video="${v.id}" data-t="${v.t}" data-title="${esc(`${ev.name} · ${last.d}`)}" aria-label="Watch ${esc(s.key)}" title="Watch">${PLAY_ICON}</button>` : ""}</span></div>
     </div>`;
   };
 
-  const sections = p.sections.map((sec) => sec.roundRobin
-    ? `<div class="bsec"><h3>${esc(sec.name)}</h3><div class="rr">${sec.rounds[0].slots.map(box).join("")}</div></div>`
-    : `<div class="bsec">${sec.name ? `<h3>${esc(sec.name)}</h3>` : ""}<div class="bracket" style="--cols:${sec.rounds.length}">
-        ${sec.rounds.map((r) => `<div class="bcol"><div class="bcol-h">${esc(r.name)}</div><div class="bcol-b">${r.slots.map(box).join("")}</div></div>`).join("")}
-      </div></div>`).join("");
+  // a match nobody has reached yet: who it's waiting on ("Winner M-3", "A1")
+  const who = (x) => (x[0] === "A" ? `<span class="seed">${x}</span>` : `<span class="faint">${x[0] === "W" ? "Winner" : "Loser"} M-${x.slice(1)}</span>`);
+  const pendingBox = (s) => `<div class="bbox pending">
+      <div class="bl red">${who(s.pending[0])}</div><div class="bl blue">${who(s.pending[1])}</div>
+      <div class="bf"><span class="bk">${esc(s.key)}</span><span class="faint">upcoming</span></div></div>`;
+  const slot = (s) => `<div class="bslot" data-key="${esc(s.key)}">${s.pending ? pendingBox(s) : box(s)}</div>`;
+
+  let bracket, wide;
+  if (p.columns) {
+    // FTC double elimination, laid out like the manual's figure: one column per round,
+    // upper bracket on top, lower bracket below, finals on the right across both
+    const cols = p.columns, n = cols.length;
+    const cell = (c, i, part, row) => `<div class="dcell" style="grid-column:${i + 1};grid-row:${row}">${(c[part] ?? []).map(slot).join("")}</div>`;
+    const hasLower = cols.some((c) => c.lower?.length);
+    bracket = `<div class="dgrid" style="--cols:${n}">
+      ${cols.map((c, i) => `<div class="bcol-h" style="grid-column:${i + 1};grid-row:1">${esc(c.name)}</div>`).join("")}
+      ${n > 1 ? `<div class="bsec-h" style="grid-column:1/${n};grid-row:2">${p.roundRobin ? "Round robin: every alliance plays every other once" : "Upper bracket"}</div>` : ""}
+      ${cols.slice(0, -1).map((c, i) => cell(c, i, "upper", 3)).join("")}
+      ${hasLower ? `<div class="bsec-h lower-h" style="grid-column:1/${n};grid-row:4">Lower bracket</div>${cols.slice(0, -1).map((c, i) => cell(c, i, "lower", 5)).join("")}` : ""}
+      <div class="dcell dfinal" style="grid-column:${n};grid-row:${n > 1 ? `3/${hasLower ? 6 : 4}` : "2/3"}">${cols.at(-1).final.map(slot).join("")}</div>
+      <svg class="dlines" aria-hidden="true"></svg>
+    </div>`;
+    // round robin: standings decide who reaches the final
+    if (p.standings) bracket += `<div class="rr-standings"><div class="bsec-h">Round robin standings</div>
+      <table><thead><tr><th></th><th>Alliance</th><th class="r">W-L</th><th class="r">Avg score</th><th></th></tr></thead><tbody>
+      ${p.standings.map((r, i) => `<tr class="${i < 2 ? "adv" : ""}"><td class="faint small">${esc(r.place.replace("Tied ", "T-"))}</td>
+        <td><span class="seed">A${r.a.seed}</span> ${r.a.teams.map((t) => tn(t)).join("")}</td>
+        <td class="r">${r.w}-${r.l}${r.t ? `-${r.t}` : ""}</td><td class="r">${fmt(r.avg)}</td>
+        <td class="small ${i < 2 ? "res-win" : "faint"}">${i < 2 ? "→ Final" : ""}</td></tr>`).join("")}
+      </tbody></table><div class="po-note" style="padding-left:0">Ordered by wins, then average score; FIRST's official tiebreakers may differ.</div></div>`;
+    wide = n >= 5;
+  } else {
+    // older seasons' best-of-3 series (and Worlds round robins): rounds left to right, the final beside them
+    const finalSec = p.sections.length > 1 && p.sections.at(-1).name === "Final" ? p.sections.at(-1) : null;
+    const rest = finalSec ? p.sections.slice(0, -1) : p.sections;
+    const rounds = (sec) => sec.rounds.map((r) => `<div class="bcol"><div class="bcol-h">${esc(r.name)}</div><div class="bcol-b">${r.slots.map(slot).join("")}</div></div>`).join("");
+    const stack = rest.map((sec) => `<div class="bsec">${sec.name && rest.length > 1 ? `<div class="bsec-h">${esc(sec.name)}</div>` : ""}
+      ${sec.roundRobin ? `<div class="rr">${sec.rounds[0].slots.map(box).join("")}</div>` : `<div class="bracket" style="--cols:${sec.rounds.length}">${rounds(sec)}</div>`}</div>`).join("");
+    bracket = `<div class="po-stack">${stack}</div>
+      ${finalSec ? `<div class="po-final"><div class="bcol-h">Final</div>${finalSec.rounds[0].slots.map(slot).join("")}</div>` : ""}`;
+    // big brackets need the full width, so the alliances go underneath
+    wide = Math.max(0, ...rest.map((sec) => sec.rounds.length)) + (finalSec ? 1 : 0) >= 4;
+  }
 
   $("#tab").innerHTML = `
-    <div class="section-title"><h2>Alliances</h2><p class="muted" style="margin:6px 0 0">Strength adds the EPAs of each alliance's two best robots.${official ? "" : " Seeds worked out from qualification ranks until FIRST publishes the official list."}</p></div>
-    <div class="card"><div class="table-wrap"><table class="alliances">
-      <thead><tr><th>Seed</th><th>Captain</th><th>Picks</th><th class="c">Strength</th><th class="c">Record</th><th>Result</th></tr></thead>
-      <tbody>${allianceRows}</tbody></table></div></div>
-    <div class="section-title"><h2>Bracket</h2></div>
-    <div class="card card-pad bracket-wrap">${sections}</div>`;
+    <div class="card playoffs-card ${wide ? "wide" : ""}">
+      <div class="po-bracket">${bracket}</div>
+      <div class="po-alliances">
+        <div class="po-h">Alliances</div>
+        <table class="alliances">
+          <thead><tr><th>Seed</th><th>Teams</th><th class="r" title="Adds the EPAs of each alliance's two best robots">Strength</th><th class="r">W-L</th><th>Result</th></tr></thead>
+          <tbody>${allianceRows}</tbody></table>
+        ${official ? "" : `<div class="po-note">Seeds worked out from qualification ranks until FIRST publishes the official list.</div>`}
+      </div>
+    </div>`;  if (p.columns) drawBracketLines($(".dgrid"), p.feeds);
+}
+
+// Elbow lines from each match to the one its winner plays next, drawn over the
+// bracket grid once it's laid out (and again whenever it resizes).
+function drawBracketLines(grid, feeds) {
+  const svg = $("svg.dlines", grid);
+  const draw = () => {
+    const g = grid.getBoundingClientRect();
+    svg.setAttribute("width", grid.scrollWidth);
+    svg.setAttribute("height", grid.scrollHeight);
+    const at = (key) => grid.querySelector(`.bslot[data-key="${CSS.escape(key)}"] .bbox`)?.getBoundingClientRect();
+    svg.innerHTML = feeds.map(([from, to, side]) => {
+      const a = at(from), b = at(to);
+      if (!a || !b) return "";
+      const lines = grid.querySelectorAll(`.bslot[data-key="${CSS.escape(to)}"] .bl`);
+      const tl = lines[side === "red" ? 0 : 1]?.getBoundingClientRect() ?? b;
+      const x1 = a.right - g.left, y1 = a.top + a.height / 2 - g.top;
+      const x2 = b.left - g.left, y2 = tl.top + tl.height / 2 - g.top;
+      const mx = x2 - 12;
+      return `<path d="M${x1},${y1}H${mx}V${y2}H${x2}"/>`;
+    }).join("");
+  };
+  draw();
+  new ResizeObserver(draw).observe(grid);
 }
 
 function eventTeams(season, meta, ev) {
@@ -724,28 +888,14 @@ function eventForecast(season, meta, ev, matches) {
   const quals = matches.filter((m) => m.level === "Quals");
   if (!quals.length) return rosterForecast(season, meta, ev);
   const playedQuals = quals.filter((m) => m.actuallyPlayed ?? m.played).length;
-  const finished = playedQuals === quals.length;
-  // default: forecast from now; for a finished event, rewind to the halfway point
-  let cutoff = finished ? Math.floor(quals.length / 2) : playedQuals;
+  const cutoff = playedQuals; // forecast from the current standings
   const teams = ev.teamList.map((t) => t.team);
   const finalRank = new Map(ev.teamList.map((t) => [t.team, t.rank]));
   const names = new Map(ev.teamList.map((t) => [t.team, t.name]));
 
-  $("#tab").innerHTML = `
-    <div class="card card-pad">
-      <div class="row" style="justify-content:space-between">
-        <div><b id="cut-title"></b><div class="small muted">${fmtInt(3000)} simulations of the qualification matches still to play, using ratings as of that moment. RS is ranking score.${finished ? " Drag back in time to see how the forecast compared to the final rankings." : ""}</div></div>
-        <input type="range" id="cut" min="0" max="${quals.length}" value="${cutoff}" style="width:min(320px,100%)">
-      </div>
-    </div>
-    <div class="card section" id="fc"></div>`;
+  $("#tab").innerHTML = `<div class="card" id="fc"></div>`;
 
-  const title = () => {
-    $("#cut-title").textContent = cutoff === 0 ? "Forecast when the schedule was released"
-      : cutoff >= quals.length ? `All ${quals.length} qualification matches played` : `Forecast after ${quals[cutoff - 1].d}`;
-  };
   const run = () => {
-    title();
     const { model, matches: replayed } = replayEvent(meta, ev, matches.map((m) => ({ ...m, played: m.actuallyPlayed ?? m.played })), cutoff);
     const rows = forecastRankings(season, teams, replayed, 3000, { model });
     const showFinal = ev.teamList.some((t) => t.rank != null) && playedQuals > 0;
@@ -762,13 +912,6 @@ function eventForecast(season, meta, ev, matches) {
         <td class="r hide-sm">${probCell(r.p8)}</td>
         ${showFinal ? `<td class="r"><b>${finalRank.get(r.team) ?? "–"}</b></td>` : ""}
       </tr>`).join("")}</tbody></table></div>`;
-  };
-  let pending;
-  $("#cut").oninput = (e) => {
-    cutoff = +e.target.value;
-    title();
-    clearTimeout(pending);
-    pending = setTimeout(run, 60);
   };
   run();
 }
@@ -812,6 +955,197 @@ const probCell = (p) => {
   const style = p >= 0.5 ? "background:#0066b3;color:#fff" : `background:color-mix(in srgb,#0066b3 ${Math.round(8 + p * 40)}%,transparent);color:var(--text)`;
   return `<span class="epa" style="${style}">${pct(p)}</span>`;
 };
+
+// ---------------- match ----------------
+
+const matchHref = (season, code, d) => `#/${season}/match/${encodeURIComponent(code)}/${encodeURIComponent(d)}`;
+
+// "Q-12" -> "Qualification 12", "SF2-1" -> "Semifinal 2, game 1", "M-14" -> "Playoff match 14"
+function matchTitle(d) {
+  let x;
+  if ((x = d.match(/^Q-(\d+)$/))) return `Qualification ${x[1]}`;
+  if ((x = d.match(/^SF(\d+)-(\d+)$/))) return `Semifinal ${x[1]}, game ${x[2]}`;
+  if ((x = d.match(/^F-(\d+)$/))) return `Final, game ${x[1]}`;
+  if ((x = d.match(/^M-(\d+)(?:\.(\d+))?$/))) return `Playoff match ${x[1]}${x[2] ? ` (replay ${x[2]})` : ""}`;
+  return d;
+}
+
+async function match(r) {
+  const { season, args } = r;
+  const code = args[0], d = decodeURIComponent(args[1] ?? "");
+  const [meta, ev, videos] = await Promise.all([data.meta(season), data.event(season, code).catch(() => null), data.videos(season)]);
+  if (stale(r)) return;
+  if (!ev) {
+    app.innerHTML = `<div class="card empty">No event with code “${esc(code)}” in ${seasonLabel(season, meta.game)}. <a class="link" href="#/${season}/events">Browse events →</a></div>`;
+    return;
+  }
+  let matches = ev.matchList;
+  // a live event's newest matches aren't in the saved file yet
+  if (!matches.some((m) => m.d === d) && !ev.finished) {
+    try {
+      const raw = await fetchLiveEvent(season, code);
+      if (stale(r)) return;
+      matches = normalizeLive(season, raw, meta);
+    } catch (e) { console.warn(e); }
+  }
+  const i = matches.findIndex((m) => m.d === d);
+  if (i < 0) {
+    app.innerHTML = `<div class="card empty">${esc(ev.name)} has no match “${esc(d)}”. <a class="link" href="#/${season}/event/${encodeURIComponent(code)}">All its matches →</a></div>`;
+    return;
+  }
+
+  // replay the event up to this match: ratings going in, and after it's played
+  const before = replayEvent(meta, ev, matches.slice(0, i));
+  const after = replayEvent(meta, ev, matches.slice(0, i + 1));
+  const m = { ...matches[i], pred: matches[i].pred ?? after.matches[i].pred };
+  const isQual = m.level === "Quals";
+  const rpNames = isQual ? meta.rpNames : [];
+  const team = new Map(ev.teamList.map((t) => [t.team, t]));
+  // qual standings just before and just after this match (playoffs use the official final ones)
+  const finalRank = new Map(ev.teamList.filter((t) => t.rank != null).map((t) => [t.team, t.rank]));
+  const allTeams = [...new Set([...team.keys(), ...matches.flatMap((x) => [...x.red, ...x.blue])])];
+  const stBefore = isQual ? standings(season, allTeams, matches.slice(0, i), finalRank) : null;
+  const stAfter = isQual ? standings(season, allTeams, matches.slice(0, i + 1), finalRank) : null;
+  const p = m.pred, rs = m.redScore, bs = m.blueScore;
+  const played = m.played && rs && bs;
+  const winner = !played ? null : rs.total > bs.total ? "red" : bs.total > rs.total ? "blue" : "tie";
+  const fav = p ? (p.pRed >= 0.5 ? "red" : "blue") : null;
+  const favP = p ? Math.max(p.pRed, 1 - p.pRed) : null;
+  const v = played && videoFor(videos, code, m.time);
+  const prev = matches[i - 1], next = matches[i + 1];
+  const Side = (s) => (s === "red" ? "Red" : "Blue");
+
+  // verdict box: did we call it?
+  const verdict = !played || !p ? `<div class="big-epa"><div class="label">Favourite</div><b class="${fav ?? ""}-text">${p ? pct(favP) : "–"}</b><div class="label">${p ? `${Side(fav)} to win` : "no prediction"}</div></div>`
+    : winner === "tie" ? `<div class="big-epa"><div class="label">Result</div><b>Tie</b><div class="label">${Side(fav)} was favoured ${pct(favP)}</div></div>`
+    : `<div class="big-epa"><div class="label">Prediction</div><b class="${winner === fav ? "good-text" : "bad-text"}">${winner === fav ? "Correct" : "Upset"}</b><div class="label">${Side(fav)} was favoured ${pct(favP)}</div></div>`;
+
+  // scoreboard: teams either side, the final (or predicted) score in the middle
+  const onField = (side) => m[`${side}On`] ?? m[side];
+  const side = (s) => `<div class="feature-side ${s}">${m[s].map((t) => `<a href="#/${season}/team/${t}" class="${onField(s).includes(t) ? "" : "sat-out"}">${t}</a><small>${esc(team.get(t)?.name ?? "")}${onField(s).includes(t) ? "" : " · didn't play"}</small>`).join("")}</div>`;
+  const big = (sideKey, val) => `<span class="score ${sideKey} ${winner && winner !== sideKey && winner !== "tie" ? "lost" : ""}">${val}</span>`;
+  const board = `<div class="feature match-board">
+    <div class="feature-head"><b>${played ? "Final score" : "Predicted score"}</b><span>${winner ? (winner === "tie" ? "Tie" : `${Side(winner)} wins`) : "Not played yet"}</span></div>
+    <div class="feature-body">
+      ${side("red")}
+      <div class="feature-score">${played ? `${big("red", rs.total)}<span class="faint">–</span>${big("blue", bs.total)}` : p ? `${big("red", fmt(p.red.total, 0))}<span class="faint">–</span>${big("blue", fmt(p.blue.total, 0))}` : "–"}
+        ${played && p ? `<div class="small muted pred-line">Predicted ${fmt(p.red.total, 0)}–${fmt(p.blue.total, 0)}</div>` : ""}</div>
+      ${side("blue")}
+    </div>
+    <div class="feature-foot">${winBar(p?.pRed)}<p>${p ? `Before the match: red ${pct(p.pRed)}, blue ${pct(1 - p.pRed)} to win.` : "No prediction for this match."}</p></div>
+  </div>`;
+
+  // with a video the page is built around it: player on the left, a compact
+  // scoreboard beside it; the verdict moves into that scoreboard
+  const clock = (t) => { const h = Math.floor(t / 3600), mm = Math.floor((t % 3600) / 60), ss = t % 60;
+    return h ? `${h}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}` : `${mm}:${String(ss).padStart(2, "0")}`; };
+  const verdictLine = !p ? "No prediction for this match."
+    : !played ? `${Side(fav)} favoured to win, ${pct(favP)}.`
+    : winner === "tie" ? `<b>Tie</b> · ${Side(fav)} was favoured ${pct(favP)}`
+    : `<b class="${winner === fav ? "good-text" : "bad-text"}">${winner === fav ? "Prediction correct" : "Upset"}</b> · ${Side(fav)} was favoured ${pct(favP)}`;
+  const stage = v ? `<div class="match-stage section">
+    <div class="stage-video" id="stage-video" data-id="${esc(v.id)}" data-t="${v.t}" data-title="${esc(`${ev.name} · ${m.d}`)}">
+      <button class="stage-play" data-play-inline aria-label="Play ${esc(matchTitle(m.d))}">
+        <span class="stage-play-icon">${PLAY_ICON}</span>
+        <span class="stage-play-text"><b>Watch ${esc(matchTitle(m.d))}</b>
+          <small>${v.t ? `Event video, from ${clock(v.t)}` : "Match video"}</small></span>
+      </button>
+    </div>
+    <div class="feature stage-board">
+      <div class="feature-head"><b>${played ? "Final score" : "Predicted score"}</b><span>${winner ? (winner === "tie" ? "Tie" : `${Side(winner)} wins`) : "Not played yet"}</span></div>
+      <div class="stage-score">${played ? `${big("red", rs.total)}<span class="faint">–</span>${big("blue", bs.total)}` : p ? `${big("red", fmt(p.red.total, 0))}<span class="faint">–</span>${big("blue", fmt(p.blue.total, 0))}` : "–"}
+        ${played && p ? `<div class="small muted pred-line">Predicted ${fmt(p.red.total, 0)}–${fmt(p.blue.total, 0)}</div>` : ""}</div>
+      <div class="stage-teams">${side("red")}${side("blue")}</div>
+      <div class="feature-foot">${winBar(p?.pRed)}<p class="stage-verdict">${verdictLine}</p></div>
+    </div>
+  </div>` : `<div class="section">${board}</div>`;
+
+  // score breakdown: predicted vs actual per period, with a bar for each
+  const rows = [["auto", "Auto"], ["teleop", "Teleop"], ["endgame", "Endgame"], ["np", "No-penalty total"], ["pen", "Penalty points"], ["total", "Final"]];
+  const val = (o, k) => (o == null ? null : k === "pen" ? o.total - o.np : o[k]);
+  const maxOf = Math.max(1, ...["auto", "teleop", "endgame"].flatMap((k) => [val(rs, k), val(bs, k), val(p?.red, k), val(p?.blue, k)]).filter((x) => x != null));
+  const cell = (pr, ac, k, s) => {
+    const diff = pr != null && ac != null ? ac - pr : null;
+    const bar = ["auto", "teleop", "endgame"].includes(k)
+      ? `<span class="bk-bar"><i class="${s}" style="width:${Math.round(((ac ?? pr ?? 0) / maxOf) * 100)}%"></i>${pr != null ? `<em style="left:${Math.min(100, Math.round((pr / maxOf) * 100))}%" title="Predicted ${fmt(pr)}"></em>` : ""}</span>` : "";
+    return `<td class="r faint">${pr != null ? fmt(pr, 0) : "–"}</td>
+      <td class="r"><b>${ac ?? "–"}</b>${diff != null && Math.abs(diff) >= 1 ? ` <span class="small ${diff > 0 ? "trend-up" : "trend-down"}">${diff > 0 ? "+" : "−"}${fmt(Math.abs(diff), 0)}</span>` : ""}</td>
+      <td class="bk-cell hide-sm">${bar}</td>`;
+  };
+  const breakdown = `<div class="table-wrap"><table class="breakdown">
+    <thead><tr><th></th><th class="r red-text">Pred</th><th class="r red-text">Red</th><th class="hide-sm"></th><th class="r blue-text">Pred</th><th class="r blue-text">Blue</th><th class="hide-sm"></th></tr></thead>
+    <tbody>${rows.map(([k, label]) => `<tr class="${k === "total" ? "tot" : ""}"><td class="muted">${label}</td>${cell(val(p?.red, k), played ? val(rs, k) : null, k, "red")}${cell(val(p?.blue, k), played ? val(bs, k) : null, k, "blue")}</tr>`).join("")}</tbody>
+  </table></div>
+  <p class="small muted hide-sm" style="margin:10px 4px 0">Bars show actual points; the tick is the prediction. Penalty points are the fouls the other alliance gave away.</p>`;
+
+  // bonus ranking points: chance before the match, and whether it was earned
+  const rpCell = (s, k) => {
+    const ch = p?.[s]?.rp?.[k], got = played ? m[`${s}Score`].rp?.[k] : null;
+    return `<td class="r">${ch != null ? pct(ch) : "–"}</td><td class="c">${got == null ? '<span class="faint">–</span>' : got ? `<span class="${s}-text">✓</span>` : '<span class="faint">✗</span>'}</td>`;
+  };
+  const rpCard = rpNames.length ? `<div class="card card-pad"><h3>Bonus ranking points</h3><div class="table-wrap"><table class="breakdown">
+    <thead><tr><th></th><th class="r red-text">Chance</th><th class="c red-text">Red</th><th class="r blue-text">Chance</th><th class="c blue-text">Blue</th></tr></thead>
+    <tbody>${rpNames.map((nm, k) => `<tr><td class="muted">${esc(nm)}</td>${rpCell("red", k)}${rpCell("blue", k)}</tr>`).join("")}</tbody>
+  </table></div></div>` : "";
+
+  // event rank after this match, and how many places this result moved it (▲ = up the table)
+  const recordOf = (x) => (x?.wins != null && (x.played ?? 1) ? `${x.wins}-${x.losses}${x.ties ? `-${x.ties}` : ""}` : "–");
+  const rankCell = (t) => {
+    if (!isQual) return finalRank.get(t) ?? "–";
+    const b = stBefore.get(t)?.rank, a = stAfter.get(t)?.rank;
+    if (a == null) return '<span class="faint">–</span>';
+    const moved = played && b != null && !(m.surr ?? []).includes(t);
+    return moved ? `${a} ${trend(b - a, 0)}` : `${a}`;
+  };
+
+  // each robot: rating going in, what it was expected to add, and how this match moved it
+  const teamRows = ["red", "blue"].flatMap((s) => m[s].map((t) => {
+    const b = before.model.epa(t), a = after.model.epa(t), row = team.get(t);
+    const played1 = onField(s).includes(t);
+    const delta = played && played1 ? a.np - b.np : null;
+    return `<tr class="side-${s}">
+      <td>${teamCell(season, t, row?.name ?? "")}${played1 ? "" : ' <span class="pill">didn\'t play</span>'}</td>
+      <td class="c">${epa(b.np, meta)}</td>
+      <td class="r small hide-sm">${fmt(b.auto)}</td><td class="r small hide-sm">${fmt(b.teleop)}</td><td class="r small hide-sm">${fmt(b.endgame)}</td>
+      <td class="r">${delta != null ? `${fmt(a.np)} ${trend(delta)}` : '<span class="faint">–</span>'}</td>
+      <td class="r">${rankCell(t)}</td>
+      <td class="r small hide-sm">${recordOf(isQual ? stAfter.get(t) : row)}</td>
+    </tr>`;
+  })).join("");
+
+  const when = m.time ? new Date(m.time).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: ev.timezone || undefined }) : fmtRange(ev.start, ev.end);
+  const evLink = `#/${season}/event/${encodeURIComponent(code)}${isQual ? "" : "/playoffs"}`;
+  app.innerHTML = `
+    <div class="card card-pad"><div class="page-head">
+      <div>
+        <div class="kicker"><a class="link" href="${evLink}">${esc(ev.name)}</a> · ${esc(when)}</div>
+        <h1>${esc(matchTitle(m.d))}</h1>
+        <div class="row" style="margin-top:8px">
+          <span class="pill">${esc(m.d)}</span>
+          <a class="pill" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}/matches" target="_blank" rel="noopener">FTCScout ↗</a>
+        </div>
+      </div>
+      ${v ? `<button class="btn btn-solid watch-cta" data-play-inline>${PLAY_ICON} Watch match</button>` : verdict}
+    </div></div>
+
+    <div class="match-nav section">
+      ${prev ? `<a class="btn btn-outline" href="${matchHref(season, code, prev.d)}">← ${esc(prev.d)}</a>` : "<span></span>"}
+      <a class="small link" href="${evLink}">All matches at this event</a>
+      ${next ? `<a class="btn btn-outline" href="${matchHref(season, code, next.d)}">${esc(next.d)} →</a>` : "<span></span>"}
+    </div>
+
+    ${stage}
+
+    <div class="grid ${rpCard ? "cols-2" : ""} section">
+      <div class="card card-pad"><h3>Score breakdown</h3>${breakdown}</div>
+      ${rpCard}
+    </div>
+
+    <div class="section-title"><h2>Teams</h2><p class="muted" style="margin:6px 0 0">Each robot's EPA going into this match, and where this result moved it${isQual ? ". Event rank and record are as of the end of this match" : ""}.</p></div>
+    <div class="card"><div class="table-wrap"><table class="match-teams">
+      <thead><tr><th>Team</th><th class="c">EPA before</th><th class="r hide-sm">Auto</th><th class="r hide-sm">Teleop</th><th class="r hide-sm">Endgame</th><th class="r">EPA after</th><th class="r"><span class="hide-sm">${isQual ? "Event" : "Qual"} </span>rank</th><th class="r hide-sm">Record</th></tr></thead>
+      <tbody>${teamRows}</tbody></table></div></div>`;
+}
 
 // ---------------- about / accuracy ----------------
 
@@ -936,20 +1270,24 @@ async function boot() {
     state.defaultSeason = index.default;
   } else {
     state.seasons = await data.seasons();
-    const metas = await Promise.all(state.seasons.map((s) => data.meta(s)));
-    state.defaultSeason = (metas.find((m) => m.matches >= 1000) ?? metas[0]).season;
+    state.defaultSeason = state.seasons[0];
   }
 
-  $("#season").onchange = (e) => {
-    const r = parseHash();
-    // stay on the same kind of page; event codes differ by season, so events go to the list
-    const keep = {
-      teams: "teams", events: "events", about: "about", event: "events",
-      team: `team/${r.args.join("/")}`,
-    }[r.page] ?? "";
-    location.hash = `#/${e.target.value}/${keep}`;
-  };
+  wireSeasonPicker();
   wireSearch($(".nav-search"));
+  // match page: play in the page's own player (and bring it into view)
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("[data-play-inline]")) return;
+    const box = $("#stage-video");
+    if (!box) return;
+    if (!box.querySelector("iframe")) {
+      const { id, t, title } = box.dataset;
+      box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?start=${+t || 0}&autoplay=1&rel=0" title="${esc(title)}"
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+    }
+    box.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
   // match videos: one player dialog for every ▶ button
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-video]");
@@ -965,13 +1303,13 @@ async function boot() {
     e.preventDefault();
     openUpload(link.dataset.upload);
   });
-  // whole-row clicks: a row whose main link is an event or team opens it, so
-  // people don't have to hit the name itself (match rows have several links, so they're left alone)
+  // whole-row clicks: a row whose main link is an event, team or match opens it, so
+  // people don't have to hit the name itself
   document.addEventListener("click", (e) => {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
     if (e.target.closest("a, button, input, select, label")) return;
     const row = e.target.closest("#app tbody tr");
-    const link = row?.querySelector("a.ev-cell, a.team-cell");
+    const link = row?.querySelector("a.ev-cell, a.team-cell, a.match-link");
     if (link && !getSelection().toString()) location.hash = link.getAttribute("href");
   });
   // team photos: "N photos ›" cycles through them
