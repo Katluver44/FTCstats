@@ -25,17 +25,36 @@ Two rating tracks run side by side over the same matches (`site/js/model.js`):
   `DEFAULT_EPA_PARAMS = { shared, auto, teleop, endgame }`. Scored by
   `research/epa-eval.mjs`: does the EPA a team brings to an event predict its
   component OPR there (extra weight on Worlds/Premier/top-scoring events), and
-  does the end-of-season list agree with Worlds? It starts as an exact copy of
-  the prediction track.
+  does the pre-Worlds list agree with Worlds division OPR and playoff results?
+  Each component was tuned separately by leave-one-season-out CV (2019,
+  2021-2025; `research/tune-*/`): new teams start nearer average, endgame
+  barely carries over between games, steadier updates. Held-out total EPA
+  error (nMAE) 0.524 -> 0.459, better in all six seasons.
+- **Off-season**: the team list offers three tables. *Official season*
+  (default) leaves off-season events out (scrimmages and post-Worlds Premier
+  events count). *Through MTI* counts off-season events up to MTI (Maryland /
+  Multinational Tech Invitational) at 40% each; *Full season* counts all of
+  them at 40%. Both skip events with modified rules: listed ones (Chicago
+  Robotics Invitational) and any whose scores fall outside 0.5-1.6x what the
+  teams' EPAs predict. Next season's starting ratings use the Full table.
 - **Prediction rating** (`DEFAULT_PARAMS`): tuned only for match-prediction
   Brier; drives win chances, predicted scores and ranking forecasts.
 
-Tuning the EPA track (about 0.3 s per season per parameter set and component):
+Tuning the EPA track (under 1 s per season per parameter set):
 
     node research/epa-eval.mjs --comp auto            # auto | teleop | endgame | total | all
     node research/epa-eval.mjs --comp all --params p.json    # p.json = {"teleop": {"mom": 0}}
     node research/epa-eval.mjs --comp teleop --grid g.json   # g.json = {"teleop.mom": [0, -0.1]}: LOSO tuning
     EPA_PARAMS=p.json node scripts/build.mjs 2025     # trial build with EPA overrides
+
+`topB(EPA)` in its output is the bias on the top 5% of pairs by EPA (the
+teams the list puts on top); `topB(tgt)` selects by outcome and is mostly
+regression to the mean. Tried and left off for the EPA track: a
+between-event growth term (`grow`: at a team's next event, add part of the
+league-average rise since its last match). LOSO picked grow 0.5 in every fold
+and lowered held-out total nMAE in all six seasons (0.462 -> 0.443), but the
+top 5% by EPA came out more overrated in five of six (mean +0.7 -> +3.5
+points), so the top of the list would read too high.
 
 What the prediction rating does:
 - **EPA**: points each team adds to its alliance, split into auto / teleop /
