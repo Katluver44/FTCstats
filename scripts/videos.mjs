@@ -87,6 +87,28 @@ const isoSeconds = (d) => {
   return m ? (+(m[1] ?? 0)) * 86400 + (+(m[2] ?? 0)) * 3600 + (+(m[3] ?? 0)) * 60 + (+(m[4] ?? 0)) : null;
 };
 
+const TOA = "https://theorangealliance.org/api";
+async function toaStreams(season) {
+  const key = `${String(season).slice(2)}${String(season + 1).slice(2)}`; // 2025 -> "2526"
+  const out = {};
+  // free key from a myTOA account (theorangealliance.org/account); skipped when unset
+  const toaKey = await env("TOA_API_KEY");
+  if (!toaKey) return out;
+  const toaHeaders = { "X-TOA-Key": toaKey, "X-Application-Origin": "FTCstats", "User-Agent": "FTCstats (https://ftcstats-photos.vercel.app)" };
+  try {
+    const [streams, events] = await Promise.all([
+      fetch(`${TOA}/streams`, { headers: toaHeaders }).then((r) => r.json()),
+      fetch(`${TOA}/event?season_key=${key}`, { headers: toaHeaders }).then((r) => r.json()),
+    ]);
+    const code = new Map(events.map((e) => [e.event_key, e.first_event_code]));
+    for (const st of streams) {
+      const c = code.get(st.event_key), id = youtubeId(st.url);
+      if (c && id) (out[c] ??= []).push(id);
+    }
+  } catch (e) { console.warn("TOA streams skipped:", e.message); }
+  return out;
+}
+
 export async function buildVideos(season) {
   const out = path.join("site", "data", String(season), "videos.json");
   const overrides = (await readJson(path.join("site", "videos", "overrides.json"), {}))[season] ?? {};
@@ -124,6 +146,8 @@ export async function buildVideos(season) {
       for (const [d, at] of Object.entries(stamps)) if (time.has(d)) add(code).uploads.push({ t: time.get(d), id, at });
     }
   }
+  // The Orange Alliance's hand-maintained stream list (current season only)
+  for (const [code, ids] of Object.entries(await toaStreams(season))) for (const id of ids) add(code).streams.add(id);
   // streams found by scripts/find-streams.mjs for events FIRST has no link for
   const discovered = (await readJson(path.join("site", "videos", "discovered.json"), {}))[season] ?? {};
   for (const [code, ids] of Object.entries(discovered)) for (const id of ids) add(code).streams.add(id);
