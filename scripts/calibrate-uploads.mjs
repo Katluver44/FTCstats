@@ -11,6 +11,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { frames, calibrate } from "./calibrate-streams.mjs";
+import { ocrAlign } from "./ocr-align.mjs";
 
 const args = process.argv.slice(2);
 const verbose = args.includes("--verbose");
@@ -26,6 +27,7 @@ for (const season of seasons) {
   const cache = await readJson(cacheFile, {});
   ts[season] ??= {};
   let placed = 0, tried = 0;
+  const fits = []; // { code, id, r, ms, pos }
   for (const [code, ids] of Object.entries(up[season] ?? {})) {
     const ev = await readJson(path.join("site", "data", String(season), "event", `${code}.json`), null);
     const ms = (ev?.matchList ?? []).filter((m) => m.played && m.time).sort((a, b) => a.time - b.time);
@@ -34,24 +36,44 @@ for (const season of seasons) {
     const pos = ms.map((m) => (m.time - t0) / 1000);
     for (const id of ids) {
       tried++;
-      if (!cache[id]) {
+      const k = `${id}@${code}`; // same video, different event = different fit
+      if (!cache[k]) {
         const fr = await frames(id).catch(() => null);
-        if (!fr) { cache[id] = { error: "no storyboard" }; continue; }
+        if (!fr) { cache[k] = { error: "no storyboard" }; continue; }
         const len = fr.count * fr.interval;
         // match j sits at pos[j] - o in the video. A full recording starts before the first
         // match (o in [-len, 0]); a later part ("Part 4") starts mid-event (o up to the event's span)
-        cache[id] = { ...(await calibrate(fr, pos, 0, { lo: -Math.round(len), hi: Math.round(pos.at(-1)) + 600 })), len: Math.round(len) };
+        cache[k] = { ...(await calibrate(fr, pos, 0, { lo: -Math.round(len), hi: Math.round(pos.at(-1)) + 600 })), len: Math.round(len) };
         await fs.mkdir(path.dirname(cacheFile), { recursive: true });
         await fs.writeFile(cacheFile, JSON.stringify(cache));
       }
-      const r = cache[id];
-      if (verbose) console.log(code, id, JSON.stringify(r));
-      if (!r.ok) continue;
-      const spots = {};
-      ms.forEach((m, j) => { const at = Math.round(pos[j] - r.o) - LEAD; if (at >= 0 && at < r.len) spots[m.d] = at; });
-      if (Object.keys(spots).length >= ms.length * 0.5) { (ts[season][code] ??= {})[id] = spots; placed++; }
+      // rhythm not sure (one match cycle looks like the next): read the overlay instead
+      if (!cache[k].ok && !cache[k].error && cache[k].ocr === undefined) {
+        cache[k].ocr = await ocrAlign(id, { matchList: ms }).catch(() => null);
+        await fs.writeFile(cacheFile, JSON.stringify(cache));
+      }
+      const o = cache[k].ocr;
+      const ocrOk = o?.o != null && o.agree >= 5 && o.agree / o.est >= 0.4 && (o.ofMatch == null || o.ofMatch >= 0.6);
+      if (verbose) console.log(code, id, JSON.stringify({ ...cache[k], halves: undefined }));
+      if (ocrOk) fits.push({ code, id, r: { ...cache[k], o: o.o, ok: true, score: 1 + o.agree }, ms, pos, via: "overlay" });
+      else if (cache[k].ok) fits.push({ code, id, r: cache[k], ms, pos, via: "rhythm" });
     }
+  }
+  // a video that fits several events (same venue, morning and afternoon sessions) goes to
+  // the one it fits clearly best, or to none
+  for (const [id, fs_] of Map.groupBy(fits, (f) => f.id)) {
+    // overlay readings beat rhythm; within a kind, the clearly better fit wins
+    fs_.sort((a, b) => (b.via === "overlay") - (a.via === "overlay") || b.r.score - a.r.score);
+    if (fs_[1] && fs_[1].via !== fs_[0].via) fs_.length = 1;
+    if (fs_[1] && fs_[1].r.score > fs_[0].r.score * 0.8) { if (verbose) console.log(`  ${id}: fits ${fs_.map((f) => f.code).join(" and ")} about equally, skipped`); continue; }
+    const { code, r, ms, pos } = fs_[0];
+    const spots = {};
+    ms.forEach((m, j) => { const at = Math.round(pos[j] - r.o) - LEAD; if (at >= 0 && at < r.len) spots[m.d] = at; });
+    if (Object.keys(spots).length >= Math.min(6, ms.length)) { (ts[season][code] ??= {})[id] = spots; placed++; if (verbose) console.log(`  placed ${id} -> ${code} (${fs_[0].via})`); }
   }
   console.log(`${season}: ${placed} of ${tried} uploads placed`);
 }
-await fs.writeFile(tsFile, JSON.stringify(ts, null, 1) + "\n");
+// merge into the file as it is now (other scripts add to it while this one runs for hours)
+const now = await readJson(tsFile, {});
+for (const [s, evs] of Object.entries(ts)) for (const [code, vids] of Object.entries(evs)) Object.assign(((now[s] ??= {})[code] ??= {}), vids);
+await fs.writeFile(tsFile, JSON.stringify(now, null, 1) + "\n");

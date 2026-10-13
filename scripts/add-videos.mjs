@@ -65,7 +65,7 @@ if (pmAt >= 0) {
       .filter((x) => x.shared >= 1 && x.has >= 0.8).sort((a, b) => b.shared - a.shared);
     if (!fits.length || (fits[1] && fits[1].shared === fits[0].shared)) { console.log(`  ? ${g.length} videos "${key}": ${fits.length ? "ambiguous" : "no event"}`); continue; }
     console.log(`  → ${fits[0].e.code} <= ${g.length} videos "${key}"`);
-    for (const v of g) cands.push({ id: v.id, code: fits[0].e.code });
+    for (const v of g) cands.push({ id: v.id, code: fits[0].e.code, trusted: true });
   }
 }
 cands = cands.filter((c) => /^[\w-]{11}$/.test(c.id ?? ""));
@@ -126,6 +126,9 @@ for (const c of cands) {
   const ev = c.code ? await event(c.code) : null;
   // 2. a single match
   let d = titleMatch(title);
+  // a bare "Match 5" from a team's own channel is usually *their* 5th match, not Q-5:
+  // trust it only from channels that upload every match of an event (--per-match-channel)
+  if (d && !c.trusted && !/\b(?:Qualification|Qual|Q[\s#-]*\d|Playoff|Elimination|Semi-?final|Finals?|M-\d)/i.test(title)) d = null;
   // "Match 3" at a league meet (no playoffs) is qualification 3
   if (d?.startsWith("M-") && ev && !/playoff/i.test(title) && !ev.matchList.some((m) => m.d.startsWith("M-"))) d = `Q-${d.slice(2)}`;
   const seconds = v.contentDetails?.duration?.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);

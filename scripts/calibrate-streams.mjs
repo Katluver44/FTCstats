@@ -37,7 +37,7 @@ const UA = { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Appl
 
 // ---- storyboard frames ---------------------------------------------------
 
-async function storyboardSpec(id) {
+export async function storyboardSpec(id) {
   const html = await (await fetch(`https://www.youtube.com/watch?v=${id}`, { headers: UA })).text();
   const m = html.match(/"playerStoryboardSpecRenderer":\{"spec":"([^"]+)"/);
   if (!m) return null;

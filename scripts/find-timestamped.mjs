@@ -150,7 +150,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href && seasons.len
       const sib = Object.values(cache).find((o) => o.code && base(o.title) === base(c.title));
       if (sib) { c.code = sib.code; delete c.none; console.log(`  ${season} ${c.code} <= ${c.title} (other part of the same event)`); }
     }
-    all[season] = {};
+    // add to what's there (add-videos.mjs and calibrate-uploads.mjs write here too)
+    all[season] ??= {};
     for (const [id, c] of Object.entries(cache)) if (c.code) (all[season][c.code] ??= {})[id] = c.stamps;
     console.log(season, `${Object.keys(all[season]).length} events with per-match timestamps`);
   }
