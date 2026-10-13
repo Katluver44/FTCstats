@@ -581,3 +581,10 @@ table.alliances tr.champ td { background: var(--accent-soft); }
 .bs { font-size: 15px; font-variant-numeric: tabular-nums; color: var(--muted); }
 .bf { display: flex; justify-content: space-between; gap: 8px; padding: 3px 10px 5px; font-size: 11px; color: var(--muted); }
 .bf:empty { display: none; }
+/* home "Top teams" / "Recent events" cards: one line per field so both lists have equal row heights */
+.home-list { table-layout: fixed; width: 100%; }
+.home-list td:first-child:not(.num), .home-list td.num + td { width: auto; }
+.home-list td.small { width: 90px; }
+.home-list td.r { width: 90px; }
+.home-list .ev-cell { min-width: 0; }
+.home-list .ev-cell .n, .home-list .ev-cell .nm { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

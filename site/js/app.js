@@ -179,7 +179,7 @@ async function home(r) {
         </div>
         <div>
           <div class="section-title"><div class="eyebrow">${live.length ? "Live" : "Results"}</div><h2>${live.length ? "Happening now" : "Recent events"}</h2></div>
-          <div class="card">${eventList(season, meta, (live.length ? live : recent).slice(0, 8))}<a class="more" href="#/${season}/events">All events →</a></div>
+          <div class="card">${eventList(season, meta, (live.length ? live : recent).slice(0, 8), "home-list")}<a class="more" href="#/${season}/events">All events →</a></div>
         </div>
       </div>
       <div class="section-title"><div class="eyebrow">Competition</div><h2>Strongest events</h2><p class="muted" style="margin:6px 0 0">Ranked by the average EPA of each event's top 8 teams.</p></div>
@@ -193,9 +193,9 @@ async function home(r) {
     <td class="r">${epa(t.np, meta)}</td></tr>`).join("")}</tbody></table></div>`;
 }
 
-function eventList(season, meta, evs) {
+function eventList(season, meta, evs, cls = "") {
   if (!evs.length) return `<div class="empty">No events yet.</div>`;
-  return `<div class="table-wrap"><table><tbody>${evs.map((e) => `
+  return `<div class="table-wrap"><table class="${cls}"><tbody>${evs.map((e) => `
     <tr>
       <td>${evCell(season, e.code, e.name, `${fmtRange(e.start, e.end)} · ${esc(e.loc)}`)}</td>
       <td class="small muted hide-sm">${esc(typeName(e.type))}</td>
