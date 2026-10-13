@@ -40,7 +40,7 @@ export function fitSoloValues(season, events) {
     // how often do the learned values reproduce the alliance total exactly?
     let exact = 0;
     for (const { ks, total } of rows) if (Math.abs(ks.reduce((s, k) => s + values[k], 0) - total) < 0.51) exact++;
-    return { comp: spec.comp, moved: !!spec.moved, parked: !!spec.parked, robots: spec.robots, values, exact: rows.length ? exact / rows.length : 0, rows: rows.length };
+    return { comp: spec.comp, label: spec.label, moved: !!spec.moved, parked: !!spec.parked, robots: spec.robots, values, exact: rows.length ? exact / rows.length : 0, rows: rows.length };
   });
 }
 

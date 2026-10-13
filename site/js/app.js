@@ -691,70 +691,88 @@ async function predict(r) {
 
 async function about(r) {
   const { season } = r;
-  const meta = await data.meta(season);
+  const [meta, bt] = await Promise.all([data.meta(season), data.ranking(season)]);
   if (stale(r)) return;
-  const a = meta.accuracy;
-  const row = (k, label) => a[k] ? `<tr><td>${label}</td><td class="r">${fmtInt(a[k].matches)}</td><td class="r"><b>${pct(a[k].accuracy, 1)}</b></td><td class="r">${fmt(a[k].brier, 3)}</td><td class="r">${fmt(a[k].scoreMae)}</td><td class="r hide-sm">${a[k].rpBrier != null ? fmt(a[k].rpBrier, 3) : "–"}</td></tr>` : "";
-  const W = 300, H = 300;
-  const cal = a.calib.map((b) => {
-    const x = 30 + ((b.bin + 0.05) - 0.5) * 2 * (W - 40), y = H - 30 - (b.winRate - 0.5) * 2 * (H - 40);
-    return `<circle cx="${x}" cy="${y}" r="${4 + Math.sqrt(b.n) / 25}" fill="var(--accent)" fill-opacity=".85"><title>${pct(b.bin)}–${pct(b.bin + 0.1)} predicted: won ${pct(b.winRate, 1)} of ${fmtInt(b.n)}</title></circle>`;
-  }).join("");
+  const a = meta.accuracy, c = meta.compare;
+  const row = (k, label) => a[k] ? `<tr><td>${label}</td><td class="r">${fmtInt(a[k].matches)}</td><td class="r"><b>${pct(a[k].accuracy, 1)}</b></td><td class="r">${fmt(a[k].brier, 3)}</td><td class="r hide-sm">${fmt(a[k].scoreMae)}</td>${meta.rpNames.length ? `<td class="r hide-sm">${a[k].rpBrier != null ? fmt(a[k].rpBrier, 3) : "–"}</td>` : ""}</tr>` : "";
+  const cmpRow = (k, name, note) => c?.[k] ? `<tr><td>${k === "epa" ? `<b>${name}</b>` : name}<div class="small muted">${note}</div></td><td class="r">${k === "epa" ? `<b>${pct(c[k].accuracy, 1)}</b>` : pct(c[k].accuracy, 1)}</td><td class="r">${fmt(c[k].brier, 3)}</td></tr>` : "";
+  const solo = (meta.solo ?? []).map((x) => esc(x.label ?? x.robots[0])).join(", ");
+
+  // calibration plot: predicted chance (x) vs how often the favourite won (y), 50-100%
+  const W = 320, H = 260, L = 44, R = 12, T = 12, B = 40;
+  const px = (v) => L + ((v - 0.5) / 0.5) * (W - L - R), py = (v) => H - B - ((v - 0.5) / 0.5) * (H - T - B);
+  const ticks = [0.5, 0.75, 1].map((v) => `
+    <line x1="${px(v)}" x2="${px(v)}" y1="${T}" y2="${H - B}" stroke="var(--line)"/><line x1="${L}" x2="${W - R}" y1="${py(v)}" y2="${py(v)}" stroke="var(--line)"/>
+    <text x="${px(v)}" y="${H - B + 16}" text-anchor="middle" fill="var(--muted)" font-size="11">${pct(v)}</text>
+    <text x="${L - 6}" y="${py(v) + 4}" text-anchor="end" fill="var(--muted)" font-size="11">${pct(v)}</text>`).join("");
+  const dots = a.calib.filter((b) => b.bin >= 0.5).map((b) => `<circle cx="${px(b.bin + 0.05)}" cy="${py(Math.max(0.5, b.winRate))}" r="${3 + Math.sqrt(b.n) / 30}" fill="var(--accent)" fill-opacity=".85"><title>Predicted ${pct(b.bin)}–${pct(b.bin + 0.1)}: favourite won ${pct(b.winRate, 1)} of ${fmtInt(b.n)} matches</title></circle>`).join("");
+
   app.innerHTML = `
     <div class="card card-pad"><div class="prose">
-      <div class="kicker muted small">${seasonLabel(season, meta.game)}</div>
-      <h1>How the predictions work</h1>
-      <p>Every team has an <b>EPA</b>, short for Expected Points Added: the points it adds to its alliance's score in an average match. An alliance's predicted score is the sum of its two teams' EPAs, and the gap between the two predicted scores gives the win chance.</p>
-      <p>After each match, every team's EPA moves toward what actually happened. How far depends on how sure we are: a team we've seen a lot moves a little, a new team or one at its first event in weeks (robots get rebuilt) moves more, and a well-known partner doesn't soak up its unknown partner's surprise. Auto, teleop and endgame are tracked separately, and so is each team's share of every bonus ranking point. Penalty points are left out because they say more about the opponent than the team.</p>
-      <p><b>Per-robot scoring from the game manuals.</b> Some points are earned by one robot alone: parking, ascent level, drone landing, leaving the start zone. Results record which robot did what, so those points go to that robot instead of being split in half. Point values are learned from the data and match each season's game manual exactly${meta.solo?.length ? `; this season: ${meta.solo.map((x) => esc(x.robots[0].replace(/_?1$/, ""))).join(", ")}` : ""}.</p>
-      <p><b>Starting ratings</b> come from the last three seasons, weighted toward the most recent, so known teams start near their level and rookies start a little below average.</p>
-      <p>This builds on the approach <a class="link" href="https://www.statbotics.io">Statbotics</a> uses for FRC, adapted to FTC's 2v2 alliances. OPR, which FTCScout shows, is computed separately for each event and can't predict a team's first match at its next event. EPA carries over across events and seasons.</p>
+      <div class="eyebrow">${seasonLabel(season, meta.game)}</div>
+      <h1 style="margin-top:8px">How the predictions work</h1>
+      <p>Every team has an <b>EPA</b>, short for <i>Expected Points Added</i>: the points it adds to its alliance's score in an average match right now, split into auto, teleop and endgame. An alliance's predicted score is the sum of its two teams' EPAs, and the gap between the two alliances gives the win chance.</p>
+      <p><b>Why EPA?</b> It's measured in points, so it means something on its own ("this team adds about 45 points a match"), it splits into auto, teleop and endgame, and it updates after every match. The name comes from <a class="link" href="https://www.statbotics.io">Statbotics</a>, the FRC site that introduced it. The model here goes further, for FTC: the extras below, each kept only because it predicted better on seasons it wasn't tuned on.</p>
+      <ul class="muted">
+        <li><b>Credit by robot.</b> Points the game manual scores per robot go to the robot that earned them instead of being split${solo ? ` (this season: ${solo})` : ""}. Point values are learned from the data and match each manual.</li>
+        <li><b>Auto movement.</b> A robot that didn't move in auto gets little of its alliance's auto credit: alliances where neither robot moves score almost nothing else in auto.</li>
+        <li><b>How sure we are.</b> A team we've seen a lot moves a little after a match; a new team, or one at its first event in weeks, moves more, and a well-known partner doesn't soak up an unknown partner's surprise.</li>
+        <li><b>Starting ratings</b> blend the last three seasons, weighted to the most recent; rookies start a little below average.</li>
+        <li><b>Penalties</b> are left out of ratings (they say more about the opponent) but count when deciding who won.</li>
+      </ul>
     </div></div>
-    <div class="card card-pad section"><h2>Track record, ${season}</h2>
-    <p class="muted small" style="margin:4px 0 0">Every prediction below was made <i>before</i> the match was played, using only earlier matches. Brier score measures how good the probabilities are: 0.25 is a coin flip, lower is better.</p></div>
-    <div class="card" style="margin-top:12px"><div class="table-wrap"><table>
-      <thead><tr><th></th><th class="r">Matches</th><th class="r">Winner correct</th><th class="r">Brier</th><th class="r">Score error (avg)</th><th class="r hide-sm">Bonus RP Brier</th></tr></thead>
+
+    ${c ? `<div class="section-title"><div class="eyebrow">Is EPA the best rating?</div><h2>Compared with the alternatives, ${season}</h2>
+      <p class="muted" style="margin:6px 0 0;max-width:760px">Every rating predicted the same ${fmtInt(a.all.matches)} matches, each using only what was known before the match. Brier score measures the win chances themselves: 0.25 is a coin flip, lower is better.</p></div>
+    <div class="grid cols-2">
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th>Rating</th><th class="r">Winner correct</th><th class="r">Brier</th></tr></thead><tbody>
+        ${cmpRow("epa", "EPA (this site)", "points added, per robot, updated every match")}
+        ${cmpRow("opr", "OPR, updated live", "what FTCScout shows, re-solved before every match")}
+        ${cmpRow("avg", "Average score so far", "each team's average alliance score")}
+        ${cmpRow("elo", "Elo", "wins and losses only, like chess ratings")}
+      </tbody></table></div></div>
+      <div class="card card-pad"><div class="small muted">Winners called by month: EPA vs OPR</div><div id="by-month"></div></div>
+    </div>` : ""}
+
+    <div class="section-title"><div class="eyebrow">Track record</div><h2>How EPA did in ${season}</h2></div>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th></th><th class="r">Matches</th><th class="r">Winner correct</th><th class="r">Brier</th><th class="r hide-sm">Score error (avg pts)</th>${meta.rpNames.length ? '<th class="r hide-sm">Bonus RP Brier</th>' : ""}</tr></thead>
       <tbody>${row("all", "All matches")}${row("quals", "Qualifications")}${row("elims", "Playoffs")}${row("champs", "Championships")}</tbody>
     </table></div></div>
-    ${meta.compare ? `
-    <div class="card card-pad section">
-      <h3>EPA vs OPR</h3>
-      <h2 style="margin-top:6px">Better than the stat you're used to</h2>
-      <p class="muted" style="max-width:760px">OPR is the stat FTCScout shows. For a fair test, before every match we computed OPR from the event's matches so far, blended with each team's OPR from earlier events, and predicted with it. Same matches, same rules.</p>
-      <div class="grid cols-2" style="gap:24px;margin-top:8px">
-        <table><thead><tr><th></th><th class="r">Winner correct</th><th class="r">Brier</th></tr></thead><tbody>
-          <tr><td><b>EPA</b> (this site)</td><td class="r"><b>${pct(meta.compare.epa.accuracy, 1)}</b></td><td class="r"><b>${fmt(meta.compare.epa.brier, 3)}</b></td></tr>
-          <tr><td>OPR</td><td class="r">${pct(meta.compare.opr.accuracy, 1)}</td><td class="r">${fmt(meta.compare.opr.brier, 3)}</td></tr>
-        </tbody></table>
-        <div><div class="small muted">Winners called, by month</div><div id="by-month"></div></div>
-      </div>
-    </div>` : ""}
+
     <div class="grid cols-2 section">
       <div class="card card-pad">
         <h3>Calibration</h3>
-        <p class="small muted">When the model says the favourite has a 75% chance, does the favourite win about 75% of the time? Points on the line mean yes. Bigger dots are more matches.</p>
-        <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:340px">
-          <line x1="30" y1="${H - 30}" x2="${W - 10}" y2="${H - 30}" stroke="var(--border)"/><line x1="30" y1="10" x2="30" y2="${H - 30}" stroke="var(--border)"/>
-          <line x1="30" y1="${H - 30}" x2="${W - 10}" y2="10" stroke="var(--faint)" stroke-dasharray="4 4"/>
-          ${[0.5, 0.75, 1].map((v) => `<text x="${30 + (v - 0.5) * 2 * (W - 40)}" y="${H - 12}" text-anchor="middle" fill="var(--faint)" font-size="11">${pct(v)}</text><text x="24" y="${H - 30 - (v - 0.5) * 2 * (H - 40) + 4}" text-anchor="end" fill="var(--faint)" font-size="11">${pct(v)}</text>`).join("")}
-          <text x="${W / 2 + 10}" y="${H}" text-anchor="middle" fill="var(--muted)" font-size="11">predicted chance</text>
-          ${cal}
+        <p class="small muted">When EPA gives the favourite a 75% chance, does the favourite win about 75% of the time? Dots on the dashed line mean yes; bigger dots are more matches.</p>
+        <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;display:block;margin:6px auto 0" role="img" aria-label="Calibration plot">
+          ${ticks}
+          <line x1="${px(0.5)}" y1="${py(0.5)}" x2="${px(1)}" y2="${py(1)}" stroke="var(--faint)" stroke-dasharray="4 4"/>
+          <text x="${(L + W - R) / 2}" y="${H - 6}" text-anchor="middle" fill="var(--muted)" font-size="11">predicted chance for the favourite</text>
+          <text x="12" y="${(T + H - B) / 2}" text-anchor="middle" fill="var(--muted)" font-size="11" transform="rotate(-90 12 ${(T + H - B) / 2})">how often it won</text>
+          ${dots}
         </svg>
       </div>
       <div class="card card-pad">
         <h3>Season reference</h3>
-        <table><tbody>
+        <table class="ref"><tbody>
           <tr><td class="muted">Top 1% EPA</td><td class="r">${epa(meta.percentiles.p99, meta)}</td></tr>
           <tr><td class="muted">Top 10%</td><td class="r">${epa(meta.percentiles.p90, meta)}</td></tr>
           <tr><td class="muted">Top 25%</td><td class="r">${epa(meta.percentiles.p75, meta)}</td></tr>
-          <tr><td class="muted">Median</td><td class="r">${epa(meta.percentiles.p50, meta)}</td></tr>
-          <tr><td class="muted">Avg alliance score now</td><td class="r">${fmt(meta.avgAlliance.np)}</td></tr>
+          <tr><td class="muted">Median team</td><td class="r">${epa(meta.percentiles.p50, meta)}</td></tr>
+          <tr><td class="muted">Average alliance score now</td><td class="r">${fmt(meta.avgAlliance.np)}</td></tr>
+          ${bt ? `<tr><td class="muted">Ranking forecasts checked on</td><td class="r"><a class="link" href="#/${season}/rankings">${fmtInt(bt.events)} events →</a></td></tr>` : ""}
           <tr><td class="muted">Data updated</td><td class="r small">${new Date(meta.generated).toLocaleString()}</td></tr>
         </tbody></table>
-        <p class="small muted" style="margin-top:12px">Match data comes from the <a class="link" href="https://ftc-events.firstinspires.org/api">FIRST FTC Events API</a>, via the <a class="link" href="https://ftcscout.org">FTCScout</a> API.</p>
       </div>
-    </div>`;
-  const bm = meta.compare?.byMonth ?? [];
+    </div>
+
+    <div class="card card-pad section"><div class="prose">
+      <h3>Tried and dropped</h3>
+      <p class="small muted" style="margin-top:6px">Ideas that sounded right but didn't predict better on held-out seasons, so they're not in the model: per-team foul ratings; less teleop credit for robots that skipped the endgame (strong robots often skip parking to keep scoring); treating robots that neither moved nor parked as broken; blending EPA with OPR; a defense term; bonus-RP chances in pre-schedule ranking forecasts.</p>
+    </div></div>`;
+
+  const bm = c?.byMonth ?? [];
   if (bm.length > 1) {
     mountLineChart($("#by-month"), {
       series: [

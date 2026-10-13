@@ -25,8 +25,8 @@ export const SEASONS = {
     winRp: 2,
     tieRp: 1,
     solo: [
-      { comp: "auto", moved: true, robots: ["autoNav2019_1", "autoNav2019_2"], total: "autoNavPoints" },
-      { comp: "endgame", parked: true, robots: ["egParked1", "egParked2"], total: "egParkPoints" },
+      { comp: "auto", moved: true, label: "auto navigation", robots: ["autoNav2019_1", "autoNav2019_2"], total: "autoNavPoints" },
+      { comp: "endgame", parked: true, label: "endgame parking", robots: ["egParked1", "egParked2"], total: "egParkPoints" },
     ],
     read: readStd,
   },
@@ -40,7 +40,7 @@ export const SEASONS = {
     rankBy: "score",
     winRp: 2,
     tieRp: 1,
-    solo: [{ comp: "auto", moved: true, robots: ["autoNav2020_1", "autoNav2020_2"], total: "autoNavPoints" }],
+    solo: [{ comp: "auto", moved: true, label: "auto navigation", robots: ["autoNav2020_1", "autoNav2020_2"], total: "autoNavPoints" }],
     read: readStd,
   },
   2021: {
@@ -54,10 +54,10 @@ export const SEASONS = {
     winRp: 2,
     tieRp: 1,
     solo: [
-      { comp: "auto", moved: true, robots: ["autoNav2021_1", "autoNav2021_2"], total: "autoNavPoints" },
+      { comp: "auto", moved: true, label: "auto parking", robots: ["autoNav2021_1", "autoNav2021_2"], total: "autoNavPoints" },
       // the auto bonus is 10 or 20 depending on duck vs team element, which the
       // per-robot flag doesn't record, so it stays shared
-      { comp: "endgame", parked: true, robots: ["egPark1", "egPark2"], total: "egParkPoints" },
+      { comp: "endgame", parked: true, label: "endgame parking", robots: ["egPark1", "egPark2"], total: "egParkPoints" },
     ],
     read: readStd,
   },
@@ -70,8 +70,8 @@ export const SEASONS = {
     winRp: 2,
     tieRp: 1,
     solo: [
-      { comp: "auto", moved: true, robots: ["autoNav2022_1", "autoNav2022_2"], total: "autoNavPoints" },
-      { comp: "endgame", robots: ["egNav1", "egNav2"], total: "egNavPoints" },
+      { comp: "auto", moved: true, label: "auto signal parking", robots: ["autoNav2022_1", "autoNav2022_2"], total: "autoNavPoints" },
+      { comp: "endgame", label: "endgame terminal parking", robots: ["egNav1", "egNav2"], total: "egNavPoints" },
     ],
     read: readStd,
   },
@@ -84,11 +84,11 @@ export const SEASONS = {
     winRp: 2,
     tieRp: 1,
     solo: [
-      { comp: "auto", moved: true, robots: ["autoNav1", "autoNav2"], total: "autoNavPoints" },
-      { comp: "auto", robots: ["purple1", "purple2"], total: "purplePoints" },
-      { comp: "auto", robots: ["yellow1", "yellow2"], total: "yellowPoints" },
-      { comp: "endgame", parked: true, robots: ["egNav2023_1", "egNav2023_2"], total: "egNavPoints" },
-      { comp: "endgame", robots: ["drone1", "drone2"], total: "dronePoints" },
+      { comp: "auto", moved: true, label: "auto navigation", robots: ["autoNav1", "autoNav2"], total: "autoNavPoints" },
+      { comp: "auto", label: "purple pixel", robots: ["purple1", "purple2"], total: "purplePoints" },
+      { comp: "auto", label: "yellow pixel", robots: ["yellow1", "yellow2"], total: "yellowPoints" },
+      { comp: "endgame", parked: true, label: "backstage / rigging", robots: ["egNav2023_1", "egNav2023_2"], total: "egNavPoints" },
+      { comp: "endgame", label: "drone landing", robots: ["drone1", "drone2"], total: "dronePoints" },
     ],
     read: readStd,
   },
@@ -101,8 +101,8 @@ export const SEASONS = {
     winRp: 2, // verified against official ranking scores in scripts/check-rs.mjs
     tieRp: 1,
     solo: [
-      { comp: "auto", moved: true, robots: ["autoPark1", "autoPark2"], total: "autoParkPoints" },
-      { comp: "endgame", parked: true, robots: ["dcPark1", "dcPark2"], total: "dcParkPoints" },
+      { comp: "auto", moved: true, label: "auto parking", robots: ["autoPark1", "autoPark2"], total: "autoParkPoints" },
+      { comp: "endgame", parked: true, label: "ascent / parking", robots: ["dcPark1", "dcPark2"], total: "dcParkPoints" },
     ],
     read: (a) => ({
       auto: a.autoPoints, teleop: a.dcPoints - a.dcParkPoints, endgame: a.dcParkPoints,
@@ -118,9 +118,9 @@ export const SEASONS = {
     winRp: 3,
     tieRp: 1,
     solo: [
-      { comp: "auto", moved: true, robots: ["autoLeave1", "autoLeave2"], total: "autoLeavePoints" },
+      { comp: "auto", moved: true, label: "leaving the start zone", robots: ["autoLeave1", "autoLeave2"], total: "autoLeavePoints" },
       // the both-robots-fully-in-base bonus stays shared
-      { comp: "endgame", parked: true, robots: ["dcBase1", "dcBase2"], total: (a) => a.dcBasePoints - a.dcBaseBonus },
+      { comp: "endgame", parked: true, label: "returning to base", robots: ["dcBase1", "dcBase2"], total: (a) => a.dcBasePoints - a.dcBaseBonus },
     ],
     read: (a) => ({
       auto: a.autoPoints, teleop: a.dcPoints - a.dcBasePoints, endgame: a.dcBasePoints,
@@ -137,9 +137,9 @@ export const SEASONS = {
     winRp: 3, // verified against official ranking scores from early 2026 events
     tieRp: 1,
     solo: [
-      { comp: "auto", moved: true, robots: ["autoLeave1", "autoLeave2"], total: "autoLeavePoints" },
-      { comp: "auto", robots: ["autoParkPoints1", "autoParkPoints2"], total: "autoParkPoints" },
-      { comp: "endgame", parked: true, robots: ["dcParkPoints1", "dcParkPoints2"], total: "dcParkPoints" },
+      { comp: "auto", moved: true, label: "leaving the start zone", robots: ["autoLeave1", "autoLeave2"], total: "autoLeavePoints" },
+      { comp: "auto", label: "auto parking", robots: ["autoParkPoints1", "autoParkPoints2"], total: "autoParkPoints" },
+      { comp: "endgame", parked: true, label: "endgame parking", robots: ["dcParkPoints1", "dcParkPoints2"], total: "dcParkPoints" },
     ],
     read: (a) => ({
       auto: a.autoPoints, teleop: a.dcPoints - a.dcParkPoints, endgame: a.dcParkPoints,

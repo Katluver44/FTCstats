@@ -462,3 +462,9 @@ footer a { text-decoration: underline; }
 }
 .toolbar input { padding: 7px 12px; font-size: 14px; border: 1px solid var(--line); }
 .toolbar select:focus, .toolbar input:focus, .season-select:focus { outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 1px; }
+
+/* tables inside padded cards don't need the full-bleed gutter */
+.card-pad table td:first-child, .card-pad table th:first-child { padding-left: 0; }
+.card-pad table td:last-child, .card-pad table th:last-child { padding-right: 0; }
+.prose ul { padding-left: 20px; margin: 8px 0 0; }
+.prose li { margin: 6px 0; }

@@ -10,6 +10,7 @@ import { SEASONS, soloPoints } from "../site/js/seasons.js";
 import { fitSoloValues } from "./solo-values.mjs";
 import { Model, COMPONENTS, onField, allianceTeams, isElim } from "../site/js/model.js";
 import { oprPredictions } from "./opr.mjs";
+import { elo, avgScore } from "./baselines.mjs";
 
 const r1 = (x) => Math.round(x * 10) / 10;
 
@@ -271,12 +272,13 @@ export async function build(season, params = {}) {
   // ---- head-to-head with OPR, and accuracy over the season ----
   const opr = oprPredictions(matches, { winScale: model.p.winScale, baselineTeam: (baseline.auto + baseline.teleop + baseline.endgame) / 2 });
   const outcome = (x) => (x.actual.red.total === x.actual.blue.total ? 0.5 : x.actual.red.total > x.actual.blue.total ? 1 : 0);
-  const cmp = { epa: { c: 0, b: 0 }, opr: { c: 0, b: 0 }, n: 0 };
+  const eloP = elo(matches, 64), avgP = avgScore(matches, 0.28);
+  const cmp = { epa: { c: 0, b: 0 }, opr: { c: 0, b: 0 }, elo: { c: 0, b: 0 }, avg: { c: 0, b: 0 }, n: 0 };
   const months = new Map();
   for (const x of matches) {
     const o = outcome(x), pe = predByMatch.get(`${x.ev.code}:${x.m.id}`).pRed, po = opr.get(x).pRed;
     cmp.n++;
-    for (const [k, p] of [["epa", pe], ["opr", po]]) {
+    for (const [k, p] of [["epa", pe], ["opr", po], ["elo", eloP.get(x)], ["avg", avgP.get(x)]]) {
       cmp[k].b += (p - o) ** 2;
       if (o !== 0.5 && (p > 0.5) === (o === 1)) cmp[k].c++;
     }
@@ -290,6 +292,8 @@ export async function build(season, params = {}) {
   const compare = {
     epa: { accuracy: r3(cmp.epa.c / cmp.n), brier: r3(cmp.epa.b / cmp.n) },
     opr: { accuracy: r3(cmp.opr.c / cmp.n), brier: r3(cmp.opr.b / cmp.n) },
+    elo: { accuracy: r3(cmp.elo.c / cmp.n), brier: r3(cmp.elo.b / cmp.n) },
+    avg: { accuracy: r3(cmp.avg.c / cmp.n), brier: r3(cmp.avg.b / cmp.n) },
     byMonth: [...months].filter(([, m]) => m.n >= 200).map(([month, m]) => ({ month, matches: m.n, epa: r3(m.c / m.n), opr: r3(m.o / m.n) })),
   };
 
@@ -464,7 +468,7 @@ export async function build(season, params = {}) {
     },
     model: { ...model.p, baseline: { ...baseline, rp: baseline.rp.map(r3) }, cv: r3(cv), priors: priors.size },
     // per-robot scoring elements and their learned point values
-    solo: fits.map((f) => ({ comp: f.comp, moved: f.moved, parked: f.parked, robots: f.robots, values: f.values, exact: r3(f.exact) })),
+    solo: fits.map((f) => ({ comp: f.comp, label: f.label, moved: f.moved, parked: f.parked, robots: f.robots, values: f.values, exact: r3(f.exact) })),
   };
   await writeJson(path.join(out, "meta.json"), meta);
   return meta;
