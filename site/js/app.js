@@ -32,7 +32,7 @@ async function route() {
   window.scrollTo(0, 0);
   app.innerHTML = `<div class="loading">Loading…</div>`;
   try {
-    const pages = { "": home, teams, team, events, event, rankings, predict, stats, about };
+    const pages = { "": home, teams, team, events, event, rankings, about };
     const fn = pages[r.page] ?? notFound;
     await fn(r);
     // tab title from the page heading, e.g. "20265 Heart of RoBots · FTCstats"
@@ -146,7 +146,7 @@ async function home(r) {
         <div class="feature-score"><span class="score red">${fmt(p.red.total, 0)}</span><span class="faint">–</span><span class="score blue">${fmt(p.blue.total, 0)}</span></div>
         ${side("blue", [t2, t3])}
       </div>
-      <div class="feature-foot">${winBar(p.pRed)}<p>Red wins ${pct(p.pRed)} of the time. <a class="link" href="#/${season}/predict?r=${t1.team},${t4.team}&b=${t2.team},${t3.team}">Try your own matchup →</a></p></div>
+      <div class="feature-foot">${winBar(p.pRed)}<p>Red wins ${pct(p.pRed)} of the time.</p></div>
     </div>`;
   }
 
@@ -292,7 +292,6 @@ async function team(r) {
           <div class="muted" style="margin-top:4px">${esc(t.loc)}${t.rookie ? ` · Rookie year ${t.rookie}` : ""}</div>
           <div class="small muted" style="margin-top:2px">#${fmtInt(t.rank)} of ${fmtInt(t.of)} · ${w}-${l}${ti ? `-${ti}` : ""} · ${t.matches.length ? pct(w / t.matches.length) : "–"} win rate · predicted ${decided.length ? pct(correct / decided.length) : "–"} of its matches</div>
         </div>
-        <div class="row"><a class="pill" href="#/${season}/predict?r=${n}">Use in predictor →</a></div>
       </div>
       <div class="meters section">
         <div>
@@ -625,117 +624,6 @@ const probCell = (p) => {
   return `<span class="epa" style="${style}">${pct(p)}</span>`;
 };
 
-// ---------------- predictor ----------------
-
-async function predict(r) {
-  const { season, query } = r;
-  const [meta, teams] = await Promise.all([data.meta(season), data.teams(season)]);
-  if (stale(r)) return;
-  const byNum = new Map(teams.map((t) => [t.team, t]));
-  const slots = { r: (query.get("r") ?? "").split(","), b: (query.get("b") ?? "").split(",") };
-  const input = (side, i) => `<input inputmode="numeric" placeholder="Team #" data-side="${side}" data-i="${i}" value="${esc(slots[side][i] ?? "")}"><div class="who" id="who-${side}${i}"></div>`;
-  app.innerHTML = `
-    <div class="card card-pad"><h1>Match predictor</h1><p class="muted" style="margin:4px 0 0">Pick any four teams to see who's favoured and why. Uses each team's current EPA.</p></div>
-    <div class="predictor section">
-      <div class="side red card">${input("r", 0)}${input("r", 1)}</div>
-      <div class="vs">VS</div>
-      <div class="side blue card">${input("b", 0)}${input("b", 1)}</div>
-    </div>
-    <div id="out" class="section"></div>`;
-
-  const run = () => {
-    const nums = { r: [], b: [] }, raw = { r: [], b: [] }, seen = new Set();
-    $$(".predictor input").forEach((el) => {
-      const v = el.value.trim(), side = el.dataset.side;
-      raw[side].push(v);
-      const t = /^\d{1,6}$/.test(v) ? byNum.get(+v) : null;
-      let msg = "";
-      if (!v) msg = "";
-      else if (!/^\d{1,6}$/.test(v)) msg = `<span class="faint">Not a team number</span>`;
-      else if (!t) msg = `<span class="faint">No ${season} matches for team ${esc(v)}</span>`;
-      else if (seen.has(+v)) msg = `<span class="faint">Already picked</span>`;
-      else { msg = `${esc(t.name)} · EPA ${fmt(t.np)}`; nums[side].push(+v); seen.add(+v); }
-      $(`#who-${side}${el.dataset.i}`).innerHTML = msg;
-    });
-    syncQuery({ r: raw.r.filter(Boolean).join(","), b: raw.b.filter(Boolean).join(",") });
-    if (!nums.r.length || !nums.b.length) {
-      $("#out").innerHTML = `<div class="card empty">Enter at least one team on each side.</div>`;
-      return;
-    }
-    const model = modelFromMeta(meta);
-    for (const n of [...nums.r, ...nums.b]) {
-      const t = byNum.get(n);
-      model.setTeam(n, { auto: t.auto, teleop: t.teleop, endgame: t.endgame, foul: t.foul, n: t.matches, rp: [t.rp0, t.rp1, t.rp2] });
-    }
-    const p = model.predict(nums.r, nums.b);
-    const comp = (k, label) => `<tr><td class="muted">${label}</td><td class="r score red">${fmt(p.red[k])}</td><td class="r score blue">${fmt(p.blue[k])}</td></tr>`;
-    $("#out").innerHTML = `
-      <div class="grid cols-2">
-        <div class="card card-pad">
-          <h3>Win chance</h3>
-          <div class="row" style="justify-content:space-between;margin-top:8px">
-            <span class="big-score score red">${pct(p.pRed)}</span><span class="big-score score blue">${pct(1 - p.pRed)}</span>
-          </div>
-          <div class="pbar" style="width:100%;height:10px;border-radius:5px;margin-top:8px"><span class="r" style="width:${p.pRed * 100}%"></span><span class="b" style="width:${(1 - p.pRed) * 100}%"></span></div>
-        </div>
-        <div class="card">
-          <table><thead><tr><th>Predicted</th><th class="r">Red</th><th class="r">Blue</th></tr></thead><tbody>
-            ${comp("auto", "Auto")}${comp("teleop", "Teleop")}${comp("endgame", "Endgame")}
-            <tr><td class="muted">Penalty points from opponent fouls</td><td class="r score red">${fmt(p.blue.foul)}</td><td class="r score blue">${fmt(p.red.foul)}</td></tr>
-            <tr><td><b>Total</b></td><td class="r score red"><b>${fmt(p.red.total, 0)}</b></td><td class="r score blue"><b>${fmt(p.blue.total, 0)}</b></td></tr>
-            ${meta.rpNames.map((n, i) => `<tr><td class="muted">${esc(n)} RP chance</td><td class="r">${pct(p.red.rp[i])}</td><td class="r">${pct(p.blue.rp[i])}</td></tr>`).join("")}
-          </tbody></table>
-        </div>
-      </div>`;
-  };
-  $$(".predictor input").forEach((el) => (el.oninput = run));
-  run();
-}
-
-// ---------------- season stats ----------------
-
-async function stats(r) {
-  const { season } = r;
-  const [meta, st] = await Promise.all([data.meta(season), data.stats(season).catch(() => null)]);
-  if (stale(r)) return;
-  if (!st) { app.innerHTML = `<div class="card empty">No stats for this season yet.</div>`; return; }
-  const ev = (x) => `<a href="#/${season}/event/${encodeURIComponent(x.ev)}" class="small muted">${esc(x.evName)} · ${esc(x.d)}</a>`;
-  const tl = (nums, side) => `<span class="alliance">${nums.map((n) => `<a class="tn ${side}" href="#/${season}/team/${n}">${n}</a>`).join(" ")}</span>`;
-  const score = (x) => `<span class="final"><span class="${x.rs > x.bs ? "w" : "l"}">${x.rs}</span><span class="faint">–</span><span class="${x.bs > x.rs ? "w" : "l"}">${x.bs}</span></span>`;
-  const chance = (p) => (p < 0.001 ? "under 0.1%" : pct(p, p < 0.1 ? 1 : 0));
-  const card = (eyebrow, title, note, body) => `<div class="card stat-card">
-    <div class="card-head"><div><div class="eyebrow">${eyebrow}</div><h2 style="margin-top:4px">${title}</h2>${note ? `<div class="small muted" style="margin-top:2px">${note}</div>` : ""}</div></div>
-    <div class="table-wrap"><table><tbody>${body}</tbody></table></div></div>`;
-  const teamList = (rows, val) => rows.map((t, i) => `<tr><td class="faint num" style="width:28px">${i + 1}</td><td>${teamCell(season, t.team, t.name)}</td><td class="r">${val(t)}</td></tr>`).join("");
-  const matchRows = (rows, val) => rows.map((x) => `<tr><td>${ev(x)}<div>${tl(x.red, "red")} <span class="faint">vs</span> ${tl(x.blue, "blue")}</div></td><td class="r">${val(x)}</td></tr>`).join("");
-  const sideRows = (rows) => rows.map((x) => `<tr><td>${ev(x)}<div>${tl(x.teams, x.side)}</div></td><td class="r"><b>${x.value}</b></td></tr>`).join("");
-  const evRows = (rows) => rows.map((e) => `<tr><td>${evCell(season, e.code, e.name, `${e.played} matches`)}</td><td class="r"><b>${pct(e.accuracy)}</b></td></tr>`).join("");
-
-  app.innerHTML = `
-    <div class="card card-pad">
-      <div class="eyebrow">${seasonLabel(season, meta.game)}</div>
-      <h1 style="margin-top:8px">Season stats</h1>
-      <p class="muted" style="margin:8px 0 0;max-width:760px">Records, leaders and surprises from ${fmtInt(meta.matches)} matches. Scores here leave out penalty points, so records are what alliances actually scored.</p>
-    </div>
-    <div class="grid cols-2 section stats-grid">
-      ${card("Upsets", "Biggest upsets", "the winner's chance before the match", matchRows(st.upsets, (x) => `${score(x)}<div class="small"><b>${chance(x.pWin)}</b></div>`))}
-      ${card("Records", "Highest alliance scores", "without penalty points", sideRows(st.highest.np))}
-      ${card("Records", "Highest auto scores", "", sideRows(st.highest.auto))}
-      ${card("Records", "Biggest blowouts", "winning margin without penalties", matchRows(st.blowouts, (x) => `${score(x)}<div class="small"><b>+${x.margin}</b></div>`))}
-      ${card("Playoffs", "Closest playoff matches", "", matchRows(st.closest, score))}
-      ${card("Leaders", "Best auto", "auto EPA", teamList(st.leaders.auto, (t) => epa(t.value, meta)))}
-      ${card("Leaders", "Best teleop", "teleop EPA", teamList(st.leaders.teleop, (t) => epa(t.value, meta)))}
-      ${card("Leaders", "Best endgame", "endgame EPA", teamList(st.leaders.endgame, (t) => epa(t.value, meta)))}
-      ${card("Improvement", "Biggest improvers", "EPA after their 3rd match → now", teamList(st.risers, (t) => `${fmt(t.from)} → <b>${fmt(t.to)}</b>`))}
-      ${card("Records", "Best records", "20+ matches, all match types", teamList(st.records, (t) => `<b>${t.wins}-${t.losses}${t.ties ? `-${t.ties}` : ""}</b> <span class="faint">${pct(t.pct)}</span>`))}
-      ${card("Luck or clutch?", "Won more than expected", "actual wins vs the sum of their pre-match win chances", teamList(st.over, (t) => `<b class="trend-up">+${fmt(t.diff)}</b> <span class="faint small">${t.wins} vs ${fmt(t.expected)}</span>`))}
-      ${card("Luck or clutch?", "Won fewer than expected", "", teamList(st.under, (t) => `<b class="trend-down">${fmt(t.diff)}</b> <span class="faint small">${t.wins} vs ${fmt(t.expected)}</span>`))}
-      ${card("Regions", "Strongest countries", "median EPA, countries with 15+ active teams", st.countries.map((c, i) => `<tr><td class="faint num" style="width:28px">${i + 1}</td><td><b>${esc(c.country)}</b> <span class="small muted">${c.teams} teams</span></td><td class="r">${epa(c.median, meta)}</td></tr>`).join(""))}
-      ${card("Events", "Most unpredictable events", "share of winners called, 30+ matches", evRows(st.events.unpredictable))}
-      ${card("Events", "Most predictable events", "", evRows(st.events.predictable))}
-    </div>`;
-}
-
 // ---------------- about / accuracy ----------------
 
 async function about(r) {
@@ -860,10 +748,8 @@ async function boot() {
   $("#season").onchange = (e) => {
     const r = parseHash();
     // stay on the same kind of page; event codes differ by season, so events go to the list
-    const q = r.query.toString();
     const keep = {
       teams: "teams", events: "events", rankings: "rankings", about: "about", event: "events",
-      predict: `predict${q ? `?${q}` : ""}`,
       team: `team/${r.args.join("/")}`,
     }[r.page] ?? "";
     location.hash = `#/${e.target.value}/${keep}`;

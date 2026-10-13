@@ -121,7 +121,6 @@ h3, .eyebrow { font-size: 13px; font-weight: 700; color: var(--accent); text-tra
 .grid { gap: 0; }
 .grid.cols-2 > .card + .card { border-left: 1px solid var(--glass-border); }
 .page-pad { padding: 0 32px; }
-.side.card { padding: 16px 32px; }
 .tiles.section, .row.section { padding: 0 48px; }
 .more { border-radius: 0; }
 
@@ -368,18 +367,6 @@ tr.upset td { background: rgba(201, 52, 43, 0.05); }
 .series-toggle button.off { opacity: 0.4; }
 .series-toggle i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 
-/* ---------- predictor ---------- */
-.predictor { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: start; }
-.side { padding: 16px; }
-.side.red { box-shadow: inset 4px 0 0 var(--red), var(--shadow); }
-.side.blue { box-shadow: inset -4px 0 0 var(--blue), var(--shadow); }
-.side input { width: 100%; margin-bottom: 6px; font-size: 16px; border-radius: 12px; }
-.side .who { font-size: 12px; color: var(--muted); margin: 0 0 10px 4px; min-height: 18px; }
-.vs { align-self: center; font-weight: 800; color: var(--faint); font-size: 20px; }
-.big-score { font-size: 44px; font-weight: 800; letter-spacing: -0.03em; }
-.score.red { color: var(--red); }
-.score.blue { color: var(--blue); }
-
 .loading { padding: 80px 0; text-align: center; color: var(--faint); font-weight: 500; }
 .empty { padding: 30px; text-align: center; color: var(--muted); }
 .more { display: block; width: 100%; padding: 12px 48px; text-align: left; border: 0; border-top: 1px solid var(--line); color: var(--accent); font-weight: 650; background: transparent; border-radius: 0 0 var(--radius) var(--radius); }
@@ -415,7 +402,7 @@ footer a { text-decoration: underline; }
   footer { padding: 18px 16px 28px; }
   .card td:first-child, .card th:first-child { padding-left: 16px; }
   .card td:last-child, .card th:last-child { padding-right: 16px; }
-  .tiles.section, .row.section, .side.card { padding-left: 16px; padding-right: 16px; }
+  .tiles.section, .row.section { padding-left: 16px; padding-right: 16px; }
   .hero-inner { padding: 9vh 16px 0; }
   .grid.cols-2 > .card + .card { border-left: 0; }
   .nav-inner { padding: 0 16px; gap: 4px; height: 60px; }
@@ -440,8 +427,6 @@ footer a { text-decoration: underline; }
   .nav-links a { padding: 7px 9px; font-size: 13px; }
   h1 { font-size: 22px; }
   .big-epa b { font-size: 30px; }
-  .predictor { grid-template-columns: 1fr; }
-  .vs { justify-self: center; }
   .hide-sm { display: none; }
   td, th { padding: 7px 7px; }
   .meter { grid-template-columns: 84px 1fr 44px; }
@@ -469,10 +454,3 @@ footer a { text-decoration: underline; }
 .prose ul { padding-left: 20px; margin: 8px 0 0; }
 .prose li { margin: 6px 0; }
 
-/* season stats: a grid of leaderboard cards with gaps between them */
-.stats-grid { gap: 14px; padding: 0 16px; }
-.stats-grid .card { border: 1px solid var(--line); border-radius: 8px; }
-.stats-grid .card td:first-child, .stats-grid .card th:first-child { padding-left: 18px; }
-.stats-grid .card td:last-child, .stats-grid .card th:last-child { padding-right: 18px; }
-.stats-grid .card-head { padding-left: 18px !important; padding-right: 18px !important; }
-.alliance .tn { min-width: 0; margin-right: 6px; }
