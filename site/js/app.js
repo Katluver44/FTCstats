@@ -162,7 +162,6 @@ function syncQuery(params) {
 const seasonLabel = (s, game) => `${s}–${String(s + 1).slice(2)}${game ? ` · ${esc(game)}` : ""}`;
 
 const EPA_TIP = "EPA: points this team adds to its alliance right now (auto + teleop + endgame). Tuned to represent robot strength.";
-const PRED_TIP = "Prediction rating: the separate rating behind win chances, predicted scores and ranking forecasts. Tuned only for match prediction.";
 
 const notFound = () => (app.innerHTML = `<div class="empty">Page not found.</div>`);
 
@@ -402,7 +401,7 @@ async function team(r) {
         <div>
           <h1><span class="team-num">${n}</span> ${esc(t.name)}</h1>
           <div class="muted" style="margin-top:4px">${esc(t.loc)}${t.rookie ? ` · Rookie year ${t.rookie}` : ""}</div>
-          <div class="small muted" style="margin-top:2px">#${fmtInt(t.rank)} of ${fmtInt(t.of)} · ${w}-${l}${ti ? `-${ti}` : ""} · ${t.matches.length ? pct(w / t.matches.length) : "–"} win rate · predicted ${decided.length ? pct(correct / decided.length) : "–"} of its matches${t.pred ? ` · <span title="${PRED_TIP}">Pred. rating ${fmt(t.pred.np)}</span>` : ""}</div>
+          <div class="small muted" style="margin-top:2px">#${fmtInt(t.rank)} of ${fmtInt(t.of)} · ${w}-${l}${ti ? `-${ti}` : ""} · ${t.matches.length ? pct(w / t.matches.length) : "–"} win rate · predicted ${decided.length ? pct(correct / decided.length) : "–"} of its matches</div>
         </div>
       </div>
       <div class="meters section">
@@ -936,14 +935,15 @@ function rosterForecast(season, meta, ev) {
     </div>
     <div class="card section" id="fc"></div>`;
   const names = new Map(ev.teamList.map((t) => [t.team, t.name]));
+  const epaIn = new Map(ev.teamList.map((t) => [t.team, t.epaStart]));
   const run = () => {
     const rows = forecastFromRoster(season, meta, ev, { perTeam });
     $("#fc").innerHTML = rows.length ? `<div class="table-wrap"><table>
-      <thead><tr><th>Proj.</th><th>Team</th><th class="r" title="${PRED_TIP}">Pred. rating</th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th></tr></thead>
+      <thead><tr><th>Proj.</th><th>Team</th><th class="r"><span title="${EPA_TIP}">EPA</span></th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th></tr></thead>
       <tbody>${rows.map((r, i) => `<tr>
         <td class="faint num">${i + 1}</td>
         <td>${teamCell(season, r.team, names.get(r.team))}</td>
-        <td class="r">${epa(r.epa, meta)}</td>
+        <td class="r">${epa(epaIn.get(r.team) ?? r.epa, meta)}</td>
         <td class="r">${fmt(r.meanRank, 1)}</td>
         <td class="r">${probCell(r.p1)}</td>
         <td class="r">${probCell(r.p4)}</td>
@@ -1178,7 +1178,7 @@ async function about(r) {
       <h1 style="margin-top:8px">Our methodology</h1>
       <p>Every team has an <b>EPA</b>, short for <i>Expected Points Added</i>: the points it adds to its alliance's score in an average match right now, split into auto, teleop and endgame. An alliance's predicted score is the sum of its two teams' EPAs, and the gap between the two alliances gives the win chance.</p>
       <p><b>Why EPA?</b> It's measured in points, so it means something on its own ("this team adds about 45 points a match"), it splits into auto, teleop and endgame, and it updates after every match. The name comes from <a class="link" href="https://www.statbotics.io">Statbotics</a>, the FRC site that introduced it. The model here goes further, for FTC: the extras below, each kept only because it predicted better on seasons it wasn't tuned on.</p>
-      <p><b>Two ratings.</b> The <b>EPA</b> in team lists, team pages and "Top teams" is tuned to show how strong each robot is right now: the EPA a team brings to an event should match what it actually scores there. Win chances, predicted scores and ranking forecasts use a separate <b>prediction rating</b> (shown as "Pred. rating" where it matters), tuned only to call matches well. Some things that help call matches, like pulling every rating a little toward average, would understate the best robots in a list.</p>
+      <p><b>EPA and predictions.</b> The <b>EPA</b> in team lists, team pages and "Top teams" is tuned to show how strong each robot is right now: the EPA a team brings to an event should match what it actually scores there. Win chances, predicted scores and ranking forecasts come from the same match data but with settings tuned only to call matches well (for example, pulling every rating a little toward average, which would understate the best robots in a list), so they don't follow exactly from the EPAs shown.</p>
       <ul class="muted">
         <li><b>Credit by robot.</b> Points the game manual scores per robot go to the robot that earned them instead of being split${solo ? ` (this season: ${solo})` : ""}. Point values are learned from the data and match each manual.</li>
         <li><b>Auto movement.</b> A robot that didn't move in auto gets little of its alliance's auto credit: alliances where neither robot moves score almost nothing else in auto.</li>
