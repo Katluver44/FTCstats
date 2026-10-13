@@ -17,9 +17,12 @@
 // scoring events at least 3):
 //   wMAE    weighted mean |pre-event EPA - event OPR|; nMAE = wMAE / weighted SD of targets
 //   wCorr   weighted Pearson correlation;  bias = mean(EPA - OPR) (negative = underrated)
-//   topMAE / topBias   pairs whose event OPR is in the season's top 5%
-//   wldMAE  Worlds pairs only (pre-Worlds EPA vs Worlds division OPR)
-//   rhoOPR  Spearman: end-of-season EPA (off-season excluded) vs Worlds division OPR
+//   topMAE / topB(tgt)  pairs whose event OPR is in the season's top 5% (the bias here is
+//           mostly regression to the mean: selected on high outcomes)
+//   topB(EPA)  bias on the top 5% of pairs by pre-event EPA (the teams the list puts on
+//           top; the bias a reader sees)
+//   wldMAE  Worlds pairs only (pre-Worlds EPA vs Worlds division OPR; finals excluded)
+//   rhoOPR  Spearman: EPA just before Worlds (off-season excluded) vs Worlds division OPR
 //   rhoPO   Spearman: same EPA vs Worlds playoff wins (+1 for making playoffs)
 // The objective for tuning ("mae") is the mean nMAE over seasons (lower = better).
 // Priors come from site/data (built with DEFAULT_EPA_PARAMS): prior settings
@@ -66,8 +69,8 @@ const objective = (ms) => {
 };
 
 const f = (x, d = 2) => (Number.isFinite(x) ? x.toFixed(d) : "-");
-const HEAD = "season     n   wMAE   nMAE  wCorr   bias  topMAE topBias wldMAE rhoOPR  rhoPO";
-const line = (s, m) => `${String(s).padEnd(6)} ${String(m.n).padStart(6)} ${f(m.wMae).padStart(6)} ${f(m.nMae, 4).padStart(6)} ${f(m.wCorr, 4).padStart(6)} ${f(m.bias).padStart(6)} ${f(m.topMae).padStart(7)} ${f(m.topBias).padStart(7)} ${f(m.worldsMae).padStart(6)} ${f(m.rhoOpr, 3).padStart(6)} ${f(m.rhoPo, 3).padStart(6)}`;
+const HEAD = "season     n   wMAE   nMAE  wCorr   bias  topMAE topB(tgt) topB(EPA) wldMAE rhoOPR  rhoPO";
+const line = (s, m) => `${String(s).padEnd(6)} ${String(m.n).padStart(6)} ${f(m.wMae).padStart(6)} ${f(m.nMae, 4).padStart(6)} ${f(m.wCorr, 4).padStart(6)} ${f(m.bias).padStart(6)} ${f(m.topMae).padStart(7)} ${f(m.topBias).padStart(9)} ${f(m.topBiasP).padStart(9)} ${f(m.worldsMae).padStart(6)} ${f(m.rhoOpr, 3).padStart(6)} ${f(m.rhoPo, 3).padStart(6)}`;
 const mean = (xs) => { const v = xs.filter(Number.isFinite); return v.reduce((a, b) => a + b, 0) / v.length; };
 function table(title, bySeason) {
   console.log(`\n== ${title}`);
@@ -75,7 +78,7 @@ function table(title, bySeason) {
     console.log(`-- ${c}\n${HEAD}`);
     for (const [s, m] of bySeason) console.log(line(s, m[c]));
     const ms = [...bySeason.values()].map((m) => m[c]);
-    const avg = Object.fromEntries(["wMae", "nMae", "wCorr", "bias", "topMae", "topBias", "worldsMae", "rhoOpr", "rhoPo"].map((k) => [k, mean(ms.map((m) => m[k]))]));
+    const avg = Object.fromEntries(["wMae", "nMae", "wCorr", "bias", "topMae", "topBias", "topBiasP", "worldsMae", "rhoOpr", "rhoPo"].map((k) => [k, mean(ms.map((m) => m[k]))]));
     console.log(line("mean", { ...avg, n: ms.reduce((a, m) => a + m.n, 0) }));
   }
 }
@@ -86,7 +89,7 @@ function compare(label, base, other) {
     for (const [s, a] of base) {
       const b = other.get(s); if (!b) continue;
       const ci = bootstrapMaeDiff(a[c].pairs, b[c].pairs, reps);
-      console.log(`${s}  wMAE ${f(a[c].wMae)} -> ${f(b[c].wMae)}  CI ${f(ci[0], 3)}..${f(ci[1], 3)}  nMAE ${f(a[c].nMae, 4)} -> ${f(b[c].nMae, 4)}  wCorr ${f(a[c].wCorr, 4)} -> ${f(b[c].wCorr, 4)}  topBias ${f(a[c].topBias)} -> ${f(b[c].topBias)}  rhoOPR ${f(a[c].rhoOpr, 3)} -> ${f(b[c].rhoOpr, 3)}  rhoPO ${f(a[c].rhoPo, 3)} -> ${f(b[c].rhoPo, 3)}`);
+      console.log(`${s}  wMAE ${f(a[c].wMae)} -> ${f(b[c].wMae)}  CI ${f(ci[0], 3)}..${f(ci[1], 3)}  nMAE ${f(a[c].nMae, 4)} -> ${f(b[c].nMae, 4)}  wCorr ${f(a[c].wCorr, 4)} -> ${f(b[c].wCorr, 4)}  topB(EPA) ${f(a[c].topBiasP)} -> ${f(b[c].topBiasP)}  topB(tgt) ${f(a[c].topBias)} -> ${f(b[c].topBias)}  rhoOPR ${f(a[c].rhoOpr, 3)} -> ${f(b[c].rhoOpr, 3)}  rhoPO ${f(a[c].rhoPo, 3)} -> ${f(b[c].rhoPo, 3)}`);
     }
   }
 }

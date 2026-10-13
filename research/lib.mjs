@@ -77,6 +77,10 @@ function oprSolve(teams, rows, lambda = 1) {
 // component. Per-robot (solo) elements count exactly where the data records them
 // (team's mean at the event); the rest of each component is the event's ridge
 // OPR on alliance scores. Only official events, teams with >= minMatches there.
+// Finals-type events (no qualification matches: e.g. the Worlds finals FTCCMP1,
+// a championship's inter-division finals) are skipped: alliances play together
+// in every match, so partners' contributions can't be separated (each gets the
+// alliance's split, e.g. 2025 UAC got its partner's number at FTCCMP1).
 // Cached per season: independent of the EPA params.
 const targetCache = new Map();
 export function epaTargets(ctx, { minMatches = 4, minTeams = 8 } = {}) {
@@ -88,6 +92,7 @@ export function epaTargets(ctx, { minMatches = 4, minTeams = 8 } = {}) {
   for (const [code, ms] of byEv) {
     const ev = ms[0].ev;
     if (NOT_TARGET.has(ev.type)) continue;
+    if (!ms.some((x) => !x.elim)) continue; // finals-type: no quals
     const count = new Map();
     for (const x of ms) for (const t of [...x.red, ...x.blue]) count.set(t, (count.get(t) ?? 0) + 1);
     const teams = [...count.keys()];
@@ -132,7 +137,7 @@ export function epaTargets(ctx, { minMatches = 4, minTeams = 8 } = {}) {
   const cut = [...events].map((e) => e.avgNp).sort((a, b) => b - a)[Math.floor(events.length * 0.05)] ?? Infinity;
   for (const e of events) e.w = Math.max(TIER_WEIGHT[e.type] ?? 1, e.avgNp >= cut ? TOP_SCORING_WEIGHT : 1);
 
-  // Worlds: division teams' total/component OPR there, and playoff wins (divisions + finals)
+  // Worlds: each team's division OPR (finals excluded above), and playoff wins (divisions + finals)
   const worlds = new Map(); // team -> { opr: {auto, teleop, endgame, total}, po }
   for (const e of events) if (e.type === "FIRSTChampionship") for (const p of e.pairs) worlds.set(p.team, { opr: p, po: 0 });
   for (const x of matches) {
@@ -157,27 +162,27 @@ async function priorsFor(season, ep) {
 }
 
 // Run the EPA track over a season. Returns each team's EPA entering each event
-// ("code:team" -> {auto, teleop, endgame, np}), the end-of-official-season EPA for
-// Worlds teams, and the final ratings (as the site would list them).
+// ("code:team" -> {auto, teleop, endgame, np}), the EPA of Worlds teams just
+// before the first Worlds match (endSeason; a snapshot after the last official
+// match would include Worlds itself and post-Worlds Premier events: leakage),
+// and the final ratings (as the site would list them).
 export async function epaRun(ctx, over = {}, comps = EPA_COMPS) {
   const ep = epaParams(over);
   const epaPriors = await priorsFor(ctx.season, ep);
   const { events, worlds } = epaTargets(ctx);
-  const offTypes = new Set(ep.shared.offTypes);
-  let lastOfficial = -1;
-  ctx.matches.forEach((x, i) => { if (!offTypes.has(x.ev.type)) lastOfficial = i; });
+  const firstWorlds = ctx.matches.findIndex((x) => x.ev.type === "FIRSTChampionship");
   const pre = new Map(), endSeason = new Map();
   const want = new Set(events.flatMap((e) => e.pairs.map((p) => `${e.code}:${p.team}`)));
   const seen = new Set();
   const sim = simulateEpa(ctx.matches, ctx, {
     epa: ep, comps, epaPriors,
-    onBefore: (x, v) => {
+    onBefore: (x, v, i) => {
+      if (i === firstWorlds) for (const t of worlds.keys()) endSeason.set(t, v.epa(t));
       for (const t of [...x.red, ...x.blue]) {
         const k = `${x.ev.code}:${t}`;
         if (!seen.has(k)) { seen.add(k); if (want.has(k)) pre.set(k, v.epa(t)); }
       }
     },
-    onMatch: (x, v, i) => { if (i === lastOfficial) for (const t of worlds.keys()) endSeason.set(t, v.epa(t)); },
   });
   return { pre, endSeason, sim };
 }
@@ -215,12 +220,16 @@ export function epaMetrics(ctx, run, comp) {
   const wMean = (f, list = ps) => { const ww = list.reduce((s, p) => s + p.w, 0); return list.reduce((s, p) => s + p.w * f(p), 0) / ww; };
   const tMean = wMean((p) => p.target), tSd = Math.sqrt(wMean((p) => (p.target - tMean) ** 2));
   const wMae = wMean((p) => Math.abs(p.err));
-  // the top of the list: pairs whose target is in the season's top 5%
+  // the top of the list. topBias (selected by target) is mostly regression to the
+  // mean: even a perfect-in-expectation EPA looks underrated on the pairs that
+  // happened to score highest. topBiasP selects the top 5% by pre-event EPA, the
+  // teams the list puts on top: that bias is the one a reader sees.
   const cut = ps.map((p) => p.target).sort((a, b) => b - a)[Math.floor(ps.length * 0.05)];
   const top = ps.filter((p) => p.target >= cut), worldsPs = ps.filter((p) => p.type === "FIRSTChampionship");
+  const topP = [...ps].sort((a, b) => b.pred - a.pred).slice(0, Math.ceil(ps.length * 0.05));
   const mae = (list) => list.length ? list.reduce((s, p) => s + Math.abs(p.err), 0) / list.length : NaN;
   const bias = (list) => list.length ? list.reduce((s, p) => s + p.err, 0) / list.length : NaN;
-  // top of list vs Worlds: end-of-season EPA (off-season excluded) vs Worlds division OPR / playoff wins
+  // top of list vs Worlds: pre-Worlds EPA (off-season excluded) vs Worlds division OPR / playoff wins
   const { worlds } = epaTargets(ctx);
   const key = comp === "total" ? "np" : comp;
   const wt = [...worlds].filter(([t]) => run.endSeason.has(t));
@@ -228,7 +237,7 @@ export function epaMetrics(ctx, run, comp) {
   const rhoPo = spearman(wt.map(([t]) => run.endSeason.get(t)[key]), wt.map(([, x]) => x.po + (x.inPo ?? 0)));
   return {
     n: ps.length, wMae, nMae: wMae / tSd, wCorr: pearson(ps.map((p) => p.pred), ps.map((p) => p.target), ps.map((p) => p.w)),
-    bias: wMean((p) => p.err), topMae: mae(top), topBias: bias(top), worldsMae: mae(worldsPs), worldsBias: bias(worldsPs),
+    bias: wMean((p) => p.err), topMae: mae(top), topBias: bias(top), topBiasP: bias(topP), worldsMae: mae(worldsPs), worldsBias: bias(worldsPs),
     rhoOpr, rhoPo, nWorlds: wt.length, pairs: ps,
   };
 }
