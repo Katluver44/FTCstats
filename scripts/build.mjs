@@ -300,7 +300,12 @@ export async function build(season, params = {}) {
   };
 
   const out = path.join("site", "data", String(season));
+  // videos.json / alliances.json come from other scripts (videos.mjs, alliances.mjs); keep them
+  const keep = {};
+  for (const f of ["videos.json", "alliances.json"]) keep[f] = await fs.readFile(path.join(out, f)).catch(() => null);
   await fs.rm(out, { recursive: true, force: true });
+  await fs.mkdir(out, { recursive: true });
+  for (const [f, buf] of Object.entries(keep)) if (buf) await fs.writeFile(path.join(out, f), buf);
 
   // ---- team info gathered from event rosters ----
   const info = new Map();
@@ -327,7 +332,7 @@ export async function build(season, params = {}) {
   const cols = ["team", "name", "loc", "country", "np", "auto", "teleop", "endgame", "rp0", "rp1", "rp2",
     "matches", "wins", "losses", "ties", "events", "trend",
     // "season only": rating after the team's last official (non off-season) match, and its record
-    "npS", "autoS", "teleopS", "endgameS", "matchesS", "winsS", "lossesS", "tiesS"];
+    "npS", "autoS", "teleopS", "endgameS", "matchesS", "winsS", "lossesS", "tiesS", "trendS"];
   const offseason = new Set(events.filter((ev) => ev.type === "OffSeason").map((ev) => ev.code));
   const rows = ranked.map(({ t, e, h }) => {
     let w = 0, l = 0, ti = 0;
@@ -513,20 +518,22 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const all = await fs.readdir(path.join("site", "data")).catch(() => []);
   const built = all.filter((d) => /^\d{4}$/.test(d)).map(Number).sort((a, b) => b - a);
   await writeJson(path.join("site", "data", "seasons.json"), built);
-  // which season the site opens on: the newest with enough matches to be useful
+  // the site opens on the newest season
   const metas = await Promise.all(built.map((s) => fs.readFile(path.join("site", "data", String(s), "meta.json"), "utf8").then(JSON.parse)));
-  const def = (metas.find((m) => m.matches >= 1000) ?? metas[0]).season;
+  const def = built[0];
   await writeJson(path.join("site", "data", "index.json"), { seasons: built, default: def, games: Object.fromEntries(metas.map((m) => [m.season, m.matches])) });
 }
 
 // Rating and record counting only official (non off-season) matches.
 function seasonOnly(h, offseason) {
   const on = h.filter((x) => !offseason.has(x.ev));
-  if (!on.length) return [null, null, null, null, 0, 0, 0, 0];
+  if (!on.length) return [null, null, null, null, 0, 0, 0, 0, null];
   const last = on[on.length - 1].epa;
   let w = 0, l = 0, ti = 0;
   for (const x of on) x.score > x.oppScore ? w++ : x.score < x.oppScore ? l++ : ti++;
-  return [last[0], last[1], last[2], last[3], on.length, w, l, ti];
+  // EPA change over the last 10 official matches
+  const prev = on.length > 10 ? on[on.length - 11].epa[0] : on[0].epa[0];
+  return [last[0], last[1], last[2], last[3], on.length, w, l, ti, r1(last[0] - prev)];
 }
 
 // team number -> [{ ev, evName, start, type, placement }] for the season
