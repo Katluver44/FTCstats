@@ -382,14 +382,8 @@ async function team(r) {
   const decided = t.matches.filter((m) => m.score !== m.oppScore);
   const correct = decided.filter((m) => (m.pWin > 0.5) === (m.score > m.oppScore)).length;
 
-  // rank tiles: world, country, state/province (precomputed by the build)
-  const tile = (rank, label, of) => `<div class="tile"><b>#${rank}</b><div class="k">${esc(label)}</div><div class="s">out of ${fmtInt(of)}</div></div>`;
+  // world, country and state/province ranks (precomputed by the build), each [label, rank, out of]
   const places = t.places ?? {};
-  const tiles = [
-    tile(t.rank, "World", t.of),
-    places.country ? tile(places.country[1], places.country[0], places.country[2]) : "",
-    places.state ? tile(places.state[1], places.state[0], places.state[2]) : "",
-  ].join("");
 
 
   // header: who they are and their EPA on top; then the radar, its numbers and the
@@ -397,6 +391,9 @@ async function team(r) {
   const awards = t.awards ?? [];
   const plaques = awards.filter((a) => !isBanner(a)), banners = awards.filter(isBanner);
   const fact = (b, k) => `<span class="th-fact"><b>${b}</b> ${k}</span>`;
+  // ranks as one line under the EPA, e.g. "#26 World · #8 Romania · #1 BZ"
+  const rankLine = [["World", t.rank, t.of], places.country, places.state].filter(Boolean)
+    .map(([label, rank, of]) => `<span title="out of ${fmtInt(of)}"><b>#${fmtInt(rank)}</b> ${esc(label)}</span>`).join("");
   app.innerHTML = `
     <div class="card card-pad team-hero">
       <div class="th-top">
@@ -411,26 +408,22 @@ async function team(r) {
           </div>
         </div>
         <div class="th-epa">
-          <div class="label">EPA</div>
+          <div class="label">EPA · points added per match</div>
           <b>${fmt(e.np)}</b>
-          <div class="label">points added per match</div>
+          <div class="th-ranks">${rankLine}</div>
         </div>
       </div>
       <div class="th-body">
         <div class="radar-box" id="radar"></div>
-        <div class="th-col">
+        <div class="th-stats">
           <div class="th-h">Compared with this season's teams (5+ matches)</div>
-          <table class="radar-list"><tbody id="radar-list"></tbody></table>
-        </div>
-        <div class="th-col">
-          <div class="th-h">Rank by EPA</div>
-          <div class="th-ranks">${tiles}</div>
+          <div class="stat-grid" id="stat-grid"></div>
         </div>
         <div class="th-photo" id="photo-slot" hidden></div>
       </div>
       ${awards.length ? `<div class="th-awards">
-        <div class="th-h">Awards</div>
-        <div class="th-award-row"><div class="plaques">${plaques.map((a) => plaque(a, season)).join("")}</div><div class="banners">${banners.map((a) => banner(a, season)).join("")}</div></div>
+        <span class="th-h">Awards</span>
+        <div class="plaques">${plaques.map((a) => plaque(a, season)).join("")}</div><div class="banners">${banners.map((a) => banner(a, season)).join("")}</div>
       </div>` : ""}
     </div>
     <div class="row section" style="justify-content:space-between">
@@ -444,9 +437,12 @@ async function team(r) {
   data.teams(season).then((rows) => {
     if (stale(r) || !$("#radar")) return;
     const axes = teamAxes(meta, t, rows);
-    $("#radar").innerHTML = radar(axes);
-    $("#radar-list").innerHTML = axes.map((ax) => `<tr title="${esc(ax.tip)}"><td class="muted">${esc(ax.label)}</td><td class="r"><b>${ax.display}</b></td>
-      <td class="r small ${ax.value >= 0.9 ? "trend-up" : "faint"}">${ax.value == null ? "–" : `top ${Math.max(1, Math.round((1 - ax.value) * 100))}%`}</td></tr>`).join("");
+    $("#radar").innerHTML = radar(axes, { values: false });
+    $("#stat-grid").innerHTML = axes.map((ax) => {
+      const top = ax.value == null ? null : Math.max(1, Math.round((1 - ax.value) * 100));
+      return `<div class="stat-card" title="${esc(ax.tip)}"><div class="k">${esc(ax.label)}</div><b>${ax.display}</b>
+        <span class="stat-pct ${top != null && top <= 10 ? "hot" : top != null && top <= 25 ? "warm" : ""}">${top == null ? "–" : `Top ${top}%`}</span></div>`;
+    }).join("");
   }).catch(() => {});
 
   // photos come from a separate service; show the page now and add them when they arrive

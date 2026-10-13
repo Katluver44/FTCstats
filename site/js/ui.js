@@ -299,8 +299,8 @@ export function sortableTable(el, rows, cols, { sortKey, desc = true, pageSize =
 
 // ---------- radar chart ----------
 // axes: [{ label, value (0-1, the team's season percentile), tip }]. Rings at every 20%.
-export function radar(axes, { size = 300 } = {}) {
-  const n = axes.length, c = size / 2, R = size / 2 - 58;
+export function radar(axes, { size = 300, values = true } = {}) {
+  const n = axes.length, c = size / 2, R = size / 2 - (values ? 58 : 46);
   const pt = (i, r) => {
     const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
     return [c + Math.cos(a) * r, c + Math.sin(a) * r];
@@ -314,7 +314,7 @@ export function radar(axes, { size = 300 } = {}) {
     const [x, y] = pt(i, R + 16);
     const anchor = Math.abs(x - c) < 4 ? "middle" : x > c ? "start" : "end";
     const dy = y < c - R * 0.6 ? -6 : y > c + R * 0.6 ? 12 : 4;
-    return `<text x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="${anchor}" class="rd-label">${esc(ax.label)}<tspan x="${x.toFixed(1)}" dy="13" class="rd-val">${ax.value == null ? "–" : `top ${Math.max(1, Math.round((1 - ax.value) * 100))}%`}</tspan><title>${esc(ax.tip)}</title></text>`;
+    return `<text x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="${anchor}" class="rd-label">${esc(ax.label)}${values ? `<tspan x="${x.toFixed(1)}" dy="13" class="rd-val">${ax.value == null ? "–" : `top ${Math.max(1, Math.round((1 - ax.value) * 100))}%`}</tspan>` : ""}<title>${esc(ax.tip)}</title></text>`;
   }).join("");
   return `<svg class="radar" viewBox="0 0 ${size} ${size}" role="img" aria-label="${esc(axes.map((a) => `${a.label}: ${a.tip}`).join("; "))}">
     ${rings}${spokes}<polygon points="${shape}" class="rd-shape"/>${dots}${labels}</svg>`;
