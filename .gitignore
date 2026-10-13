@@ -3,3 +3,4 @@ node_modules/
 site/data/
 .DS_Store
 .claude/worktrees/
+.env
