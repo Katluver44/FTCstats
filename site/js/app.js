@@ -215,7 +215,7 @@ async function teams(r) {
   const seasonRows = rows.filter((r) => r.matchesS > 0)
     .map((r) => ({ ...r, np: r.npS, auto: r.autoS, teleop: r.teleopS, endgame: r.endgameS, matches: r.matchesS, wins: r.winsS, losses: r.lossesS, ties: r.tiesS, trend: null }))
     .sort((a, b) => b.np - a.np).map((r, i) => ({ ...r, rank: i + 1 }));
-  let scope = query.get("scope") === "season" ? "season" : "all";
+  let scope = query.get("scope") === "all" ? "all" : "season"; // official events by default
   app.innerHTML = `
     <div class="card">
       <div class="toolbar">
@@ -223,8 +223,8 @@ async function teams(r) {
         <select id="country" aria-label="Country"><option value="">All countries</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
         <select id="minm" aria-label="Minimum matches played"><option value="1">Any number of matches</option><option value="10">Played 10+ matches</option><option value="25">Played 25+ matches</option></select>
         <div class="seg scope" role="group" aria-label="Which events count">
-          <a href="#" data-scope="all" title="Ratings from every event, including off-season ones">All events</a>
           <a href="#" data-scope="season" title="Ratings as of each team's last official event; off-season events ignored">Season only</a>
+          <a href="#" data-scope="all" title="Ratings from every event, including off-season ones">All events</a>
         </div>
         <span class="small muted" id="count"></span>
         <a class="small link" href="#/${season}/about" style="margin-left:auto">Our methodology</a>
@@ -247,7 +247,7 @@ async function teams(r) {
   if (query.get("min")) $("#minm").value = query.get("min");
   const apply = () => {
     const q = $("#filter").value.trim().toLowerCase(), c = $("#country").value, m = +$("#minm").value;
-    syncQuery({ q: $("#filter").value.trim(), country: c, min: m > 1 ? m : "", scope: scope === "season" ? "season" : "" });
+    syncQuery({ q: $("#filter").value.trim(), country: c, min: m > 1 ? m : "", scope: scope === "all" ? "all" : "" });
     $$(".scope a").forEach((a) => a.classList.toggle("active", a.dataset.scope === scope));
     const shown = (scope === "season" ? seasonRows : rows).filter((r) =>
       (!c || r.country === c) && r.matches >= m &&
@@ -467,7 +467,15 @@ const SHORT = {
   Winner: "WINNER", Finalist: "FINALIST", DivisionWinner: "DIVISION", DivisionFinalist: "DIVISION", ConferenceFinalist: "FINALIST",
   TopRanked: "TOP SEED", DeansListWinner: "DEAN'S", DeansListFinalist: "DEAN'S", DeansListSemiFinalist: "DEAN'S",
 };
-// Event name split into short lines for a banner, e.g. "Romania" / "Championship".
+function banner(a, season) {
+  const label = a.type === "Inspire" ? "INSPIRE" : "WIN";
+  return `<a class="banner-icon" href="#/${season}/event/${encodeURIComponent(a.ev)}" title="${esc(AWARD_NAMES[a.type] ?? a.type)} · ${esc(a.evName)}">
+    <svg viewBox="0 0 40 56" width="40" height="56" aria-hidden="true">
+      <path d="M0 0h40v56l-20-10-20 10z" fill="#0b4f9c"/>
+      <text x="20" y="25" text-anchor="middle" font-size="${label.length > 3 ? 8 : 11}" font-weight="900" fill="#fff">${label}</text>
+    </svg></a>`;
+}
+// Event name split into short lines for a plaque, e.g. "Romania" / "Championship".
 function bannerLines(name, max = 12, lines = 3) {
   const words = name.replace(/^FIRST\s+/i, "").replace(/\s+presented by.*$/i, "").split(/\s+/);
   const out = [""];
@@ -477,21 +485,6 @@ function bannerLines(name, max = 12, lines = 3) {
   }
   if (out.length > lines) { out.length = lines; out[lines - 1] = out[lines - 1].replace(/.{0,2}$/, "…"); }
   return out;
-}
-function banner(a, season) {
-  const title = a.type === "Inspire" ? ["INSPIRE", "AWARD"] : a.type === "DivisionWinner" ? ["DIVISION", "WINNER"] : ["EVENT", "WINNER"];
-  const ev = bannerLines(a.evName);
-  return `<a class="banner-icon" href="#/${season}/event/${encodeURIComponent(a.ev)}" title="${esc(AWARD_NAMES[a.type] ?? a.type)} · ${esc(a.evName)}">
-    <svg viewBox="0 0 60 96" width="60" height="96" aria-hidden="true">
-      <path d="M0 0h60v96l-30-14-30 14z" fill="#0b4f9c"/>
-      <rect width="60" height="6" fill="#083b75"/>
-      <path d="M30 12l8 8-8 8-8-8z" fill="none" stroke="#fff" stroke-width="2"/>
-      <text x="30" y="40" text-anchor="middle" font-size="7.5" font-weight="900" fill="#fff" letter-spacing=".4">${title[0]}</text>
-      <text x="30" y="49" text-anchor="middle" font-size="7.5" font-weight="900" fill="#fff" letter-spacing=".4">${title[1]}</text>
-      <line x1="14" y1="54" x2="46" y2="54" stroke="#8fb6e3" stroke-width=".8"/>
-      ${ev.map((l, k) => `<text x="30" y="${61 + k * 6.5}" text-anchor="middle" font-size="5.2" fill="#e3eefb">${esc(l)}</text>`).join("")}
-      <text x="30" y="${63 + ev.length * 6.5}" text-anchor="middle" font-size="5.2" font-weight="700" fill="#e3eefb">${season}</text>
-    </svg></a>`;
 }
 function plaque(a, season) {
   const first = (a.placement || 1) <= 1 && !/Finalist/.test(a.type);
