@@ -19,7 +19,7 @@ export async function fetchLiveEvent(season, code) {
 export function modelFromMeta(meta, avg) {
   const a = avg ?? meta.avgAlliance;
   return new Model({
-    baseline: { auto: a.auto, teleop: a.teleop, endgame: a.endgame, foul: a.foul, rp: a.rp, solo: a.solo ?? [] },
+    baseline: { auto: a.auto, teleop: a.teleop, endgame: a.endgame, foul: a.foul, errVar: a.errVar, foulDiffVar: a.foulDiffVar, rp: a.rp, solo: a.solo ?? [], clipVar: a.clipVar },
     soloComps: (meta.solo ?? []).map((s) => s.comp),
     movedSpec: (meta.solo ?? []).findIndex((s) => s.moved),
     parkedSpec: (meta.solo ?? []).findIndex((s) => s.parked),
@@ -78,16 +78,84 @@ export function replayEvent(meta, ev, matches, cutoff = Infinity) {
 }
 
 const SCORE_NOISE = 0.47; // score spread / average alliance score, measured 2020-2025
+// spread of the tiebreaker field around its prediction / its average, per match
+// (2019-2025 quals: auto 0.54-0.70, match points without fouls 0.37-0.45)
+const TB_NOISE = { auto: 0.65, np: 0.4 };
+
+// Plays out simulated matches for both forecasts.
+// - Each simulated event first draws every team's "true" strength from the
+//   model's uncertainty about it (variance v, scaled by `corr`), so one team's
+//   matches move together: a team that's better than its rating is better all
+//   event. Per-match odds are sharpened to keep each match's overall win
+//   probability unchanged.
+// - The tiebreaker is played out from simulated alliance scores in the field
+//   the season actually breaks ties on (SEASONS[season].tiebreak).
+function makeSim(season, model, { corr = 1, tb = "sim" } = {}) {
+  const { winRp, rpNames } = SEASONS[season];
+  const field = SEASONS[season].tiebreak ?? "np";
+  const valueField = field === "losingNp" ? "np" : field;
+  const avgNp = model ? Math.max(10, model.avgAllianceNp()) : 0;
+  const scale = model ? model.p.winScale * avgNp : 0;
+  const spread2 = (scale * Math.PI / Math.sqrt(3)) ** 2; // variance of a logistic with this scale
+  // a rating variance of vObs is one match's worth of score noise
+  const unit = model ? (SCORE_NOISE * avgNp) ** 2 / model.p.vObs : 0;
+  const useCorr = !!model && corr > 0;
+  let sd = [], delta = [], avgTb = 0;
+  const sim = {
+    field,
+    // the actual tiebreaker points an alliance earned in a played match
+    actualTb: (own, opp) => (field === "losingNp" ? Math.min(own.np, opp.np) : own[field] ?? own.np),
+    expectedTb: (pOwn, pOpp) => (field === "losingNp" ? Math.min(pOwn.np, pOpp.np) : pOwn[field] ?? pOwn.np),
+    setup(teams, avgField) {
+      avgTb = avgField;
+      sd = teams.map((t) => (useCorr ? Math.sqrt(corr * (model.teams.get(t)?.v ?? model.p.v0) * unit) : 0));
+      delta = sd.map(() => 0);
+    },
+    newEvent() { for (let i = 0; i < sd.length; i++) delta[i] = sd[i] ? sd[i] * gauss() : 0; },
+    // -> [red RP, blue RP, red tiebreak points, blue tiebreak points]
+    play(p, red, blue, bonus = true) {
+      let pRed = p.pRed, dr = 0, db = 0;
+      if (useCorr) {
+        let v = 0;
+        for (const t of red) { dr += delta[t]; v += sd[t] ** 2; }
+        for (const t of blue) { db += delta[t]; v += sd[t] ** 2; }
+        const s = scale * Math.sqrt(Math.max(0.1, 1 - v / spread2));
+        pRed = 1 / (1 + Math.exp(-(p.red.total - p.blue.total + dr - db) / s));
+      }
+      const redWins = rand() < pRed;
+      let rr = redWins ? winRp : 0, br = redWins ? 0 : winRp;
+      if (bonus) for (let k = 0; k < rpNames.length; k++) {
+        if (rand() < p.red.rp[k]) rr++;
+        if (rand() < p.blue.rp[k]) br++;
+      }
+      let tr = 0, tbb = 0;
+      if (tb === "sim") {
+        const noise = (TB_NOISE[valueField] ?? 0.4) * avgTb;
+        const frac = valueField === "np" ? 1 : avgTb / Math.max(1, avgNp); // share of a strength surprise that shows in this field
+        const vr = p.red[valueField] + frac * dr + noise * gauss();
+        const vb = p.blue[valueField] + frac * db + noise * gauss();
+        tr = field === "losingNp" ? Math.min(vr, vb) : vr;
+        tbb = field === "losingNp" ? Math.min(vr, vb) : vb;
+      } else {
+        tr = sim.expectedTb(p.red, p.blue); tbb = sim.expectedTb(p.blue, p.red);
+      }
+      return [rr, br, tr, tbb];
+    },
+  };
+  return sim;
+}
 
 // Monte Carlo over the remaining quals. Returns per-team ranking odds.
-export function forecastRankings(season, teams, matches, sims = 3000) {
+// Pass the replay's `model` to draw correlated team strengths (see makeSim).
+export function forecastRankings(season, teams, matches, sims = 3000, { model = null, corr = 1, tb = "sim" } = {}) {
   reseed(teams.length * 7919 + matches.length);
-  const { winRp, tieRp, rpNames, rankBy } = SEASONS[season];
-  const bonusRps = rpNames.length;
+  const { winRp, tieRp, rankBy } = SEASONS[season];
   const byScore = rankBy === "score";
+  const sim = makeSim(season, model, { corr, tb });
   const idx = new Map(teams.map((t, i) => [t, i]));
   const N = teams.length;
-  const baseRp = new Float64Array(N), basePlayed = new Float64Array(N), scoreSum = new Float64Array(N);
+  const baseRp = new Float64Array(N), basePlayed = new Float64Array(N);
+  const baseTb = new Float64Array(N), scoreSum = new Float64Array(N);
   const remaining = [];
 
   for (const m of matches) {
@@ -99,8 +167,9 @@ export function forecastRankings(season, teams, matches, sims = 3000) {
       const r = m.redScore, b = m.blueScore;
       const rr = byScore ? r.total : (r.total > b.total ? winRp : r.total === b.total ? tieRp : 0) + (r.rp ?? []).filter(Boolean).length;
       const br = byScore ? b.total : (b.total > r.total ? winRp : r.total === b.total ? tieRp : 0) + (b.rp ?? []).filter(Boolean).length;
-      for (const t of red) { baseRp[idx.get(t)] += rr; basePlayed[idx.get(t)]++; scoreSum[idx.get(t)] += r.np; }
-      for (const t of blue) { baseRp[idx.get(t)] += br; basePlayed[idx.get(t)]++; scoreSum[idx.get(t)] += b.np; }
+      const tr = tb === "legacy" ? r.np : sim.actualTb(r, b), tbb = tb === "legacy" ? b.np : sim.actualTb(b, r);
+      for (const t of red) { baseRp[idx.get(t)] += rr; basePlayed[idx.get(t)]++; baseTb[idx.get(t)] += tr; }
+      for (const t of blue) { baseRp[idx.get(t)] += br; basePlayed[idx.get(t)]++; baseTb[idx.get(t)] += tbb; }
     } else if (m.pred) {
       remaining.push({ red: red.map((t) => idx.get(t)), blue: blue.map((t) => idx.get(t)), p: m.pred });
       for (const t of red) scoreSum[idx.get(t)] += m.pred.red.np;
@@ -110,20 +179,22 @@ export function forecastRankings(season, teams, matches, sims = 3000) {
 
   // real scores scatter by about half an average alliance score around the
   // prediction (measured on 2020-2025 quals)
-  const avgTotal = remaining.reduce((t, m) => t + m.p.red.total + m.p.blue.total, 0) / Math.max(1, 2 * remaining.length);
-  const scoreSd = SCORE_NOISE * avgTotal;
+  const avgOf = (f) => remaining.reduce((t, m) => t + m.p.red[f] + m.p.blue[f], 0) / Math.max(1, 2 * remaining.length);
+  const scoreSd = SCORE_NOISE * avgOf("total");
+  sim.setup(teams, avgOf(sim.field === "losingNp" ? "np" : sim.field));
   const totalPlayed = basePlayed.map((p, i) => p + remaining.filter((m) => m.red.includes(i) || m.blue.includes(i)).length);
-  // tiebreak proxy: average (actual + predicted) score
-  const tb = scoreSum.map((s, i) => s / Math.max(1, totalPlayed[i]));
+  // legacy tiebreak proxy: average (actual + predicted) score
+  const legacyTb = baseTb.map((s, i) => (s + scoreSum[i]) / Math.max(1, totalPlayed[i]));
 
   const rankSum = new Float64Array(N), rsSum = new Float64Array(N);
   const top1 = new Float64Array(N), top4 = new Float64Array(N), top8 = new Float64Array(N);
-  const rp = new Float64Array(N);
+  const rp = new Float64Array(N), tbs = new Float64Array(N);
   const order = Array.from({ length: N }, (_, i) => i);
   const rs = new Float64Array(N);
 
   for (let s = 0; s < sims; s++) {
-    rp.set(baseRp);
+    rp.set(baseRp); tbs.set(baseTb);
+    sim.newEvent();
     for (const m of remaining) {
       if (byScore) {
         // simulate the scores themselves: predicted total plus match noise
@@ -132,18 +203,13 @@ export function forecastRankings(season, teams, matches, sims = 3000) {
         for (const t of m.blue) rp[t] += b;
         continue;
       }
-      const u = rand();
-      const redWins = u < m.p.pRed;
-      let rr = redWins ? winRp : 0, br = redWins ? 0 : winRp;
-      for (let k = 0; k < bonusRps; k++) {
-        if (rand() < m.p.red.rp[k]) rr++;
-        if (rand() < m.p.blue.rp[k]) br++;
-      }
-      for (const t of m.red) rp[t] += rr;
-      for (const t of m.blue) rp[t] += br;
+      const [rr, br, tr, tbb] = sim.play(m.p, m.red, m.blue);
+      for (const t of m.red) { rp[t] += rr; tbs[t] += tr; }
+      for (const t of m.blue) { rp[t] += br; tbs[t] += tbb; }
     }
     for (let i = 0; i < N; i++) rs[i] = byScore ? rp[i] : totalPlayed[i] ? rp[i] / totalPlayed[i] : 0;
-    order.sort((a, b) => rs[b] - rs[a] || tb[b] - tb[a]);
+    const tbv = tb === "legacy" ? legacyTb : tbs.map((x, i) => x / Math.max(1, totalPlayed[i]));
+    order.sort((a, b) => rs[b] - rs[a] || tbv[b] - tbv[a]);
     order.forEach((t, r) => {
       rankSum[t] += r + 1;
       rsSum[t] += rs[t];
@@ -165,6 +231,7 @@ export function forecastRankings(season, teams, matches, sims = 3000) {
     p8: top8[i] / sims,
   })).sort((a, b) => a.meanRank - b.meanRank);
 }
+
 
 // Seeded random numbers, so a forecast shows the same numbers on every visit.
 let seed = 1;
@@ -213,9 +280,12 @@ function shuffle(a) {
 // schedules, each played out from the teams' ratings entering the event.
 // Bonus-RP chances are left out by default: per-team RP ratings added noise
 // and made the predicted order worse in the 2025 backtest.
-export function forecastFromRoster(season, meta, ev, { perTeam = 5, sims = 2000, bonus = false } = {}) {
+// Correlated strengths and the simulated tiebreaker are off by default here:
+// random schedules are already well calibrated, and both made the 2023-2025
+// backtest worse (corr=1 underconfident; tb "sim" -0.01 Spearman in 2023/2024).
+export function forecastFromRoster(season, meta, ev, { perTeam = 5, sims = 2000, bonus = false, corr = 0, tb = "legacy", rpProb = null } = {}) {
   reseed(ev.teamList.length * 7919 + perTeam);
-  const { winRp, tieRp, rpNames, rankBy } = SEASONS[season];
+  const { rankBy } = SEASONS[season];
   const byScore = rankBy === "score";
   const model = modelFromMeta(meta);
   const teams = ev.teamList.map((t) => t.team);
@@ -223,45 +293,50 @@ export function forecastFromRoster(season, meta, ev, { perTeam = 5, sims = 2000,
   const N = teams.length;
   if (N < 4) return [];
   const idx = new Map(teams.map((t, i) => [t, i]));
-  const strength = teams.map((t) => model.epa(t).np); // tiebreak proxy
+  const strength = teams.map((t) => model.epa(t).np); // shown in the table; legacy tiebreak proxy
+  const sim = makeSim(season, model, { corr, tb });
+  const vf = sim.field === "losingNp" ? "np" : sim.field;
+  sim.setup(teams, 2 * teams.reduce((s, t) => s + (model.epa(t)[vf] ?? model.epa(t).np), 0) / N);
   const cache = new Map(); // "a,b|c,d" -> prediction
   const predict = (red, blue) => {
     const k = `${red}|${blue}`;
-    if (!cache.has(k)) cache.set(k, model.predict(red, blue));
+    if (!cache.has(k)) {
+      const p = model.predict(red, blue);
+      if (rpProb) { p.red.rp = rpProb(red, p.red); p.blue.rp = rpProb(blue, p.blue); }
+      cache.set(k, p);
+    }
     return cache.get(k);
   };
 
   const rankSum = new Float64Array(N), rsSum = new Float64Array(N);
   const top1 = new Float64Array(N), top4 = new Float64Array(N), top8 = new Float64Array(N);
-  const rp = new Float64Array(N), played = new Float64Array(N), rs = new Float64Array(N);
+  const rp = new Float64Array(N), played = new Float64Array(N), rs = new Float64Array(N), tbs = new Float64Array(N);
   const order = Array.from({ length: N }, (_, i) => i);
 
   for (let s = 0; s < sims; s++) {
-    rp.fill(0); played.fill(0);
+    rp.fill(0); played.fill(0); tbs.fill(0);
+    sim.newEvent();
     for (const m of randomSchedule(teams, perTeam)) {
       const p = predict(m.red, m.blue);
-      let rr, br;
+      let rr, br, tr = 0, tbb = 0;
       if (byScore) {
         const sd = SCORE_NOISE * model.avgAllianceNp();
         rr = Math.max(0, p.red.total + sd * gauss());
         br = Math.max(0, p.blue.total + sd * gauss());
       } else {
-        const redWins = rand() < p.pRed;
-        rr = redWins ? winRp : 0; br = redWins ? 0 : winRp;
-        for (let k = 0; k < (bonus ? rpNames.length : 0); k++) {
-          if (rand() < p.red.rp[k]) rr++;
-          if (rand() < p.blue.rp[k]) br++;
-        }
+        [rr, br, tr, tbb] = sim.play(p, m.red.map((t) => idx.get(t)), m.blue.map((t) => idx.get(t)), bonus);
       }
       [...m.red, ...m.blue].forEach((t, j) => {
         if (m.surrogate[j]) return;
         const i = idx.get(t);
         rp[i] += j < 2 ? rr : br;
+        tbs[i] += j < 2 ? tr : tbb;
         played[i]++;
       });
     }
     for (let i = 0; i < N; i++) rs[i] = byScore ? rp[i] : played[i] ? rp[i] / played[i] : 0;
-    order.sort((a, b) => rs[b] - rs[a] || strength[b] - strength[a]);
+    const tbv = tb === "legacy" ? strength : tbs.map((x, i) => x / Math.max(1, played[i]));
+    order.sort((a, b) => rs[b] - rs[a] || tbv[b] - tbv[a]);
     order.forEach((t, r) => {
       rankSum[t] += r + 1; rsSum[t] += rs[t];
       if (r === 0) top1[t]++;

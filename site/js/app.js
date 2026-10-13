@@ -537,8 +537,8 @@ function eventForecast(season, meta, ev, matches) {
   };
   const run = () => {
     title();
-    const replayed = replayEvent(meta, ev, matches.map((m) => ({ ...m, played: m.actuallyPlayed ?? m.played })), cutoff).matches;
-    const rows = forecastRankings(season, teams, replayed);
+    const { model, matches: replayed } = replayEvent(meta, ev, matches.map((m) => ({ ...m, played: m.actuallyPlayed ?? m.played })), cutoff);
+    const rows = forecastRankings(season, teams, replayed, 3000, { model });
     const showFinal = ev.teamList.some((t) => t.rank != null) && playedQuals > 0;
     $("#fc").innerHTML = `<div class="table-wrap"><table>
       <thead><tr><th>Proj.</th><th>Team</th><th class="r">Current RS</th><th class="r">Proj. RS</th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th>${showFinal ? '<th class="r">Actual rank</th>' : ""}</tr></thead>

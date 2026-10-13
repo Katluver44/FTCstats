@@ -81,7 +81,7 @@ export async function prepare(season, events, priorOpts) {
 // Average alliance values over the first matches; components exclude per-robot points.
 export function baselineOf(matches, soloComps = []) {
   const first = matches.slice(0, 400);
-  const b = { auto: 0, teleop: 0, endgame: 0, foul: 0, rp: [0, 0, 0], solo: soloComps.map(() => 0) };
+  const b = { auto: 0, teleop: 0, endgame: 0, foul: 0, foulVar: 0, rp: [0, 0, 0], solo: soloComps.map(() => 0) };
   let n = 0;
   for (const { actual, elim } of first) {
     for (const a of [actual.red, actual.blue]) {
@@ -91,11 +91,13 @@ export function baselineOf(matches, soloComps = []) {
         b[c] -= s; b.solo[j] += s;
       });
       b.foul += a.total - a.np;
+      b.foulVar += (a.total - a.np) ** 2;
       if (!elim) a.rp.forEach((x, i) => (b.rp[i] += x ? 1 : 0));
       n++;
     }
   }
   for (const c of [...COMPONENTS, "foul"]) b[c] /= n || 1;
+  b.foulVar = Math.max(0, b.foulVar / (n || 1) - b.foul ** 2);
   b.solo = b.solo.map((x) => x / (n || 1));
   b.rp = b.rp.map((x) => x / (n || 1));
   return b;
@@ -165,7 +167,7 @@ export function simulate(matches, { params, baseline, priors, cv, soloComps, mov
   const acc = newAcc();
   for (const x of matches) {
     const before = onMatch ? new Map([...x.red, ...x.blue].map((t) => [t, model.epa(t)])) : null;
-    const avgBefore = onMatch ? { ...model.avg, rp: [...model.avg.rp], solo: [...model.avg.solo] } : null;
+    const avgBefore = onMatch ? { ...model.avg, rp: [...model.avg.rp], solo: [...model.avg.solo], clipVar: { ...model.errVar } } : null;
     const pre = model.update(x.red, x.blue, x.actual, x.elim, x.ev.code);
     score(acc, x, pre);
     onMatch?.(x, pre, model, before, avgBefore);
@@ -439,7 +441,8 @@ export async function build(season, params = {}) {
     evList.push(summary);
     const av = eventAvg.get(ev.code) ?? model.avg;
     // season averages when the event started, so the browser can replay it exactly
-    const avg = { auto: r1(av.auto), teleop: r1(av.teleop), endgame: r1(av.endgame), foul: r1(av.foul), solo: av.solo.map(r1), rp: av.rp.map(r3) };
+    const avg = { auto: r1(av.auto), teleop: r1(av.teleop), endgame: r1(av.endgame), foul: r1(av.foul), errVar: r1(av.errVar), foulDiffVar: r1(av.foulDiffVar), solo: av.solo.map(r1), rp: av.rp.map(r3),
+      clipVar: Object.fromEntries(Object.entries(av.clipVar ?? model.errVar).map(([k, v]) => [k, r1(v)])) };
     await writeJson(path.join(out, "event", `${ev.code}.json`), { ...summary, timezone: ev.timezone, avg, teamList: teams, matchList: ms });
   }
   evList.sort((a, b) => b.start.localeCompare(a.start) || b.strength - a.strength);
@@ -463,6 +466,8 @@ export async function build(season, params = {}) {
     percentiles: { p99: pct(0.99), p90: pct(0.9), p75: pct(0.75), p50: pct(0.5), p25: pct(0.25) },
     avgAlliance: {
       auto: r1(model.avg.auto), teleop: r1(model.avg.teleop), endgame: r1(model.avg.endgame), foul: r1(model.avg.foul),
+      errVar: r1(model.avg.errVar), foulDiffVar: r1(model.avg.foulDiffVar),
+      clipVar: Object.fromEntries(Object.entries(model.errVar).map(([k, v]) => [k, r1(v)])),
       solo: model.avg.solo.map(r1),
       np: r1(model.avgAllianceNp()), rp: model.avg.rp.map(r3),
     },

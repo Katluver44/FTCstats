@@ -24,6 +24,9 @@ export const SEASONS = {
     rpNames: [],
     winRp: 2,
     tieRp: 1,
+    // what breaks ranking-score ties, checked on tied teams' official ranks:
+    // the losing alliance's points without fouls (95% of tied pairs)
+    tiebreak: "losingNp",
     solo: [
       { comp: "auto", moved: true, label: "auto navigation", robots: ["autoNav2019_1", "autoNav2019_2"], total: "autoNavPoints" },
       { comp: "endgame", parked: true, label: "endgame parking", robots: ["egParked1", "egParked2"], total: "egParkPoints" },
@@ -69,6 +72,7 @@ export const SEASONS = {
     rpNames: [],
     winRp: 2,
     tieRp: 1,
+    tiebreak: "auto", // average alliance auto points (100% of tied pairs)
     solo: [
       { comp: "auto", moved: true, label: "auto signal parking", robots: ["autoNav2022_1", "autoNav2022_2"], total: "autoNavPoints" },
       { comp: "endgame", label: "endgame terminal parking", robots: ["egNav1", "egNav2"], total: "egNavPoints" },
@@ -83,6 +87,7 @@ export const SEASONS = {
     rpNames: [],
     winRp: 2,
     tieRp: 1,
+    tiebreak: "auto", // average alliance auto points (100% of tied pairs)
     solo: [
       { comp: "auto", moved: true, label: "auto navigation", robots: ["autoNav1", "autoNav2"], total: "autoNavPoints" },
       { comp: "auto", label: "purple pixel", robots: ["purple1", "purple2"], total: "purplePoints" },
@@ -100,6 +105,7 @@ export const SEASONS = {
     rpNames: [], // no bonus ranking points this season
     winRp: 2, // verified against official ranking scores in scripts/check-rs.mjs
     tieRp: 1,
+    tiebreak: "auto", // average alliance auto points (100% of tied pairs)
     solo: [
       { comp: "auto", moved: true, label: "auto parking", robots: ["autoPark1", "autoPark2"], total: "autoParkPoints" },
       { comp: "endgame", parked: true, label: "ascent / parking", robots: ["dcPark1", "dcPark2"], total: "dcParkPoints" },
@@ -117,6 +123,7 @@ export const SEASONS = {
     rpNames: ["Movement", "Goal", "Pattern"],
     winRp: 3,
     tieRp: 1,
+    tiebreak: "np", // average match points without fouls (100% of tied pairs)
     solo: [
       { comp: "auto", moved: true, label: "leaving the start zone", robots: ["autoLeave1", "autoLeave2"], total: "autoLeavePoints" },
       // the both-robots-fully-in-base bonus stays shared
@@ -136,6 +143,7 @@ export const SEASONS = {
     rpNames: ["Swarm", "Pollinator 1", "Pollinator 2"],
     winRp: 3, // verified against official ranking scores from early 2026 events
     tieRp: 1,
+    tiebreak: "np", // average match points without fouls (100% of tied pairs, 84 so far)
     solo: [
       { comp: "auto", moved: true, label: "leaving the start zone", robots: ["autoLeave1", "autoLeave2"], total: "autoLeavePoints" },
       { comp: "auto", label: "auto parking", robots: ["autoParkPoints1", "autoParkPoints2"], total: "autoParkPoints" },

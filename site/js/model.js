@@ -19,6 +19,8 @@
 export const COMPONENTS = ["auto", "teleop", "endgame"];
 
 // Tuned on 2022-2024 and checked on held-out 2025 (scripts/experiments.mjs).
+// The volatility, shortfall-clip and win-spread settings came from a research
+// round on Glicko/TrueSkill/Statbotics ideas: held-out 2025 Brier 0.1683 -> 0.1669.
 export const DEFAULT_PARAMS = {
   kStart: 0.6, // K for a team's first matches
   kEnd: 0.35, // K once the team is established
@@ -37,8 +39,18 @@ export const DEFAULT_PARAMS = {
   kalman: 1, // 1 = uncertainty-weighted updates instead of the K ramp
   v0: 0.7, // starting variance (relative units) for a new team
   vObs: 1.5, // match noise, same units
-  vMatch: 0.02, // variance added after every match (robots change)
+  vMatch: 0.01, // variance added after every match (robots change)
   vEvent: 0.2, // extra variance at the start of each new event
+  clipC: 1.25, // robust updates: clip each component's alliance error at clipC running SDs (0 = off)
+  errAlpha: 0.005, // speed of the running error-variance tracker used by clipC / volK
+  clipUp: 0, // 1 = clip both directions; 0 = clip only shortfalls (breakdowns): big jumps are real improvement
+  volK: 0.1, // volatility: extra variance after a surprise, volK * max(0, |z| - volThr)^2
+  volThr: 0.5, // surprise threshold for volK, in running SDs of the alliance error
+  // Win-probability spread. Default: winScale x average alliance score.
+  winSelf: 0.4, // >0: spread = winSelf x the observed SD of the score-difference error (self-calibrating)
+  winFoul: 0.4, // weight of the league's foul-differential variance in the spread
+  winVar: 0.02, // weight of the teams' rating variances in the spread (Glicko-style shrink to 50%)
+  winAlpha: 0.01, // speed of the error / foul variance trackers
 };
 
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
@@ -60,10 +72,18 @@ export class Model {
       rp: [...baseline.rp],
       solo: soloComps.map((_, j) => baseline.solo?.[j] ?? 0),
     };
+    // variance of the foul differential, and of the non-foul score-difference
+    // error (starts where the default spread would be)
+    this.avg.foulDiffVar ??= 2 * (baseline.foulVar ?? (baseline.foul ?? 0) ** 2);
+    this.avg.errVar ??= (this.p.winScale * this.avgAllianceNp() / (this.p.winSelf || 1)) ** 2;
     this.priors = priors;
     this.rookieZ = rookieZ;
     this.cv = cv; // spread of team EPAs relative to the mean, for priors
     this.teams = new Map();
+    // running variance of alliance errors per component and in total (for clipC / volK)
+    const np0 = this.avgAllianceNp();
+    // restored from an event file when replaying in the browser, so live matches the build
+    this.errVar = baseline.clipVar ? { ...baseline.clipVar } : { auto: (0.6 * this.avg.auto) ** 2, teleop: (0.6 * this.avg.teleop) ** 2, endgame: (0.6 * this.avg.endgame) ** 2, np: (0.4 * np0) ** 2 };
   }
 
   avgAllianceNp() {
@@ -119,19 +139,34 @@ export class Model {
     return out;
   }
 
-  winProb(redTotal, blueTotal) {
-    const scale = this.p.winScale * Math.max(10, this.avgAllianceNp());
-    return 1 / (1 + Math.exp(-(redTotal - blueTotal) / scale));
+  // varSum: summed rating variance of every team on the field (relative units).
+  // The logistic spread widens with the teams' uncertainty (Glicko/TrueSkill
+  // style), so a match of barely-known teams sits closer to 50%, and with the
+  // league's foul-differential noise, since fouls flip close matches.
+  winProb(redTotal, blueTotal, varSum = 0) {
+    const { winScale, winSelf, winFoul, winVar } = this.p;
+    const avg = Math.max(10, this.avgAllianceNp());
+    let v = winSelf ? winSelf ** 2 * (this.avg.errVar + winFoul * this.avg.foulDiffVar) : (winScale * avg) ** 2 + winFoul * this.avg.foulDiffVar;
+    v += winVar * varSum * avg ** 2;
+    return 1 / (1 + Math.exp(-(redTotal - blueTotal) / Math.sqrt(v)));
   }
 
-  predict(red, blue) {
+  // Variance a team will carry into this match (incl. the new-event bump).
+  preVar(num, eventCode) {
+    const t = this.team(num);
+    return t.v + (this.p.kalman && eventCode && t.ev && t.ev !== eventCode ? this.p.vEvent : 0);
+  }
+
+  predict(red, blue, eventCode) {
     const r = this.allianceExpected(red);
     const b = this.allianceExpected(blue);
     // an alliance's total = its own points + the fouls the other side commits
     r.total = r.np + b.foul;
     b.total = b.np + r.foul;
-    return { red: r, blue: b, pRed: this.winProb(r.total, b.total) };
+    const varSum = this.p.kalman ? [...red, ...blue].reduce((s, n) => s + this.preVar(n, eventCode), 0) : 0;
+    return { red: r, blue: b, varSum, pRed: this.winProb(r.total, b.total, varSum) };
   }
+
 
   // How much of an alliance's error each team takes.
   shares(nums, eventCode) {
@@ -148,7 +183,7 @@ export class Model {
   //   solo[j] = [points of robot 1, points of robot 2], in the same order as the
   //   team list; omit (or null) when the per-robot breakdown is unknown.
   update(red, blue, actual, isElim, eventCode) {
-    const pred = this.predict(red, blue);
+    const pred = this.predict(red, blue, eventCode);
     const w = isElim ? this.p.elimWeight : 1;
     for (const [nums, side] of [[red, "red"], [blue, "blue"]]) {
       const exp = pred[side], act = actual[side];
@@ -184,12 +219,26 @@ export class Model {
       let teleShare = reweight(noEnd, this.p.endIdleShare);
       if (this.p.deadShare !== 1) teleShare = reweight(dead, this.p.deadShare);
 
+      // Robust errors: one breakdown or freak match moves ratings by at most clipC SDs' worth.
+      const err = {}, ea = this.p.errAlpha;
+      for (const c of COMPONENTS) {
+        const e = actShared[c] - exp.shared[c];
+        const lim = this.p.clipC * Math.sqrt(this.errVar[c]);
+        err[c] = this.p.clipC > 0 ? clamp(e, -lim, this.p.clipUp ? lim : Infinity) : e;
+        if (!isElim) this.errVar[c] += ea * (e * e - this.errVar[c]);
+      }
+      // Volatility: a big surprise on the whole alliance score adds process noise.
+      const eNp = act.np - exp.np;
+      const zNp = eNp / Math.sqrt(this.errVar.np);
+      if (!isElim) this.errVar.np += ea * (eNp * eNp - this.errVar.np);
+      const volAdd = this.p.volK ? this.p.volK * Math.max(0, Math.abs(zNp) - this.p.volThr) ** 2 : 0;
+
       nums.forEach((num, i) => {
         const t = this.team(num);
         const k = share[i] * w;
         for (const c of COMPONENTS) {
           const kc = c === "auto" ? autoShare[i] * w : c === "teleop" ? teleShare[i] * w : k;
-          t[c] += kc * (actShared[c] - exp.shared[c]);
+          t[c] += kc * err[c];
         }
         this.soloComps.forEach((_, j) => {
           const pts = act.solo?.[j];
@@ -199,7 +248,7 @@ export class Model {
           const kr = this.p.kRp / nums.length;
           t.rp = t.rp.map((r, j) => clamp(r + kr * ((act.rp?.[j] ? 1 : 0) - exp.rp[j]), -0.2, 1));
         }
-        if (this.p.kalman) t.v = t.v * (1 - share[i] * w) + this.p.vMatch;
+        if (this.p.kalman) t.v = t.v * (1 - share[i] * w) + this.p.vMatch + volAdd * w;
         t.n++;
       });
 
@@ -213,6 +262,12 @@ export class Model {
       this.avg.foul += a * (foulsMade - this.avg.foul);
       if (!isElim) this.avg.rp = this.avg.rp.map((r, j) => r + a * ((act.rp?.[j] ? 1 : 0) - r));
     }
+    // how far off the predicted score difference was (fouls tracked apart)
+    const wa = this.p.winAlpha;
+    const foulDiff = (actual.red.total - actual.red.np) - (actual.blue.total - actual.blue.np);
+    const npErr = (actual.red.np - actual.blue.np) - (pred.red.total - pred.blue.total);
+    this.avg.errVar += wa * (npErr ** 2 - this.avg.errVar);
+    this.avg.foulDiffVar += wa * (foulDiff ** 2 - this.avg.foulDiffVar);
     return pred;
   }
 
