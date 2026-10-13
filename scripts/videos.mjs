@@ -115,6 +115,9 @@ export async function buildVideos(season) {
   for (const [code, o] of Object.entries(overrides)) {
     for (const url of o.streams ?? []) { const id = youtubeId(url); if (id) add(code).streams.add(id); }
   }
+  // streams found by scripts/find-streams.mjs for events FIRST has no link for
+  const discovered = (await readJson(path.join("site", "videos", "discovered.json"), {}))[season] ?? {};
+  for (const [code, ids] of Object.entries(discovered)) for (const id of ids) add(code).streams.add(id);
 
   const allIds = Object.values(events).flatMap((e) => [...e.streams, ...e.uploads.map((u) => u.id)]);
   const yt = await youtubeDetails(allIds, path.join(".cache", "videos", `${season}.json`));
