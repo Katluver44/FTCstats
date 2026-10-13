@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>FTCstats photo review</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; margin: 0; padding: 24px; background: #f6f6f6; color: #222; }
+    h1 { margin: 0 0 12px; font-size: 22px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-top: 16px; }
+    .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+    .card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: #eee; }
+    .card .body { padding: 10px 12px; }
+    button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid #999; cursor: pointer; margin-right: 6px; }
+    .ok { background: #1e8a3e; color: #fff; border-color: #1e8a3e; }
+    .no { background: #fff; color: #b3261e; border-color: #b3261e; }
+    input { font: inherit; padding: 6px 10px; width: 320px; max-width: 100%; }
+    .muted { color: #666; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>FTCstats photo review</h1>
+  <p class="muted">Only approved photos appear on the site. Reject anything showing identifiable people without clear permission.</p>
+  <div><input id="token" type="password" placeholder="Admin token" autocomplete="current-password"> <button id="load">Load queue</button></div>
+  <div id="out" class="grid"></div>
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    $("#token").value = sessionStorage.getItem("t") ?? "";
+    const call = (opts = {}) => fetch("/api/admin", { ...opts, headers: { Authorization: `Bearer ${$("#token").value}`, "Content-Type": "application/json" } });
+    async function load() {
+      sessionStorage.setItem("t", $("#token").value);
+      const r = await call();
+      if (!r.ok) { $("#out").innerHTML = `<p>${r.status === 401 ? "Wrong token." : "Couldn't load."}</p>`; return; }
+      const { pending } = await r.json();
+      $("#out").innerHTML = pending.length ? pending.map((p) => `<div class="card"><img src="${esc(p.url)}" alt=""><div class="body">
+        <b>Team ${esc(p.team)}</b> <span class="muted">${esc(p.uploaded.slice(0, 16).replace("T", " "))}</span><div>${esc(p.caption) || '<span class="muted">no caption</span>'}</div>
+        <div style="margin-top:8px"><button class="ok" data-id="${esc(p.id)}" data-a="approve">Approve</button><button class="no" data-id="${esc(p.id)}" data-a="reject">Reject</button></div></div></div>`).join("")
+        : "<p>No photos waiting.</p>";
+    }
+    $("#load").onclick = load;
+    $("#out").onclick = async (e) => {
+      const b = e.target.closest("button[data-id]");
+      if (!b) return;
+      b.disabled = true;
+      await call({ method: "POST", body: JSON.stringify({ id: b.dataset.id, action: b.dataset.a }) });
+      load();
+    };
+    if ($("#token").value) load();
+  </script>
+</body>
+</html>
