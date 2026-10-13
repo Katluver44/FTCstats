@@ -161,6 +161,9 @@ function syncQuery(params) {
 // "2025–26 · DECODE", or just "2026–27" before the game name is known
 const seasonLabel = (s, game) => `${s}–${String(s + 1).slice(2)}${game ? ` · ${esc(game)}` : ""}`;
 
+const EPA_TIP = "EPA: points this team adds to its alliance right now (auto + teleop + endgame). Tuned to represent robot strength.";
+const PRED_TIP = "Prediction rating: the separate rating behind win chances, predicted scores and ranking forecasts. Tuned only for match prediction.";
+
 const notFound = () => (app.innerHTML = `<div class="empty">Page not found.</div>`);
 
 // ---------------- search ----------------
@@ -231,7 +234,8 @@ async function home(r) {
   let feature = "";
   if (t4) {
     const model = modelFromMeta(meta);
-    for (const t of [t1, t2, t3, t4]) model.setTeam(t.team, { auto: t.auto, teleop: t.teleop, endgame: t.endgame, foul: t.foul, n: t.matches, rp: [t.rp0, t.rp1, t.rp2] });
+    // the top 4 by EPA, played out with their prediction ratings (pauto..., older files: the EPA)
+    for (const t of [t1, t2, t3, t4]) model.setTeam(t.team, { auto: t.pauto ?? t.auto, teleop: t.pteleop ?? t.teleop, endgame: t.pendgame ?? t.endgame, foul: t.foul, n: t.matches, rp: [t.rp0, t.rp1, t.rp2] });
     const p = model.predict([t1.team, t4.team], [t2.team, t3.team]);
     const side = (cls, ts) => `<div class="feature-side ${cls}">${ts.map((t) => `<a href="#/${season}/team/${t.team}">${t.team}</a><small>${esc(t.name)}</small>`).join("")}</div>`;
     feature = `<div class="feature">
@@ -301,25 +305,25 @@ function eventList(season, meta, evs, cls = "") {
 
 async function teams(r) {
   const { season, query } = r;
-  const [meta, rows] = await Promise.all([data.meta(season), data.teams(season)]);
+  // ?off=mti | full (old links: off=1 and scope=all = full); official season by default
+  let off = { 1: "full", mti: "mti", full: "full" }[query.get("off")] ?? (query.get("scope") === "all" ? "full" : "official");
+  const [meta, rows] = await Promise.all([data.meta(season), data.teams(season, off)]);
+  const hasOff = meta.offTables && meta.offTables.full !== meta.offTables.official;
   if (stale(r)) return;
   const rpNames = meta.rpNames;
   const countries = [...new Set(rows.map((r) => r.country).filter(Boolean))].sort();
-  // "Season only": ratings and records from official events, ignoring off-season events
-  const seasonRows = rows.filter((r) => r.matchesS > 0)
-    .map((r) => ({ ...r, np: r.npS, auto: r.autoS, teleop: r.teleopS, endgame: r.endgameS, matches: r.matchesS, wins: r.winsS, losses: r.lossesS, ties: r.tiesS, trend: r.trendS }))
-    .sort((a, b) => b.np - a.np).map((r, i) => ({ ...r, rank: i + 1 }));
-  let scope = query.get("scope") === "all" ? "all" : "season"; // official events by default
   app.innerHTML = `
     <div class="card">
       <div class="toolbar">
         <input id="filter" placeholder="Search teams…" value="${esc(query.get("q") ?? "")}">
         <select id="country" aria-label="Country"><option value="">All countries</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
         <select id="minm" aria-label="Minimum matches played"><option value="1">Any number of matches</option><option value="10">Played 10+ matches</option><option value="25">Played 25+ matches</option></select>
-        <div class="seg scope" role="group" aria-label="Which events count">
-          <a href="#" data-scope="season" title="Ratings as of each team's last official event; off-season events ignored">Season only</a>
-          <a href="#" data-scope="all" title="Ratings from every event, including off-season ones">All events</a>
-        </div>
+        ${hasOff ? `<div class="seg scope" role="group" aria-label="Which events count">
+          ${[["official", "Season only", "Official events only: off-season events (often modified rules and lineups) never move these ratings"],
+             ["mti", "Through MTI", "Adds off-season events up to MTI, each counted at 40% (the weight that best predicts next season); modified-rules events left out"],
+             ["full", "All events", "Adds every off-season event at 40%; modified-rules events left out"]]
+            .map(([k, l, tip]) => `<a href="#" data-off="${k}" class="${k === off ? "active" : ""}" title="${tip}">${l}</a>`).join("")}
+        </div>` : ""}
       </div>
       <div id="tbl"></div>
     </div>`;
@@ -327,7 +331,7 @@ async function teams(r) {
     { key: "rank", label: "#", cls: "faint num", render: (r) => r.rank },
     { key: "team", label: "Team", render: (r) => teamCell(season, r.team, r.name), sort: false },
     { key: "loc", label: "Location", cls: "small muted hide-sm", sort: false, render: (r) => esc(r.loc) },
-    { key: "np", label: "EPA", cls: "c", render: (r) => epa(r.np, meta) },
+    { key: "np", label: `<span title="${EPA_TIP}">EPA</span>`, cls: "c", render: (r) => epa(r.np, meta) },
     { key: "auto", label: "Auto", cls: "r", render: (r) => fmt(r.auto) },
     { key: "teleop", label: "Teleop", cls: "r", render: (r) => fmt(r.teleop) },
     { key: "endgame", label: "Endgame", cls: "r", render: (r) => fmt(r.endgame) },
@@ -339,20 +343,21 @@ async function teams(r) {
   if (query.get("min")) $("#minm").value = query.get("min");
   const apply = () => {
     const q = $("#filter").value.trim().toLowerCase(), c = $("#country").value, m = +$("#minm").value;
-    syncQuery({ q: $("#filter").value.trim(), country: c, min: m > 1 ? m : "", scope: scope === "all" ? "all" : "" });
-    $$(".scope a").forEach((a) => a.classList.toggle("active", a.dataset.scope === scope));
-    const shown = (scope === "season" ? seasonRows : rows).filter((r) =>
+    syncQuery({ q: $("#filter").value.trim(), country: c, min: m > 1 ? m : "", off: off === "official" ? "" : off, scope: "" });
+    const shown = rows.filter((r) =>
       (!c || r.country === c) && r.matches >= m &&
       (!q || String(r.team).startsWith(q) || r.name.toLowerCase().includes(q) || r.loc.toLowerCase().includes(q)));
     table.setRows(shown);
   };
   $("#filter").oninput = apply; $("#country").onchange = apply; $("#minm").onchange = apply;
-  $(".scope").onclick = (e) => {
-    const a = e.target.closest("[data-scope]");
+  // switching tables reloads the page with ?off=mti|full (filters are kept in the query)
+  if ($(".scope")) $(".scope").onclick = (e) => {
+    const a = e.target.closest("[data-off]");
     if (!a) return;
     e.preventDefault();
-    scope = a.dataset.scope;
+    off = a.dataset.off;
     apply();
+    teams({ ...r, query: new URLSearchParams(location.hash.split("?")[1] ?? "") });
   };
   apply();
 }
@@ -397,7 +402,7 @@ async function team(r) {
         <div>
           <h1><span class="team-num">${n}</span> ${esc(t.name)}</h1>
           <div class="muted" style="margin-top:4px">${esc(t.loc)}${t.rookie ? ` · Rookie year ${t.rookie}` : ""}</div>
-          <div class="small muted" style="margin-top:2px">#${fmtInt(t.rank)} of ${fmtInt(t.of)} · ${w}-${l}${ti ? `-${ti}` : ""} · ${t.matches.length ? pct(w / t.matches.length) : "–"} win rate · predicted ${decided.length ? pct(correct / decided.length) : "–"} of its matches</div>
+          <div class="small muted" style="margin-top:2px">#${fmtInt(t.rank)} of ${fmtInt(t.of)} · ${w}-${l}${ti ? `-${ti}` : ""} · ${t.matches.length ? pct(w / t.matches.length) : "–"} win rate · predicted ${decided.length ? pct(correct / decided.length) : "–"} of its matches${t.pred ? ` · <span title="${PRED_TIP}">Pred. rating ${fmt(t.pred.np)}</span>` : ""}</div>
         </div>
       </div>
       <div class="meters section">
@@ -934,7 +939,7 @@ function rosterForecast(season, meta, ev) {
   const run = () => {
     const rows = forecastFromRoster(season, meta, ev, { perTeam });
     $("#fc").innerHTML = rows.length ? `<div class="table-wrap"><table>
-      <thead><tr><th>Proj.</th><th>Team</th><th class="r">EPA</th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th></tr></thead>
+      <thead><tr><th>Proj.</th><th>Team</th><th class="r" title="${PRED_TIP}">Pred. rating</th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th></tr></thead>
       <tbody>${rows.map((r, i) => `<tr>
         <td class="faint num">${i + 1}</td>
         <td>${teamCell(season, r.team, names.get(r.team))}</td>
@@ -1173,6 +1178,7 @@ async function about(r) {
       <h1 style="margin-top:8px">Our methodology</h1>
       <p>Every team has an <b>EPA</b>, short for <i>Expected Points Added</i>: the points it adds to its alliance's score in an average match right now, split into auto, teleop and endgame. An alliance's predicted score is the sum of its two teams' EPAs, and the gap between the two alliances gives the win chance.</p>
       <p><b>Why EPA?</b> It's measured in points, so it means something on its own ("this team adds about 45 points a match"), it splits into auto, teleop and endgame, and it updates after every match. The name comes from <a class="link" href="https://www.statbotics.io">Statbotics</a>, the FRC site that introduced it. The model here goes further, for FTC: the extras below, each kept only because it predicted better on seasons it wasn't tuned on.</p>
+      <p><b>Two ratings.</b> The <b>EPA</b> in team lists, team pages and "Top teams" is tuned to show how strong each robot is right now: the EPA a team brings to an event should match what it actually scores there. Win chances, predicted scores and ranking forecasts use a separate <b>prediction rating</b> (shown as "Pred. rating" where it matters), tuned only to call matches well. Some things that help call matches, like pulling every rating a little toward average, would understate the best robots in a list.</p>
       <ul class="muted">
         <li><b>Credit by robot.</b> Points the game manual scores per robot go to the robot that earned them instead of being split${solo ? ` (this season: ${solo})` : ""}. Point values are learned from the data and match each manual.</li>
         <li><b>Auto movement.</b> A robot that didn't move in auto gets little of its alliance's auto credit: alliances where neither robot moves score almost nothing else in auto.</li>

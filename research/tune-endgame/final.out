@@ -1,0 +1,63 @@
+
+== EPA track, DEFAULT_EPA_PARAMS (comp endgame)
+-- endgame
+season     n   wMAE   nMAE  wCorr   bias  topMAE topBias wldMAE rhoOPR  rhoPO
+2019    10088   4.26 0.9089 0.4919  -2.53    7.59   -7.11      -      -      -
+2021    11476  10.00 0.8937 0.5922  -5.42   13.32  -12.02   9.72  0.879  0.304
+2022    16985   5.34 0.6983 0.6400  -1.98   10.31   -8.34   6.19  0.918  0.289
+2023    19333   6.51 0.6311 0.6940  -3.60   12.78  -11.56   6.67  0.852  0.456
+2024    22230   3.15 0.5641 0.6301  -1.18    8.29   -7.46   3.97  0.934  0.462
+2025    24158   2.44 1.0811 0.3613  -1.11    4.49   -4.39   2.05  0.780  0.171
+mean   104270   5.28 0.7962 0.5682  -2.64    9.46   -8.48   5.72  0.873  0.337
+
+objective (mae) default: 0.79622
+
+== EPA track, candidate research/tune-endgame/endgame.json
+-- endgame
+season     n   wMAE   nMAE  wCorr   bias  topMAE topBias wldMAE rhoOPR  rhoPO
+2019    10088   3.44 0.7332 0.4666  -0.74    7.20   -7.05      -      -      -
+2021    11476   7.65 0.6830 0.5802  -2.30   14.46  -14.05   7.14  0.858  0.351
+2022    16985   4.76 0.6232 0.6165  -0.88   11.36  -10.74   4.81  0.928  0.304
+2023    19333   6.17 0.5983 0.6674  -2.18   13.36  -12.78   6.26  0.921  0.492
+2024    22230   3.10 0.5554 0.6293  -0.53    8.43   -8.04   3.60  0.966  0.467
+2025    24158   1.79 0.7930 0.3752  -0.33    4.07   -4.02   1.82  0.858  0.207
+mean   104270   4.48 0.6643 0.5559  -1.16    9.81   -9.45   4.73  0.906  0.364
+
+== candidate: default -> candidate, weighted MAE (paired event bootstrap 95% CI of the difference; negative = better)
+-- endgame
+2019  wMAE 4.26 -> 3.44  CI -0.917..-0.724  nMAE 0.9089 -> 0.7332  wCorr 0.4919 -> 0.4666  topBias -7.11 -> -7.05  rhoOPR - -> -  rhoPO - -> -
+2021  wMAE 10.00 -> 7.65  CI -2.765..-2.158  nMAE 0.8937 -> 0.6830  wCorr 0.5922 -> 0.5802  topBias -12.02 -> -14.05  rhoOPR 0.879 -> 0.858  rhoPO 0.304 -> 0.351
+2022  wMAE 5.34 -> 4.76  CI -0.627..-0.506  nMAE 0.6983 -> 0.6232  wCorr 0.6400 -> 0.6165  topBias -8.34 -> -10.74  rhoOPR 0.918 -> 0.928  rhoPO 0.289 -> 0.304
+2023  wMAE 6.51 -> 6.17  CI -0.420..-0.274  nMAE 0.6311 -> 0.5983  wCorr 0.6940 -> 0.6674  topBias -11.56 -> -12.78  rhoOPR 0.852 -> 0.921  rhoPO 0.456 -> 0.492
+2024  wMAE 3.15 -> 3.10  CI -0.074..-0.020  nMAE 0.5641 -> 0.5554  wCorr 0.6301 -> 0.6293  topBias -7.46 -> -8.04  rhoOPR 0.934 -> 0.966  rhoPO 0.462 -> 0.467
+2025  wMAE 2.44 -> 1.79  CI -0.683..-0.618  nMAE 1.0811 -> 0.7930  wCorr 0.3613 -> 0.3752  topBias -4.39 -> -4.02  rhoOPR 0.780 -> 0.858  rhoPO 0.171 -> 0.207
+objective (mae) candidate: 0.66433
+
+== Sanity: 2025 final EPA ranking (candidate params)
+   #   team name                        total   auto teleop endgm   WldOPR POw
+   1  19564 ITKAN Solar                 258.0   66.3  180.3   11.4    232.3   6
+   2  20265 Heart of RoBots             255.3   65.4  174.1   15.9    231.5   8
+   3  14270 Quantum Robotics            250.9   52.4  191.4    7.1    230.8   7
+   4  30030 Exodus                      245.3   61.4  176.8    7.1    230.7  10
+   5  19066 AiCitizens                  242.9   54.4  181.4    7.1    241.6   6
+   6  11329 I.C.E. Robotics             239.0   57.0  173.8    8.2    241.6   6
+   7  15993 infO(1)Robotics             233.8   55.1  169.4    9.4    202.1   0
+   8  18221 Meta^Infinity               229.1   53.8  168.8    6.5    179.7   4
+   9  17861 CSH                         227.4   52.9  161.7   12.8    219.7   2
+  10  25943 HIVE Robotics               223.7   58.6  158.1    7.0    209.4   2
+  11  30784 ITKAN Lunar Jr              222.8   40.7  172.7    9.4    224.4   4
+  12  19043 CyLiis                      219.8   55.3  154.6    9.9        -   -
+  13   3565 Ghost Robotics              218.1   54.5  156.4    7.1    230.8   7
+  14  14631 Laser Tech                  218.0   49.7  156.4   11.8    194.6   2
+  15    772 Golden Dragons              217.4   59.2  150.2    8.0    147.1   0
+  16   9879 Root Negative One           213.0   49.3  154.8    8.8    183.9   1
+  17  22489 Galactic Narwhal Chicken E  208.8   35.1  165.4    8.3        -   -
+  18  15991 Gamma                       208.6   51.9  149.5    7.2    201.6   1
+  19  27570 BAYI RONG ZHEN              208.4   48.5  147.6   12.4    196.7   3
+  20  19745 Turtle Walkers              205.8   45.1  153.6    7.1    179.2   2
+  ...
+   3  14270 Quantum Robotics            250.9   52.4  191.4    7.1    230.8   7
+  26  11260 Up-A-Creek Robotics         199.1   48.1  138.8   12.2    232.3   6
+  73  24033 Alphatronic                 172.7   41.7  121.7    9.3        -   -
+
+runtime: 0.40 s per season per param set (comp endgame, 1 component run); 12 season-runs total

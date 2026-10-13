@@ -1,0 +1,48 @@
+
+=== 2019  Worlds 9999  MTI -  first off-season 9999
+A off excluded (default)               wMAE 8.82 (0.000..0.000)  nMAE 0.7330  topBias -15.83  rhoOPR - rhoPO - | reachable n=0 wMAE - (-..-)
+B all off @0.4                         wMAE 8.82 (0.000..0.000)  nMAE 0.7330  topBias -15.83  rhoOPR - rhoPO - | reachable n=0 wMAE - (-..-)
+C off <=MTI @0.4, later dropped        wMAE 8.82 (0.000..0.000)  nMAE 0.7330  topBias -15.83  rhoOPR - rhoPO - | reachable n=0 wMAE - (-..-)
+D off <=MTI @1, later dropped          wMAE 8.82 (0.000..0.000)  nMAE 0.7330  topBias -15.83  rhoOPR - rhoPO - | reachable n=0 wMAE - (-..-)
+E post-Worlds scrimmages as off (@0)   wMAE 8.82 (0.000..0.000)  nMAE 0.7330  topBias -15.83  rhoOPR - rhoPO - | reachable n=0 wMAE - (-..-)
+F E + off <=MTI @0.4                   wMAE 8.82 (0.000..0.000)  nMAE 0.7330  topBias -15.83  rhoOPR - rhoPO - | reachable n=0 wMAE - (-..-)
+
+=== 2021  Worlds 2022-04-19  MTI 2022-06-24  first off-season 2022-03-17
+A off excluded (default)               wMAE 19.63 (0.000..0.000)  nMAE 0.6058  topBias -23.34  rhoOPR 0.944 rhoPO 0.525 | reachable n=504 wMAE 25.86 (0.000..0.000)
+B all off @0.4                         wMAE 19.62 (-0.008..0.000)  nMAE 0.6056  topBias -23.32  rhoOPR 0.945 rhoPO 0.526 | reachable n=504 wMAE 25.82 (-0.111..0.000)
+C off <=MTI @0.4, later dropped        wMAE 19.62 (-0.008..0.000)  nMAE 0.6056  topBias -23.32  rhoOPR 0.945 rhoPO 0.526 | reachable n=504 wMAE 25.82 (-0.111..0.000)
+D off <=MTI @1, later dropped          wMAE 19.62 (-0.019..0.000)  nMAE 0.6054  topBias -23.27  rhoOPR 0.945 rhoPO 0.527 | reachable n=504 wMAE 25.75 (-0.277..0.000)
+E post-Worlds scrimmages as off (@0)   wMAE 19.63 (0.000..0.000)  nMAE 0.6058  topBias -23.34  rhoOPR 0.944 rhoPO 0.525 | reachable n=504 wMAE 25.86 (0.000..0.000)
+F E + off <=MTI @0.4                   wMAE 19.62 (-0.008..0.000)  nMAE 0.6056  topBias -23.32  rhoOPR 0.945 rhoPO 0.526 | reachable n=504 wMAE 25.82 (-0.111..0.000)
+
+=== 2022  Worlds 2023-04-18  MTI 2023-06-23  first off-season 2023-05-05
+A off excluded (default)               wMAE 14.94 (0.000..0.000)  nMAE 0.5299  topBias -18.51  rhoOPR 0.961 rhoPO 0.638 | reachable n=0 wMAE - (-..-)
+B all off @0.4                         wMAE 14.94 (0.000..0.000)  nMAE 0.5299  topBias -18.51  rhoOPR 0.962 rhoPO 0.638 | reachable n=0 wMAE - (-..-)
+C off <=MTI @0.4, later dropped        wMAE 14.94 (0.000..0.000)  nMAE 0.5299  topBias -18.51  rhoOPR 0.962 rhoPO 0.638 | reachable n=0 wMAE - (-..-)
+D off <=MTI @1, later dropped          wMAE 14.94 (0.000..0.000)  nMAE 0.5299  topBias -18.51  rhoOPR 0.959 rhoPO 0.640 | reachable n=0 wMAE - (-..-)
+E post-Worlds scrimmages as off (@0)   wMAE 14.94 (0.000..0.000)  nMAE 0.5299  topBias -18.51  rhoOPR 0.961 rhoPO 0.635 | reachable n=0 wMAE - (-..-)
+F E + off <=MTI @0.4                   wMAE 14.94 (0.000..0.000)  nMAE 0.5299  topBias -18.51  rhoOPR 0.961 rhoPO 0.635 | reachable n=0 wMAE - (-..-)
+
+=== 2023  Worlds 2024-04-15  MTI 2024-06-28  first off-season 2024-04-27
+A off excluded (default)               wMAE 14.16 (0.000..0.000)  nMAE 0.4285  topBias -21.30  rhoOPR 0.969 rhoPO 0.660 | reachable n=0 wMAE - (-..-)
+B all off @0.4                         wMAE 14.16 (0.000..0.000)  nMAE 0.4285  topBias -21.30  rhoOPR 0.969 rhoPO 0.660 | reachable n=0 wMAE - (-..-)
+C off <=MTI @0.4, later dropped        wMAE 14.16 (0.000..0.000)  nMAE 0.4285  topBias -21.30  rhoOPR 0.969 rhoPO 0.660 | reachable n=0 wMAE - (-..-)
+D off <=MTI @1, later dropped          wMAE 14.16 (0.000..0.000)  nMAE 0.4285  topBias -21.30  rhoOPR 0.969 rhoPO 0.660 | reachable n=0 wMAE - (-..-)
+E post-Worlds scrimmages as off (@0)   wMAE 14.16 (0.000..0.000)  nMAE 0.4285  topBias -21.30  rhoOPR 0.969 rhoPO 0.660 | reachable n=0 wMAE - (-..-)
+F E + off <=MTI @0.4                   wMAE 14.16 (0.000..0.000)  nMAE 0.4285  topBias -21.30  rhoOPR 0.969 rhoPO 0.660 | reachable n=0 wMAE - (-..-)
+
+=== 2024  Worlds 2025-04-15  MTI 2025-06-27  first off-season 2025-04-26
+A off excluded (default)               wMAE 18.43 (0.000..0.000)  nMAE 0.4228  topBias -26.56  rhoOPR 0.965 rhoPO 0.744 | reachable n=407 wMAE 24.18 (0.000..0.000)
+B all off @0.4                         wMAE 18.39 (-0.074..-0.016)  nMAE 0.4219  topBias -26.51  rhoOPR 0.961 rhoPO 0.747 | reachable n=407 wMAE 23.21 (-1.537..-0.398)
+C off <=MTI @0.4, later dropped        wMAE 18.40 (-0.052..-0.006)  nMAE 0.4222  topBias -26.45  rhoOPR 0.963 rhoPO 0.744 | reachable n=407 wMAE 23.56 (-1.056..-0.196)
+D off <=MTI @1, later dropped          wMAE 18.41 (-0.050..0.004)  nMAE 0.4224  topBias -26.28  rhoOPR 0.948 rhoPO 0.735 | reachable n=407 wMAE 23.71 (-1.061..0.041)
+E post-Worlds scrimmages as off (@0)   wMAE 18.43 (-0.001..0.000)  nMAE 0.4228  topBias -26.56  rhoOPR 0.966 rhoPO 0.744 | reachable n=407 wMAE 24.17 (-0.038..0.007)
+F E + off <=MTI @0.4                   wMAE 18.40 (-0.053..-0.006)  nMAE 0.4222  topBias -26.44  rhoOPR 0.963 rhoPO 0.744 | reachable n=407 wMAE 23.55 (-1.065..-0.202)
+
+=== 2025  Worlds 2026-04-29  MTI 2026-06-26  first off-season 2026-04-25
+A off excluded (default)               wMAE 14.70 (0.000..0.000)  nMAE 0.4074  topBias -21.93  rhoOPR 0.953 rhoPO 0.754 | reachable n=1101 wMAE 21.98 (0.000..0.000)
+B all off @0.4                         wMAE 14.69 (-0.013..-0.001)  nMAE 0.4073  topBias -21.86  rhoOPR 0.944 rhoPO 0.753 | reachable n=1101 wMAE 21.93 (-0.126..0.002)
+C off <=MTI @0.4, later dropped        wMAE 14.69 (-0.013..0.001)  nMAE 0.4073  topBias -21.87  rhoOPR 0.947 rhoPO 0.755 | reachable n=1101 wMAE 21.93 (-0.121..0.014)
+D off <=MTI @1, later dropped          wMAE 14.70 (-0.012..0.014)  nMAE 0.4074  topBias -21.78  rhoOPR 0.918 rhoPO 0.737 | reachable n=1101 wMAE 21.98 (-0.123..0.094)
+E post-Worlds scrimmages as off (@0)   wMAE 14.71 (-0.025..0.037)  nMAE 0.4076  topBias -22.03  rhoOPR 0.957 rhoPO 0.755 | reachable n=1101 wMAE 22.05 (-0.178..0.375)
+F E + off <=MTI @0.4                   wMAE 14.69 (-0.054..0.020)  nMAE 0.4072  topBias -21.92  rhoOPR 0.950 rhoPO 0.756 | reachable n=1101 wMAE 21.91 (-0.304..0.264)

@@ -1,0 +1,55 @@
+
+=== 2021
+{}                                                          
+   new-1 n 1428 bias -28.51 mae 29.67 | new-2 n  931 bias -12.17 mae 16.77 | new-3+ n 1125 bias  -7.98 mae 15.32
+   vet-1 n 2647 bias -26.42 mae 27.32 | vet-2 n 2084 bias -12.16 mae 17.28 | vet-3+ n 3261 bias  -6.45 mae 14.93
+{"priorRookieZ":0}                                          
+   new-1 n 1428 bias -21.91 mae 24.14 | new-2 n  931 bias -11.70 mae 16.44 | new-3+ n 1125 bias  -7.86 mae 15.28
+   vet-1 n 2647 bias -22.70 mae 24.13 | vet-2 n 2084 bias -12.12 mae 17.19 | vet-3+ n 3261 bias  -6.47 mae 14.95
+{"priorRookieZ":0.5}                                        
+   new-1 n 1428 bias -15.10 mae 19.83 | new-2 n  931 bias -10.99 mae 16.06 | new-3+ n 1125 bias  -7.76 mae 15.25
+   vet-1 n 2647 bias -18.57 mae 21.27 | vet-2 n 2084 bias -12.00 mae 17.07 | vet-3+ n 3261 bias  -6.53 mae 14.97
+
+=== 2022
+{}                                                          
+   new-1 n 1672 bias -15.61 mae 16.76 | new-2 n 1087 bias  -9.44 mae 13.88 | new-3+ n 1281 bias  -5.13 mae 12.05
+   vet-1 n 3861 bias -17.49 mae 18.71 | vet-2 n 3273 bias  -9.95 mae 14.64 | vet-3+ n 5811 bias  -3.78 mae 13.67
+{"priorRookieZ":0}                                          
+   new-1 n 1672 bias -11.72 mae 14.43 | new-2 n 1087 bias  -9.05 mae 13.62 | new-3+ n 1281 bias  -5.04 mae 12.00
+   vet-1 n 3861 bias -16.72 mae 18.18 | vet-2 n 3273 bias  -9.97 mae 14.64 | vet-3+ n 5811 bias  -3.81 mae 13.69
+{"priorRookieZ":0.5}                                        
+   new-1 n 1672 bias  -7.82 mae 13.36 | new-2 n 1087 bias  -8.57 mae 13.34 | new-3+ n 1281 bias  -4.95 mae 11.95
+   vet-1 n 3861 bias -15.92 mae 17.70 | vet-2 n 3273 bias  -9.99 mae 14.64 | vet-3+ n 5811 bias  -3.84 mae 13.70
+
+=== 2023
+{}                                                          
+   new-1 n 1873 bias -13.13 mae 14.02 | new-2 n 1131 bias  -9.60 mae 12.33 | new-3+ n 1427 bias  -6.44 mae 12.65
+   vet-1 n 4654 bias -13.56 mae 14.91 | vet-2 n 3894 bias -10.40 mae 13.71 | vet-3+ n 6354 bias  -7.07 mae 14.58
+{"priorRookieZ":0}                                          
+   new-1 n 1873 bias  -9.03 mae 12.03 | new-2 n 1131 bias  -9.14 mae 12.05 | new-3+ n 1427 bias  -6.37 mae 12.62
+   vet-1 n 4654 bias -13.08 mae 14.60 | vet-2 n 3894 bias -10.40 mae 13.71 | vet-3+ n 6354 bias  -7.08 mae 14.59
+{"priorRookieZ":0.5}                                        
+   new-1 n 1873 bias  -4.92 mae 11.46 | new-2 n 1131 bias  -8.63 mae 11.77 | new-3+ n 1427 bias  -6.30 mae 12.59
+   vet-1 n 4654 bias -12.56 mae 14.32 | vet-2 n 3894 bias -10.40 mae 13.70 | vet-3+ n 6354 bias  -7.10 mae 14.60
+
+=== 2024
+{}                                                          
+   new-1 n 1929 bias -17.98 mae 19.13 | new-2 n 1217 bias -12.71 mae 16.90 | new-3+ n 1535 bias  -7.90 mae 16.70
+   vet-1 n 5434 bias -17.38 mae 19.58 | vet-2 n 4457 bias -11.30 mae 16.77 | vet-3+ n 7658 bias  -7.14 mae 18.92
+{"priorRookieZ":0}                                          
+   new-1 n 1929 bias -11.49 mae 16.13 | new-2 n 1217 bias -11.98 mae 16.44 | new-3+ n 1535 bias  -7.72 mae 16.63
+   vet-1 n 5434 bias -16.83 mae 19.26 | vet-2 n 4457 bias -11.40 mae 16.83 | vet-3+ n 7658 bias  -7.19 mae 18.94
+{"priorRookieZ":0.5}                                        
+   new-1 n 1929 bias  -4.66 mae 15.66 | new-2 n 1217 bias -11.03 mae 15.94 | new-3+ n 1535 bias  -7.53 mae 16.54
+   vet-1 n 5434 bias -16.20 mae 18.99 | vet-2 n 4457 bias -11.51 mae 16.90 | vet-3+ n 7658 bias  -7.26 mae 18.98
+
+=== 2025
+{}                                                          
+   new-1 n 1771 bias -18.00 mae 18.74 | new-2 n 1134 bias  -8.84 mae 12.65 | new-3+ n 1488 bias  -5.67 mae 13.31
+   vet-1 n 6300 bias -14.87 mae 16.53 | vet-2 n 5009 bias  -8.14 mae 12.64 | vet-3+ n 8456 bias  -6.40 mae 14.47
+{"priorRookieZ":0}                                          
+   new-1 n 1771 bias -12.72 mae 14.86 | new-2 n 1134 bias  -8.22 mae 12.26 | new-3+ n 1488 bias  -5.53 mae 13.24
+   vet-1 n 6300 bias -14.43 mae 16.20 | vet-2 n 5009 bias  -8.22 mae 12.67 | vet-3+ n 8456 bias  -6.44 mae 14.49
+{"priorRookieZ":0.5}                                        
+   new-1 n 1771 bias  -6.96 mae 12.98 | new-2 n 1134 bias  -7.37 mae 11.82 | new-3+ n 1488 bias  -5.35 mae 13.16
+   vet-1 n 6300 bias -13.91 mae 15.89 | vet-2 n 5009 bias  -8.31 mae 12.71 | vet-3+ n 8456 bias  -6.48 mae 14.51

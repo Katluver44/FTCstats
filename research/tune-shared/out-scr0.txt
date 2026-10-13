@@ -1,0 +1,35 @@
+
+objective (mae) default: 0.58666
+
+== candidate: default -> candidate, weighted MAE (paired event bootstrap 95% CI of the difference; negative = better)
+-- auto
+2019  wMAE 3.81 -> 3.81  CI 0.000..0.000  nMAE 0.6950 -> 0.6950  wCorr 0.6054 -> 0.6054  topBias -8.26 -> -8.26  rhoOPR - -> -  rhoPO - -> -
+2021  wMAE 6.82 -> 6.99  CI 0.072..0.302  nMAE 0.5939 -> 0.6088  wCorr 0.7208 -> 0.7052  topBias -12.44 -> -13.26  rhoOPR 0.922 -> 0.923  rhoPO 0.469 -> 0.471
+2022  wMAE 5.20 -> 5.24  CI -0.005..0.049  nMAE 0.5414 -> 0.5452  wCorr 0.7277 -> 0.7225  topBias -7.51 -> -7.82  rhoOPR 0.954 -> 0.953  rhoPO 0.650 -> 0.648
+2023  wMAE 6.38 -> 6.42  CI 0.013..0.050  nMAE 0.4483 -> 0.4510  wCorr 0.7797 -> 0.7771  topBias -12.92 -> -12.99  rhoOPR 0.938 -> 0.938  rhoPO 0.612 -> 0.613
+2024  wMAE 4.59 -> 4.60  CI -0.004..0.030  nMAE 0.4306 -> 0.4316  wCorr 0.8104 -> 0.8092  topBias -7.60 -> -7.70  rhoOPR 0.950 -> 0.951  rhoPO 0.633 -> 0.634
+2025  wMAE 4.97 -> 5.01  CI 0.004..0.064  nMAE 0.4735 -> 0.4777  wCorr 0.8074 -> 0.8035  topBias -6.82 -> -7.34  rhoOPR 0.932 -> 0.938  rhoPO 0.711 -> 0.717
+-- teleop
+2019  wMAE 2.50 -> 2.50  CI 0.000..0.000  nMAE 0.6656 -> 0.6656  wCorr 0.6807 -> 0.6807  topBias -5.24 -> -5.24  rhoOPR - -> -  rhoPO - -> -
+2021  wMAE 7.52 -> 7.81  CI 0.108..0.506  nMAE 0.5246 -> 0.5445  wCorr 0.7856 -> 0.7619  topBias -13.76 -> -15.33  rhoOPR 0.946 -> 0.945  rhoPO 0.530 -> 0.530
+2022  wMAE 7.81 -> 7.97  CI 0.070..0.228  nMAE 0.5381 -> 0.5492  wCorr 0.7892 -> 0.7805  topBias -12.18 -> -12.83  rhoOPR 0.937 -> 0.935  rhoPO 0.622 -> 0.615
+2023  wMAE 5.28 -> 5.35  CI 0.042..0.085  nMAE 0.4198 -> 0.4258  wCorr 0.8399 -> 0.8366  topBias -10.16 -> -10.57  rhoOPR 0.974 -> 0.973  rhoPO 0.631 -> 0.629
+2024  wMAE 13.70 -> 13.87  CI 0.103..0.241  nMAE 0.4387 -> 0.4442  wCorr 0.8471 -> 0.8447  topBias -19.86 -> -20.13  rhoOPR 0.962 -> 0.963  rhoPO 0.723 -> 0.724
+2025  wMAE 10.53 -> 10.78  CI 0.136..0.317  nMAE 0.4056 -> 0.4152  wCorr 0.8555 -> 0.8491  topBias -19.25 -> -20.62  rhoOPR 0.953 -> 0.956  rhoPO 0.738 -> 0.739
+-- endgame
+2019  wMAE 4.26 -> 4.26  CI 0.000..0.000  nMAE 0.9089 -> 0.9089  wCorr 0.4919 -> 0.4919  topBias -7.11 -> -7.11  rhoOPR - -> -  rhoPO - -> -
+2021  wMAE 10.00 -> 10.35  CI 0.186..0.565  nMAE 0.8937 -> 0.9243  wCorr 0.5922 -> 0.5762  topBias -12.02 -> -12.51  rhoOPR 0.879 -> 0.869  rhoPO 0.304 -> 0.299
+2022  wMAE 5.34 -> 5.41  CI 0.045..0.113  nMAE 0.6983 -> 0.7083  wCorr 0.6400 -> 0.6302  topBias -8.34 -> -8.79  rhoOPR 0.918 -> 0.922  rhoPO 0.289 -> 0.283
+2023  wMAE 6.51 -> 6.60  CI 0.052..0.103  nMAE 0.6311 -> 0.6393  wCorr 0.6940 -> 0.6889  topBias -11.56 -> -11.73  rhoOPR 0.852 -> 0.851  rhoPO 0.456 -> 0.454
+2024  wMAE 3.15 -> 3.17  CI 0.014..0.039  nMAE 0.5641 -> 0.5680  wCorr 0.6301 -> 0.6261  topBias -7.46 -> -7.61  rhoOPR 0.934 -> 0.936  rhoPO 0.462 -> 0.461
+2025  wMAE 2.44 -> 2.50  CI 0.037..0.083  nMAE 1.0811 -> 1.1094  wCorr 0.3613 -> 0.3549  topBias -4.39 -> -4.53  rhoOPR 0.780 -> 0.802  rhoPO 0.171 -> 0.161
+-- total
+2019  wMAE 8.82 -> 8.82  CI 0.000..0.000  nMAE 0.7330 -> 0.7330  wCorr 0.6798 -> 0.6798  topBias -15.83 -> -15.83  rhoOPR - -> -  rhoPO - -> -
+2021  wMAE 19.63 -> 20.52  CI 0.442..1.539  nMAE 0.6058 -> 0.6333  wCorr 0.7940 -> 0.7701  topBias -23.34 -> -27.17  rhoOPR 0.944 -> 0.940  rhoPO 0.525 -> 0.522
+2022  wMAE 14.94 -> 15.25  CI 0.122..0.415  nMAE 0.5299 -> 0.5411  wCorr 0.8105 -> 0.8017  topBias -18.51 -> -19.74  rhoOPR 0.961 -> 0.960  rhoPO 0.638 -> 0.635
+2023  wMAE 14.16 -> 14.38  CI 0.115..0.244  nMAE 0.4285 -> 0.4351  wCorr 0.8597 -> 0.8558  topBias -21.30 -> -21.68  rhoOPR 0.969 -> 0.969  rhoPO 0.660 -> 0.659
+2024  wMAE 18.43 -> 18.67  CI 0.149..0.349  nMAE 0.4228 -> 0.4284  wCorr 0.8597 -> 0.8574  topBias -26.56 -> -26.84  rhoOPR 0.965 -> 0.966  rhoPO 0.744 -> 0.744
+2025  wMAE 14.70 -> 15.12  CI 0.253..0.510  nMAE 0.4074 -> 0.4192  wCorr 0.8716 -> 0.8655  topBias -21.93 -> -23.95  rhoOPR 0.953 -> 0.957  rhoPO 0.754 -> 0.754
+objective (mae) candidate: 0.59592
+
+runtime: 1.25 s per season per param set (comp all, 3 component runs, deduplicated when settings match); 12 season-runs total

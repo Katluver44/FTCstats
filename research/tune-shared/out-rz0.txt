@@ -1,0 +1,14 @@
+
+objective (mae) default: 0.52122
+
+== candidate: default -> candidate, weighted MAE (paired event bootstrap 95% CI of the difference; negative = better)
+-- total
+2019  wMAE 8.82 -> 8.82  CI 0.000..0.000  nMAE 0.7330 -> 0.7330  wCorr 0.6798 -> 0.6798  topBias -15.83 -> -15.83  rhoOPR - -> -  rhoPO - -> -
+2021  wMAE 19.63 -> 18.33  CI -1.563..-1.188  nMAE 0.6058 -> 0.5656  wCorr 0.7940 -> 0.8027  topBias -23.34 -> -22.95  rhoOPR 0.944 -> 0.943  rhoPO 0.525 -> 0.527
+2022  wMAE 14.94 -> 14.62  CI -0.393..-0.280  nMAE 0.5299 -> 0.5186  wCorr 0.8105 -> 0.8114  topBias -18.51 -> -18.44  rhoOPR 0.961 -> 0.962  rhoPO 0.638 -> 0.638
+2023  wMAE 14.16 -> 13.91  CI -0.305..-0.223  nMAE 0.4285 -> 0.4207  wCorr 0.8597 -> 0.8595  topBias -21.30 -> -21.22  rhoOPR 0.969 -> 0.969  rhoPO 0.660 -> 0.660
+2024  wMAE 18.43 -> 18.12  CI -0.362..-0.259  nMAE 0.4228 -> 0.4158  wCorr 0.8597 -> 0.8600  topBias -26.56 -> -26.40  rhoOPR 0.965 -> 0.965  rhoPO 0.744 -> 0.744
+2025  wMAE 14.70 -> 14.37  CI -0.373..-0.283  nMAE 0.4074 -> 0.3982  wCorr 0.8716 -> 0.8732  topBias -21.93 -> -21.90  rhoOPR 0.953 -> 0.953  rhoPO 0.754 -> 0.753
+objective (mae) candidate: 0.50863
+
+runtime: 1.50 s per season per param set (comp total, 3 component runs, deduplicated when settings match); 12 season-runs total

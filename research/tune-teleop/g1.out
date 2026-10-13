@@ -1,0 +1,47 @@
+
+objective (mae) default: 0.49873
+held-out 2019: tuned on 2021,2022,2023,2024,2025 -> {"teleop":{"mom":0,"initFrac":0.7,"carry":0.8,"vEvent":0.1,"obsHet":0.5,"clipC":1,"volK":0.05,"elimWeight":1,"emaAlpha":0.001,"vMatch":0.03,"vObs":2.5}} (train objective 0.43203)
+held-out 2021: tuned on 2019,2022,2023,2024,2025 -> {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":1,"vEvent":0.1,"vObs":3,"obsHet":0.5,"clipC":1,"elimWeight":0.8,"emaAlpha":0.001,"vMatch":0.03}} (train objective 0.44988)
+held-out 2022: tuned on 2019,2021,2023,2024,2025 -> {"teleop":{"mom":0,"initFrac":0.8,"carry":0.8,"vEvent":0.1,"vObs":3,"obsHet":0.5,"clipC":1,"elimWeight":0.8,"emaAlpha":0.001,"vMatch":0.03}} (train objective 0.44791)
+held-out 2023: tuned on 2019,2021,2022,2024,2025 -> {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":0.8,"v0":1,"vMatch":0.03,"vEvent":0.1,"vObs":3,"obsHet":0.5,"clipC":1,"elimWeight":1,"emaAlpha":0.001,"volK":0.05}} (train objective 0.46475)
+held-out 2024: tuned on 2019,2021,2022,2023,2025 -> {"teleop":{"mom":0,"initFrac":0.8,"carry":0.8,"v0":0.3,"vEvent":0.1,"obsHet":0.5,"clipC":1,"volK":0.05,"elimWeight":0.8,"emaAlpha":0.001,"vMatch":0.03}} (train objective 0.46214)
+held-out 2025: tuned on 2019,2021,2022,2023,2024 -> {"teleop":{"mom":-0.1,"initFrac":0.8,"carry":1,"v0":1,"vMatch":0.03,"vEvent":0.1,"vObs":3,"obsHet":0.5,"clipC":1,"elimWeight":1,"emaAlpha":0.001,"volK":0.05}} (train objective 0.46761)
+
+== LOSO (each season scored with params tuned on the other seasons): default -> candidate, weighted MAE (paired event bootstrap 95% CI of the difference; negative = better)
+-- teleop
+2019  wMAE 2.50 -> 2.14  CI -0.397..-0.320  nMAE 0.6656 -> 0.5694  wCorr 0.6807 -> 0.6949  topBias -5.24 -> -4.96  rhoOPR - -> -  rhoPO - -> -
+2021  wMAE 7.52 -> 6.86  CI -0.811..-0.519  nMAE 0.5246 -> 0.4782  wCorr 0.7856 -> 0.8006  topBias -13.76 -> -12.69  rhoOPR 0.946 -> 0.933  rhoPO 0.530 -> 0.532
+2022  wMAE 7.81 -> 7.08  CI -0.924..-0.599  nMAE 0.5381 -> 0.4879  wCorr 0.7892 -> 0.7929  topBias -12.18 -> -11.06  rhoOPR 0.937 -> 0.930  rhoPO 0.622 -> 0.624
+2023  wMAE 5.28 -> 5.03  CI -0.294..-0.198  nMAE 0.4198 -> 0.4003  wCorr 0.8399 -> 0.8384  topBias -10.16 -> -10.34  rhoOPR 0.974 -> 0.967  rhoPO 0.631 -> 0.623
+2024  wMAE 13.70 -> 12.93  CI -0.917..-0.663  nMAE 0.4387 -> 0.4139  wCorr 0.8471 -> 0.8448  topBias -19.86 -> -17.70  rhoOPR 0.962 -> 0.961  rhoPO 0.723 -> 0.731
+2025  wMAE 10.53 -> 10.02  CI -0.631..-0.384  nMAE 0.4056 -> 0.3859  wCorr 0.8555 -> 0.8539  topBias -19.25 -> -18.56  rhoOPR 0.953 -> 0.947  rhoPO 0.738 -> 0.746
+objective (mae) LOSO: 0.45596 vs default 0.49873
+
+== Sanity: 2025 final EPA ranking (default params)
+   #   team name                        total   auto teleop endgm   WldOPR POw
+   1  19564 ITKAN Solar                 258.3   66.3  180.3   11.7    232.3   6
+   2  20265 Heart of RoBots             255.5   65.4  174.1   16.1    231.5   8
+   3  14270 Quantum Robotics            250.2   52.4  191.4    6.4    230.8   7
+   4  30030 Exodus                      244.6   61.4  176.8    6.4    230.7  10
+   5  19066 AiCitizens                  243.0   54.4  181.4    7.2    241.6   6
+   6  11329 I.C.E. Robotics             238.7   57.0  173.8    7.9    241.6   6
+   7  15993 infO(1)Robotics             234.9   55.1  169.4   10.5    202.1   0
+   8  18221 Meta^Infinity               229.1   53.8  168.8    6.5    179.7   4
+   9  17861 CSH                         227.8   52.9  161.7   13.2    219.7   2
+  10  25943 HIVE Robotics               223.7   58.6  158.1    7.0    209.4   2
+  11  30784 ITKAN Lunar Jr              221.5   40.7  172.7    8.1    224.4   4
+  12  19043 CyLiis                      220.4   55.3  154.6   10.5        -   -
+  13  14631 Laser Tech                  218.8   49.7  156.4   12.6    194.6   2
+  14    772 Golden Dragons              218.3   59.2  150.2    9.0    147.1   0
+  15   3565 Ghost Robotics              218.2   54.5  156.4    7.2    230.8   7
+  16   9879 Root Negative One           213.2   49.3  154.8    9.1    183.9   1
+  17  27570 BAYI RONG ZHEN              208.9   48.5  147.6   12.9    196.7   3
+  18  15991 Gamma                       208.5   51.9  149.5    7.2    201.6   1
+  19  22489 Galactic Narwhal Chicken E  208.2   35.1  165.4    7.7        -   -
+  20  19745 Turtle Walkers              205.6   45.1  153.6    6.9    179.2   2
+  ...
+   3  14270 Quantum Robotics            250.2   52.4  191.4    6.4    230.8   7
+  27  11260 Up-A-Creek Robotics         199.1   48.1  138.8   12.1    232.3   6
+  76  24033 Alphatronic                 172.0   41.7  121.7    8.5        -   -
+
+runtime: 0.85 s per season per param set (comp teleop, 1 component run); 2022 season-runs total
