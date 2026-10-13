@@ -19,7 +19,7 @@ export async function fetchLiveEvent(season, code) {
 export function modelFromMeta(meta, avg) {
   const a = avg ?? meta.avgAlliance;
   return new Model({
-    baseline: { auto: a.auto, teleop: a.teleop, endgame: a.endgame, foul: a.foul, errVar: a.errVar, foulDiffVar: a.foulDiffVar, rp: a.rp, solo: a.solo ?? [], clipVar: a.clipVar },
+    baseline: { auto: a.auto, teleop: a.teleop, endgame: a.endgame, foul: a.foul, errVar: a.errVar, foulDiffVar: a.foulDiffVar, rp: a.rp, solo: a.solo ?? [], clipVar: a.clipVar, cal: a.cal },
     soloComps: (meta.solo ?? []).map((s) => s.comp),
     movedSpec: (meta.solo ?? []).findIndex((s) => s.moved),
     parkedSpec: (meta.solo ?? []).findIndex((s) => s.parked),
