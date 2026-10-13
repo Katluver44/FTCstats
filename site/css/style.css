@@ -517,21 +517,16 @@ footer a { text-decoration: underline; }
 .hero-below .grid.cols-2 td { height: 58px; }
 @media (max-width: 900px) { .hero-below .grid.cols-2 > div + div .card { border-left: 0; } }
 
-/* team page: season awards beside the rank tiles */
-.tiles-row { display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 20px; padding: 0 48px; }
+/* team page: trophy case (plaques, rank tiles, banners) */
+.tiles-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 20px; padding: 0 48px; }
 .tiles-row .tiles { padding: 0; flex-wrap: nowrap; }
-.awards { min-width: 0; align-self: start; }
 /* trophy case: plaques lean toward the tiles from the left, banners hang to the right */
 .plaques, .banners { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; min-width: 0; }
 .plaques { justify-content: flex-end; }
 .banners { justify-content: flex-start; }
 .plaque-icon, .banner-icon { display: block; line-height: 0; transition: transform .12s; }
 .plaque-icon:hover, .banner-icon:hover { transform: translateY(-2px); }
-.plaque-icon svg { filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.35)); }
-.awards ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; max-height: 220px; overflow-y: auto; }
-.awards li { display: flex; gap: 10px; align-items: flex-start; }
-.awards li span:last-child { display: flex; flex-direction: column; line-height: 1.3; }
-.aw-icon { width: 18px; display: flex; justify-content: center; padding-top: 2px; }
+
 @media (max-width: 900px) {
   .tiles-row { grid-template-columns: 1fr; padding: 0 16px; }
   .tiles-row .tiles { flex-wrap: wrap; }
