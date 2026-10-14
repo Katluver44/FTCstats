@@ -49,7 +49,7 @@ for (const f of extra) {
 }
 // channels of every video we already use (found by hand, FIRST links …)
 const used = new Map(); // videoId -> [{ season, code }]
-const note = (s, code, id) => id && (used.get(id) ?? used.set(id, []).get(id)).push({ season: +s, code });
+const note = (s, code, id) => id && !String(id).startsWith("bili:") && (used.get(id) ?? used.set(id, []).get(id)).push({ season: +s, code });
 const ov = await readJson(path.join("site", "videos", "overrides.json"), {});
 const disc = await readJson(path.join("site", "videos", "discovered.json"), {});
 const ts = await readJson(path.join("site", "videos", "timestamped.json"), {});

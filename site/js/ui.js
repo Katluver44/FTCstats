@@ -159,9 +159,22 @@ export function videoFor(videos, evCode, time) {
   const v = videos?.[evCode];
   if (!v || !time) return null;
   const up = v.uploads.find((u) => Math.abs(u.t - time) < 90e3);
-  if (up) return { id: up.id, t: up.at ?? 0, ext: up.ext }; // at: the match's listed spot in a longer video (these lists run ~40 s early already)
+  if (up) return { id: up.id, t: up.at ?? 0, ext: up.ext, platform: up.platform }; // at: the match's listed spot in a longer video (these lists run ~40 s early already)
   const s = v.streams.find((s) => time >= s.start && time <= s.end);
   return s ? { id: s.id, t: Math.max(0, Math.round((time - s.start) / 1000) - LEAD_SECONDS), ext: s.ext } : null;
+}
+
+// Player and "open on the site" links for a video id. YouTube ids are bare; Bilibili ones are
+// "bili:BV…" ("bili:BV…/p3" = page 3 of a multi-part upload). t: seconds in.
+export function videoLinks(id, t = 0) {
+  const b = String(id).match(/^bili:(BV\w+)(?:\/p(\d+))?$/);
+  if (b) {
+    const p = +(b[2] ?? 1);
+    return { site: "Bilibili", embed: `https://player.bilibili.com/player.html?bvid=${b[1]}&p=${p}&t=${t}&autoplay=0&danmaku=0`,
+      open: `https://www.bilibili.com/video/${b[1]}/?p=${p}&t=${t}` };
+  }
+  const e = encodeURIComponent(id);
+  return { site: "YouTube", embed: `https://www.youtube-nocookie.com/embed/${e}?start=${t}&autoplay=1&rel=0`, open: `https://www.youtube.com/watch?v=${e}&t=${t}s` };
 }
 
 export const PLAY_ICON = '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1.2v7.6L8.6 5Z" fill="currentColor"/></svg>';

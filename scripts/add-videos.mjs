@@ -11,6 +11,8 @@
 //  - livestream recording                              -> site/videos/overrides.json, if it was live
 //    during at least half of the event's matches
 //  - a long upload with no timestamps                 -> site/videos/uploads.json, for calibrate-uploads.mjs
+//  - Bilibili (results-file entries with platform "bilibili") -> timestamped.json as "bili:BV…[/pN]"
+//    (no YouTube lookup; see the Bilibili section below)
 // Channels are added to site/videos/channels.json, which find-timestamped.mjs scans.
 
 import fs from "node:fs/promises";
@@ -24,11 +26,23 @@ const season = +args.shift();
 const fileAt = args.indexOf("--file");
 const readJson = (f, fallback) => fs.readFile(f, "utf8").then(JSON.parse).catch(() => fallback);
 const key = process.env.YOUTUBE_API_KEY ?? (await fs.readFile(".env", "utf8").catch(() => "")).match(/^YOUTUBE_API_KEY=(\S+)/m)?.[1];
-if (!season || !key) throw new Error("usage: node scripts/add-videos.mjs <season> <url|id>[@CODE]… | --file f.json  (needs YOUTUBE_API_KEY)");
+const usage = "usage: node scripts/add-videos.mjs <season> <url|id>[@CODE]… | --file f.json  (needs YOUTUBE_API_KEY)";
+if (!season) throw new Error(usage);
 
-let cands = [], channels = [];
+let cands = [], channels = [], bili = [];
 if (fileAt >= 0) {
   const f = await readJson(args[fileAt + 1], {});
+  // Bilibili entries: { platform: "bilibili", videoId: "BV…", page, kind: "per-match" | "upload",
+  // match, duration (s), pubdate (unix s), season, code }
+  const isBili = (v) => v.platform === "bilibili";
+  bili = (f.videos ?? []).filter(isBili).map((v) => {
+    const bv = String(v.videoId ?? "").replace(/^bili:/, "").match(/^BV[0-9A-Za-z]{10}/)?.[0];
+    const page = +(v.page ?? 1) || 1;
+    const pub = typeof v.pubdate === "number" ? (v.pubdate < 1e12 ? v.pubdate * 1000 : v.pubdate) : Date.parse(v.pubdate);
+    return bv && { id: `bili:${bv}${page > 1 ? `/p${page}` : ""}`, code: v.code, season: +(v.season ?? season), kind: v.kind, match: v.match,
+      duration: +v.duration || 0, pub, title: v.title ?? "" };
+  }).filter(Boolean);
+  f.videos = (f.videos ?? []).filter((v) => !isBili(v));
   // `match`: the official match id when a search worked it out from the schedule (a team's
   // "our 3rd match" upload); still checked against the event's matches and dates below
   cands = (f.videos ?? []).map((v) => ({ id: youtubeId(v.videoId) ?? v.videoId, code: v.code, note: v.title ?? "",
@@ -77,6 +91,7 @@ if (pmAt >= 0) {
   }
 }
 cands = cands.filter((c) => /^[\w-]{11}$/.test(c.id ?? ""));
+if (cands.length && !key) throw new Error(usage);
 
 // details, 50 per call (1 quota unit each)
 const info = {};
@@ -99,9 +114,10 @@ if (i < ids.length) { // API quota used up: YouTube's own player data instead
 }
 
 const evCache = new Map();
-const event = async (code) => {
-  if (!evCache.has(code)) evCache.set(code, await readJson(path.join("site", "data", String(season), "event", `${code}.json`), null));
-  return evCache.get(code);
+const event = async (code, s = season) => {
+  const k = `${s}/${code}`;
+  if (!evCache.has(k)) evCache.set(k, await readJson(path.join("site", "data", String(s), "event", `${code}.json`), null));
+  return evCache.get(k);
 };
 // "Qualification 12", "Qual 12", "Q12", "Q-01", "Playoff M-03", "Playoff 3", "Playoff Match 3", "Match 3", "Semifinal 1-2", "Final 2"
 function titleMatch(t, bareM = false) {
@@ -201,6 +217,35 @@ for (const c of cands) {
     tally.upload++; console.log(`  … ${ev.code} long upload, needs calibrate-uploads: ${title}`); continue;
   }
   why(c, `no timestamps, not a livestream, no event to place it in: ${title}`);
+}
+// Bilibili: no API details to check, so trust the results file's event/match, but only when
+// the event has that match and the video came out within 240 days after it (as for YouTube).
+for (const c of bili) {
+  const s2 = c.season, ev = c.code ? await event(c.code, s2) : null;
+  if (!ev) { why(c, `no ${s2} event ${c.code}`); continue; }
+  if (!(c.pub >= Date.parse(ev.start) - 864e5 && c.pub <= Date.parse(ev.end) + 240 * 864e5)) { why(c, `published ${new Date(c.pub || 0).toISOString().slice(0, 10)}, not near ${ev.code} (${ev.start})`); continue; }
+  const owner = Object.entries(ts[s2] ?? {}).find(([code, vids]) => code !== ev.code && vids[c.id]);
+  if (owner) { why(c, `already ${owner[0]}'s video`); continue; }
+  if (c.kind === "per-match") {
+    if (!ev.matchList.some((m) => m.d === c.match)) { why(c, `${ev.code} has no match ${c.match}`); continue; }
+    ((ts[s2] ??= {})[ev.code] ??= {})[c.id] = { [c.match]: 0 };
+    tally.perMatch++; console.log(`  ✓ ${ev.code} ${c.match} (Bilibili) ${c.title}`); continue;
+  }
+  if (c.kind === "upload") {
+    // uploads.json feeds calibrate-uploads.mjs, which reads YouTube's preview thumbnails, so it
+    // can't place a Bilibili video. For now: an estimated spot per match, assuming the first
+    // match is ~10 minutes in and the rest follow the official schedule. Only for videos long
+    // enough to hold most of the event (≥ 60% of first-to-last match), which leaves out a
+    // multi-day event's one-day uploads. Rough: replace with real calibration when we have it.
+    const ms = ev.matchList.filter((m) => m.played && m.time).sort((a, b) => a.time - b.time);
+    const span = ms.length ? (ms.at(-1).time - ms[0].time) / 1000 : 0;
+    if (!span || c.duration < 0.6 * span) { why(c, `${Math.round(c.duration / 60)} min is under 60% of ${ev.code}'s ${Math.round(span / 60)} min of matches`); continue; }
+    const stamps = {};
+    for (const m of ms) { const at = 600 + Math.round((m.time - ms[0].time) / 1000); if (at < c.duration) stamps[m.d] = at; }
+    ((ts[s2] ??= {})[ev.code] ??= {})[c.id] = stamps;
+    tally.upload++; console.log(`  ~ ${ev.code} long Bilibili upload, ${Object.keys(stamps).length} estimated spots: ${c.title}`); continue;
+  }
+  why(c, `unknown kind ${c.kind}`);
 }
 // livestreams: a stream of another year or event overlaps none of this event's matches,
 // so any real overlap counts. A playoffs-only day, a finals stream or one part of a split

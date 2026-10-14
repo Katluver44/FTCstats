@@ -1,6 +1,6 @@
 import {
   $, $$, esc, data, getJSON, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
-  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, PLAY_ICON, downloadCsv, CSV_ICON } from "./ui.js";
+  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, videoLinks, PLAY_ICON, downloadCsv, CSV_ICON } from "./ui.js";
 import { SEASONS } from "./seasons.js";
 import { scatter, histogram, breakdown } from "./charts.js";
 import { addEventSos, sosValue, sosPlaces } from "./sos.js";
@@ -1050,7 +1050,6 @@ function plaque(a, season) {
     </svg></a>`;
 }
 
-// YouTube's privacy-enhanced player: no cookies until the viewer presses play.
 // Share button: a short link (/t/2025/14270, /e/…, /m/…) whose preview shows a
 // card for that team, event or match (see photo-service/api/share.js)
 const SHARE_ICON = '<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 9V1.8M4 4.6 7 1.6l3 3M2.5 7.5v4.2h9V7.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -1066,14 +1065,16 @@ async function share(btn) {
   } catch {}
 }
 
+// YouTube's privacy-enhanced player: no cookies until the viewer presses play.
+// Bilibili's outside player; "Open on Bilibili" is the fallback if it won't play.
 function openVideo(id, t, title) {
   const dlg = document.createElement("dialog");
   dlg.className = "video-dialog";
-  const src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?start=${t}&autoplay=1&rel=0`;
+  const l = videoLinks(id, t);
   dlg.innerHTML = `<div class="video-head"><b>${esc(title ?? "")}</b>
-    <a class="small link" href="https://www.youtube.com/watch?v=${encodeURIComponent(id)}&t=${t}s" target="_blank" rel="noopener">Open on YouTube ↗</a>
+    <a class="small link" href="${l.open}" target="_blank" rel="noopener">Open on ${l.site} ↗</a>
     <button class="video-close" aria-label="Close">✕</button></div>
-    <div class="video-frame"><iframe src="${src}" title="${esc(title ?? "Match video")}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
+    <div class="video-frame"><iframe src="${l.embed}" title="${esc(title ?? "Match video")}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
   document.body.appendChild(dlg);
   dlg.showModal();
   const close = () => dlg.close();
@@ -1582,20 +1583,20 @@ async function match(r) {
   // scoreboard beside it; the verdict moves into that scoreboard
   const clock = (t) => { const h = Math.floor(t / 3600), mm = Math.floor((t % 3600) / 60), ss = t % 60;
     return h ? `${h}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}` : `${mm}:${String(ss).padStart(2, "0")}`; };
-  const ytUrl = v ? `https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}&t=${v.t}s` : "";
+  const links = v && videoLinks(v.id, v.t), openUrl = links?.open ?? "";
   const stage = v ? `<div class="match-stage section">
     <div class="stage-video" id="stage-video" data-id="${esc(v.id)}" data-t="${v.t}" data-title="${esc(`${ev.name} · ${m.d}`)}">
       ${v.ext
         // the owner turned off embedding: same spot, on YouTube
-        ? `<a class="stage-play" href="${ytUrl}" target="_blank" rel="noopener">
+        ? `<a class="stage-play" href="${openUrl}" target="_blank" rel="noopener">
         <span class="stage-play-icon">${PLAY_ICON}</span>
-        <span class="stage-play-text"><b>Watch ${esc(matchTitle(m.d))} on YouTube ↗</b>
+        <span class="stage-play-text"><b>Watch ${esc(matchTitle(m.d))} on ${links.site} ↗</b>
           <small>${v.t ? `From ${clock(v.t)} · ` : ""}this video's owner doesn't allow playing it here</small></span>
       </a>`
         : `<button class="stage-play" data-play-inline aria-label="Play ${esc(matchTitle(m.d))}">
         <span class="stage-play-icon">${PLAY_ICON}</span>
         <span class="stage-play-text"><b>Watch ${esc(matchTitle(m.d))}</b>
-          <small>${v.t ? `Event video, from ${clock(v.t)}` : "Match video"}</small></span>
+          <small>${v.t ? `Event video, from ${clock(v.t)}` : "Match video"}${links.site === "YouTube" ? "" : ` · ${links.site}`}</small></span>
       </button>`}
     </div>
   </div>
@@ -1663,10 +1664,11 @@ async function match(r) {
         <div class="row" style="margin-top:8px">
           <span class="pill">${esc(m.d)}</span>
           <a class="pill" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}/matches" target="_blank" rel="noopener">FTCScout ↗</a>
+          ${links && links.site !== "YouTube" ? `<a class="pill" href="${openUrl}" target="_blank" rel="noopener">${links.site} ↗</a>` : ""}
           ${shareButton(`m/${season}/${encodeURIComponent(code)}/${encodeURIComponent(m.d)}`, `${ev.name} · ${m.d}`)}
         </div>
       </div>
-      ${v ? (v.ext ? `<a class="btn btn-solid watch-cta" href="${ytUrl}" target="_blank" rel="noopener">${PLAY_ICON} Watch on YouTube ↗</a>`
+      ${v ? (v.ext ? `<a class="btn btn-solid watch-cta" href="${openUrl}" target="_blank" rel="noopener">${PLAY_ICON} Watch on ${links.site} ↗</a>`
         : `<button class="btn btn-solid watch-cta" data-play-inline>${PLAY_ICON} Watch match</button>`) : verdict}
     </div></div>
 
@@ -2467,7 +2469,7 @@ async function boot() {
     if (!box) return;
     if (!box.querySelector("iframe")) {
       const { id, t, title } = box.dataset;
-      box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?start=${+t || 0}&autoplay=1&rel=0" title="${esc(title)}"
+      box.innerHTML = `<iframe src="${videoLinks(id, +t || 0).embed}" title="${esc(title)}"
         allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
     }
     box.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -2480,7 +2482,7 @@ async function boot() {
     if (!b) return;
     e.preventDefault();
     // the owner turned off embedding: open it on YouTube at the same moment
-    if (b.dataset.ext) { open(`https://www.youtube.com/watch?v=${encodeURIComponent(b.dataset.video)}&t=${+b.dataset.t || 0}s`, "_blank", "noopener"); return; }
+    if (b.dataset.ext) { open(videoLinks(b.dataset.video, +b.dataset.t || 0).open, "_blank", "noopener"); return; }
     openVideo(b.dataset.video, +b.dataset.t || 0, b.dataset.title);
   });
   addEventListener("hashchange", () => $$(".video-dialog").forEach((d) => d.close()));

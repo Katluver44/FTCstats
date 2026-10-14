@@ -1,6 +1,6 @@
 // Finds match video for every event and writes site/data/<season>/videos.json.
 //
-// Sources, best first:
+// Sources, best first (Bilibili clips come in through timestamped.json with a "bili:" id):
 //  1. Per-match uploads FIRST links on each match (Worlds playoffs, mostly).
 //  2. The event's livestream recording (FIRST event listing + overrides),
 //     with each match located by its official start time.
@@ -187,7 +187,10 @@ export async function buildVideos(season) {
     ...(await readJson(path.join("site", "videos", "offsets.json"), {}))[season],
   };
 
-  const allIds = Object.values(events).flatMap((e) => [...e.streams, ...e.uploads.map((u) => u.id)]);
+  // Bilibili videos ("bili:BV…" or "bili:BV…/p3" for page 3 of a multi-part upload, filed in
+  // timestamped.json) have no YouTube details to look up: kept as they are
+  const isBili = (id) => String(id).startsWith("bili:");
+  const allIds = Object.values(events).flatMap((e) => [...e.streams, ...e.uploads.map((u) => u.id)]).filter((id) => !isBili(id));
   const yt = await youtubeDetails(allIds, path.join(".cache", "videos", `${season}.json`));
 
   // keep recordings we can place matches in (start and end known); ones whose owner
@@ -199,8 +202,8 @@ export async function buildVideos(season) {
       .filter((v) => v.start && !v.missing && !v.usBlocked)
       .map((v) => ({ ...v, start: v.start + (offsets[v.id] ?? 0) * 1000 }))
       .map((v) => ({ id: v.id, start: v.start, end: Math.min(v.end ?? Infinity, v.start + Math.min(v.seconds ?? 43200, 43200) * 1000), title: v.title, ...(v.embeddable ? {} : { ext: 1 }) }));
-    const uploads = e.uploads.filter((u) => yt[u.id] && !yt[u.id].missing && !yt[u.id].usBlocked)
-      .map((u) => (yt[u.id].embeddable ? u : { ...u, ext: 1 }));
+    const uploads = e.uploads.filter((u) => isBili(u.id) || (yt[u.id] && !yt[u.id].missing && !yt[u.id].usBlocked))
+      .map((u) => (isBili(u.id) ? { ...u, platform: "bilibili" } : yt[u.id].embeddable ? u : { ...u, ext: 1 }));
     if (streams.length || uploads.length) result[code] = { streams, uploads };
   }
   await fs.mkdir(path.dirname(out), { recursive: true });
