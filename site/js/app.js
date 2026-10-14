@@ -1113,10 +1113,9 @@ async function event(r) {
     const decided = played.filter((m) => m.pred && m.redScore.total !== m.blueScore.total);
     const correct = decided.filter((m) => (m.pred.pRed > 0.5) === (m.redScore.total > m.blueScore.total)).length;
     const hasQuals = matches.some((m) => m.level === "Quals");
-    // forecast needs a quals schedule, or no matches yet (pre-event); playoff-only events get none,
-    // and once every qual is played the rankings are settled, so there's nothing left to forecast
-    const qualsDone = hasQuals && matches.every((m) => m.level !== "Quals" || (m.actuallyPlayed ?? m.played));
-    const canForecast = (hasQuals && !qualsDone) || (!matches.length && ev.teamList.length >= 4);
+    // forecast needs a quals schedule, or no matches yet (pre-event); playoff-only events get none.
+    // Once quals are done it still replays: "what did the forecast say after match N?"
+    const canForecast = hasQuals || (!matches.length && ev.teamList.length >= 4);
     const hasPlayoffs = matches.some((m) => m.level && m.level !== "Quals");
     const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(ev.teamList.length >= 4 ? [["pickmap", "Pick list"]] : []), ...(hasPlayoffs ? [["playoffs", "Playoffs"]] : []), ...(canForecast ? [["forecast", "Rankings forecast"]] : [])];
     app.innerHTML = `
@@ -1335,17 +1334,26 @@ function eventForecast(season, meta, ev, matches) {
   const quals = matches.filter((m) => m.level === "Quals");
   if (!quals.length) return rosterForecast(season, meta, ev);
   const playedQuals = quals.filter((m) => m.actuallyPlayed ?? m.played).length;
-  const cutoff = playedQuals; // forecast from the current standings
+  const done = playedQuals === quals.length;
+  // "simulate from": forecast as it stood after any played qual. Live events start
+  // from now; finished ones from before the first match, to compare with how it went.
+  let cutoff = done ? 0 : playedQuals;
   const teams = ev.teamList.map((t) => t.team);
   const finalRank = new Map(ev.teamList.map((t) => [t.team, t.rank]));
   const names = new Map(ev.teamList.map((t) => [t.team, t.name]));
+  const qualName = (i) => quals[i - 1]?.d ?? `Q-${i}`;
+  const asOf = (c) => (c === 0 ? "before the first match" : c === playedQuals && !done ? `now, after ${qualName(c)}` : `after ${qualName(c)}`);
 
-  $("#tab").innerHTML = `<div class="card" id="fc"></div>`;
+  $("#tab").innerHTML = `${playedQuals ? `<div class="card card-pad fc-from">
+      <label for="fc-cut"><b>Forecast as of</b> <span id="fc-as">${asOf(cutoff)}</span></label>
+      <input type="range" id="fc-cut" min="0" max="${playedQuals}" step="1" value="${cutoff}" aria-label="Forecast as of match">
+      <div class="small muted">Drag to replay the forecast from any point${done ? "; the last column is how it actually finished" : ""}. Each step re-runs 3,000 simulated events.</div>
+    </div>` : ""}<div class="card${playedQuals ? " section" : ""}" id="fc"></div>`;
 
   const run = () => {
     const { model, matches: replayed } = replayEvent(meta, ev, matches.map((m) => ({ ...m, played: m.actuallyPlayed ?? m.played })), cutoff);
     const rows = forecastRankings(season, teams, replayed, 3000, { model });
-    const showFinal = ev.teamList.some((t) => t.rank != null) && playedQuals > 0;
+    const showFinal = ev.teamList.some((t) => t.rank != null) && playedQuals > 0 && (done || cutoff < playedQuals);
     $("#fc").innerHTML = `<div class="table-wrap"><table>
       <thead><tr><th>Proj.</th><th>Team</th><th class="r">Current RS</th><th class="r">Proj. RS</th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th>${showFinal ? '<th class="r">Actual rank</th>' : ""}</tr></thead>
       <tbody>${rows.map((r, i) => `<tr>
@@ -1361,6 +1369,16 @@ function eventForecast(season, meta, ev, matches) {
       </tr>`).join("")}</tbody></table></div>`;
   };
   run();
+  const cut = $("#fc-cut");
+  if (cut) {
+    let timer;
+    cut.oninput = () => {
+      cutoff = +cut.value;
+      $("#fc-as").textContent = asOf(cutoff);
+      clearTimeout(timer);
+      timer = setTimeout(run, 120);
+    };
+  }
 }
 
 // Before the schedule is out: simulate random FTC schedules from the team list.
