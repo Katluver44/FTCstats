@@ -1061,7 +1061,6 @@ async function events(r) {
     { key: "teams", label: "Teams", cls: "r hide-sm" },
     { key: "played", label: "Matches", cls: "r small hide-sm", render: (e) => (e.matches ? (e.played < e.matches ? `${e.played}/${e.matches}` : e.matches) : "–") },
     { key: "strength", label: "Strength", cls: "r", render: (e) => epa(e.strength, meta) },
-    { key: "accuracy", label: "Called", cls: "r small hide-sm", render: (e) => pct(e.accuracy) },
   ];
   const table = sortableTable($("#tbl"), evs, cols, { sortKey: "start" });
   const fillStates = regionSelect($("#state"), () => evs.filter((e) => e.country === $("#country").value), query.get("state"));
