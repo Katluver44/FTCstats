@@ -372,7 +372,12 @@ async function teams(r) {
   const hasOff = meta.offTables && meta.offTables.full !== meta.offTables.official;
   if (stale(r)) return;
   const rpNames = meta.rpNames;
-  for (const r of rows) { r.region = regionOf(r.loc); r.wr = r.matches ? (r.wins + r.ties / 2) / r.matches : null; }
+  // rps: bonus RPs earned in an average match (each RP's rate, 0-1, summed), one column for all of them
+  const rpRate = (r, i) => Math.min(1, Math.max(0, r[`rp${i}`] ?? 0));
+  for (const r of rows) {
+    r.region = regionOf(r.loc); r.wr = r.matches ? (r.wins + r.ties / 2) / r.matches : null;
+    r.rps = rpNames.reduce((sum, _, i) => sum + rpRate(r, i), 0);
+  }
   const countries = [...new Set(rows.map((r) => r.country).filter(Boolean))].sort();
   app.innerHTML = `
     <div class="card">
@@ -399,15 +404,17 @@ async function teams(r) {
     { key: "auto", label: "Auto", cls: "r", render: (r) => fmt(r.auto) },
     { key: "teleop", label: "Teleop", cls: "r", render: (r) => fmt(r.teleop) },
     { key: "endgame", label: "Endgame", cls: "r", render: (r) => fmt(r.endgame) },
-    ...rpNames.map((n, i) => ({ key: `rp${i}`, label: `${n} RP`, cls: "r small hide-sm", render: (r) => pct(Math.max(0, r[`rp${i}`])) })),
+    ...(rpNames.length ? [{ key: "rps", label: `<span title="Bonus ranking points earned in an average match (${rpNames.join(", ")})">Bonus RPs</span>`, cls: "r small hide-sm",
+      render: (r) => `<span title="${rpNames.map((n, i) => `${n} ${pct(rpRate(r, i))}`).join(" · ")}">${fmt(r.rps)} <span class="faint">/ ${rpNames.length}</span></span>` }] : []),
     { key: "wins", label: "Record", cls: "r small", render: (r) => `${r.wins}-${r.losses}${r.ties ? `-${r.ties}` : ""}` },
     { key: "wr", label: "Win rate", cls: "r small", render: (r) => (r.wr == null ? "–" : pct(r.wr)) },
     { key: "trend", label: "Trend", cls: "r small", render: (r) => `<span title="EPA change over the last 10 matches">${trend(r.trend)}</span>` },
   ];
-  // Columns menu: everything but rank, team and EPA can be hidden (remembered per device)
+  // Columns menu: everything but rank, team and EPA can be hidden (remembered per device).
+  // By default location (the country filter covers it) and win rate (record says it) are off.
   const FIXED = new Set(["rank", "team", "np"]);
   const plain = (c) => c.label.replace(/<[^>]+>/g, "");
-  let hiddenCols = new Set(pref.get("teamCols", []));
+  let hiddenCols = new Set(pref.get("teamCols2", ["loc", "wr"]));
   $("#col-list").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) =>
     `<button type="button" class="col-btn" data-k="${c.key}" aria-pressed="${!hiddenCols.has(c.key)}">${esc(plain(c))}</button>`).join("");
   let table;
@@ -419,7 +426,7 @@ async function teams(r) {
     const k = b.dataset.k, on = hiddenCols.has(k);
     on ? hiddenCols.delete(k) : hiddenCols.add(k);
     b.setAttribute("aria-pressed", String(on));
-    pref.set("teamCols", [...hiddenCols]);
+    pref.set("teamCols2", [...hiddenCols]);
     mount(); apply();
   };
   if (query.get("min")) $("#minm").value = query.get("min");
