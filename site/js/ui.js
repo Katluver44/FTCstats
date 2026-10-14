@@ -338,7 +338,7 @@ export function downloadCsv(filename, cols, rows) {
 export const CSV_ICON = '<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1.5v7.5M3.8 6 7 9.2 10.2 6M2 12.5h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 // Sortable table: cols [{ key, label, cls, render(row), sort? }]
-export function sortableTable(el, rows, cols, { sortKey, desc = true, pageSize = 100 } = {}) {
+export function sortableTable(el, rows, cols, { sortKey, desc = true, pageSize = 100, rowClass = null } = {}) {
   let key = sortKey, dir = desc ? -1 : 1, shown = pageSize;
   const draw = () => {
     const sorted = [...rows].sort((a, b) => {
@@ -350,7 +350,7 @@ export function sortableTable(el, rows, cols, { sortKey, desc = true, pageSize =
     const head = cols.map((c) =>
       `<th class="${c.cls ?? ""} ${c.sort === false ? "" : "sortable"} ${c.key === key ? `sorted col-sorted ${dir > 0 ? "asc" : ""}` : ""}" data-k="${c.key}">${c.label}</th>`).join("");
     const body = sorted.slice(0, shown).map((r) =>
-      `<tr>${cols.map((c) => `<td class="${c.cls ?? ""} ${c.key === key ? "col-sorted" : ""}">${c.render ? c.render(r) : esc(r[c.key])}</td>`).join("")}</tr>`).join("");
+      `<tr${rowClass?.(r) ? ` class="${rowClass(r)}"` : ""}>${cols.map((c) => `<td class="${c.cls ?? ""} ${c.key === key ? "col-sorted" : ""}">${c.render ? c.render(r) : esc(r[c.key])}</td>`).join("")}</tr>`).join("");
     el.innerHTML = `<div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body || `<tr><td colspan="${cols.length}" class="empty">Nothing matches.</td></tr>`}</tbody></table></div>${
       sorted.length > shown ? `<button class="more">Show more (${fmtInt(sorted.length - shown)} left)</button>` : ""}`;
     el.querySelectorAll("th.sortable").forEach((th) => (th.onclick = () => {

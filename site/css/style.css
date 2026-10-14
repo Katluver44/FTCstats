@@ -1130,3 +1130,6 @@ pre.code { background: var(--surface-2); border: 1px solid var(--line); border-r
 /* three wide period cards: content centered so it doesn't sit in a corner */
 .stat-main .stat-card { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .stat-minor { justify-content: center; }
+/* teams that haven't played yet: the whole row a little greyed */
+tr.pre-row td { opacity: .5; }
+tr.pre-row:hover td { opacity: .85; }

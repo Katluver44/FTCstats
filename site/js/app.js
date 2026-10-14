@@ -490,7 +490,7 @@ async function teams(r) {
   $("#col-list").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) =>
     `<button type="button" class="col-btn" data-k="${c.key}" aria-pressed="${!hiddenCols.has(c.key)}">${esc(plain(c))}</button>`).join("");
   let table, shown = rows;
-  const mount = () => { table = sortableTable($("#tbl"), shown, cols.filter((c) => !hiddenCols.has(c.key)), { sortKey: "np" }); };
+  const mount = () => { table = sortableTable($("#tbl"), shown, cols.filter((c) => !hiddenCols.has(c.key)), { sortKey: "np", rowClass: (r) => (r.pre ? "pre-row" : "") }); };
   $("#col-list").onclick = (e) => {
     const b = e.target.closest("[data-k]");
     if (!b) return;
