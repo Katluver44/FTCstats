@@ -1115,10 +1115,17 @@ pre.code { background: var(--surface-2); border: 1px solid var(--line); border-r
 .wf-path { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 2 9; stroke-linecap: round; opacity: .55; }
 .wf-body { fill: var(--accent); }
 .wf-wheel { fill: var(--text); opacity: .8; }
-.wf-intake { fill: var(--orange); }
-.wf-bot { offset-path: path("M40 112 C 160 112, 200 38, 300 38 S 440 112, 560 112"); offset-rotate: auto; animation: wf-drive 5.5s ease-in-out infinite alternate; }
-@keyframes wf-drive { from { offset-distance: 0%; } to { offset-distance: 100%; } }
-@media (prefers-reduced-motion: reduce) { .wf-bot { animation: none; offset-distance: 50%; } }
+.wf-roller { stroke: var(--surface-2); stroke-width: 1.4; stroke-linecap: round; } /* mecanum rollers, in an X pattern */
+/* mecanum drive: it strafes along the curve still facing forward, then spins on the spot */
+.wf-bot { offset-path: path("M40 112 C 160 112, 200 38, 300 38 S 440 112, 560 112"); offset-rotate: 0deg; animation: wf-drive 9s ease-in-out infinite; }
+@keyframes wf-drive {
+  0% { offset-distance: 0%; rotate: 0deg; }
+  38% { offset-distance: 100%; rotate: 0deg; }
+  50% { offset-distance: 100%; rotate: 180deg; }
+  88% { offset-distance: 0%; rotate: 180deg; }
+  100% { offset-distance: 0%; rotate: 360deg; }
+}
+@media (prefers-reduced-motion: reduce) { .wf-bot { animation: none; offset-distance: 50%; rotate: 0deg; } }
 @media (max-width: 640px) { .no-matches h2 { font-size: 24px; } }
 /* three wide period cards: content centered so it doesn't sit in a corner */
 .stat-main .stat-card { display: flex; flex-direction: column; align-items: center; text-align: center; }

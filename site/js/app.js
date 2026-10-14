@@ -625,7 +625,7 @@ async function team(r) {
       ${[100, 200, 300, 400, 500].map((x) => `<line x1="${x}" y1="1" x2="${x}" y2="149" class="wf-line"/>`).join("")}
       <line x1="1" y1="75" x2="599" y2="75" class="wf-line"/>
       <path d="M40 112 C 160 112, 200 38, 300 38 S 440 112, 560 112" class="wf-path"/>
-      <g class="wf-bot"><rect x="-20" y="-20" width="40" height="40" rx="6" class="wf-body"/>${[[-17, -25], [5, -25], [-17, 19], [5, 19]].map(([x, y]) => `<rect x="${x}" y="${y}" width="12" height="6" rx="2" class="wf-wheel"/>`).join("")}<rect x="20" y="-14" width="6" height="28" rx="2" class="wf-intake"/></g>
+      <g class="wf-bot"><rect x="-20" y="-20" width="40" height="40" rx="6" class="wf-body"/>${[[-17, -25, 1], [5, -25, -1], [-17, 19, -1], [5, 19, 1]].map(([x, y, d]) => `<rect x="${x}" y="${y}" width="12" height="6" rx="2" class="wf-wheel"/>${[3, 7].map((u) => `<line x1="${x + u}" y1="${d > 0 ? y + 6 : y}" x2="${x + u + 3}" y2="${d > 0 ? y : y + 6}" class="wf-roller"/>`).join("")}`).join("")}</g>
     </svg>`;
     const header = p ? `<div class="card card-pad team-hero"><div class="th-top">
         <div class="th-id">
