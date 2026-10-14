@@ -82,7 +82,8 @@ async function decodeJpeg(bytes) {
 
 // Frames of the 80x45 level, each downsampled 2x to 40x22 RGB. Not kept on disk
 // (5 MB a stream); the per-stream result is what gets cached.
-export async function frames(id) {
+// pause: ms to wait between sheet requests (stay a trickle on youtube.com)
+export async function frames(id, { pause = 0 } = {}) {
   const spec = await storyboardSpec(id);
   const lv = spec?.find((l) => l.interval > 0 && l.w >= 80);
   if (!lv) return null;
@@ -90,6 +91,7 @@ export async function frames(id) {
   const data = new Uint8Array(lv.count * dims);
   const perSheet = lv.cols * lv.rows;
   for (let n = 0; n * perSheet < lv.count; n++) {
+    if (pause) await new Promise((r) => setTimeout(r, pause));
     const res = await fetch(lv.url(n), { headers: UA });
     if (!res.ok) return null;
     const img = await decodeJpeg(Buffer.from(await res.arrayBuffer()));
