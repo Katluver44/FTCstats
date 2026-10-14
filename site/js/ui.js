@@ -238,7 +238,7 @@ export function mountLineChart(el, { series, bands = [], tooltip, zero = true, m
     }
     bands.forEach((b, i) => {
       const x0 = x(b.from) - (b.from ? (x(1) - x(0)) / 2 : 0), x1 = x(b.to) + (b.to < n - 1 ? (x(1) - x(0)) / 2 : 0);
-      if (i % 2) g += `<rect x="${x0}" y="${P.t}" width="${Math.max(0, x1 - x0)}" height="${H - P.t - P.b}" fill="var(--zebra)"/>`;
+      if (i % 2) g += `<rect x="${x0}" y="${P.t}" width="${Math.max(0, x1 - x0)}" height="${H - P.t - P.b}" fill="var(--band)"/>`;
       // fit the label to its band (about 6px per character), or skip it
       const fit = Math.floor((x1 - x0 - 6) / 6);
       if (fit >= 4) {

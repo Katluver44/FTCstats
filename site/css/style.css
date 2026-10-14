@@ -26,7 +26,8 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   --pop-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
   --radius: 8px;
-  --zebra: rgba(0, 0, 0, 0.04); /* every other table row, and alternate chart bands */
+  --zebra: rgba(0, 0, 0, 0.012); /* every other table row: barely there, well under the match tints */
+  --band: rgba(0, 0, 0, 0.028); /* alternate event bands in charts */
   /* side margin: grows gently with the window (5%), 48px to 120px; no hard content cap,
      which left wide empty bands beside full-width rows on big screens */
   --gutter: clamp(48px, 5vw, 120px);
@@ -59,7 +60,8 @@
     --dot: #4da3ea;
     --dot-off: #2f3a46;
     --shadow: none;
-    --zebra: rgba(255, 255, 255, 0.055);
+    --zebra: rgba(255, 255, 255, 0.014);
+    --band: rgba(255, 255, 255, 0.035);
     --pop-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
     color-scheme: dark;
   }
@@ -88,7 +90,8 @@
   --dot: #4da3ea;
   --dot-off: #2f3a46;
   --shadow: none;
-  --zebra: rgba(255, 255, 255, 0.055);
+  --zebra: rgba(255, 255, 255, 0.014);
+  --band: rgba(255, 255, 255, 0.035);
   --pop-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
   color-scheme: dark;
 }
@@ -871,3 +874,59 @@ a.th-add:hover { color: var(--accent); border-color: var(--accent); }
   .nav-links a { padding: 7px 6px; }
 }
 .compete-bar .chart-pick a { white-space: nowrap; }
+
+/* home page lists: five big rows a side */
+.hl { display: flex; flex-direction: column; }
+.hl-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 16px 24px; border-bottom: 1px solid var(--line); color: var(--text); }
+.hl-row:hover { background: var(--hover); color: var(--text); }
+.hl-row:last-child { border-bottom: 0; }
+#home-events .hl-row { grid-template-columns: minmax(0, 1fr) auto; }
+.hl-rank { font-size: 26px; font-weight: 800; color: var(--faint); width: 28px; text-align: center; font-variant-numeric: tabular-nums; }
+.hl-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.hl-main b { font-size: 18px; font-weight: 750; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hl-num { color: var(--accent); }
+.hl-main small { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hl-meta { color: var(--faint) !important; font-variant-numeric: tabular-nums; }
+.hl-val { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 70px; }
+.hl-val .epa { font-size: 17px; padding: 4px 12px; }
+.hl-val small { font-size: 10.5px; color: var(--faint); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+@media (max-width: 640px) {
+  .hl-row { padding: 12px 16px; gap: 12px; }
+  .hl-main b { font-size: 16px; }
+  .hl-rank { font-size: 20px; width: 22px; }
+}
+
+/* home fits one screen on desktop: hero, then the two lists filling what's left, footer at the bottom.
+   refitHome() trims list rows to fit; .home-scroll is the fallback when even 3 rows don't. */
+@media (min-width: 901px) and (min-height: 520px) {
+  body.home-fit:not(.home-scroll) { height: 100vh; overflow: hidden; }
+  body.home-fit:not(.home-scroll) main { flex: 1 1 auto; min-height: 0; padding: 0; display: flex; flex-direction: column; }
+  body.home-fit:not(.home-scroll) footer { padding-top: 12px; padding-bottom: 14px; }
+  body.home-fit .hero { padding-top: clamp(16px, 4vh, 56px); padding-bottom: clamp(12px, 3vh, 40px); margin-top: 0; gap: 40px; }
+  body.home-fit .hero-title { font-size: clamp(34px, min(5vw, 7.5vh), 72px); margin: 1vh 0 1.6vh; }
+  body.home-fit .hero-sub { font-size: clamp(15px, 2.2vh, 19px); line-height: 1.5; }
+  body.home-fit .hero-actions { margin-top: clamp(12px, 2.4vh, 28px); }
+  body.home-fit .hero-stats { margin-top: clamp(12px, 2.6vh, 32px); }
+  body.home-fit .hero-stats b { font-size: clamp(22px, 3.4vh, 32px); }
+  body.home-fit .hero-media { padding: clamp(14px, 3.5vh, 48px) 0; }
+  body.home-fit:not(.home-scroll) .hero-below { flex: 1 1 auto; min-height: 0; padding: 0; display: flex; flex-direction: column; }
+  body.home-fit:not(.home-scroll) .hero-below .grid.cols-2 { flex: 1 1 auto; min-height: 0; }
+  body.home-fit:not(.home-scroll) .hero-below .grid.cols-2 > div { min-height: 0; }
+  body.home-fit .hero-below .section-title { padding-top: clamp(10px, 2vh, 28px); padding-bottom: 8px; }
+  body.home-fit .hero-below .section-title h2 { font-size: clamp(22px, 3.2vh, 32px); margin-top: 2px; }
+  body.home-fit:not(.home-scroll) .hero-below .card { min-height: 0; }
+  body.home-fit:not(.home-scroll) #top-teams, body.home-fit:not(.home-scroll) #home-events { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  body.home-fit .hl-row { padding-top: clamp(8px, 1.4vh, 16px); padding-bottom: clamp(8px, 1.4vh, 16px); }
+}
+.hero-row { display: flex; flex-wrap: wrap; align-items: flex-end; column-gap: 40px; }
+@media (min-width: 901px) and (min-height: 520px) {
+  body.home-fit .hero-title { font-size: clamp(32px, min(4.2vw, 6.5vh), 64px); }
+  body.home-fit .hero-sub { max-width: 640px; }
+  body.home-fit .hero-row .hero-stats { margin-top: clamp(12px, 2.4vh, 28px); }
+  body.home-fit .hero-media .feature-body { padding-top: clamp(10px, 2vh, 22px); padding-bottom: clamp(10px, 2vh, 22px); }
+  body.home-fit .hero-media .feature-foot { padding-bottom: clamp(10px, 2vh, 22px); }
+  body.home-fit .hero-media .feature-score { font-size: clamp(28px, 5vh, 40px); }
+  body.home-fit .hero-below .section-title .eyebrow { display: none; }
+  body.home-fit .hl-meta { display: none; }
+}
+@media (min-width: 901px) and (min-height: 860px) { body.home-fit .hl-meta { display: block; } }

@@ -34,6 +34,8 @@ async function route() {
   r.nav = ++state.nav;
   state.season = r.season;
   renderNav(r);
+  // the home page fits one screen on desktop (fitHome); every other page scrolls normally
+  document.body.classList.toggle("home-fit", !r.page);
   window.scrollTo(0, 0);
   app.innerHTML = `<div class="loading">Loading…</div>`;
   const pages = { "": home, teams, team, events, event, match, compete, about };
@@ -256,6 +258,7 @@ async function home(r) {
         <div class="hero-title">Every FTC match, predicted.</div>
         <div class="hero-sub">Team ratings that update after every match, win chances you can check against real results, and ranking forecasts for live events.</div>
         <div class="search hero-search mobile-only" id="hero-search">${SEARCH_ICON}<input placeholder="Search teams & events" autocomplete="off"><div class="search-results"></div></div>
+        <div class="hero-row">
         <div class="hero-actions">
           <a class="btn btn-solid" href="#/${season}/teams">Find a team</a>
           <a class="btn btn-outline" href="#/${season}/about">Our methodology</a>
@@ -264,6 +267,7 @@ async function home(r) {
           <div><b>${pct(acc.accuracy, 1)}</b><span>winners called before the match</span></div>
           <div><b>${fmtInt(meta.matches)}</b><span>matches rated</span></div>
           <div><b>${fmtInt(meta.teams)}</b><span>teams</span></div>
+        </div>
         </div>
       </div>
       <div class="hero-media">${feature}</div>
@@ -276,27 +280,60 @@ async function home(r) {
         </div>
         <div>
           <div class="section-title"><div class="eyebrow">${live.length ? "Live" : "Results"}</div><h2>${live.length ? "Happening now" : "Recent events"}</h2></div>
-          <div class="card">${eventList(season, meta, (live.length ? live : recent).slice(0, 8), "home-list")}<a class="more" href="#/${season}/events">All events →</a></div>
+          <div class="card"><div id="home-events"></div><a class="more" href="#/${season}/events">All events →</a></div>
         </div>
       </div>
     </div>`;
   wireSearch($("#hero-search"));
-  // two-line rows (team, then location) so they line up with the events list beside it
-  $("#top-teams").innerHTML = `<div class="table-wrap"><table class="home-list"><tbody>${teams.slice(0, 8).map((t) => `
-    <tr><td class="faint num" style="width:32px">${t.rank}</td>
-    <td><a class="ev-cell" href="#/${season}/team/${t.team}"><span class="n">${t.team} ${esc(t.name)}</span><span class="nm">${esc(t.loc)}</span></a></td>
-    <td class="r">${epa(t.np, meta)}</td></tr>`).join("")}</tbody></table></div>`;
+  // five big rows a side: who's on top, and what just happened
+  const rec = (x) => `${x.wins}-${x.losses}${x.ties ? `-${x.ties}` : ""}`;
+  $("#top-teams").innerHTML = `<div class="hl">${teams.slice(0, 8).map((t) => `
+    <a class="hl-row" href="#/${season}/team/${t.team}">
+      <span class="hl-rank">${t.rank}</span>
+      <span class="hl-main"><b><span class="hl-num">${t.team}</span> ${esc(t.name)}</b><small>${esc(t.loc)}</small>
+        <small class="hl-meta">${rec(t)} · Auto ${fmt(t.auto, 0)} · Teleop ${fmt(t.teleop, 0)} · Endgame ${fmt(t.endgame, 0)}</small></span>
+      <span class="hl-val">${epa(t.np, meta)}<small>EPA</small></span>
+    </a>`).join("")}</div>`;
+  // tiny scrimmages crowd out the events people care about; skip them when there are enough others
+  const evPool = live.length ? live : recent;
+  const bigger = evPool.filter((e) => e.teams >= 8);
+  const evs = (bigger.length >= 8 ? bigger : evPool).slice(0, 8);
+  $("#home-events").innerHTML = evs.length ? `<div class="hl">${evs.map((e) => `
+    <a class="hl-row" href="#/${season}/event/${e.code}">
+      <span class="hl-main"><b title="${esc(e.name)}">${esc(e.name)}</b><small>${fmtRange(e.start, e.end)} · ${esc(e.loc)}</small>
+        <small class="hl-meta">${esc(typeName(e.type))} · ${e.teams} teams${e.topTeams?.length ? ` · Top: ${e.topTeams.slice(0, 3).join(", ")}` : ""}</small></span>
+      <span class="hl-val">${e.ongoing ? '<span class="pill live">Live</span>' : `${epa(e.strength, meta)}<small>Strength</small>`}</span>
+    </a>`).join("")}</div>` : `<div class="empty">No events yet.</div>`;
+  fitHome();
 }
 
-function eventList(season, meta, evs, cls = "") {
-  if (!evs.length) return `<div class="empty">No events yet.</div>`;
-  return `<div class="table-wrap"><table class="${cls}"><tbody>${evs.map((e) => `
-    <tr>
-      <td>${evCell(season, e.code, e.name, `${fmtRange(e.start, e.end)} · ${esc(e.loc)}`)}</td>
-      <td class="small muted hide-sm">${esc(typeName(e.type))}</td>
-      <td class="r">${e.ongoing ? '<span class="pill live">Live</span>' : epa(e.strength, meta)}</td>
-    </tr>`).join("")}</tbody></table></div>`;
+// Home on a desktop screen: show as many list rows as fit so the page never
+// scrolls (at least 3 a side); if even that doesn't fit, let it scroll.
+let homeRows = null;
+function fitHome() {
+  const lists = ["#top-teams .hl", "#home-events .hl"].map((q) => $(q)).filter(Boolean);
+  homeRows = lists.map((l) => [l, [...l.children]]);
+  refitHome();
 }
+function refitHome() {
+  if (!homeRows || !document.body.classList.contains("home-fit") || !homeRows[0][0].isConnected) return;
+  document.body.classList.remove("home-scroll");
+  for (const [l, rows] of homeRows) l.replaceChildren(...rows);
+  if (!matchMedia("(min-width: 901px) and (min-height: 520px)").matches) return;
+  let fits = true;
+  for (const [l] of homeRows) {
+    const box = l.parentElement; // the list's area inside its card
+    while (box.scrollHeight > box.clientHeight + 1 && l.children.length > 1) l.lastElementChild.remove();
+    if (box.scrollHeight > box.clientHeight + 1 || l.children.length < 3) fits = false;
+  }
+  // too short a window for a useful one-screen page: put every row back and scroll
+  if (!fits) {
+    for (const [l, rows] of homeRows) l.replaceChildren(...rows);
+    document.body.classList.add("home-scroll");
+  }
+}
+let refitTimer;
+addEventListener("resize", () => { clearTimeout(refitTimer); refitTimer = setTimeout(refitHome, 120); });
 
 // "Columbus, OH, USA" -> "OH" (the part before the country), or "" when there's none
 const regionOf = (loc) => { const p = (loc ?? "").split(", "); return p.length >= 3 ? p[p.length - 2] : ""; };
@@ -836,8 +873,6 @@ async function events(r) {
     { key: "type", label: "Type", cls: "small muted hide-sm", render: (e) => esc(typeName(e.type)) },
     { key: "teams", label: "Teams", cls: "r hide-sm" },
     { key: "played", label: "Matches", cls: "r small hide-sm", render: (e) => (e.matches ? (e.played < e.matches ? `${e.played}/${e.matches}` : e.matches) : "–") },
-    { key: "topTeams", label: "Top teams", cls: "small hide-sm", sort: false,
-      render: (e) => (e.topTeams ?? (e.topTeam ? [e.topTeam] : [])).map((t) => `<a class="link" href="#/${season}/team/${t}">${t}</a>`).join(" · ") || "–" },
     { key: "strength", label: "Strength", cls: "r", render: (e) => epa(e.strength, meta) },
     { key: "accuracy", label: "Called", cls: "r small hide-sm", render: (e) => pct(e.accuracy) },
   ];
