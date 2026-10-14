@@ -36,8 +36,7 @@ await fs.writeFile(path.join(out, "vercel.json"), JSON.stringify({
     // Vercel's CDN keeps each deployment's own cache and starts fresh on every deploy,
     // so the edge can hold files until the next deploy (s-maxage of a year); browsers
     // reuse data for 5 minutes and serve a stale copy instantly while refetching.
-    // /data is a public read-only API (see #/api): any site may fetch it
-    { source: "/data/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=31536000, stale-while-revalidate=86400" }, { key: "Access-Control-Allow-Origin", value: "*" }] },
+    { source: "/data/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=31536000, stale-while-revalidate=86400" }] },
     // code: the page asks for every script and stylesheet with this deploy's ?v= stamp,
     // so a stamped URL never changes and browsers can keep it for good
     { source: "/(js|css)/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=31536000, stale-while-revalidate=86400" }] },

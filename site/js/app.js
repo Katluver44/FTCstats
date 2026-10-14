@@ -35,7 +35,7 @@ function labelFilters(root = document) {
   }
 }
 document.addEventListener("change", (e) => { if (e.target instanceof HTMLSelectElement) labelFilters(e.target.parentElement ?? document); }, true);
-const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", sim: "SIM event", about: "Our methodology", api: "Data API" };
+const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", sim: "SIM event", about: "Our methodology" };
 const setTitle = (name) => (document.title = name ? `${name} · FTCstats` : "FTCstats · FTC ratings & match predictions");
 
 async function route() {
@@ -48,7 +48,7 @@ async function route() {
   document.body.classList.toggle("home-fit", !r.page);
   window.scrollTo(0, 0);
   app.innerHTML = `<div class="loading">Loading…</div>`;
-  const pages = { "": home, teams, team, events, event, match, compete, h2h, sim, about, api };
+  const pages = { "": home, teams, team, events, event, match, compete, h2h, sim, about };
   const fn = pages[r.page] ?? notFound;
   setTitle(r.page && (PAGE_TITLES[r.page] ?? "Page not found"));
   try {
@@ -67,7 +67,7 @@ async function route() {
 // the same kind of page in another season; event codes differ by season, so events go to the list
 function seasonHref(s, { page, args }) {
   const keep = {
-    teams: "teams", events: "events", compete: "compete", h2h: `h2h?${new URLSearchParams(location.hash.split("?")[1] ?? "")}`, about: "about", api: "api", sim: "sim", event: "events", match: "events",
+    teams: "teams", events: "events", compete: "compete", h2h: `h2h?${new URLSearchParams(location.hash.split("?")[1] ?? "")}`, about: "about", sim: "sim", event: "events", match: "events",
     team: `team/${args.join("/")}`,
   }[page] ?? "";
   return `#/${s}/${keep}`;
@@ -1112,25 +1112,12 @@ async function event(r) {
             <span class="pill">${ev.teams} teams</span><span class="pill">${played.length}/${matches.length} matches played</span>
             <a class="pill" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}" target="_blank" rel="noopener">FTCScout ↗</a>
             ${shareButton(`e/${season}/${encodeURIComponent(code)}`, ev.name)}
-            <button class="pill" id="ev-csv" title="Download every match, with scores and predictions, as a spreadsheet">${CSV_ICON} Matches CSV</button>
             ${videos?.[code]?.streams?.[0] ? `<button class="pill" data-video="${videos[code].streams[0].id}" data-t="0"${videos[code].streams[0].ext ? ' data-ext="1"' : ""} data-title="${esc(ev.name)}">▶ Event stream</button>` : ""}
           </div>
         </div>
       </div></div>
       <nav class="tabs seg glass">${tabs.map(([k, label]) => `<a href="#/${season}/event/${code}/${k}" class="${k === (tabs.some(([t]) => t === tab) ? tab : "matches") ? "active" : ""}">${label}</a>`).join("")}</nav>
       <div id="tab"></div>`;
-    $("#ev-csv").onclick = () => {
-      const side = (m, s) => m[s].join(" ");
-      const sc = (m, s, k) => (m.played ? m[`${s}Score`]?.[k] : "");
-      downloadCsv(`ftcstats-${season}-${code}-matches.csv`, [
-        { label: "Match", get: (m) => m.d }, { label: "Level", get: (m) => m.level },
-        { label: "Red teams", get: (m) => side(m, "red") }, { label: "Blue teams", get: (m) => side(m, "blue") },
-        { label: "Red score", get: (m) => sc(m, "red", "total") }, { label: "Blue score", get: (m) => sc(m, "blue", "total") },
-        { label: "Red auto", get: (m) => sc(m, "red", "auto") }, { label: "Red teleop", get: (m) => sc(m, "red", "teleop") }, { label: "Red endgame", get: (m) => sc(m, "red", "endgame") },
-        { label: "Blue auto", get: (m) => sc(m, "blue", "auto") }, { label: "Blue teleop", get: (m) => sc(m, "blue", "teleop") }, { label: "Blue endgame", get: (m) => sc(m, "blue", "endgame") },
-        { label: "Red win chance (before)", get: (m) => m.pred?.pRed }, { label: "Predicted red score", get: (m) => m.pred?.red?.total }, { label: "Predicted blue score", get: (m) => m.pred?.blue?.total },
-      ], matches);
-    };
     if (tab === "teams") eventTeams(season, meta, ev);
     else if (tab === "pickmap" && ev.teamList.length >= 4) eventPickMap(season, ev);
     else if (tab === "playoffs" && hasPlayoffs) eventPlayoffs(season, meta, ev, matches, official[code], (m) => videoFor(videos, code, m.time));
@@ -2192,47 +2179,6 @@ async function h2h(r) {
     ${awardsTitle}${awardsCard()}
     <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(allVs)}</b> for ${A} · Together: <b>${recordOf(allWith)}</b> · scores show ${A}'s alliance first</p></div>
     ${meetTable(groups, evNames)}`;
-}
-
-// ---------------- data API ----------------
-
-// The site's own JSON files, documented so others can build on them (Discord bots,
-// spreadsheets, scouting apps). Plain static files: no key, cached for minutes.
-async function api(r) {
-  const { season } = r;
-  const base = `${location.origin}${location.pathname.replace(/[^/]*$/, "")}data`;
-  const ep = (path, what, eg) => `<tr><td><code>${esc(path)}</code></td><td>${what}${eg ? `<div class="small"><a class="link" href="${esc(`data/${eg}`)}" target="_blank" rel="noopener">Try it ↗</a></div>` : ""}</td></tr>`;
-  app.innerHTML = `
-    <div class="card card-pad"><div class="prose">
-      <div class="kicker">For developers</div>
-      <h1>Data API</h1>
-      <p>Everything on this site comes from plain JSON files you can use too: no sign-up and no key. They're rebuilt every hour from the season's results, and other websites can load them directly (CORS is open). Base URL:</p>
-      <pre class="code">${esc(base)}</pre>
-      <p>Free for non-commercial use. Please link back to FTCstats, and keep FIRST's credit too: the match data comes from the <a class="link" href="https://ftc-events.firstinspires.org/api" target="_blank" rel="noopener">FIRST FTC Events API</a> via <a class="link" href="https://ftcscout.org" target="_blank" rel="noopener">FTCScout</a>, whose terms rule out commercial use. Please cache what you fetch rather than polling every few seconds.</p>
-    </div></div>
-    <div class="card section"><div class="table-wrap"><table class="api-table">
-      <thead><tr><th>File</th><th>What's in it</th></tr></thead>
-      <tbody>
-        ${ep("/index.json", "Seasons available and the default (current) one.", "index.json")}
-        ${ep("/{season}/meta.json", "The season: game name, bonus RP names, prediction accuracy, calibration, model settings.", `${season}/meta.json`)}
-        ${ep("/{season}/teams.json", "Every team that played: <code>{cols, rows}</code>, one array per team in column order, best EPA first. Columns include <code>np</code> (EPA), <code>auto</code>, <code>teleop</code>, <code>endgame</code>, <code>rp0-2</code> (bonus RP rates), record, <code>trend</code>.", `${season}/teams.json`)}
-        ${ep("/{season}/teams-pre.json", "Teams that haven't played yet this season, with the EPA they start on.", `${season}/teams-pre.json`)}
-        ${ep("/{season}/team/{n÷10}x.json", "Full team pages, 10 teams to a file: team 14270 is in <code>1427x.json</code> under key <code>\"14270\"</code>. Every match with EPA after it, events, awards, world / country / state ranks.", "")}
-        ${ep("/{season}/events.json", "Every event: code, name, type, dates, location, team count, strength, how many winners we called.", `${season}/events.json`)}
-        ${ep("/{season}/event/{code}.json", "One event: teams with their EPA coming in and rankings, every match with scores and the prediction made before it.", "")}
-        ${ep("/{season}/videos/{code}.json", "Match video for one event: livestream recordings (with start times) and per-match uploads.", "")}
-        ${ep("/{season}/alliances.json", "Playoff alliances for each event.", `${season}/alliances.json`)}
-      </tbody></table></div></div>
-    <div class="card card-pad section"><div class="prose">
-      <h2>Example</h2>
-      <p>The top 5 teams this season by EPA:</p>
-      <pre class="code">const base = "${esc(base)}";
-const { default: season } = await (await fetch(\`\${base}/index.json\`)).json();
-const { cols, rows } = await (await fetch(\`\${base}/\${season}/teams.json\`)).json();
-const teams = rows.map((r) =&gt; Object.fromEntries(cols.map((c, i) =&gt; [c, r[i]])));
-console.table(teams.slice(0, 5), ["team", "name", "np", "auto", "teleop", "endgame"]);</pre>
-      <p class="small muted">File shapes can gain fields; we avoid renaming or removing them. Lists on the site also have a CSV button for spreadsheets.</p>
-    </div></div>`;
 }
 
 // ---------------- about / accuracy ----------------
