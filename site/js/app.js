@@ -26,7 +26,7 @@ function parseHash() {
 }
 
 // tab title for pages with no heading (the lists, "not found" messages) and while loading
-const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", about: "Our methodology", api: "Data API" };
+const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", sim: "Make-up event", about: "Our methodology", api: "Data API" };
 const setTitle = (name) => (document.title = name ? `${name} · FTCstats` : "FTCstats · FTC ratings & match predictions");
 
 async function route() {
@@ -39,7 +39,7 @@ async function route() {
   document.body.classList.toggle("home-fit", !r.page);
   window.scrollTo(0, 0);
   app.innerHTML = `<div class="loading">Loading…</div>`;
-  const pages = { "": home, teams, team, events, event, match, compete, h2h, about, api };
+  const pages = { "": home, teams, team, events, event, match, compete, h2h, sim, about, api };
   const fn = pages[r.page] ?? notFound;
   setTitle(r.page && (PAGE_TITLES[r.page] ?? "Page not found"));
   try {
@@ -57,7 +57,7 @@ async function route() {
 // the same kind of page in another season; event codes differ by season, so events go to the list
 function seasonHref(s, { page, args }) {
   const keep = {
-    teams: "teams", events: "events", compete: "compete", h2h: `h2h?${new URLSearchParams(location.hash.split("?")[1] ?? "")}`, about: "about", api: "api", event: "events", match: "events",
+    teams: "teams", events: "events", compete: "compete", h2h: `h2h?${new URLSearchParams(location.hash.split("?")[1] ?? "")}`, about: "about", api: "api", sim: "sim", event: "events", match: "events",
     team: `team/${args.join("/")}`,
   }[page] ?? "";
   return `#/${s}/${keep}`;
@@ -76,7 +76,7 @@ function renderNav(r) {
   closeSeasonMenu(false);
   $$("header [data-page]").forEach((a) => {
     a.href = `#/${season}/${a.dataset.page}`;
-    a.classList.toggle("active", a.dataset.page === (page === "h2h" ? "compete" : page));
+    a.classList.toggle("active", a.dataset.page === (page === "h2h" || page === "sim" ? "compete" : page));
   });
   $(".logo").href = `#/${season}/`;
 }
@@ -1890,8 +1890,76 @@ async function compete(r) {
 }
 
 // Predict a match | Head to head: the two Compete modes
+// ---------------- make-up event ----------------
+
+// Any list of teams as a pretend event: random qualification schedules, played out
+// from each team's current rating (scrimmages, off-season planning, "what if").
+async function sim(r) {
+  const { season, query } = r;
+  const [meta, played, preTable, events] = await Promise.all([data.meta(season), data.teams(season), getJSON(`data/${season}/teams-pre.json`).catch(() => null), data.events(season)]);
+  if (stale(r)) return;
+  const pre = (preTable?.rows ?? []).map((row) => { const o = { matches: 0, pre: true }; preTable.cols.forEach((c, j) => (o[c] = row[j])); return o; });
+  const byNum = new Map([...pre, ...played].map((t) => [t.team, t]));
+  let perTeam = Math.min(10, Math.max(3, +query.get("per") || 5));
+  const parse = (text) => [...new Set((text.match(/\d{1,6}/g) ?? []).map(Number))].slice(0, 80);
+  const evOpts = [...events].filter((e) => e.teams >= 4).sort((a, b) => b.start.localeCompare(a.start));
+  app.innerHTML = `
+    <div class="card card-pad"><div class="page-head"><div>
+      <div class="kicker">${seasonLabel(season, meta.game)}</div>
+      <h1>Make-up event</h1>
+      <p class="muted" style="margin:4px 0 0">Pick any teams and see how a qualification tournament between them would likely rank: thousands of random schedules, each played out from every team's current EPA.</p>
+    </div>${competeModes(season, "sim")}</div></div>
+    <div class="card card-pad section sim-form">
+      <label for="sim-teams"><b>Teams</b> <span class="small muted">numbers, separated by spaces, commas or new lines</span></label>
+      <textarea id="sim-teams" rows="3" placeholder="e.g. 14270 20265 11329 30030 19066 …">${esc((query.get("teams") ?? "").split(",").filter(Boolean).join(" "))}</textarea>
+      <div class="row sim-row">
+        <label class="sel-label"><span>Start from</span><input id="sim-ev" list="sim-evs" placeholder="an event's team list" autocomplete="off"></label>
+        <datalist id="sim-evs">${evOpts.map((e) => `<option value="${esc(e.name)} (${esc(e.code)})"></option>`).join("")}</datalist>
+        <label class="sel-label"><span>Matches per team</span><select id="sim-per">${[3, 4, 5, 6, 7, 8, 9, 10].map((n) => `<option ${n === perTeam ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+        <button type="button" class="btn btn-solid" id="sim-go">Simulate</button>
+        <span class="small muted" id="sim-note"></span>
+      </div>
+    </div>
+    <div class="card section" id="sim-out"></div>`;
+  const ta = $("#sim-teams");
+  const run = () => {
+    const nums = parse(ta.value);
+    syncQuery({ teams: nums.join(","), per: perTeam === 5 ? "" : perTeam });
+    const unknown = nums.filter((n) => !byNum.has(n));
+    $("#sim-note").textContent = `${nums.length} team${nums.length === 1 ? "" : "s"}${unknown.length ? ` · ${unknown.length} not rated yet, treated as new teams (${unknown.slice(0, 5).join(", ")}${unknown.length > 5 ? "…" : ""})` : ""}`;
+    if (nums.length < 4) { $("#sim-out").innerHTML = `<div class="empty">Add at least 4 teams.</div>`; return; }
+    const teamList = nums.map((n) => {
+      const t = byNum.get(n);
+      return { team: n, name: t?.name ?? "", state: t ? { auto: t.pauto ?? t.auto, teleop: t.pteleop ?? t.teleop, endgame: t.pendgame ?? t.endgame, n: t.matches, rp: [t.rp0 ?? 0, t.rp1 ?? 0, t.rp2 ?? 0] } : null };
+    });
+    const rows = forecastFromRoster(season, meta, { teamList, type: null }, { perTeam });
+    const names = new Map(teamList.map((t) => [t.team, t.name]));
+    $("#sim-out").innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Proj.</th><th>Team</th><th class="r"><span title="${EPA_TIP}">EPA</span></th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th></tr></thead>
+      <tbody>${rows.map((x, i) => `<tr>
+        <td class="faint num">${i + 1}</td>
+        <td>${byNum.has(x.team) ? teamCell(season, x.team, names.get(x.team)) : `<b>${x.team}</b> <span class="faint small">new</span>`}</td>
+        <td class="r">${byNum.has(x.team) ? epa(byNum.get(x.team).np, meta) : "–"}</td>
+        <td class="r">${fmt(x.meanRank, 1)}</td><td class="r">${probCell(x.p1)}</td><td class="r">${probCell(x.p4)}</td><td class="r hide-sm">${probCell(x.p8)}</td>
+      </tr>`).join("")}</tbody></table></div>
+      <p class="small muted card-pad" style="margin:0">2,000 random schedules with ${perTeam} matches per team. Teams that haven't played this season use the rating they start on.</p>`;
+  };
+  $("#sim-go").onclick = run;
+  $("#sim-per").onchange = (e) => { perTeam = +e.target.value; run(); };
+  $("#sim-ev").onchange = async (e) => {
+    const code = e.target.value.match(/\(([^)]+)\)\s*$/)?.[1];
+    if (!code) return;
+    const ev = await data.event(season, code).catch(() => null);
+    if (!ev) return;
+    ta.value = ev.teamList.map((t) => t.team).join(" ");
+    e.target.value = "";
+    run();
+  };
+  if (parse(ta.value).length >= 4) run(); else $("#sim-out").innerHTML = `<div class="empty">Add at least 4 teams, or start from an event's team list.</div>`;
+}
+
 const competeModes = (season, cur) => `<nav class="chart-pick mode-pick" aria-label="Compete mode">
-  ${[["compete", "Predict a match"], ["h2h", "Head to head"]].map(([k, l]) => `<a href="#/${season}/${k}" class="${k === cur ? "active" : ""}">${l}</a>`).join("")}</nav>`;
+  ${[["compete", "Predict a match"], ["h2h", "Head to head"], ["sim", "Make-up event"]].map(([k, l]) => `<a href="#/${season}/${k}" class="${k === cur ? "active" : ""}">${l}</a>`).join("")}</nav>`;
 
 // Type-ahead for one team input (number or name), strongest first; same look as Compete's.
 function teamTypeahead(el, list, meta, onPick) {
