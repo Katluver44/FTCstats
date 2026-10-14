@@ -139,6 +139,8 @@ h3, .eyebrow { font-size: 13px; font-weight: 700; color: var(--accent); text-tra
 /* ---------- header: dark utility strip + white nav ---------- */
 .nav { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); }
 .nav-inner { display: flex; align-items: center; gap: 8px; padding: 0 var(--gutter); height: 84px; }
+/* the links, search and season picker sit out toward the right edge */
+@media (min-width: 901px) { .nav-inner { padding-right: calc(var(--gutter) / 2); } }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 22px; letter-spacing: -0.02em; white-space: nowrap; margin-right: auto; }
 .logo i { font-style: italic; font-weight: 900; }
 .logo svg { display: block; }
