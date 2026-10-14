@@ -26,8 +26,8 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   --pop-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
   --radius: 8px;
-  /* side margin: 48px, growing on wide screens so content stays within ~1600px, centred */
-  --gutter: max(48px, calc((100vw - 1600px) / 2));
+  /* side margin: 48px, growing on very wide screens so content stays within ~1800px, centred */
+  --gutter: max(48px, calc((100vw - 1800px) / 2));
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
