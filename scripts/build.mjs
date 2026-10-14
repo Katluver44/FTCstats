@@ -10,6 +10,7 @@ import { SEASONS, soloPoints } from "../site/js/seasons.js";
 import { fitSoloValues } from "./solo-values.mjs";
 import { Model, COMPONENTS, onField, allianceTeams, isElim, epaParams, epaComponent } from "../site/js/model.js";
 import { oprPredictions } from "./opr.mjs";
+import { localToUtc } from "./videos.mjs";
 import { elo, avgScore } from "./baselines.mjs";
 
 const r1 = (x) => Math.round(x * 10) / 10;
@@ -29,9 +30,29 @@ export async function loadSeason(season) {
   const events = [];
   for (const f of files) {
     const ev = JSON.parse(await fs.readFile(path.join(dir, f), "utf8"));
+    if (season === 2019) fixLocalTimes(ev);
     if (!ev.remote) events.push(ev);
   }
   return events;
+}
+
+// 2019 match times come as the venue's clock time marked UTC ("11:15Z" for 11:15 in New
+// York), so they're 4-7 h early in the US. Livestream recordings confirm it: their
+// matches start that many hours after the listed times. Read them as local time.
+const STATE_TZ = { CT: "America/New_York", DE: "America/New_York", DC: "America/New_York", FL: "America/New_York", GA: "America/New_York", IN: "America/Indiana/Indianapolis",
+  KY: "America/New_York", ME: "America/New_York", MD: "America/New_York", MA: "America/New_York", MI: "America/Detroit", NH: "America/New_York", NJ: "America/New_York",
+  NY: "America/New_York", NC: "America/New_York", OH: "America/New_York", PA: "America/New_York", RI: "America/New_York", SC: "America/New_York", VT: "America/New_York",
+  VA: "America/New_York", WV: "America/New_York", AL: "America/Chicago", AR: "America/Chicago", IL: "America/Chicago", IA: "America/Chicago", KS: "America/Chicago",
+  LA: "America/Chicago", MN: "America/Chicago", MS: "America/Chicago", MO: "America/Chicago", NE: "America/Chicago", ND: "America/Chicago", OK: "America/Chicago",
+  SD: "America/Chicago", TN: "America/Chicago", TX: "America/Chicago", WI: "America/Chicago", AZ: "America/Phoenix", CO: "America/Denver", ID: "America/Boise",
+  MT: "America/Denver", NM: "America/Denver", UT: "America/Denver", WY: "America/Denver", CA: "America/Los_Angeles", NV: "America/Los_Angeles",
+  OR: "America/Los_Angeles", WA: "America/Los_Angeles", AK: "America/Anchorage", HI: "Pacific/Honolulu" };
+function fixLocalTimes(ev) {
+  const tz = ev.timezone && ev.timezone !== "UTC" ? ev.timezone : ev.location?.country === "USA" ? STATE_TZ[ev.location.state] : null;
+  if (!tz) return;
+  for (const m of ev.matches ?? []) for (const k of ["actualStartTime", "scheduledStartTime"]) {
+    if (m[k]) m[k] = new Date(localToUtc(m[k].replace(/(\.\d+)?Z$/, ""), tz)).toISOString();
+  }
 }
 
 function matchTime(ev, m) {

@@ -18,6 +18,7 @@ const args = process.argv.slice(2);
 const opt = (name, dflt) => { const i = args.indexOf(name); return i >= 0 ? args.splice(i, 2)[1] : dflt; };
 let budget = +opt("--budget", 8000);
 const outDir = opt("--out", ".cache/channels/out");
+const force = args.includes("--force"); // rescan channels scanned this week too
 const extra = [];
 for (let i; (i = args.indexOf("--channels")) >= 0;) extra.push(args.splice(i, 2)[1]);
 const readJson = (f, fallback) => fs.readFile(f, "utf8").then(JSON.parse).catch(() => fallback);
@@ -80,7 +81,7 @@ console.log(`${channels.size} channels to scan`);
 async function scan(ch) {
   const file = path.join(".cache", "channels", `${ch}.json`);
   const c = await readJson(file, { scanned: 0, videos: {} });
-  if (Date.now() - c.scanned < 7 * 864e5) return c;
+  if (!force && Date.now() - c.scanned < 7 * 864e5) return c;
   // the channel's streams and videos tabs, every page (YouTube's own pages: no quota)
   const fresh = [];
   for (const tab of ["streams", "videos"]) {
@@ -111,19 +112,23 @@ const UA = { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Appl
 const walk = (o, k, out = []) => { if (o && typeof o === "object") { if (o[k]) out.push(o[k]); for (const v of Object.values(o)) walk(v, k, out); } return out; };
 async function channelTab(ch, tab) {
   const out = [];
-  const take = (d) => { for (const v of walk(d, "lockupViewModel")) if (v.contentId) out.push({ id: v.contentId, title: v.metadata?.lockupMetadataViewModel?.title?.content ?? "" }); };
   const html = await fetch(`https://www.youtube.com/channel/${ch}/${tab}`, { headers: UA }).then((r) => r.text()).catch(() => "");
   const m = html.match(/var ytInitialData = (\{.*?\});<\/script>/s);
   if (!m) return out;
   const d = JSON.parse(m[1]);
-  take(d);
-  let tok = walk(d, "continuationCommand")[0]?.token;
-  for (let i = 0; tok && i < 300; i++) {
+  // the selected tab's items; the next page's token is in the LAST continuation item
+  // (the first one found can point back at page one)
+  const root = walk(d, "tabRenderer").find((t) => t.selected)?.content ?? d;
+  const next = (o) => walk(o, "continuationItemRenderer").at(-1)?.continuationEndpoint?.continuationCommand?.token;
+  const seen = new Set();
+  const take2 = (o) => { let fresh = 0; for (const v of walk(o, "lockupViewModel")) if (v.contentId && !seen.has(v.contentId)) { seen.add(v.contentId); fresh++; out.push({ id: v.contentId, title: v.metadata?.lockupMetadataViewModel?.title?.content ?? "" }); } return fresh; };
+  take2(root);
+  let tok = next(root);
+  for (let i = 0; tok && i < 400; i++) {
     const r = await fetch("https://www.youtube.com/youtubei/v1/browse", { method: "POST", headers: { ...UA, "Content-Type": "application/json" },
       body: JSON.stringify({ context: { client: { clientName: "WEB", clientVersion: "2.20240726.00.00", hl: "en" } }, continuation: tok }) }).then((x) => x.json()).catch(() => null);
-    if (!r) break;
-    take(r);
-    tok = walk(r, "continuationCommand")[0]?.token;
+    if (!r || !take2(r)) break; // nothing new: end of the list
+    tok = next(r);
   }
   return out;
 }
@@ -161,9 +166,18 @@ const perMatch = new Map(); // channel -> number of per-match titles
 const stampCh = new Set();
 const NOT_FTC = /\b(vex|v5rc|vrc|vexu|fll|lego|frc|rebuilt|reefscape|crescendo|charged up|rapid react|infinite recharge)\b/i;
 let n = 0;
+// list channels a few at a time (each is many page requests); details calls share the budget
+const scanned = new Map();
+try {
+  const todo = [...channels];
+  await Promise.all(Array.from({ length: 6 }, async () => {
+    for (let ch; (ch = todo.shift());) scanned.set(ch, await scan(ch));
+  }));
+} catch (e) { if (!e.budget) throw e; console.log(`quota budget used up after ${scanned.size} channels; run again to continue`); }
 try {
   for (const ch of channels) {
-    const c = await scan(ch);
+    const c = scanned.get(ch);
+    if (!c) continue;
     n++;
     // the channel's home: regions of events its videos are already filed under
     const home = new Set([...used].filter(([id]) => c.videos[id]).flatMap(([, xs]) => xs.map((x) => evs.find((e) => e.season === x.season && e.code === x.code)?.region)).filter(Boolean));
@@ -200,7 +214,7 @@ try {
       cands[pick.e.season].push({ videoId: id, code: pick.e.code, title: v.title, why: `${ch} ${pick.score ? "name" : "home region"} ${pick.inside} inside` });
     }
   }
-} catch (e) { if (!e.budget) throw e; console.log(`quota budget used up after ${n} channels; run again to continue`); }
+} catch (e) { if (!e.budget) throw e; }
 
 await fs.mkdir(outDir, { recursive: true });
 for (const s of SEASONS) if (cands[s].length) await fs.writeFile(path.join(outDir, `cands-${s}.json`), JSON.stringify({ videos: cands[s] }, null, 1));

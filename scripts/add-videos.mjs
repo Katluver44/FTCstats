@@ -103,7 +103,7 @@ const event = async (code) => {
 // "Qualification 12", "Qual 12", "Q12", "Q-01", "Playoff M-03", "Playoff 3", "Playoff Match 3", "Match 3", "Semifinal 1-2", "Final 2"
 function titleMatch(t, bareM = false) {
   let x;
-  if ((x = t.match(/\b(?:Qualification|Qual|Q)[\s#-]*(\d{1,3})\b/i))) return `Q-${+x[1]}`;
+  if ((x = t.match(/\b(?:Qualification|Qual|QM|Q)[\s#-]*(?:Match\s*#?\s*)?(\d{1,3})\b/i))) return `Q-${+x[1]}`; // "Qualification Match 8", "QM 8"
   if ((x = t.match(/\bSemi-?final\s*(\d)\s*[-, ]\s*(?:game\s*|match\s*)?(\d)\b/i))) return `SF${x[1]}-${x[2]}`;
   if ((x = t.match(/\bFinals?\s*(?:game\s*|match\s*)?#?\s*(\d)\b/i))) return `F-${x[1]}`;
   if (/tie-?breaker|replay/i.test(t)) return null; // replays are numbered differently
@@ -122,6 +122,20 @@ const reroute = []; // rejected here, but maybe the same-named event of another 
 const tally = { timestamped: 0, perMatch: 0, livestream: 0, upload: 0, rejected: 0 };
 const why = (c, msg) => { tally.rejected++; console.log(`  ✗ ${c.id} ${c.code ?? ""}: ${msg}`); };
 
+// channels that uploaded a run of bare "Match N" videos for one event (6+ numbers, past 10):
+// an event's own numbering, not a team's "my 5th match"
+const matchRun = new Set();
+{
+  const runs = new Map();
+  for (const c of cands) {
+    const v = info[c.id], t = v?.snippet?.title ?? "";
+    const x = t.match(/\bmatch\s*#?\s*(\d{1,3})\b/i);
+    if (!x || /playoff|semi|final|elim/i.test(t)) continue;
+    const k = `${c.code} ${v.snippet.channelId}`;
+    (runs.get(k) ?? runs.set(k, new Set()).get(k)).add(+x[1]);
+  }
+  for (const [k, ns] of runs) if (ns.size >= 6 && Math.max(...ns) > 10) matchRun.add(k);
+}
 for (const c of cands) {
   const v = info[c.id];
   if (!v) { why(c, "private, deleted or not found"); continue; }
@@ -145,7 +159,10 @@ for (const c of cands) {
   let d = titleMatch(title, c.trusted);
   // a bare "Match 5" from a team's own channel is usually *their* 5th match, not Q-5:
   // trust it only from channels that upload every match of an event (--per-match-channel)
-  if (d && !c.trusted && !/\b(?:Qualification|Qual|Q[\s#-]*\d|Playoff|Elimination|Semi-?final|Finals?|M-\d)/i.test(title)) d = null;
+  // …unless the same channel uploaded a whole run of "Match N" for this event: then it's the event's numbering
+  if (d && !c.trusted && !/\b(?:Qualification|Qual|Q[\s#-]*\d|Playoff|Elimination|Semi-?final|Finals?|M-\d)/i.test(title) && !matchRun.has(`${c.code} ${v.snippet.channelId}`)) d = null;
+  // a run of bare "Match N" (no playoff words) is the qualification schedule
+  if (d?.startsWith("M-") && matchRun.has(`${c.code} ${v.snippet.channelId}`) && !/playoff|semi|final|elim|M-\d/i.test(title)) d = `Q-${d.slice(2)}`;
   // "Match 3" at a league meet (no playoffs) is qualification 3
   if (d?.startsWith("M-") && ev && !/playoff/i.test(title) && !ev.matchList.some((m) => m.d.startsWith("M-"))) d = `Q-${d.slice(2)}`;
   const seconds = v.contentDetails?.duration?.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
@@ -248,9 +265,14 @@ let newCh = 0;
 for (const ch of channels) if (!chs.includes(ch)) { chs.push(ch); newCh++; }
 
 const dry = process.argv.includes("--dry-run"); // report only, write nothing
-if (!dry) await fs.writeFile(tsFile, JSON.stringify(ts, null, 1) + "\n");
-if (!dry) await fs.writeFile(ovFile, JSON.stringify(ov, null, 1) + "\n");
-if (!dry) await fs.writeFile(chFile, JSON.stringify(chs, null, 1) + "\n");
-if (!dry) await fs.writeFile(upFile, JSON.stringify(up, null, 1) + "\n");
+// other scripts (calibrate-uploads) may have written these files while we checked videos:
+// merge what we have into what's there now rather than overwrite it
+const merge = (a, b) => {
+  if (Array.isArray(a) && Array.isArray(b)) return [...new Set([...a, ...b])];
+  if (a && b && typeof a === "object" && typeof b === "object") { const o = { ...a }; for (const [k, v] of Object.entries(b)) o[k] = k in o ? merge(o[k], v) : v; return o; }
+  return b;
+};
+const save = async (file, ours) => fs.writeFile(file, JSON.stringify(merge(await readJson(file, Array.isArray(ours) ? [] : {}), ours), null, 1) + "\n");
+if (!dry) { await save(tsFile, ts); await save(ovFile, ov); await save(chFile, chs); await save(upFile, up); }
 console.log(`${season}: ${tally.timestamped} timestamped, ${tally.perMatch} single-match, ${tally.livestream} livestreams added, ${tally.upload} uploads to calibrate; ${tally.rejected} rejected, ${tally.rerouted ?? 0} of those filed under another season/event; ${newCh} new channels`);
 console.log("next: node scripts/videos.mjs", season);

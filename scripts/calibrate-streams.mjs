@@ -39,6 +39,8 @@ const UA = { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Appl
 
 export async function storyboardSpec(id) {
   const html = await (await fetch(`https://www.youtube.com/watch?v=${id}`, { headers: UA })).text();
+  // YouTube's "unusual traffic" page isn't a video without previews: stop, don't cache a miss
+  if (!html.includes("ytInitialPlayerResponse")) throw new Error("YouTube is rate-limiting watch pages; run again later");
   const m = html.match(/"playerStoryboardSpecRenderer":\{"spec":"([^"]+)"/);
   if (!m) return null;
   const [base, ...levels] = JSON.parse(`"${m[1]}"`).split("|");
