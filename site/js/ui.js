@@ -70,6 +70,15 @@ export const data = {
 
 export const fmt = (x, d = 1) => (x == null || Number.isNaN(x) ? "–" : Number(x).toFixed(d));
 export const pct = (x, d = 0) => (x == null ? "–" : `${(x * 100).toFixed(d)}%`);
+// a win chance: never a flat 0% or 100% (nothing is certain), "<1%" / ">99%" at the ends
+export const chance = (p) => (p == null ? "–" : p > 0 && p < 0.01 ? "<1%" : p < 1 && p > 0.99 ? ">99%" : pct(p));
+// the same chance as a count, which reads less like a promise: "about 7 in 10"
+export function inWords(p) {
+  if (p == null) return "";
+  const q = Math.max(p, 1 - p);
+  const words = q > 0.99 ? "almost every time" : q >= 0.945 ? "about 19 in 20" : q >= 0.875 ? "about 9 in 10" : q < 0.55 ? "slightly more often than not" : `about ${Math.round(q * 10)} in 10`;
+  return words; // phrased for the favourite; callers name the side
+}
 export const fmtInt = (x) => (x == null ? "–" : Number(x).toLocaleString());
 
 export function fmtDate(s, opts = { month: "short", day: "numeric" }) {
@@ -138,8 +147,8 @@ const rpDots = (side, arr, names = [], verb = "earned") => {
 export function winBar(pRed) {
   if (pRed == null) return `<span class="faint">–</span>`;
   const r = Math.round(pRed * 100);
-  const fav = r >= 50 ? "red" : "blue";
-  return `<span class="wp" title="Red ${r}% · Blue ${100 - r}%"><span class="wp-track"><span class="wp-red" style="width:${r}%"></span></span><span class="wp-label ${fav}">${Math.max(r, 100 - r)}%</span></span>`;
+  const fav = pRed >= 0.5 ? "red" : "blue";
+  return `<span class="wp" title="Red ${chance(pRed)} · Blue ${chance(1 - pRed)}"><span class="wp-track"><span class="wp-red" style="width:${r}%"></span></span><span class="wp-label ${fav}">${chance(Math.max(pRed, 1 - pRed))}</span></span>`;
 }
 
 // One row per match.
