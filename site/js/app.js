@@ -482,7 +482,7 @@ async function team(r) {
     const place = a.placement > 1 && !["Winner", "Finalist", "DivisionWinner", "DivisionFinalist"].includes(a.type) ? ` · ${ordinal(a.placement)}` : "";
     // gold: banners plus making the final (finalist alliances); banners alone still decide the trophy case
     const gold = isBanner(a) || ["Finalist", "DivisionFinalist"].includes(a.type);
-    return `<span class="ev-award ${gold ? "win" : ""}">${gold ? "🏆 " : ""}${esc((AWARD_NAMES[a.type] ?? a.type).replace(/ Award$/, ""))}${place}</span>`;
+    return `<span class="ev-award ${gold ? "win" : ""}">${esc((AWARD_NAMES[a.type] ?? a.type).replace(/ Award$/, ""))}${place}</span>`;
   };
   $("#view").innerHTML = [...t.events].reverse().map((ev) => {
     const won = (t.awards ?? []).filter((a) => a.ev === ev.code).sort((a, b) => isBanner(b) - isBanner(a) || ["Finalist", "DivisionFinalist"].includes(b.type) - ["Finalist", "DivisionFinalist"].includes(a.type));
@@ -638,10 +638,9 @@ function banner(a, season) {
   const label = a.type === "Inspire" ? "INSPIRE" : "WIN";
   return `<a class="banner-icon" href="#/${season}/event/${encodeURIComponent(a.ev)}" title="${esc(AWARD_NAMES[a.type] ?? a.type)} · ${esc(a.evName)}">
     <svg viewBox="0 0 40 56" width="40" height="56" aria-hidden="true">
-      <defs><linearGradient id="gold-edge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f9e08b"/><stop offset=".45" stop-color="#d4a017"/><stop offset=".7" stop-color="#f7d774"/><stop offset="1" stop-color="#b8860b"/></linearGradient></defs>
       <path d="M0 0h40v56l-20-10-20 10z" fill="#0b4f9c"/>
-      <path d="M1.5 1.5h37v51.6l-18.5-9.25-18.5 9.25z" fill="none" stroke="url(#gold-edge)" stroke-width="2"/>
-      <text x="20" y="25" text-anchor="middle" font-size="${label.length > 3 ? 8 : 11}" font-weight="900" fill="url(#gold-edge)">${label}</text>
+      <path d="M2.5 2.5h35v49.9l-17.5-8.75-17.5 8.75z" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="1.5"/>
+      <text x="20" y="25" text-anchor="middle" font-size="${label.length > 3 ? 8 : 11}" font-weight="900" fill="#fff">${label}</text>
     </svg></a>`;
 }
 // Event name split into short lines for a plaque, e.g. "Romania" / "Championship".
@@ -827,7 +826,7 @@ function eventPlayoffs(season, meta, ev, matches, official, video) {
     <td><div class="al-teams">${a.teams.map((t) => tn(t)).join("")}</div><div class="al-name">${esc(name(a.captain))}</div></td>
     <td class="r"><b>${fmt(strength(a))}</b></td>
     <td class="r small muted">${record(a)}</td>
-    <td class="small res ${a.result === "Winner" ? "res-win" : a.result === "Finalist" ? "res-final" : "muted"}">${a.result === "Winner" ? "🏆 Winner" : esc(a.result)}</td>
+    <td class="small res ${a.result === "Winner" ? "res-win" : a.result === "Finalist" ? "res-final" : "muted"}">${esc(a.result)}</td>
   </tr>`).join("");
 
   // one bracket box: two alliance lines with the score (or series wins)
