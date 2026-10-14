@@ -633,7 +633,7 @@ footer a { text-decoration: underline; }
 .vid.none:hover { background: none; }
 .play svg { margin-left: 1px; }
 button.pill { border: 0; cursor: pointer; font: inherit; font-size: 12px; font-weight: 650; }
-.video-dialog { padding: 0; border: 0; border-radius: 12px; width: min(960px, calc(100% - 24px), calc((100vh - 90px) * 16 / 9)); background: #000; color: #fff; overflow: hidden; }
+.video-dialog { padding: 0; border: 0; border-radius: 12px; width: min(calc(100vw - 48px), calc((100vh - 110px) * 16 / 9)); max-width: none; max-height: none; background: #000; color: #fff; overflow: hidden; }
 .video-dialog::backdrop { background: rgba(0, 0, 0, 0.7); }
 .video-head { display: flex; align-items: center; gap: 14px; padding: 10px 14px; background: #111; }
 .video-head .link { color: #9cc8ff; margin-left: auto; }
