@@ -193,7 +193,8 @@ function textScore(text, q) {
   if (t === tq || tc === qc) return 100;
   if (t.startsWith(tq) || tc.startsWith(qc)) return 80;
   if ((" " + t).includes(" " + tq)) return 60;
-  if (t.includes(tq) || (qc.length >= 3 && tc.includes(qc))) return 40;
+  // inside a word ("practice" for "ice") only for longer searches, where it is rarely noise
+  if (qc.length >= 4 && (t.includes(tq) || tc.includes(qc))) return 40;
   return 0;
 }
 async function searchItems(season, q) {
