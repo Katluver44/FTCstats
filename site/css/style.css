@@ -412,6 +412,13 @@ tr.flag-upset { --flag: #ed1c24; } tr.flag-high { --flag: #d4a017; } tr.flag-per
 .chart text { fill: var(--faint); font-size: 11px; font-family: inherit; }
 .chart .grid-line { stroke: var(--line); }
 .series-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
+.chart-head { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; }
+.chart-pick { display: inline-flex; gap: 4px; padding: 3px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); }
+.chart-pick a { padding: 5px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.chart-pick a.active { background: var(--accent); color: #fff; }
+.vs-form { display: flex; gap: 6px; }
+.vs-form input { width: 130px; }
+#chart-note { margin: 10px 0 6px; }
 .series-toggle button { font-size: 12px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--glass-strong); }
 .series-toggle button.off { opacity: 0.4; }
 .series-toggle i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }

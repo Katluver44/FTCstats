@@ -211,7 +211,8 @@ export function matchTable(s, matches, { me, rpNames = [], video, href, highScor
 
 // ---------- line chart ----------
 // series: [{ name, color, values: number[] }], bands: [{ from, to, label }]
-export function mountLineChart(el, { series, bands = [], tooltip, zero = true }) {
+// values may contain nulls (gaps); dash: dashed line; max: fixed top of the y axis
+export function mountLineChart(el, { series, bands = [], tooltip, zero = true, max = null }) {
   const hidden = new Set();
   const legend = document.createElement("div");
   legend.className = "series-toggle";
@@ -227,7 +228,7 @@ export function mountLineChart(el, { series, bands = [], tooltip, zero = true })
     const n = Math.max(...series.map((s) => s.values.length));
     const all = vis.flatMap((s) => s.values).filter((v) => v != null);
     const lo = zero ? Math.min(0, ...all) : Math.floor(Math.min(...all) / 5) * 5 - 5;
-    const hi = zero ? Math.max(10, ...all) * 1.08 : Math.ceil(Math.max(...all) / 5) * 5 + 2;
+    const hi = max ?? (zero ? Math.max(10, ...all) * 1.08 : Math.ceil(Math.max(...all) / 5) * 5 + 2);
     const x = (i) => P.l + (n <= 1 ? 0 : (i / (n - 1)) * (W - P.l - P.r));
     const y = (v) => P.t + (1 - (v - lo) / (hi - lo)) * (H - P.t - P.b);
     const step = niceStep((hi - lo) / 4);
@@ -246,8 +247,8 @@ export function mountLineChart(el, { series, bands = [], tooltip, zero = true })
       }
     });
     const paths = vis.map((s) => {
-      const d = s.values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
-      return `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.width ?? 2}" stroke-linejoin="round" stroke-linecap="round"/>`;
+      const d = s.values.map((v, i) => (v == null ? "" : `${i && s.values[i - 1] != null ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`)).join("");
+      return `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.width ?? 2}" stroke-linejoin="round" stroke-linecap="round"${s.dash ? ' stroke-dasharray="5 4"' : ""}/>`;
     }).join("");
     box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}">${g}${paths}<line class="cursor" y1="${P.t}" y2="${H - P.b}" stroke="var(--faint)" stroke-dasharray="3 3" style="display:none"/></svg><div class="tip"></div>`;
     const svg = box.querySelector("svg"), tip = box.querySelector(".tip"), cur = box.querySelector(".cursor");

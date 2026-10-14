@@ -452,26 +452,79 @@ async function team(r) {
   }).catch(() => {});
 
   if (view === "charts") {
-    $("#view").innerHTML = `<div class="card card-pad section"><h2>EPA over the season</h2><div id="chart"></div></div>`;
+    // ?g=epa | scores | win | compare (&vs=team for compare)
+    const GRAPHS = [["epa", "EPA"], ["scores", "Scores"], ["win", "Win chance"], ["compare", "Compare"]];
+    const g = GRAPHS.some(([k]) => k === r.query.get("g")) ? r.query.get("g") : "epa";
+    $("#view").innerHTML = `<div class="card card-pad section">
+      <div class="chart-head"><nav class="chart-pick">${GRAPHS.map(([k, l]) => `<a href="#/${season}/team/${n}/charts${k === "epa" ? "" : `?g=${k}`}" class="${k === g ? "active" : ""}">${l}</a>`).join("")}</nav>
+        ${g === "compare" ? `<form id="vs-form" class="vs-form"><input id="vs" inputmode="numeric" placeholder="Team number" value="${esc(r.query.get("vs") ?? "")}" aria-label="Team to compare with"><button class="btn btn-solid">Compare</button></form>` : ""}</div>
+      <p class="small muted" id="chart-note"></p><div id="chart"></div></div>`;
+    const ms = t.matches;
     const bands = [];
-    t.matches.forEach((m, i) => {
+    ms.forEach((m, i) => {
       const last = bands[bands.length - 1];
       if (last && last.ev === m.ev) last.to = i;
       else bands.push({ ev: m.ev, from: i, to: i, label: shortEvent(evName.get(m.ev) ?? m.ev) });
     });
-    mountLineChart($("#chart"), {
-      series: [
-        { name: "EPA", color: "var(--text)", values: t.matches.map((m) => m.epa[0]), width: 2.5 },
-        { name: "Auto", color: "#f59e0b", values: t.matches.map((m) => m.epa[1]) },
-        { name: "Teleop", color: "var(--accent)", values: t.matches.map((m) => m.epa[2]) },
-        { name: "Endgame", color: "#10b981", values: t.matches.map((m) => m.epa[3]) },
-      ],
-      bands,
-      tooltip: (i) => {
-        const m = t.matches[i];
-        return `<b>${esc(evName.get(m.ev) ?? m.ev)}</b> · ${esc(m.m)}<br>EPA ${fmt(m.epa[0])} · ${m.score > m.oppScore ? "W" : m.score < m.oppScore ? "L" : "T"} ${m.score}–${m.oppScore}`;
-      },
-    });
+    const head = (m) => `<b>${esc(evName.get(m.ev) ?? m.ev)}</b> · ${esc(m.m)}`;
+    const result = (m) => `${m.score > m.oppScore ? "W" : m.score < m.oppScore ? "L" : "T"} ${m.score}–${m.oppScore}`;
+    const note = (s) => ($("#chart-note").textContent = s);
+    if (g === "epa") {
+      note("EPA after each match: points this team adds to its alliance, and how they split by period.");
+      mountLineChart($("#chart"), {
+        series: [
+          { name: "EPA", color: "var(--text)", values: ms.map((m) => m.epa[0]), width: 2.5 },
+          { name: "Auto", color: "#f59e0b", values: ms.map((m) => m.epa[1]) },
+          { name: "Teleop", color: "var(--accent)", values: ms.map((m) => m.epa[2]) },
+          { name: "Endgame", color: "#10b981", values: ms.map((m) => m.epa[3]) },
+        ],
+        bands,
+        tooltip: (i) => `${head(ms[i])}<br>EPA ${fmt(ms[i].epa[0])} · ${result(ms[i])}`,
+      });
+    } else if (g === "scores") {
+      note("Each match: this team's alliance score, what was predicted before the match, and the opponents' score (all including fouls).");
+      mountLineChart($("#chart"), {
+        series: [
+          { name: "Alliance score", color: "var(--text)", values: ms.map((m) => m.score), width: 2.5 },
+          { name: "Predicted", color: "var(--accent)", values: ms.map((m) => m.pred?.[0] ?? null), dash: true },
+          { name: "Opponents", color: "var(--red)", values: ms.map((m) => m.oppScore) },
+        ],
+        bands,
+        tooltip: (i) => `${head(ms[i])}<br>${result(ms[i])}${ms[i].pred ? ` · predicted ${fmt(ms[i].pred[0], 0)}–${fmt(ms[i].pred[1], 0)}` : ""}`,
+      });
+    } else if (g === "win") {
+      note("Chance to win before each match, and the share of the last 10 matches actually won.");
+      const won = ms.map((m) => (m.score > m.oppScore ? 1 : m.score < m.oppScore ? 0 : 0.5));
+      mountLineChart($("#chart"), {
+        series: [
+          { name: "Win chance", color: "var(--accent)", values: ms.map((m) => (m.pWin != null ? Math.round(m.pWin * 100) : null)) },
+          { name: "Win rate (last 10)", color: "var(--text)", values: won.map((_, i) => { const w = won.slice(Math.max(0, i - 9), i + 1); return Math.round((w.reduce((a, b) => a + b, 0) / w.length) * 100); }), width: 2.5 },
+        ],
+        bands, max: 100,
+        tooltip: (i) => `${head(ms[i])}<br>${ms[i].pWin != null ? `${pct(ms[i].pWin)} to win · ` : ""}${result(ms[i])}`,
+      });
+    } else {
+      const vs = /^\d{1,6}$/.test(r.query.get("vs") ?? "") ? +r.query.get("vs") : null;
+      $("#vs-form").onsubmit = (e) => {
+        e.preventDefault();
+        const v = $("#vs").value.trim();
+        location.hash = `#/${season}/team/${n}/charts?g=compare${/^\d{1,6}$/.test(v) ? `&vs=${v}` : ""}`;
+      };
+      const other = vs != null && vs !== n ? await data.team(season, vs).catch(() => null) : null;
+      if (stale(r)) return;
+      if (vs != null && !other) note(`Team ${vs} has no matches in ${season}.`);
+      else note(other ? `EPA by match number (1st match of the season, 2nd, …), so seasons of different lengths line up.` : "Type another team's number to put its EPA next to this team's.");
+      const om = other?.matches ?? [];
+      const len = Math.max(ms.length, om.length);
+      const pad = (arr) => Array.from({ length: len }, (_, i) => arr[i] ?? null);
+      mountLineChart($("#chart"), {
+        series: [
+          { name: `${n} ${t.name}`, color: "var(--accent)", values: pad(ms.map((m) => m.epa[0])), width: 2.5 },
+          ...(other ? [{ name: `${vs} ${other.name}`, color: "#f59e0b", values: pad(om.map((m) => m.epa[0])), width: 2.5 }] : []),
+        ],
+        tooltip: (i) => [[n, ms[i]], [vs, om[i]]].filter(([, m]) => m).map(([num, m]) => `<b>${num}</b> · ${esc(evName.get(m.ev) ?? shortEvent(m.ev))} ${esc(m.m)} · EPA ${fmt(m.epa[0])}`).join("<br>") + `<br><span class="faint">match ${i + 1}</span>`,
+      });
+    }
     return;
   }
 
