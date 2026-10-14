@@ -35,16 +35,24 @@ async function readJson(file, fallback) {
 }
 
 // Details for many videos, cached: finished streams never change.
+// When the YouTube API refuses (e.g. daily quota used up), the rest of the run
+// uses cached details only, so a deploy still goes out; uncached videos wait
+// for the next run.
+let ytDown = false;
 async function youtubeDetails(ids, cacheFile) {
   const cache = await readJson(cacheFile, {});
   const key = await env("YOUTUBE_API_KEY");
   const todo = [...new Set(ids)].filter((id) => !cache[id] || cache[id].live || cache[id].v !== CACHE_V);
-  if (key && todo.length) {
+  if (key && todo.length && !ytDown) {
     for (let i = 0; i < todo.length; i += 50) {
       const batch = todo.slice(i, i + 50);
       const res = await fetch(`${YT}?part=liveStreamingDetails,contentDetails,status,snippet&id=${batch.join(",")}&key=${key}`);
       const json = await res.json();
-      if (json.error) throw new Error(`YouTube API: ${json.error.message}`);
+      if (json.error) {
+        console.warn(`YouTube API: ${json.error.message.replace(/<[^>]+>/g, "")} (using cached details; ${todo.length - i} videos skipped this run)`);
+        ytDown = true;
+        break;
+      }
       const found = new Set();
       for (const v of json.items ?? []) {
         found.add(v.id);
