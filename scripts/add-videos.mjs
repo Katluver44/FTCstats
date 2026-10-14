@@ -29,7 +29,10 @@ if (!season || !key) throw new Error("usage: node scripts/add-videos.mjs <season
 let cands = [], channels = [];
 if (fileAt >= 0) {
   const f = await readJson(args[fileAt + 1], {});
-  cands = (f.videos ?? []).map((v) => ({ id: youtubeId(v.videoId) ?? v.videoId, code: v.code, note: v.title ?? "" }));
+  // `match`: the official match id when a search worked it out from the schedule (a team's
+  // "our 3rd match" upload); still checked against the event's matches and dates below
+  cands = (f.videos ?? []).map((v) => ({ id: youtubeId(v.videoId) ?? v.videoId, code: v.code, note: v.title ?? "",
+    match: /^(Q-\d+|SF\d-\d|F-\d|M-\d+)$/.test(v.match ?? "") ? v.match : null }));
   channels = (f.channels ?? []).map((c) => c.channelId).filter((c) => /^UC[\w-]{22}$/.test(c));
 } else if (!args.includes("--per-match-channel")) {
   cands = args.map((a) => { const [u, code] = a.split("@"); return { id: youtubeId(u) ?? u, code }; });
@@ -156,11 +159,12 @@ for (const c of cands) {
   }
   const ev = c.code ? await event(c.code) : null;
   // 2. a single match
-  let d = titleMatch(title, c.trusted);
+  let d = titleMatch(title, c.trusted) ?? c.match;
+  if (c.match && d !== c.match && /^Q-/.test(c.match) && /^M-/.test(d ?? "")) d = c.match; // "Match 5" read as playoff
   // a bare "Match 5" from a team's own channel is usually *their* 5th match, not Q-5:
   // trust it only from channels that upload every match of an event (--per-match-channel)
   // …unless the same channel uploaded a whole run of "Match N" for this event: then it's the event's numbering
-  if (d && !c.trusted && !/\b(?:Qualification|Qual|Q[\s#-]*\d|Playoff|Elimination|Semi-?final|Finals?|M-\d)/i.test(title) && !matchRun.has(`${c.code} ${v.snippet.channelId}`)) d = null;
+  if (d && !c.trusted && d !== c.match && !/\b(?:Qualification|Qual|Q[\s#-]*\d|Playoff|Elimination|Semi-?final|Finals?|M-\d)/i.test(title) && !matchRun.has(`${c.code} ${v.snippet.channelId}`)) d = null;
   // a run of bare "Match N" (no playoff words) is the qualification schedule
   if (d?.startsWith("M-") && matchRun.has(`${c.code} ${v.snippet.channelId}`) && !/playoff|semi|final|elim|M-\d/i.test(title)) d = `Q-${d.slice(2)}`;
   // "Match 3" at a league meet (no playoffs) is qualification 3
