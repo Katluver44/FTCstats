@@ -26,6 +26,15 @@ function parseHash() {
 }
 
 // tab title for pages with no heading (the lists, "not found" messages) and while loading
+// Filter dropdowns show their name ("Type") until used; once a value has been picked, the
+// blank choice reads "All types" so going back says what it means.
+function labelFilters(root = document) {
+  for (const sel of root.querySelectorAll("select")) {
+    const o = sel.options[0];
+    if (o?.dataset.all && sel.value !== "") o.text = o.dataset.all;
+  }
+}
+document.addEventListener("change", (e) => { if (e.target instanceof HTMLSelectElement) labelFilters(e.target.parentElement ?? document); }, true);
 const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", sim: "SIM event", about: "Our methodology", api: "Data API" };
 const setTitle = (name) => (document.title = name ? `${name} · FTCstats` : "FTCstats · FTC ratings & match predictions");
 
@@ -44,6 +53,7 @@ async function route() {
   setTitle(r.page && (PAGE_TITLES[r.page] ?? "Page not found"));
   try {
     await fn(r);
+    if (!stale(r)) labelFilters($("#app")); // filters set from the link already read "All …"
     // a heading names the page better, e.g. "20265 Heart of RoBots · FTCstats"
     const h1 = !stale(r) && r.page && $("#app h1");
     if (h1) setTitle(h1.textContent.trim().replace(/\s+/g, " "));
@@ -352,9 +362,10 @@ function regionSelect(sel, rowsFn, initial) {
     const regions = [...new Set(rowsFn().map((r) => r.region).filter(Boolean))].sort((a, b) => a.localeCompare(b));
     const keep = first ? initial : sel.value;
     first = false;
-    sel.innerHTML = `<option value="">All states / regions</option>${regions.map((x) => `<option ${x === keep ? "selected" : ""}>${esc(x)}</option>`).join("")}`;
+    sel.innerHTML = `<option value="" data-all="All states / regions">State / region</option>${regions.map((x) => `<option ${x === keep ? "selected" : ""}>${esc(x)}</option>`).join("")}`;
     sel.hidden = regions.length < 2;
     if (sel.hidden) sel.value = "";
+    labelFilters(sel.parentElement ?? document);
   };
 }
 // per-device preferences (remembered columns); the page works the same without storage
@@ -406,7 +417,7 @@ async function teams(r) {
           <button type="button" data-view="chart" aria-pressed="${view === "chart"}">${CHART_ICON}Chart</button>
         </div>
         <input id="filter" placeholder="Search teams…" value="${esc(query.get("q") ?? "")}">
-        <select id="country" aria-label="Country"><option value="">All countries</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
+        <select id="country" aria-label="Country"><option value="" data-all="All countries">Country</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
         <select id="state" aria-label="State or region" hidden></select>
         <label class="sel-label" title="Predicted: every team, including ones that haven't played yet (on the EPA they start the season with)"><span># of matches</span>
           <select id="minm"><option value="0">Predicted</option><option value="1">1+</option><option value="5">5+</option><option value="10">10+</option><option value="25">25+</option></select></label>
@@ -1046,11 +1057,11 @@ async function events(r) {
     <div class="card">
       <div class="toolbar">
         <input id="filter" placeholder="Search events…" value="${esc(query.get("q") ?? "")}">
-        <select id="type" aria-label="Event type"><option value="">All types</option>${types.map((t) => `<option value="${esc(t)}" ${t === query.get("type") ? "selected" : ""}>${esc(typeName(t))}</option>`).join("")}</select>
-        <select id="country" aria-label="Country"><option value="">All countries</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
+        <select id="type" aria-label="Event type"><option value="" data-all="All types">Type</option>${types.map((t) => `<option value="${esc(t)}" ${t === query.get("type") ? "selected" : ""}>${esc(typeName(t))}</option>`).join("")}</select>
+        <select id="country" aria-label="Country"><option value="" data-all="All countries">Country</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
         <select id="state" aria-label="State or region" hidden></select>
-        <select id="month" aria-label="Month"><option value="">Any month</option>${months.map((m) => `<option value="${m}" ${m === query.get("month") ? "selected" : ""}>${monthName(m)}</option>`).join("")}</select>
-        <select id="status" aria-label="Status"><option value="">Any status</option>${[["upcoming", "Upcoming"], ["live", "Live now"], ["done", "Finished"]].map(([k, l]) => `<option value="${k}" ${k === query.get("status") ? "selected" : ""}>${l}</option>`).join("")}</select>
+        <select id="month" aria-label="Month"><option value="" data-all="Any month">Month</option>${months.map((m) => `<option value="${m}" ${m === query.get("month") ? "selected" : ""}>${monthName(m)}</option>`).join("")}</select>
+        <select id="status" aria-label="Status"><option value="" data-all="Any status">Status</option>${[["upcoming", "Upcoming"], ["live", "Live now"], ["done", "Finished"]].map(([k, l]) => `<option value="${k}" ${k === query.get("status") ? "selected" : ""}>${l}</option>`).join("")}</select>
       </div>
       <div id="tbl"></div>
     </div>`;
