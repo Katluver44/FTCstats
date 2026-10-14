@@ -1113,14 +1113,9 @@ pre.code { background: var(--surface-2); border: 1px solid var(--line); border-r
 .wf-mat { fill: var(--surface-2); stroke: var(--line); stroke-width: 2; }
 .wf-line { stroke: var(--line); stroke-width: 1.5; }
 .wf-path { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 2 9; stroke-linecap: round; opacity: .55; }
-.wf-frame { fill: #8c939b; stroke: #5d646b; stroke-width: 1.5; }
-.wf-wheel { fill: #2b2f33; }
-.wf-roller { stroke: #8c939b; stroke-width: 1; }
-.wf-plate { fill: #3c4248; }
-.wf-hub { fill: #f57e25; }
-.wf-slide { fill: #c9ced3; }
-.wf-intake { fill: #4a5057; }
-.wf-num { fill: var(--accent); }
+.wf-body { fill: var(--accent); }
+.wf-wheel { fill: var(--text); opacity: .8; }
+.wf-intake { fill: var(--orange); }
 .wf-bot { offset-path: path("M40 112 C 160 112, 200 38, 300 38 S 440 112, 560 112"); offset-rotate: auto; animation: wf-drive 5.5s ease-in-out infinite alternate; }
 @keyframes wf-drive { from { offset-distance: 0%; } to { offset-distance: 100%; } }
 @media (prefers-reduced-motion: reduce) { .wf-bot { animation: none; offset-distance: 50%; } }
