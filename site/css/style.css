@@ -431,11 +431,14 @@ td.c, th.c { text-align: center; }
 .col-pick summary { list-style: none; cursor: pointer; font-size: 13px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--glass-strong); }
 .col-pick summary::-webkit-details-marker { display: none; }
 .col-pick summary::after { content: " ▾"; color: var(--muted); }
-.col-pick > div { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; display: flex; flex-wrap: wrap; gap: 6px; width: max-content; max-width: min(300px, calc(100vw - 32px)); padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--pop-shadow); }
-/* column toggles: filled = shown, outlined = hidden */
-.col-btn { font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+.col-pick > div { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; width: 320px; max-width: calc(100vw - 32px); padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--pop-shadow); }
+/* column toggles: an even grid of equal buttons; tinted with a check = shown, plain = hidden */
+.col-btn { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 36px; padding: 0 12px; border-radius: 8px; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 600; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   border: 1px solid var(--line); background: transparent; color: var(--muted); transition: background .12s, color .12s, border-color .12s; }
-.col-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.col-btn::after { content: ""; width: 14px; flex: none; text-align: right; }
+.col-btn[aria-pressed="true"] { background: var(--accent-soft); border-color: transparent; color: var(--text); }
+.col-btn[aria-pressed="true"]::after { content: "✓"; color: var(--accent); }
 .col-btn:hover { border-color: var(--accent); }
 .chart-head { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; }
 .chart-pick { display: inline-flex; gap: 4px; padding: 3px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); }
