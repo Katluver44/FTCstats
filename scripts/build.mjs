@@ -546,8 +546,57 @@ export async function build(season, params = {}, epaOver = {}) {
   // np/auto/teleop/endgame: EPA track. pnp..pendgame, rp0-2: prediction track;
   // prank: order by prediction rating (ties in the rounded pnp keep it, for priors)
   const cols = ["team", "name", "loc", "country", "np", "auto", "teleop", "endgame", "rp0", "rp1", "rp2",
-    "matches", "wins", "losses", "ties", "events", "trend", "pnp", "pauto", "pteleop", "pendgame", "prank", "cons"];
+    "matches", "wins", "losses", "ties", "events", "trend", "pnp", "pauto", "pteleop", "pendgame", "prank", "cons", "sos"];
   const predRank = (list, split) => new Map([...list].sort(byRating("p", split)).map((x, i) => [x.t, i]));
+  // Strength of schedule (the luck of the draw): in each qual, the win chance this team
+  // had with the partner and opponents it drew, against its average win chance over
+  // random draws from the same event (Statbotics compares with random schedules too),
+  // all EPAs as they entered the event; averaged over its quals, sign flipped so
+  // + = a harder schedule. Statbotics' Delta-EPA in points explained less of who out-
+  // or under-performed their own rating (partial correlation 0.31-0.34 vs 0.33-0.37
+  // in win chance, 2022-2025): a stacked match can't cost a team more than the match.
+  const evStat = new Map(); // event -> [sum EPA in, teams, sum alliance np, alliances, [EPAs in]]
+  for (const [k, v] of epaStart) {
+    const ev = k.slice(0, k.lastIndexOf(":")), a = evStat.get(ev) ?? [0, 0, 0, 0, []];
+    a[0] += v; a[1]++; a[4].push(v); evStat.set(ev, a);
+  }
+  const sig = (z) => 1 / (1 + Math.exp(-z));
+  // expected win chance over random partner + two opponents from the event (fixed draws)
+  const randBase = new Map();
+  const randWin = (ev, me, scale) => {
+    const key = `${ev}:${me}`;
+    if (randBase.has(key)) return randBase.get(key);
+    const pool = evStat.get(ev)[4];
+    let seed = 12345, sum = 0;
+    const pick = () => pool[(seed = (seed * 1103515245 + 12345) % 2147483648) % pool.length];
+    for (let k = 0; k < 400; k++) sum += sig((me + pick() - pick() - pick()) / scale);
+    randBase.set(key, sum / 400);
+    return sum / 400;
+  };
+  for (const x of matches) {
+    const a = evStat.get(x.ev.code);
+    if (!a || x.elim) continue;
+    for (const sd of ["red", "blue"]) if (Number.isFinite(x.actual?.[sd]?.np)) { a[2] += x.actual[sd].np; a[3]++; }
+  }
+  const rawSos = (t, hh) => {
+    let sum = 0, n = 0;
+    for (const x of hh) {
+      if (x.elim || x.opps?.length !== 2 || x.partners?.length !== 1) continue;
+      const at = (k) => epaStart.get(`${x.ev}:${k}`);
+      const st = evStat.get(x.ev), me = at(t), p = at(x.partners[0]), o = x.opps.map(at);
+      if (!st || !st[3] || me == null || p == null || o.some((v) => v == null)) continue;
+      const scale = 0.28 * (st[2] / st[3]); // logistic spread: a share of the event's average alliance score
+      sum += randWin(x.ev, me, scale) - sig((me + p - o[0] - o[1]) / scale);
+      n++;
+    }
+    return n ? sum / n : null;
+  };
+  const centerSos = (rows) => {
+    const i = cols.indexOf("sos"), vals = rows.map((r) => r[i]).filter((v) => v != null);
+    const mean = vals.reduce((a, b) => a + b, 0) / Math.max(1, vals.length);
+    for (const r of rows) if (r[i] != null) r[i] = r3(r[i] - mean);
+    return rows;
+  };
   const tableRows = (list, official, prank) => list.map(({ t, e, p, h }) => {
     const hh = official ? h.filter((x) => !x.off) : h;
     let w = 0, l = 0, ti = 0;
@@ -564,9 +613,9 @@ export async function build(season, params = {}, epaOver = {}) {
       : null;
     return [t, i.name ?? "", i.loc ?? "", i.country ?? "", r1(e.np), r1(e.auto), r1(e.teleop), r1(e.endgame),
       ...p.rp.map(r3), hh.length, w, l, ti, evs, r1(e.np - prev),
-      r1(p.np), r1(p.auto), r1(p.teleop), r1(p.endgame), prank.get(t), cons == null ? null : r3(cons)];
+      r1(p.np), r1(p.auto), r1(p.teleop), r1(p.endgame), prank.get(t), cons == null ? null : r3(cons), rawSos(t, hh)];
   });
-  const rows = tableRows(ranked, true, predRank(ranked, true));
+  const rows = centerSos(tableRows(ranked, true, predRank(ranked, true)));
   await writeJson(path.join(out, "teams.json"), { cols, rows });
   // the team page radar ranks a team among teams with 5+ matches; ship 101 quantiles
   // of each axis (meta.radarDist) instead of making the page load teams.json
@@ -633,7 +682,7 @@ export async function build(season, params = {}, epaOver = {}) {
         .map((t) => ({ t, e: allEpa.rate(t), p: allModel.epa(t), h: allHist.get(t) }))
         .sort(byRating("e", false));
       offTables[key] = OFF_TABLES[key].file;
-      await writeJson(path.join(out, offTables[key]), { cols, rows: tableRows(rankedAll, false, predRank(rankedAll, false)) });
+      await writeJson(path.join(out, offTables[key]), { cols, rows: centerSos(tableRows(rankedAll, false, predRank(rankedAll, false))) });
     }
   }
 

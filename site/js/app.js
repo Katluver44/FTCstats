@@ -452,13 +452,15 @@ async function teams(r) {
     { key: "cons", label: `<span title="How far its alliance's score typically lands from the prediction (lower = steadier)">Consistency</span>`, cls: "r small",
       render: (r) => (r.cons == null ? "–" : `±${pct(r.cons)}`) },
     { key: "trend", label: "Trend", cls: "r small", render: (r) => (r.trend == null ? "–" : `<span title="EPA change over the last 10 matches">${trend(r.trend)}</span>`) },
+    { key: "sos", label: `<span title="Strength of schedule: how much the partners and opponents it drew in quals changed its win chance per match, compared with random draws at the same events (EPAs as teams arrived). + = harder schedule, − = easier">SOS</span>`, cls: "r small",
+      render: (r) => (r.sos == null ? "–" : `<span class="${r.sos >= 0.05 ? "bad-text" : r.sos <= -0.05 ? "good-text" : "muted"}" title="Its draw ${r.sos > 0 ? "cost" : "gave"} it about ${Math.round(Math.abs(r.sos) * 100)} percentage points of win chance a match">${Math.round(r.sos * 100) > 0 ? "+" : Math.round(r.sos * 100) < 0 ? "−" : ""}${Math.round(Math.abs(r.sos) * 100)}%</span>`) },
   ];
   // CSV: plain values for each shown column (team splits into number + name)
   const CSV_VAL = {
     rank: (r) => r.rank, loc: (r) => r.loc, country: (r) => r.country, region: (r) => r.region, np: (r) => r.np,
     auto: (r) => r.auto, teleop: (r) => r.teleop, endgame: (r) => r.endgame, rps: (r) => r.rps?.toFixed(2),
     wins: (r) => `${r.wins}-${r.losses}-${r.ties}`, wr: (r) => r.wr?.toFixed(3), matches: (r) => r.matches, events: (r) => r.events,
-    cons: (r) => r.cons, trend: (r) => r.trend,
+    cons: (r) => r.cons, trend: (r) => r.trend, sos: (r) => r.sos,
   };
   rpNames.forEach((_, i) => (CSV_VAL[`rpr${i}`] = (r) => r[`rpr${i}`]?.toFixed(3)));
   $("#csv").onclick = () => {
@@ -502,6 +504,7 @@ async function teams(r) {
     { key: "matches", label: "Matches played", get: (r) => r.matches, d: 0 },
     { key: "trend", label: "Trend (last 10 matches)", get: (r) => r.trend },
     { key: "cons", label: "Consistency (± miss)", get: (r) => r.cons, pct: true },
+    { key: "sos", label: "Strength of schedule (win chance)", get: (r) => r.sos, pct: true },
   ].map((m) => ({ ...m, show: (v, tick) => (m.pct ? pct(v) : tick ? fmt(v, Number.isInteger(v) ? 0 : 1) : fmt(v, m.d ?? 1)) }));
   const metric = (k, d) => metrics.find((m) => m.key === k) ?? metrics.find((m) => m.key === d);
   const opts = (sel) => metrics.map((m) => `<option value="${m.key}" ${m.key === sel ? "selected" : ""}>${esc(m.label)}</option>`).join("");
@@ -1101,7 +1104,7 @@ async function event(r) {
     // Once quals are done it still replays: "what did the forecast say after match N?"
     const canForecast = hasQuals || (!matches.length && ev.teamList.length >= 4);
     const hasPlayoffs = matches.some((m) => m.level && m.level !== "Quals");
-    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(ev.teamList.length >= 4 ? [["pickmap", "Pick list"]] : []), ...(hasPlayoffs ? [["playoffs", "Playoffs"]] : []), ...(canForecast ? [["forecast", "Rankings forecast"]] : []), ...(hasQuals && ev.teamList.length >= 4 ? [["schedule", "Schedule"]] : [])];
+    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(ev.teamList.length >= 4 ? [["pickmap", "Pick list"]] : []), ...(hasPlayoffs ? [["playoffs", "Playoffs"]] : []), ...(canForecast ? [["forecast", "Rankings forecast"]] : [])];
     app.innerHTML = `
       <div class="card card-pad"><div class="page-head">
         <div>
@@ -1122,7 +1125,6 @@ async function event(r) {
     else if (tab === "pickmap" && ev.teamList.length >= 4) eventPickMap(season, ev);
     else if (tab === "playoffs" && hasPlayoffs) eventPlayoffs(season, meta, ev, matches, official[code], (m) => videoFor(videos, code, m.time));
     else if (tab === "forecast" && canForecast) eventForecast(season, meta, ev, matches);
-    else if (tab === "schedule" && hasQuals) eventSchedule(season, meta, ev, matches);
     else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
   };
 
@@ -1350,51 +1352,6 @@ function eventForecast(season, meta, ev, matches) {
       timer = setTimeout(run, 120);
     };
   }
-}
-
-// Strength of schedule: each team's expected rank on its actual qualification
-// schedule vs on a random one (same teams, same number of matches), both played
-// out from the ratings everyone brought to the event. The gap is how much the
-// schedule helped or hurt, in ranking places, before a single match was played.
-function eventSchedule(season, meta, ev, matches) {
-  const quals = matches.filter((m) => m.level === "Quals");
-  const teams = ev.teamList.map((t) => t.team);
-  const names = new Map(ev.teamList.map((t) => [t.team, t.name]));
-  const epaIn = new Map(ev.teamList.map((t) => [t.team, t.epaStart]));
-  const finalRank = new Map(ev.teamList.map((t) => [t.team, t.rank]));
-  const counts = new Map();
-  for (const m of quals) for (const t of [...m.red, ...m.blue]) counts.set(t, (counts.get(t) ?? 0) + 1);
-  const perTeam = Math.max(1, Math.round([...counts.values()].reduce((a, b) => a + b, 0) / Math.max(1, counts.size)));
-  $("#tab").innerHTML = `<div class="card card-pad"><b>Strength of schedule</b>
-      <div class="small muted">How each team's qualification schedule (partners and opponents) moved its expected rank, compared with a random schedule of ${perTeam} matches. Both use only the ratings teams brought to the event, so this is about the draw, not how anyone played. Positive = the schedule helped.</div></div>
-    <div class="card section" id="sos"><div class="loading">Simulating schedules…</div></div>`;
-  setTimeout(() => {
-    const { model, matches: replayed } = replayEvent(meta, ev, quals.map((m) => ({ ...m, played: m.actuallyPlayed ?? m.played })), 0);
-    const actual = new Map(forecastRankings(season, teams, replayed, 3000, { model }).map((x) => [x.team, x]));
-    const random = new Map(forecastFromRoster(season, meta, ev, { perTeam, sims: 3000, bonus: true, corr: 1, tb: "sim", model }).map((x) => [x.team, x]));
-    const rows = teams.map((t) => {
-      const a = actual.get(t), r = random.get(t);
-      return { team: t, a, r, effect: r && a ? r.meanRank - a.meanRank : null, rs: r && a ? a.meanRs - r.meanRs : null, fin: finalRank.get(t) };
-    }).filter((x) => x.effect != null).sort((x, y) => y.effect - x.effect);
-    const anyFinal = rows.some((x) => x.fin != null) && quals.some((m) => m.actuallyPlayed ?? m.played);
-    const places = (v) => `<span class="${v > 0.3 ? "good-text" : v < -0.3 ? "bad-text" : "muted"}">${v > 0 ? "+" : ""}${fmt(v, 1)}</span>`;
-    $("#sos").innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Team</th><th class="r"><span title="EPA coming into the event">EPA in</span></th>
-        <th class="r"><span title="Average simulated rank with a random schedule">Exp. rank, random</span></th>
-        <th class="r"><span title="Average simulated rank with the schedule it actually got">Exp. rank, its schedule</span></th>
-        <th class="r"><span title="Ranking places the schedule was worth (random minus actual). Positive = an easier draw">Schedule effect</span></th>
-        <th class="r hide-sm"><span title="Change in expected ranking score from the schedule">RS effect</span></th>
-        ${anyFinal ? '<th class="r"><span title="Final rank, and places better (+) or worse than expected on its schedule">Actual rank</span></th>' : ""}</tr></thead>
-      <tbody>${rows.map((x) => `<tr>
-        <td>${teamCell(season, x.team, names.get(x.team))}</td>
-        <td class="r">${epa(epaIn.get(x.team), meta)}</td>
-        <td class="r">${fmt(x.r.meanRank, 1)}</td>
-        <td class="r">${fmt(x.a.meanRank, 1)}</td>
-        <td class="r"><b>${places(x.effect)}</b></td>
-        <td class="r hide-sm small">${x.rs > 0 ? "+" : ""}${fmt(x.rs, 2)}</td>
-        ${anyFinal ? `<td class="r">${x.fin ?? "–"}${x.fin != null ? ` <span class="small">(${places(x.a.meanRank - x.fin)})</span>` : ""}</td>` : ""}
-      </tr>`).join("")}</tbody></table></div>`;
-  }, 20);
 }
 
 // Before the schedule is out: simulate random FTC schedules from the team list.
