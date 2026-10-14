@@ -27,12 +27,17 @@ await fs.writeFile(index, (await fs.readFile(index, "utf8")).replace(/((?:href|s
 await fs.writeFile(path.join(out, "vercel.json"), JSON.stringify({
   headers: [
     { source: "/admin.html", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
-    // Browsers reuse files for 5 minutes, and serve a stale copy instantly while
-    // fetching a fresh one in the background, instead of checking every file on
-    // every visit. Data changes hourly; code at most every deploy.
+    // Vercel's CDN keeps each deployment's own cache and starts fresh on every deploy,
+    // so the edge can hold files until the next deploy (s-maxage of a year); browsers
+    // reuse data for 5 minutes and serve a stale copy instantly while refetching.
     // /data is a public read-only API (see #/api): any site may fetch it
-    { source: "/data/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=600, stale-while-revalidate=86400" }, { key: "Access-Control-Allow-Origin", value: "*" }] },
-    { source: "/(js|css)/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400" }] },
+    { source: "/data/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=31536000, stale-while-revalidate=86400" }, { key: "Access-Control-Allow-Origin", value: "*" }] },
+    // code: the page asks for every script and stylesheet with this deploy's ?v= stamp,
+    // so a stamped URL never changes and browsers can keep it for good
+    { source: "/(js|css)/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=31536000, stale-while-revalidate=86400" }] },
+    { source: "/(js|css)/(.*)", has: [{ type: "query", key: "v" }], headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+    // team photos and match-video lists change rarely
+    { source: "/(photos|videos)/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=3600, s-maxage=31536000, stale-while-revalidate=604800" }] },
   ],
 }, null, 2));
 console.log("dist/ ready");
