@@ -181,26 +181,61 @@ const notFound = () => (app.innerHTML = `<div class="empty">Page not found.</div
 
 // ---------------- search ----------------
 
+// Search: every team and event gets a match score, then teams and events are mixed
+// by score. Exact > starts with > a word starts with > anywhere; punctuation and case
+// don't matter ("ice" finds I.C.E. Robotics). Ties go to stronger teams, teams that
+// have played, and events that are live or soon.
+const normText = (x) => String(x ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+function textScore(text, q) {
+  const t = normText(text), tq = normText(q);
+  if (!t || !tq) return 0;
+  const tc = t.replace(/ /g, ""), qc = tq.replace(/ /g, "");
+  if (t === tq || tc === qc) return 100;
+  if (t.startsWith(tq) || tc.startsWith(qc)) return 80;
+  if ((" " + t).includes(" " + tq)) return 60;
+  if (t.includes(tq) || (qc.length >= 3 && tc.includes(qc))) return 40;
+  return 0;
+}
 async function searchItems(season, q) {
-  q = q.trim().toLowerCase();
+  q = q.trim();
   if (!q) return [];
   const [played, pre, events] = await Promise.all([data.teams(season), data.pre(season), data.events(season)]);
   const teams = [...played, ...pre]; // teams that haven't played yet this season are findable too
-  const out = [];
-  if (/^\d+$/.test(q)) {
-    for (const t of teams) if (String(t.team).startsWith(q)) out.push(t);
-    out.sort((a, b) => String(a.team).length - String(b.team).length || a.team - b.team);
-  } else {
-    for (const t of teams) if (t.name.toLowerCase().includes(q)) out.push(t);
+  const isNum = /^\d+$/.test(q);
+  const scored = [];
+  const n = played.length || 1;
+  for (const t of teams) {
+    let sc = 0;
+    const num = String(t.team);
+    if (isNum) sc = num === q ? 120 : num.startsWith(q) ? 90 - (num.length - q.length) * 3 : 0;
+    else sc = Math.max(textScore(t.name, q), textScore(t.loc, q) * 0.4);
+    if (!sc) continue;
+    // tie-breaks: played this season, then higher in the rankings
+    sc += (t.pre ? 0 : 4) + (t.pre ? 0 : 3 * (1 - (t.rank ?? n) / n));
+    scored.push({ sc, item: { href: `#/${season}/team/${t.team}`, main: num, sub: t.name, kind: "Team" } });
   }
-  const items = out.slice(0, 6).map((t) => ({ href: `#/${season}/team/${t.team}`, main: `${t.team}`, sub: t.name, kind: "Team" }));
+  const today = localToday(0);
+  // what people call events: "worlds", "states"
+  const alias = { worlds: ["world championship"], world: ["world championship"], states: ["state championship"], state: ["state championship"] }[normText(q)] ?? [];
   for (const e of events) {
-    if (items.length >= 10) break;
-    if (e.name.toLowerCase().includes(q) || e.code.toLowerCase() === q) {
-      items.push({ href: `#/${season}/event/${e.code}`, main: e.name, sub: fmtDate(e.start), kind: "Event" });
-    }
+    const code = e.code.toLowerCase(), ql = q.toLowerCase();
+    let sc = code === ql ? 110 : !isNum && code.startsWith(ql) && ql.length >= 3 ? 65 : 0;
+    if (!isNum) sc = Math.max(sc, textScore(e.name, q), textScore(e.loc, q) * 0.4, ...alias.map((a) => textScore(e.name, a) - 5));
+    if (!sc) continue;
+    sc += { FIRSTChampionship: 6, Premier: 3, Championship: 3, SuperQualifier: 2, Qualifier: 1, LeagueTournament: 1 }[e.type] ?? 0;
+    const soon = e.ongoing ? 6 : e.start >= today && e.start <= localToday(21) ? 4 : !e.finished ? 1 : 0;
+    sc += soon + Math.min(2, (e.teams ?? 0) / 25) - e.name.length / 200; // shorter = the main event, not a division
+    scored.push({ sc, item: { href: `#/${season}/event/${e.code}`, main: e.name, sub: `${fmtDate(e.start)}${e.ongoing ? " · live" : ""}`, kind: "Event" } });
   }
-  return items;
+  scored.sort((x, y) => y.sc - x.sc);
+  // up to 10, at most 7 of one kind so both show when both match
+  const out = [], count = { Team: 0, Event: 0 };
+  for (const { item } of scored) {
+    if (count[item.kind] >= 7) continue;
+    out.push(item); count[item.kind]++;
+    if (out.length >= 10) break;
+  }
+  return out;
 }
 
 function wireSearch(wrap) {
