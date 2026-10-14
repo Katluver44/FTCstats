@@ -160,8 +160,9 @@ for (const c of cands) {
   }
   const ev = c.code ? await event(c.code) : null;
   // 2. a single match
-  let d = titleMatch(title, c.trusted) ?? c.match;
-  if (c.match && d !== c.match && /^Q-/.test(c.match) && /^M-/.test(d ?? "")) d = c.match; // "Match 5" read as playoff
+  // a match id a search worked out from the official schedule wins over our title parsing
+  // (still checked below: the event must have that match, the upload date must fit)
+  let d = c.match ?? titleMatch(title, c.trusted);
   // a bare "Match 5" from a team's own channel is usually *their* 5th match, not Q-5:
   // trust it only from channels that upload every match of an event (--per-match-channel)
   // …unless the same channel uploaded a whole run of "Match N" for this event: then it's the event's numbering
