@@ -1,6 +1,6 @@
 import {
   $, $$, esc, data, getJSON, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
-  trend, matchTable, mountLineChart, mountScatter, sortableTable, radar, winBar, videoFor, PLAY_ICON } from "./ui.js";
+  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, PLAY_ICON } from "./ui.js";
 import { SEASONS } from "./seasons.js";
 import { playoffs } from "./playoffs.js";
 import { initAnalytics, trackPage } from "./analytics.js";
@@ -954,7 +954,7 @@ async function event(r) {
     const qualsDone = hasQuals && matches.every((m) => m.level !== "Quals" || (m.actuallyPlayed ?? m.played));
     const canForecast = (hasQuals && !qualsDone) || (!matches.length && ev.teamList.length >= 4);
     const hasPlayoffs = matches.some((m) => m.level && m.level !== "Quals");
-    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(ev.teamList.length >= 4 ? [["pickmap", "Pick map"]] : []), ...(hasPlayoffs ? [["playoffs", "Playoffs"]] : []), ...(canForecast ? [["forecast", "Rankings forecast"]] : [])];
+    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(ev.teamList.length >= 4 ? [["pickmap", "Pick list"]] : []), ...(hasPlayoffs ? [["playoffs", "Playoffs"]] : []), ...(canForecast ? [["forecast", "Rankings forecast"]] : [])];
     app.innerHTML = `
       <div class="card card-pad"><div class="page-head">
         <div>
@@ -972,7 +972,7 @@ async function event(r) {
       <nav class="tabs seg glass">${tabs.map(([k, label]) => `<a href="#/${season}/event/${code}/${k}" class="${k === (tabs.some(([t]) => t === tab) ? tab : "matches") ? "active" : ""}">${label}</a>`).join("")}</nav>
       <div id="tab"></div>`;
     if (tab === "teams") eventTeams(season, meta, ev);
-    else if (tab === "pickmap" && ev.teamList.length >= 4) eventPickMap(season, ev, r);
+    else if (tab === "pickmap" && ev.teamList.length >= 4) eventPickMap(season, ev);
     else if (tab === "playoffs" && hasPlayoffs) eventPlayoffs(season, meta, ev, matches, official[code], (m) => videoFor(videos, code, m.time));
     else if (tab === "forecast" && canForecast) eventForecast(season, meta, ev, matches);
     else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
@@ -1125,42 +1125,32 @@ function eventTeams(season, meta, ev) {
   ], { sortKey: "epaEnd" });
 }
 
-// Strategy-binder style pick map: every team at the event by auto vs teleop EPA
-// (after its last match here, or its current EPA if it hasn't played here yet),
-// dot size = endgame EPA. ?hl=<team> highlights one team.
-function eventPickMap(season, ev, r) {
-  const hl = /^\d{1,6}$/.test(r.query.get("hl") ?? "") ? +r.query.get("hl") : null;
+// Pick list: every team at the event, strongest first, as auto / teleop / endgame
+// stacked bars. Before any match here it ranks by EPA coming in; once matches are
+// played, by EPA after each team's last match here.
+function eventPickMap(season, ev) {
+  const played = ev.teamList.some((t) => t.epaOut);
   const rows = ev.teamList.map((t) => {
-    const v = t.epaOut ?? (t.epaNow ? [t.epaNow.np, t.epaNow.auto, t.epaNow.teleop, t.epaNow.endgame] : null);
-    return v && { ...t, np: v[0], auto: v[1], teleop: v[2], endgame: v[3], here: !!t.epaOut };
-  }).filter(Boolean);
-  const eg = rows.map((t) => t.endgame), egLo = Math.min(...eg), egHi = Math.max(...eg);
-  const rank = new Map([...rows].sort((a, b) => b.np - a.np).map((t, i) => [t.team, i + 1]));
+    const v = (played && t.epaOut) || t.epaIn;
+    return v && { ...t, np: v[0], auto: v[1], teleop: v[2], endgame: v[3] };
+  }).filter(Boolean).sort((a, b) => b.np - a.np);
+  const pos = (v) => Math.max(0, v);
+  const top = Math.max(1, ...rows.map((t) => pos(t.auto) + pos(t.teleop) + pos(t.endgame)));
+  const seg = (v, cls) => (v > 0 ? `<i class="${cls}" style="width:${((v / top) * 100).toFixed(2)}%"></i>` : "");
   $("#tab").innerHTML = `<div class="card card-pad">
     <div class="chart-head"><div>
-        <h2 style="margin:0">Pick map</h2>
-        <p class="small muted" style="margin:4px 0 0">Up and right is better. Dashed lines are the event medians, dot size is endgame EPA. ${rows.some((t) => !t.here) ? "Teams that haven't played here yet use their current EPA." : "EPAs as each team left this event."} Click a dot for the team.</p>
+        <h2 style="margin:0">Pick list</h2>
+        <p class="small muted" style="margin:4px 0 0">${played ? "Ranked by EPA after each team's last match here" : "Ranked by EPA coming into the event"}, split into what each team scores in auto, teleop and endgame.</p>
       </div>
-      <form id="hl-form" class="scatter-tools"><input id="hl" inputmode="numeric" placeholder="Highlight team" value="${hl ?? ""}" aria-label="Team to highlight"><button class="btn btn-solid">Show</button></form>
+      <div class="pl-legend small"><span><i class="auto"></i>Auto</span><span><i class="teleop"></i>Teleop</span><span><i class="endgame"></i>Endgame</span></div>
     </div>
-    ${hl != null && !rows.some((t) => t.team === hl) ? `<p class="small muted">Team ${hl} isn't at this event.</p>` : ""}
-    <div id="pm"></div>
-    <p class="small muted">Total EPA is still the first thing to sort by. The map shows <i>how</i> each team gets there, so when two candidates are close you can pick the one that covers your gaps (a strong auto next to a teleop specialist, say).</p>
+    <div class="pick-list">${rows.map((t, i) => `<a class="pl-row" href="#/${season}/team/${t.team}" title="Auto ${fmt(t.auto)} · Teleop ${fmt(t.teleop)} · Endgame ${fmt(t.endgame)}">
+      <span class="pl-rank faint">${i + 1}</span>
+      <span class="pl-team"><b>${t.team}</b> <span class="muted">${esc(t.name)}</span></span>
+      <span class="pl-bar">${seg(t.auto, "auto")}${seg(t.teleop, "teleop")}${seg(t.endgame, "endgame")}</span>
+      <b class="pl-epa">${fmt(t.np)}</b>
+    </a>`).join("")}</div>
   </div>`;
-  $("#hl-form").onsubmit = (e) => {
-    e.preventDefault();
-    const v = $("#hl").value.trim();
-    location.hash = `#/${season}/event/${ev.code}/pickmap${/^\d{1,6}$/.test(v) ? `?hl=${v}` : ""}`;
-  };
-  mountScatter($("#pm"), {
-    xLabel: "Auto EPA", yLabel: "Teleop EPA",
-    points: rows.map((t) => ({
-      x: t.auto, y: t.teleop, label: String(t.team), hl: t.team === hl,
-      r: egHi > egLo ? 4 + (6 * (t.endgame - egLo)) / (egHi - egLo) : 5,
-      href: `#/${season}/team/${t.team}`,
-      tip: `<b>${t.team}</b> ${esc(t.name)}<br>EPA ${fmt(t.np)} (#${rank.get(t.team)} here)${t.rank ? ` · ranked ${t.rank}` : ""}<br>Auto ${fmt(t.auto)} · Teleop ${fmt(t.teleop)} · Endgame ${fmt(t.endgame)}`,
-    })),
-  });
 }
 
 function eventForecast(season, meta, ev, matches) {
@@ -1460,7 +1450,7 @@ async function compete(r) {
         <p class="muted" style="margin:4px 0 0">Put any teams against each other and see the predicted score, who wins and how often. Uses each team's current EPA.</p>
       </div></div></div>
       <div class="compete-bar section">
-        <div class="row"><button type="button" class="pill" id="swap">⇄ Swap sides</button><button type="button" class="pill" id="top4">Top 4</button><button type="button" class="pill" id="clear">Clear</button></div>
+        <div class="row"><button type="button" class="pill" id="swap">⇄ Swap sides</button><button type="button" class="pill" id="random">Random</button><button type="button" class="pill" id="clear">Clear</button></div>
       </div>
       <div class="predictor section">${sideBox("r")}<div class="vs"><span>VS</span><button type="button" class="btn btn-solid" id="go">Predict</button></div>${sideBox("b")}</div>
       <div id="out"></div>`;
@@ -1470,8 +1460,13 @@ async function compete(r) {
     $("#swap").onclick = () => { [st.r, st.b, st.rn, st.bn] = [st.b, st.r, st.bn, st.rn]; shell(); };
     $("#clear").onclick = () => { st.r = []; st.b = []; st.shown = false; shell(); $(".predictor input")?.focus(); };
     $("#go").onclick = () => { st.shown = true; run(); };
-    // the season's best four, split #1 + #4 vs #2 + #3
-    $("#top4").onclick = () => { const t = [...teams].sort((a, b) => b.np - a.np).slice(0, 4).map((x) => `${x.team}`); [st.r, st.b, st.rn, st.bn, st.shown] = [[t[0], t[3]], [t[1], t[2]], 2, 2, true]; shell(); };
+    // four random teams with 5+ matches this season, 2 v 2
+    $("#random").onclick = () => {
+      const pool = teams.filter((x) => x.matches >= 5), t = [];
+      while (t.length < 4 && t.length < pool.length) { const n = `${pool[Math.floor(Math.random() * pool.length)].team}`; if (!t.includes(n)) t.push(n); }
+      [st.r, st.b, st.rn, st.bn, st.shown] = [t.slice(0, 2), t.slice(2), 2, 2, true];
+      shell();
+    };
     run();
   };
 

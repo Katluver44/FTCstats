@@ -411,14 +411,22 @@ td.c, th.c { text-align: center; }
 .chart .grid-line { stroke: var(--line); }
 .series-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
 .chart .axis-title { fill: var(--muted); font-size: 12px; font-weight: 600; }
-.scatter .median { stroke: var(--faint); stroke-dasharray: 4 4; opacity: 0.6; }
-.scatter circle { fill: var(--accent); fill-opacity: 0.55; stroke: var(--accent); stroke-width: 1; }
-.scatter circle.hl { fill: #f59e0b; stroke: #b45309; fill-opacity: 0.9; }
-.scatter a:hover circle { fill-opacity: 0.95; }
-.scatter .dot-label { fill: var(--muted); font-size: 10px; }
-.scatter .dot-label.hl { fill: var(--text); font-weight: 700; font-size: 12px; }
-.scatter-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.scatter-tools input { width: 130px; }
+/* event pick list: one stacked auto / teleop / endgame bar per team */
+.pick-list { display: grid; gap: 2px; margin-top: 14px; }
+.pl-row { display: grid; grid-template-columns: 28px minmax(140px, 260px) 1fr 56px; align-items: center; gap: 12px; padding: 5px 8px; border-radius: 8px; color: inherit; }
+.pl-row:hover { background: var(--surface-2); }
+.pl-rank { text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; }
+.pl-team { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
+.pl-bar { display: flex; height: 14px; border-radius: 4px; overflow: hidden; background: var(--line); }
+.pl-bar i, .pl-legend i { display: block; height: 100%; }
+.pl-epa { text-align: right; font-variant-numeric: tabular-nums; }
+.pl-legend { display: flex; gap: 14px; color: var(--muted); }
+.pl-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.pl-legend i { width: 10px; height: 10px; border-radius: 3px; }
+.pick-list .auto, .pl-legend .auto { background: #f59e0b; }
+.pick-list .teleop, .pl-legend .teleop { background: var(--accent); }
+.pick-list .endgame, .pl-legend .endgame { background: #10b981; }
+@media (max-width: 640px) { .pl-row { grid-template-columns: 22px minmax(90px, 130px) 1fr 44px; gap: 8px; } }
 .col-pick { position: relative; }
 .col-pick summary { list-style: none; cursor: pointer; font-size: 13px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--glass-strong); }
 .col-pick summary::-webkit-details-marker { display: none; }

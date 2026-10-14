@@ -416,10 +416,14 @@ export async function build(season, params = {}, epaOver = {}) {
   const epaVec = (e) => [r1(e.np), r1(e.auto), r1(e.teleop), r1(e.endgame)];
   const epaAfter = new Map(); // match -> Map(team -> [np, auto, teleop, endgame])
   const epaStart = new Map(); // `${code}:${team}` -> np entering the event
+  const epaStartVec = new Map(); // same, as [np, auto, teleop, endgame]
   const epaTrack = simulateEpa(matches, ctxEpa, {
     epa,
     onBefore: (x, v) => {
-      for (const t of [...x.red, ...x.blue]) if (!epaStart.has(`${x.ev.code}:${t}`)) epaStart.set(`${x.ev.code}:${t}`, v.epa(t).np);
+      for (const t of [...x.red, ...x.blue]) if (!epaStart.has(`${x.ev.code}:${t}`)) {
+        epaStart.set(`${x.ev.code}:${t}`, v.epa(t).np);
+        epaStartVec.set(`${x.ev.code}:${t}`, epaVec(v.epa(t)));
+      }
     },
     onMatch: (x, v) => epaAfter.set(x, new Map([...x.red, ...x.blue].map((t) => [t, epaVec(v.epa(t))]))),
   });
@@ -656,7 +660,8 @@ export async function build(season, params = {}, epaOver = {}) {
           ...(start.zone ? { zone: start.zone.map(r3) } : {}),
         } : null,
         epaEnd: h.length ? h[h.length - 1].epa[0] : null,
-        // [np, auto, teleop, endgame] after its last match here, for the event's pick map
+        // [np, auto, teleop, endgame] entering the event and after its last match here, for the pick map
+        epaIn: epaStartVec.get(`${ev.code}:${tp.teamNumber}`) ?? epaVec(epaTrack.rate(tp.teamNumber)),
         epaOut: h.length ? h[h.length - 1].epa : null,
         epaNow: e ? { np: r1(e.np), auto: r1(e.auto), teleop: r1(e.teleop), endgame: r1(e.endgame) } : null,
       };

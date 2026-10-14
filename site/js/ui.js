@@ -261,61 +261,6 @@ export function mountLineChart(el, { series, bands = [], tooltip, zero = true, m
   ro.observe(box);
 }
 
-// Scatter of labelled dots: points [{ x, y, r?, label, href, tip, hl? }], dashed lines at
-// the median x and y split it into four quadrants (the strategy-binder "pick map").
-export function mountScatter(el, { points, xLabel, yLabel }) {
-  const box = document.createElement("div");
-  box.className = "chart scatter";
-  el.replaceChildren(box);
-  const draw = () => {
-    const W = box.clientWidth || 600, H = Math.min(520, Math.max(320, W * 0.62)), P = { l: 44, r: 14, t: 12, b: 40 };
-    const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
-    const span = (vs) => {
-      const lo = Math.min(0, ...vs), hi = Math.max(10, ...vs);
-      const pad = (hi - lo) * 0.06;
-      return [lo < 0 ? lo - pad : 0, hi + pad];
-    };
-    const [x0, x1] = span(xs), [y0, y1] = span(ys);
-    const x = (v) => P.l + ((v - x0) / (x1 - x0)) * (W - P.l - P.r);
-    const y = (v) => P.t + (1 - (v - y0) / (y1 - y0)) * (H - P.t - P.b);
-    const med = (vs) => { const a = [...vs].sort((p, q) => p - q); return a.length ? (a[(a.length - 1) >> 1] + a[a.length >> 1]) / 2 : 0; };
-    let g = "";
-    const sx = niceStep((x1 - x0) / 5), sy = niceStep((y1 - y0) / 4);
-    for (let v = Math.ceil(y0 / sy) * sy; v <= y1; v += sy)
-      g += `<line class="grid-line" x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}"/><text x="${P.l - 6}" y="${y(v) + 4}" text-anchor="end">${Math.round(v)}</text>`;
-    for (let v = Math.ceil(x0 / sx) * sx; v <= x1; v += sx)
-      g += `<text x="${x(v)}" y="${H - P.b + 16}" text-anchor="middle">${Math.round(v)}</text>`;
-    g += `<text class="axis-title" x="${(P.l + W - P.r) / 2}" y="${H - 4}" text-anchor="middle">${esc(xLabel)} →</text>`;
-    g += `<text class="axis-title" transform="translate(12 ${(P.t + H - P.b) / 2}) rotate(-90)" text-anchor="middle">${esc(yLabel)} →</text>`;
-    if (points.length >= 4) {
-      const mx = x(med(xs)), my = y(med(ys));
-      g += `<line class="median" x1="${mx}" x2="${mx}" y1="${P.t}" y2="${H - P.b}"/><line class="median" x1="${P.l}" x2="${W - P.r}" y1="${my}" y2="${my}"/>`;
-    }
-    // small dots first so big ones stay on top; labels sit to the right of each dot
-    const order = points.map((p, i) => i).sort((a, b) => (points[a].hl ? 1 : 0) - (points[b].hl ? 1 : 0) || (points[a].r ?? 5) - (points[b].r ?? 5));
-    const dots = order.map((i) => {
-      const p = points[i], r = p.r ?? 5;
-      return `<a href="${p.href}" data-i="${i}"><circle cx="${x(p.x).toFixed(1)}" cy="${y(p.y).toFixed(1)}" r="${r}" class="${p.hl ? "hl" : ""}"/>` +
-        `<text x="${(x(p.x) + r + 3).toFixed(1)}" y="${(y(p.y) + 4).toFixed(1)}" class="dot-label${p.hl ? " hl" : ""}">${esc(p.label)}</text></a>`;
-    }).join("");
-    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}">${g}${dots}</svg><div class="tip"></div>`;
-    const svg = box.querySelector("svg"), tip = box.querySelector(".tip");
-    svg.onpointermove = (e) => {
-      const a = e.target.closest("a[data-i]");
-      if (!a) { tip.style.display = "none"; return; }
-      const p = points[+a.dataset.i], r = svg.getBoundingClientRect();
-      tip.innerHTML = p.tip;
-      tip.style.display = "block";
-      const left = (x(p.x) / W) * r.width, top = (y(p.y) / H) * r.height;
-      tip.style.left = `${Math.max(4, Math.min(left + 12, r.width - tip.offsetWidth - 4))}px`;
-      tip.style.top = `${Math.max(4, top - tip.offsetHeight - 10)}px`;
-    };
-    svg.onpointerleave = () => (tip.style.display = "none");
-  };
-  draw();
-  new ResizeObserver(() => draw()).observe(box);
-}
-
 function niceStep(raw) {
   const mag = 10 ** Math.floor(Math.log10(raw || 1));
   const f = raw / mag;
