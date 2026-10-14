@@ -372,7 +372,7 @@ tr.upset td { background: rgba(201, 52, 43, 0.05); }
 .ev-title { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
 .ev-title h2 { margin: 0; }
 .ev-award { font-size: 12px; font-weight: 650; padding: 3px 9px; border-radius: 999px; background: var(--line); color: var(--text); white-space: nowrap; }
-.ev-award.win { background: #0b4f9c; color: #fff; }
+
 .ev-head { display: flex; justify-content: space-between; gap: 16px; padding: 16px 20px 10px; flex-wrap: wrap; }
 .ev-box { display: grid; grid-template-columns: repeat(4, auto); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--glass-strong); }
 .ev-box div { padding: 6px 14px; text-align: center; border-right: 1px solid var(--line); }
@@ -778,13 +778,21 @@ a.th-add:hover { color: var(--accent); border-color: var(--accent); }
 .stat-pct { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--hover); color: var(--muted); }
 .stat-pct.warm { background: var(--accent-soft); color: var(--accent); }
 .stat-pct.hot { background: var(--accent); color: #fff; }
+/* gold: kept for the very best only (Top 1%, #1 ranks, event wins, win banners) */
+.stat-pct.gold, .ev-award.win { color: #3d2a00; background: linear-gradient(110deg, #c8961a 0%, #f7d774 30%, #fff3c4 45%, #f2c94c 60%, #b8860b 100%);
+  background-size: 220% 100%; box-shadow: 0 0 0 1px rgba(184, 134, 11, .35), 0 1px 6px rgba(242, 201, 76, .25); animation: gold-shine 5s ease-in-out infinite; }
+@keyframes gold-shine { 0%, 70% { background-position: 100% 0; } 100% { background-position: -20% 0; } }
+@media (prefers-reduced-motion: reduce) { .stat-pct.gold, .ev-award.win { animation: none; } }
+.gold-rank b { color: #b8860b; }
+:root[data-theme="dark"] .gold-rank b { color: #f2c94c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gold-rank b { color: #f2c94c; } }
 .th-photo .team-photo { width: 100%; }
 .th-awards { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; flex: 1 1 280px; justify-content: center; align-self: center; }
 @media (max-width: 700px) { .th-awards { order: 3; justify-content: flex-start; } }
 .th-awards .th-h { margin: 0 6px 0 0; }
 .th-awards .plaques, .th-awards .banners { justify-content: flex-start; }
-.th-awards .plaque-icon svg { width: 44px; height: 56px; }
-.th-awards .banner-icon svg { width: 32px; height: 45px; }
+.th-awards .plaque-icon svg { width: 58px; height: 74px; }
+.th-awards .banner-icon svg { width: 42px; height: 59px; }
 @media (max-width: 1000px) {
   .th-body, .th-body.has-photo { grid-template-columns: 1fr; }
   .th-body .radar-box { justify-self: center; }

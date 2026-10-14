@@ -393,7 +393,7 @@ async function team(r) {
   const fact = (b, k) => `<span class="th-fact"><b>${b}</b> ${k}</span>`;
   // ranks as one line under the EPA, e.g. "#26 World · #8 Romania · #1 BZ"
   const rankLine = [["World", t.rank, t.of], places.country, places.state].filter(Boolean)
-    .map(([label, rank, of]) => `<span title="out of ${fmtInt(of)}"><b>#${fmtInt(rank)}</b> ${esc(label)}</span>`).join("");
+    .map(([label, rank, of]) => `<span title="out of ${fmtInt(of)}" class="${rank === 1 ? "gold-rank" : ""}"><b>#${fmtInt(rank)}</b> ${esc(label)}</span>`).join("");
   app.innerHTML = `
     <div class="card card-pad team-hero">
       <div class="th-top">
@@ -408,7 +408,6 @@ async function team(r) {
           </div>
         </div>
         ${awards.length ? `<div class="th-awards">
-          <span class="th-h">Awards</span>
           <div class="plaques">${plaques.map((a) => plaque(a, season)).join("")}</div><div class="banners">${banners.map((a) => banner(a, season)).join("")}</div>
         </div>` : ""}
         <div class="th-epa">
@@ -441,7 +440,7 @@ async function team(r) {
     $("#stat-grid").innerHTML = axes.map((ax) => {
       const top = ax.value == null ? null : Math.max(1, Math.round((1 - ax.value) * 100));
       return `<div class="stat-card" title="${esc(ax.tip)}"><div class="k">${esc(ax.label)}</div><b>${ax.display}</b>
-        <span class="stat-pct ${top != null && top <= 10 ? "hot" : top != null && top <= 25 ? "warm" : ""}">${top == null ? "–" : `Top ${top}%`}</span></div>`;
+        <span class="stat-pct ${top === 1 ? "gold" : top != null && top <= 10 ? "hot" : top != null && top <= 25 ? "warm" : ""}">${top == null ? "–" : `Top ${top}%`}</span></div>`;
     }).join("");
   }).catch(() => {});
 
@@ -637,8 +636,10 @@ function banner(a, season) {
   const label = a.type === "Inspire" ? "INSPIRE" : "WIN";
   return `<a class="banner-icon" href="#/${season}/event/${encodeURIComponent(a.ev)}" title="${esc(AWARD_NAMES[a.type] ?? a.type)} · ${esc(a.evName)}">
     <svg viewBox="0 0 40 56" width="40" height="56" aria-hidden="true">
+      <defs><linearGradient id="gold-edge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f9e08b"/><stop offset=".45" stop-color="#d4a017"/><stop offset=".7" stop-color="#f7d774"/><stop offset="1" stop-color="#b8860b"/></linearGradient></defs>
       <path d="M0 0h40v56l-20-10-20 10z" fill="#0b4f9c"/>
-      <text x="20" y="25" text-anchor="middle" font-size="${label.length > 3 ? 8 : 11}" font-weight="900" fill="#fff">${label}</text>
+      <path d="M1.5 1.5h37v51.6l-18.5-9.25-18.5 9.25z" fill="none" stroke="url(#gold-edge)" stroke-width="2"/>
+      <text x="20" y="25" text-anchor="middle" font-size="${label.length > 3 ? 8 : 11}" font-weight="900" fill="url(#gold-edge)">${label}</text>
     </svg></a>`;
 }
 // Event name split into short lines for a plaque, e.g. "Romania" / "Championship".
