@@ -2,6 +2,7 @@ import {
   $, $$, esc, data, getJSON, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
   trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, PLAY_ICON } from "./ui.js";
 import { SEASONS } from "./seasons.js";
+import { scatter, histogram, breakdown } from "./charts.js";
 import { playoffs } from "./playoffs.js";
 import { initAnalytics, trackPage } from "./analytics.js";
 import { CONFIG } from "./config.js";
@@ -364,91 +365,192 @@ const pref = {
 
 // ---------------- teams ----------------
 
+const TABLE_ICON = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 3h11M1.5 7h11M1.5 11h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+const CHART_ICON = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="3.5" cy="9.5" r="1.6" fill="currentColor"/><circle cx="7" cy="5.5" r="1.6" fill="currentColor"/><circle cx="10.5" cy="7.5" r="1.6" fill="currentColor"/><circle cx="11" cy="2.8" r="1.6" fill="currentColor"/></svg>';
+
 async function teams(r) {
   const { season, query } = r;
-  // ?off=mti | full (old links: off=1 and scope=all = full); official season by default
-  let off = { 1: "full", mti: "mti", full: "full" }[query.get("off")] ?? (query.get("scope") === "all" ? "full" : "official");
-  const [meta, rows] = await Promise.all([data.meta(season), data.teams(season, off)]);
+  // ?off=full (old links: off=1 / off=mti / scope=all); official season by default
+  let off = ["1", "mti", "full"].includes(query.get("off")) || query.get("scope") === "all" ? "full" : "official";
+  const [meta, played, preTable] = await Promise.all([data.meta(season), data.teams(season, off), getJSON(`data/${season}/teams-pre.json`).catch(() => null)]);
   const hasOff = meta.offTables && meta.offTables.full !== meta.offTables.official;
   if (stale(r)) return;
   const rpNames = meta.rpNames;
   // rps: bonus RPs earned in an average match (each RP's rate, 0-1, summed), one column for all of them
   const rpRate = (r, i) => Math.min(1, Math.max(0, r[`rp${i}`] ?? 0));
+  // own copies (rank changes with the matches filter); plus last season's teams that
+  // haven't played yet, on the EPA the model starts them on ("Predicted")
+  const pre = (preTable?.rows ?? []).map((row) => {
+    const o = { matches: 0, wins: 0, losses: 0, ties: 0, events: 0, trend: null, cons: null, pre: true };
+    preTable.cols.forEach((c, j) => (o[c] = row[j]));
+    return o;
+  });
+  const rows = [...played.map((o) => ({ ...o })), ...pre];
   for (const r of rows) {
     r.region = regionOf(r.loc); r.wr = r.matches ? (r.wins + r.ties / 2) / r.matches : null;
+    if (r.pre) r.country = (r.loc ?? "").split(", ").pop();
     r.rps = rpNames.reduce((sum, _, i) => sum + rpRate(r, i), 0);
+    rpNames.forEach((_, i) => (r[`rpr${i}`] = rpRate(r, i)));
   }
+  const byEpa = [...rows].sort((a, b) => b.np - a.np);
+  byEpa.forEach((r, i) => (r.rankAll = i + 1));
+  byEpa.filter((r) => !r.pre).forEach((r, i) => (r.rankPlayed = i + 1));
   const countries = [...new Set(rows.map((r) => r.country).filter(Boolean))].sort();
+  let view = query.get("view") === "chart" ? "chart" : "table";
+  const chart = { type: query.get("chart") ?? "scatter", x: query.get("x") ?? "auto", y: query.get("y") ?? "teleop", m: query.get("m") ?? "np" };
   app.innerHTML = `
     <div class="card">
       <div class="toolbar">
+        <div class="view-pick" role="group" aria-label="View">
+          <button type="button" data-view="table" aria-pressed="${view === "table"}">${TABLE_ICON}Table</button>
+          <button type="button" data-view="chart" aria-pressed="${view === "chart"}">${CHART_ICON}Chart</button>
+        </div>
         <input id="filter" placeholder="Search teams…" value="${esc(query.get("q") ?? "")}">
         <select id="country" aria-label="Country"><option value="">All countries</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
         <select id="state" aria-label="State or region" hidden></select>
-        <select id="minm" aria-label="Minimum matches played"><option value="1">Any number of matches</option><option value="10">Played 10+ matches</option><option value="25">Played 25+ matches</option></select>
+        <label class="sel-label" title="Predicted: every team, including ones that haven't played yet (on the EPA they start the season with)"><span># of matches</span>
+          <select id="minm"><option value="0">Predicted</option><option value="1">1+</option><option value="5">5+</option><option value="10">10+</option><option value="25">25+</option></select></label>
         ${hasOff ? `<div class="seg scope" role="group" aria-label="Which events count">
           ${[["official", "Season only", "Official events only: off-season events (often modified rules and lineups) never move these ratings"],
-             ["mti", "Through MTI", "Adds off-season events up to MTI, each counted at 40% (the weight that best predicts next season); modified-rules events left out"],
              ["full", "All events", "Adds every off-season event at 40%; modified-rules events left out"]]
             .map(([k, l, tip]) => `<a href="#" data-off="${k}" class="${k === off ? "active" : ""}" title="${tip}">${l}</a>`).join("")}
         </div>` : ""}
-        <details class="col-pick"><summary>Columns</summary><div id="col-list"></div></details>
+        <details class="col-pick"${view === "chart" ? " hidden" : ""}><summary>Columns</summary><div id="col-list"></div></details>
       </div>
-      <div id="tbl"></div>
+      <div id="tbl"${view === "chart" ? " hidden" : ""}></div>
+      <div id="charts" class="card-pad team-charts"${view === "table" ? " hidden" : ""}></div>
     </div>`;
   const cols = [
     { key: "rank", label: "#", cls: "faint num", render: (r) => r.rank },
     { key: "team", label: "Team", render: (r) => teamCell(season, r.team, r.name), sort: false },
     { key: "loc", label: "Location", cls: "small muted hide-sm", sort: false, render: (r) => esc(r.loc) },
-    { key: "np", label: `<span title="${EPA_TIP}">EPA</span>`, cls: "c", render: (r) => epa(r.np, meta) },
+    { key: "country", label: "Country", cls: "small muted", render: (r) => esc(r.country ?? "") },
+    { key: "region", label: "State / region", cls: "small muted", render: (r) => esc(r.region || "–") },
+    { key: "np", label: `<span title="${EPA_TIP}">EPA</span>`, cls: "c",
+      render: (r) => (r.pre ? `<span class="pred-epa" title="Predicted: hasn't played yet this season">${epa(r.np, meta)}</span>` : epa(r.np, meta)) },
     { key: "auto", label: "Auto", cls: "r", render: (r) => fmt(r.auto) },
     { key: "teleop", label: "Teleop", cls: "r", render: (r) => fmt(r.teleop) },
     { key: "endgame", label: "Endgame", cls: "r", render: (r) => fmt(r.endgame) },
-    ...(rpNames.length ? [{ key: "rps", label: `<span title="Bonus ranking points earned in an average match (${rpNames.join(", ")})">Bonus RPs</span>`, cls: "r small hide-sm",
+    ...(rpNames.length ? [{ key: "rps", label: `<span title="Bonus ranking points earned in an average match (${rpNames.join(", ")})">RPs</span>`, cls: "r small hide-sm",
       render: (r) => `<span title="${rpNames.map((n, i) => `${n} ${pct(rpRate(r, i))}`).join(" · ")}">${fmt(r.rps)}</span>` }] : []),
-    { key: "wins", label: "Record", cls: "r small", render: (r) => `${r.wins}-${r.losses}${r.ties ? `-${r.ties}` : ""}` },
+    ...rpNames.map((n, i) => ({ key: `rpr${i}`, label: `<span title="How often it earns the ${esc(n)} RP">${esc(n)}</span>`, cls: "r small", render: (r) => pct(r[`rpr${i}`]) })),
+    { key: "wins", label: "Record", cls: "r small", render: (r) => (r.matches ? `${r.wins}-${r.losses}${r.ties ? `-${r.ties}` : ""}` : "–") },
     { key: "wr", label: "Win rate", cls: "r small", render: (r) => (r.wr == null ? "–" : pct(r.wr)) },
-    { key: "trend", label: "Trend", cls: "r small", render: (r) => `<span title="EPA change over the last 10 matches">${trend(r.trend)}</span>` },
+    { key: "matches", label: "Matches", cls: "r small", render: (r) => r.matches },
+    { key: "events", label: "Events", cls: "r small", render: (r) => r.events ?? 0 },
+    { key: "cons", label: `<span title="How far its alliance's score typically lands from the prediction (lower = steadier)">Consistency</span>`, cls: "r small",
+      render: (r) => (r.cons == null ? "–" : `±${pct(r.cons)}`) },
+    { key: "trend", label: "Trend", cls: "r small", render: (r) => (r.trend == null ? "–" : `<span title="EPA change over the last 10 matches">${trend(r.trend)}</span>`) },
   ];
   // Columns menu: everything but rank, team and EPA can be hidden (remembered per device).
-  // By default location (the country filter covers it) and win rate (record says it) are off.
+  // Off by default: location, win rate and the extra columns added later.
   const FIXED = new Set(["rank", "team", "np"]);
+  const EXTRA = ["country", "region", "matches", "events", "cons", ...rpNames.map((_, i) => `rpr${i}`)];
   const plain = (c) => c.label.replace(/<[^>]+>/g, "");
-  let hiddenCols = new Set(pref.get("teamCols2", ["loc", "wr"]));
+  let hiddenCols = new Set(pref.get("teamCols3", null) ?? [...pref.get("teamCols2", ["loc", "wr"]), ...EXTRA]);
   $("#col-list").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) =>
     `<button type="button" class="col-btn" data-k="${c.key}" aria-pressed="${!hiddenCols.has(c.key)}">${esc(plain(c))}</button>`).join("");
-  let table;
-  const mount = () => { table = sortableTable($("#tbl"), rows, cols.filter((c) => !hiddenCols.has(c.key)), { sortKey: "np" }); };
-  mount();
+  let table, shown = rows;
+  const mount = () => { table = sortableTable($("#tbl"), shown, cols.filter((c) => !hiddenCols.has(c.key)), { sortKey: "np" }); };
   $("#col-list").onclick = (e) => {
     const b = e.target.closest("[data-k]");
     if (!b) return;
     const k = b.dataset.k, on = hiddenCols.has(k);
     on ? hiddenCols.delete(k) : hiddenCols.add(k);
     b.setAttribute("aria-pressed", String(on));
-    pref.set("teamCols2", [...hiddenCols]);
-    mount(); apply();
+    pref.set("teamCols3", [...hiddenCols]);
+    mount();
   };
-  if (query.get("min")) $("#minm").value = query.get("min");
+
+  // ---- charts ----
+  const metrics = [
+    { key: "np", label: "EPA", get: (r) => r.np },
+    { key: "auto", label: "Auto EPA", get: (r) => r.auto },
+    { key: "teleop", label: "Teleop EPA", get: (r) => r.teleop },
+    { key: "endgame", label: "Endgame EPA", get: (r) => r.endgame },
+    ...(rpNames.length ? [{ key: "rps", label: "Bonus RPs a match", get: (r) => r.rps, d: 2 }] : []),
+    { key: "wr", label: "Win rate", get: (r) => r.wr, pct: true },
+    { key: "matches", label: "Matches played", get: (r) => r.matches, d: 0 },
+    { key: "trend", label: "Trend (last 10 matches)", get: (r) => r.trend },
+    { key: "cons", label: "Consistency (± miss)", get: (r) => r.cons, pct: true },
+  ].map((m) => ({ ...m, show: (v, tick) => (m.pct ? pct(v) : tick ? fmt(v, Number.isInteger(v) ? 0 : 1) : fmt(v, m.d ?? 1)) }));
+  const metric = (k, d) => metrics.find((m) => m.key === k) ?? metrics.find((m) => m.key === d);
+  const opts = (sel) => metrics.map((m) => `<option value="${m.key}" ${m.key === sel ? "selected" : ""}>${esc(m.label)}</option>`).join("");
+  const CHARTS = [["scatter", "Scatter"], ["dist", "Distribution"], ["breakdown", "Top 25 breakdown"]];
+  const drawChart = () => {
+    if (!CHARTS.some(([k]) => k === chart.type)) chart.type = "scatter";
+    const x = metric(chart.x, "auto"), y = metric(chart.y, "teleop"), m = metric(chart.m, "np");
+    const controls = chart.type === "scatter"
+      ? `<label class="sel-label"><span>X</span><select data-c="x">${opts(x.key)}</select></label><button type="button" class="swap" title="Swap axes" aria-label="Swap axes">⇄</button><label class="sel-label"><span>Y</span><select data-c="y">${opts(y.key)}</select></label>`
+      : chart.type === "dist" ? `<label class="sel-label"><span>Stat</span><select data-c="m">${opts(m.key)}</select></label>`
+      : `<div class="pl-legend small"><span><i class="auto"></i>Auto</span><span><i class="teleop"></i>Teleop</span><span><i class="endgame"></i>Endgame</span></div>`;
+    const note = {
+      scatter: `Each dot is a team that has played; the top 8 by EPA are orange. Grey dashes mark the medians, orange dashes the trend. Click a dot to open the team.`,
+      dist: "How many teams sit at each level. The markers show the median and what it takes to be in the top 10% and top 1%.",
+      breakdown: "The 25 best teams by EPA in this list, split into what each scores in auto, teleop and endgame.",
+    }[chart.type];
+    $("#charts").innerHTML = `
+      <div class="chart-head">
+        <div class="chart-pick">${CHARTS.map(([k, l]) => `<a href="#" data-type="${k}" class="${k === chart.type ? "active" : ""}">${l}</a>`).join("")}</div>
+        <div class="chart-controls">${controls}</div>
+      </div>
+      <p class="small muted chart-note">${note}</p>
+      <div id="chart-box" class="chart"></div>`;
+    const box = $("#chart-box");
+    // predicted teams have no matches of their own (their stats just scale with the
+    // carried-over EPA); leave them off the scatter unless they're nearly all there is
+    const playedShown = shown.filter((r) => !r.pre);
+    if (chart.type === "scatter") scatter(box, playedShown.length >= 20 ? playedShown : shown, { x, y, href: (r) => `#/${season}/team/${r.team}` });
+    else if (chart.type === "dist") histogram(box, shown, { m });
+    else breakdown(box, shown, { season });
+  };
+  $("#charts").onclick = (e) => {
+    const a = e.target.closest("[data-type]");
+    if (a) { e.preventDefault(); chart.type = a.dataset.type; sync(); drawChart(); return; }
+    if (e.target.closest(".swap")) { [chart.x, chart.y] = [chart.y, chart.x]; sync(); drawChart(); }
+  };
+  $("#charts").onchange = (e) => {
+    const s = e.target.closest("[data-c]");
+    if (s) { chart[s.dataset.c] = s.value; sync(); drawChart(); }
+  };
+  $(".view-pick").onclick = (e) => {
+    const b = e.target.closest("[data-view]");
+    if (!b || b.dataset.view === view) return;
+    view = b.dataset.view;
+    $$(".view-pick button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.view === view)));
+    $("#tbl").hidden = $(".col-pick").hidden = view === "chart";
+    $("#charts").hidden = view === "table";
+    apply();
+  };
+
+  if (query.get("min") != null) $("#minm").value = query.get("min");
+  if (!$("#minm").value) $("#minm").value = "0";
   const fillStates = regionSelect($("#state"), () => rows.filter((r) => r.country === $("#country").value), query.get("state"));
+  const sync = () => {
+    const m = +$("#minm").value;
+    const ch = view === "chart" ? { view: "chart", chart: chart.type, ...(chart.type === "scatter" ? { x: chart.x, y: chart.y } : chart.type === "dist" ? { m: chart.m } : {}) } : {};
+    syncQuery({ q: $("#filter").value.trim(), country: $("#country").value, state: $("#state").value, min: m ? m : "", off: off === "official" ? "" : off, ...ch });
+  };
   const apply = () => {
     const q = $("#filter").value.trim().toLowerCase(), c = $("#country").value, m = +$("#minm").value, st = $("#state").value;
-    syncQuery({ q: $("#filter").value.trim(), country: c, state: st, min: m > 1 ? m : "", off: off === "official" ? "" : off, scope: "" });
-    const shown = rows.filter((r) =>
-      (!c || r.country === c) && (!st || r.region === st) && r.matches >= m &&
-      (!q || String(r.team).startsWith(q) || r.name.toLowerCase().includes(q) || r.loc.toLowerCase().includes(q)));
-    table.setRows(shown);
+    sync();
+    for (const r of rows) r.rank = m ? r.rankPlayed : r.rankAll;
+    shown = rows.filter((r) =>
+      (m ? !r.pre && r.matches >= m : true) && (!c || r.country === c) && (!st || r.region === st) &&
+      (!q || String(r.team).startsWith(q) || (r.name ?? "").toLowerCase().includes(q) || (r.loc ?? "").toLowerCase().includes(q)));
+    if (view === "table") { if (table) table.setRows(shown); else mount(); }
+    else drawChart();
   };
   $("#filter").oninput = apply; $("#minm").onchange = apply; $("#state").onchange = apply;
   $("#country").onchange = () => { fillStates(); apply(); };
   fillStates();
-  // switching tables reloads the page with ?off=mti|full (filters are kept in the query)
+  // switching tables reloads the page with ?off=full (filters are kept in the query)
   if ($(".scope")) $(".scope").onclick = (e) => {
     const a = e.target.closest("[data-off]");
     if (!a) return;
     e.preventDefault();
     off = a.dataset.off;
-    apply();
+    sync();
     teams({ ...r, query: new URLSearchParams(location.hash.split("?")[1] ?? "") });
   };
   apply();

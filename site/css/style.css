@@ -1012,3 +1012,40 @@ body.home-fit .hero { flex-shrink: 0; }
 /* head to head meetings: long event names wrap instead of widening the table */
 .meet td { white-space: normal; }
 @media (max-width: 640px) { .meet td, .meet th { padding-left: 8px; padding-right: 8px; } }
+
+/* ---------- teams list: table / chart switch, labelled pickers, charts ---------- */
+.view-pick { display: inline-flex; gap: 2px; padding: 3px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); flex: none; }
+.view-pick button { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border: 0; border-radius: 6px; background: transparent;
+  font: inherit; font-size: 13.5px; font-weight: 600; color: var(--muted); cursor: pointer; transition: background .12s, color .12s; }
+.view-pick button:hover { color: var(--text); }
+.view-pick button[aria-pressed="true"] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgba(0, 0, 0, .08), 0 0 0 1px var(--line); }
+/* a select with its name inside the same box: "# of matches  Predicted ▾" */
+.sel-label { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.sel-label > span { padding: 0 2px 0 10px; font-size: 12.5px; font-weight: 600; color: var(--faint); white-space: nowrap; }
+.toolbar .sel-label select, .sel-label select { border: 0; background-color: transparent; padding-left: 6px; font-weight: 600; }
+.sel-label:focus-within { outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 1px; }
+.sel-label select:focus { outline: none; }
+.pred-epa { opacity: .62; font-style: italic; }
+.team-charts { padding-top: 18px !important; padding-bottom: 24px !important; }
+.team-charts .chart-head { justify-content: flex-start; }
+.chart-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.chart-controls .sel-label select { max-width: 200px; appearance: none; cursor: pointer; font-size: 13.5px; padding: 7px 28px 7px 6px;
+  background: transparent linear-gradient(45deg, transparent 50%, var(--muted) 50%) calc(100% - 14px) 52% / 4px 4px no-repeat,
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%) calc(100% - 10px) 52% / 4px 4px no-repeat; color: var(--text); }
+.chart-controls .swap { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; font-size: 15px; }
+.chart-controls .swap:hover { color: var(--accent); border-color: var(--accent); }
+.chart-note { margin: 10px 0 4px; }
+.team-charts .chart { margin-top: 6px; }
+.team-charts .pick-list { margin-top: 6px; }
+.chart .dot { fill: var(--accent); fill-opacity: .3; }
+.chart .dot.top { fill: var(--orange); fill-opacity: .95; stroke: var(--surface); stroke-width: 1.5; }
+.chart .dot-label { fill: var(--text); font-size: 11.5px; font-weight: 700; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+.chart .dot-ring { fill: none; stroke: var(--text); stroke-width: 2; pointer-events: none; }
+.chart .med-line { stroke: var(--faint); stroke-dasharray: 4 4; opacity: .55; }
+.chart .fit-line { stroke: var(--orange); stroke-width: 1.5; stroke-dasharray: 6 4; opacity: .7; }
+.chart .corr { fill: var(--muted); font-size: 12px; font-weight: 600; }
+.chart .bar { fill: var(--accent); fill-opacity: .75; transition: fill-opacity .1s; }
+.chart .bar.on { fill-opacity: 1; }
+.chart .mark-line { stroke: var(--orange); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.chart .mark { fill: var(--orange); font-size: 11.5px; font-weight: 700; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+@media (max-width: 640px) { .chart-controls { margin-left: 0; } .view-pick button { padding: 5px 9px; } }
