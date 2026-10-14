@@ -106,9 +106,10 @@ const event = async (code) => {
 // "Qualification 12", "Qual 12", "Q12", "Q-01", "Playoff M-03", "Playoff 3", "Playoff Match 3", "Match 3", "Semifinal 1-2", "Final 2"
 function titleMatch(t, bareM = false) {
   let x;
-  if ((x = t.match(/\b(?:Qualification|Qual|QM|Q)[\s#-]*(?:Match\s*#?\s*)?(\d{1,3})\b/i))) return `Q-${+x[1]}`; // "Qualification Match 8", "QM 8"
-  if ((x = t.match(/\bSemi-?final\s*(\d)\s*[-, ]\s*(?:game\s*|match\s*)?(\d)\b/i))) return `SF${x[1]}-${x[2]}`;
-  if ((x = t.match(/\bFinals?\s*(?:game\s*|match\s*)?#?\s*(\d)\b/i))) return `F-${x[1]}`;
+  if ((x = t.match(/\b(?:Qualifications?|Quals?|QM|Q)[\s#-]*(?:Match\s*#?\s*)?(\d{1,3})\b/i))) return `Q-${+x[1]}`; // "Qualification Match 8", "QM 8", "Quals 18"
+  if ((x = t.match(/\bSemi-?(?:final)?s?\s*-?\s*(\d)\s*[-, ]\s*(?:game\s*|match\s*)?(\d)\b/i))) return `SF${x[1]}-${x[2]}`; // "Semifinal 1-2", "Semis-1-1", "Semi 2-2"
+  if ((x = t.match(/\bSF\s*(\d)\s*(?:[-.]|M|\s)\s*(\d)\b/i))) return `SF${x[1]}-${x[2]}`; // "SF2-1", "SF2M1"
+  if ((x = t.match(/\bFinals?\s*(?:game\s*|match\s*)?#?\s*(\d)\b/i)) || (x = t.match(/\bF-?(\d)\b/))) return `F-${x[1]}`; // "Finals 2", "F2", "F-2"
   if (/tie-?breaker|replay/i.test(t)) return null; // replays are numbered differently
   if ((x = t.match(/\b(?:Playoff\s*)?M-(\d{1,2})\b/)) || (x = t.match(/\bPlayoff\s+M(\d{1,2})\b/i))) return `M-${+x[1]}`;
   if (bareM && (x = t.match(/\bM(\d{1,2})\b/))) return `M-${+x[1]}`; // "… Tournament M3" on a per-match channel
@@ -164,7 +165,7 @@ for (const c of cands) {
   // a bare "Match 5" from a team's own channel is usually *their* 5th match, not Q-5:
   // trust it only from channels that upload every match of an event (--per-match-channel)
   // …unless the same channel uploaded a whole run of "Match N" for this event: then it's the event's numbering
-  if (d && !c.trusted && d !== c.match && !/\b(?:Qualification|Qual|Q[\s#-]*\d|Playoff|Elimination|Semi-?final|Finals?|M-\d)/i.test(title) && !matchRun.has(`${c.code} ${v.snippet.channelId}`)) d = null;
+  if (d && !c.trusted && d !== c.match && !/\b(?:Qualification|Qual|QM\s*\d|Q[\s#-]*\d|Playoff|Elimination|Semi|SF\s*\d|F-?\d\b|Finals?|M-\d)/i.test(title) && !matchRun.has(`${c.code} ${v.snippet.channelId}`)) d = null;
   // a run of bare "Match N" (no playoff words) is the qualification schedule
   if (d?.startsWith("M-") && matchRun.has(`${c.code} ${v.snippet.channelId}`) && !/playoff|semi|final|elim|M-\d/i.test(title)) d = `Q-${d.slice(2)}`;
   // "Match 3" at a league meet (no playoffs) is qualification 3
