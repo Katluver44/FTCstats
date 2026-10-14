@@ -298,6 +298,27 @@ function eventList(season, meta, evs, cls = "") {
     </tr>`).join("")}</tbody></table></div>`;
 }
 
+// "Columbus, OH, USA" -> "OH" (the part before the country), or "" when there's none
+const regionOf = (loc) => { const p = (loc ?? "").split(", "); return p.length >= 3 ? p[p.length - 2] : ""; };
+// Fill a state/region <select> from rowsFn(); hidden while the chosen country has
+// fewer than two regions. Returns the refill function (call it when the country changes).
+function regionSelect(sel, rowsFn, initial) {
+  let first = true;
+  return () => {
+    const regions = [...new Set(rowsFn().map((r) => r.region).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    const keep = first ? initial : sel.value;
+    first = false;
+    sel.innerHTML = `<option value="">All states / regions</option>${regions.map((x) => `<option ${x === keep ? "selected" : ""}>${esc(x)}</option>`).join("")}`;
+    sel.hidden = regions.length < 2;
+    if (sel.hidden) sel.value = "";
+  };
+}
+// per-device preferences (remembered columns); the page works the same without storage
+const pref = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem(`ftcstats:${k}`)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(`ftcstats:${k}`, JSON.stringify(v)); } catch {} },
+};
+
 // ---------------- teams ----------------
 
 async function teams(r) {
@@ -308,12 +329,14 @@ async function teams(r) {
   const hasOff = meta.offTables && meta.offTables.full !== meta.offTables.official;
   if (stale(r)) return;
   const rpNames = meta.rpNames;
+  for (const r of rows) { r.region = regionOf(r.loc); r.wr = r.matches ? (r.wins + r.ties / 2) / r.matches : null; }
   const countries = [...new Set(rows.map((r) => r.country).filter(Boolean))].sort();
   app.innerHTML = `
     <div class="card">
       <div class="toolbar">
         <input id="filter" placeholder="Search teams…" value="${esc(query.get("q") ?? "")}">
         <select id="country" aria-label="Country"><option value="">All countries</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
+        <select id="state" aria-label="State or region" hidden></select>
         <select id="minm" aria-label="Minimum matches played"><option value="1">Any number of matches</option><option value="10">Played 10+ matches</option><option value="25">Played 25+ matches</option></select>
         ${hasOff ? `<div class="seg scope" role="group" aria-label="Which events count">
           ${[["official", "Season only", "Official events only: off-season events (often modified rules and lineups) never move these ratings"],
@@ -321,6 +344,7 @@ async function teams(r) {
              ["full", "All events", "Adds every off-season event at 40%; modified-rules events left out"]]
             .map(([k, l, tip]) => `<a href="#" data-off="${k}" class="${k === off ? "active" : ""}" title="${tip}">${l}</a>`).join("")}
         </div>` : ""}
+        <details class="col-pick"><summary>Columns</summary><div id="col-list"></div></details>
       </div>
       <div id="tbl"></div>
     </div>`;
@@ -334,19 +358,38 @@ async function teams(r) {
     { key: "endgame", label: "Endgame", cls: "r", render: (r) => fmt(r.endgame) },
     ...rpNames.map((n, i) => ({ key: `rp${i}`, label: `${n} RP`, cls: "r small hide-sm", render: (r) => pct(Math.max(0, r[`rp${i}`])) })),
     { key: "wins", label: "Record", cls: "r small", render: (r) => `${r.wins}-${r.losses}${r.ties ? `-${r.ties}` : ""}` },
+    { key: "wr", label: "Win rate", cls: "r small", render: (r) => (r.wr == null ? "–" : pct(r.wr)) },
     { key: "trend", label: "Trend", cls: "r small", render: (r) => `<span title="EPA change over the last 10 matches">${trend(r.trend)}</span>` },
   ];
-  const table = sortableTable($("#tbl"), rows, cols, { sortKey: "np" });
+  // Columns menu: everything but rank, team and EPA can be hidden (remembered per device)
+  const FIXED = new Set(["rank", "team", "np"]);
+  const plain = (c) => c.label.replace(/<[^>]+>/g, "");
+  let hiddenCols = new Set(pref.get("teamCols", []));
+  $("#col-list").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) =>
+    `<label><input type="checkbox" data-k="${c.key}" ${hiddenCols.has(c.key) ? "" : "checked"}> ${esc(plain(c))}</label>`).join("");
+  let table;
+  const mount = () => { table = sortableTable($("#tbl"), rows, cols.filter((c) => !hiddenCols.has(c.key)), { sortKey: "np" }); };
+  mount();
+  $("#col-list").onchange = (e) => {
+    const k = e.target.dataset.k;
+    if (!k) return;
+    e.target.checked ? hiddenCols.delete(k) : hiddenCols.add(k);
+    pref.set("teamCols", [...hiddenCols]);
+    mount(); apply();
+  };
   if (query.get("min")) $("#minm").value = query.get("min");
+  const fillStates = regionSelect($("#state"), () => rows.filter((r) => r.country === $("#country").value), query.get("state"));
   const apply = () => {
-    const q = $("#filter").value.trim().toLowerCase(), c = $("#country").value, m = +$("#minm").value;
-    syncQuery({ q: $("#filter").value.trim(), country: c, min: m > 1 ? m : "", off: off === "official" ? "" : off, scope: "" });
+    const q = $("#filter").value.trim().toLowerCase(), c = $("#country").value, m = +$("#minm").value, st = $("#state").value;
+    syncQuery({ q: $("#filter").value.trim(), country: c, state: st, min: m > 1 ? m : "", off: off === "official" ? "" : off, scope: "" });
     const shown = rows.filter((r) =>
-      (!c || r.country === c) && r.matches >= m &&
+      (!c || r.country === c) && (!st || r.region === st) && r.matches >= m &&
       (!q || String(r.team).startsWith(q) || r.name.toLowerCase().includes(q) || r.loc.toLowerCase().includes(q)));
     table.setRows(shown);
   };
-  $("#filter").oninput = apply; $("#country").onchange = apply; $("#minm").onchange = apply;
+  $("#filter").oninput = apply; $("#minm").onchange = apply; $("#state").onchange = apply;
+  $("#country").onchange = () => { fillStates(); apply(); };
+  fillStates();
   // switching tables reloads the page with ?off=mti|full (filters are kept in the query)
   if ($(".scope")) $(".scope").onclick = (e) => {
     const a = e.target.closest("[data-off]");
@@ -770,11 +813,20 @@ async function events(r) {
   if (stale(r)) return;
   if (stale(r)) return;
   const types = [...new Set(evs.map((e) => e.type))];
+  for (const e of evs) { e.country = e.loc.split(", ").pop() ?? ""; e.region = regionOf(e.loc); e.month = e.start.slice(0, 7); }
+  const countries = [...new Set(evs.map((e) => e.country).filter(Boolean))].sort();
+  const months = [...new Set(evs.map((e) => e.month))].sort();
+  const monthName = (ym) => new Date(`${ym}-15T12:00:00`).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const status = (e) => (e.ongoing ? "live" : e.finished ? "done" : "upcoming");
   app.innerHTML = `
     <div class="card">
       <div class="toolbar">
         <input id="filter" placeholder="Search events…" value="${esc(query.get("q") ?? "")}">
-        <select id="type"><option value="">All types</option>${types.map((t) => `<option value="${esc(t)}" ${t === query.get("type") ? "selected" : ""}>${esc(typeName(t))}</option>`).join("")}</select>
+        <select id="type" aria-label="Event type"><option value="">All types</option>${types.map((t) => `<option value="${esc(t)}" ${t === query.get("type") ? "selected" : ""}>${esc(typeName(t))}</option>`).join("")}</select>
+        <select id="country" aria-label="Country"><option value="">All countries</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
+        <select id="state" aria-label="State or region" hidden></select>
+        <select id="month" aria-label="Month"><option value="">Any month</option>${months.map((m) => `<option value="${m}" ${m === query.get("month") ? "selected" : ""}>${monthName(m)}</option>`).join("")}</select>
+        <select id="status" aria-label="Status"><option value="">Any status</option>${[["upcoming", "Upcoming"], ["live", "Live now"], ["done", "Finished"]].map(([k, l]) => `<option value="${k}" ${k === query.get("status") ? "selected" : ""}>${l}</option>`).join("")}</select>
       </div>
       <div id="tbl"></div>
     </div>`;
@@ -783,17 +835,23 @@ async function events(r) {
     { key: "start", label: "Date", cls: "small muted", render: (e) => fmtDate(e.start) },
     { key: "type", label: "Type", cls: "small muted hide-sm", render: (e) => esc(typeName(e.type)) },
     { key: "teams", label: "Teams", cls: "r hide-sm" },
+    { key: "played", label: "Matches", cls: "r small hide-sm", render: (e) => (e.matches ? (e.played < e.matches ? `${e.played}/${e.matches}` : e.matches) : "–") },
+    { key: "topTeams", label: "Top teams", cls: "small hide-sm", sort: false,
+      render: (e) => (e.topTeams ?? (e.topTeam ? [e.topTeam] : [])).map((t) => `<a class="link" href="#/${season}/team/${t}">${t}</a>`).join(" · ") || "–" },
     { key: "strength", label: "Strength", cls: "r", render: (e) => epa(e.strength, meta) },
     { key: "accuracy", label: "Called", cls: "r small hide-sm", render: (e) => pct(e.accuracy) },
   ];
   const table = sortableTable($("#tbl"), evs, cols, { sortKey: "start" });
+  const fillStates = regionSelect($("#state"), () => evs.filter((e) => e.country === $("#country").value), query.get("state"));
   const apply = () => {
-    const q = $("#filter").value.trim().toLowerCase(), ty = $("#type").value;
-    syncQuery({ q: $("#filter").value.trim(), type: ty });
-    table.setRows(evs.filter((e) => (!ty || e.type === ty) &&
+    const q = $("#filter").value.trim().toLowerCase(), ty = $("#type").value, c = $("#country").value, st = $("#state").value, mo = $("#month").value, stat = $("#status").value;
+    syncQuery({ q: $("#filter").value.trim(), type: ty, country: c, state: st, month: mo, status: stat });
+    table.setRows(evs.filter((e) => (!ty || e.type === ty) && (!c || e.country === c) && (!st || e.region === st) && (!mo || e.month === mo) && (!stat || status(e) === stat) &&
       (!q || e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q) || e.loc.toLowerCase().includes(q))));
   };
-  $("#filter").oninput = apply; $("#type").onchange = apply;
+  $("#filter").oninput = apply; $("#type").onchange = apply; $("#state").onchange = apply; $("#month").onchange = apply; $("#status").onchange = apply;
+  $("#country").onchange = () => { fillStates(); apply(); };
+  fillStates();
   apply();
 }
 

@@ -706,6 +706,8 @@ export async function build(season, params = {}, epaOver = {}) {
       finished: ev.finished, ongoing: ev.ongoing, strength,
       accuracy: decided ? r3(correct / decided) : null,
       topTeam: teams.reduce((b, t) => ((t.epaNow?.np ?? -1) > (b?.epaNow?.np ?? -1) ? t : b), null)?.team ?? null,
+      // the event's three highest-EPA teams, best first (events list)
+      topTeams: teams.filter((t) => t.epaNow?.np != null).sort((a, b) => b.epaNow.np - a.epaNow.np).slice(0, 3).map((t) => t.team),
     };
     evList.push(summary);
     const av = eventAvg.get(ev.code) ?? model.avg;
