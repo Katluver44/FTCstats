@@ -106,7 +106,7 @@ const event = async (code) => {
 // "Qualification 12", "Qual 12", "Q12", "Q-01", "Playoff M-03", "Playoff 3", "Playoff Match 3", "Match 3", "Semifinal 1-2", "Final 2"
 function titleMatch(t, bareM = false) {
   let x;
-  if ((x = t.match(/\b(?:Qualifications?|Quals?|QM|Q)[\s#-]*(?:Match\s*#?\s*)?(\d{1,3})\b/i))) return `Q-${+x[1]}`; // "Qualification Match 8", "QM 8", "Quals 18"
+  if ((x = t.match(/\b(?:Qualifications?|Quals?|QM|Q)[\s#-]*(?:(?:Match|Number|No\.?)\s*#?\s*)?(\d{1,3})\b/i))) return `Q-${+x[1]}`; // "Qualification Match 8", "QM 8", "Quals 18"
   if ((x = t.match(/\bSemi-?(?:final)?s?\s*-?\s*(\d)\s*[-, ]\s*(?:game\s*|match\s*)?(\d)\b/i))) return `SF${x[1]}-${x[2]}`; // "Semifinal 1-2", "Semis-1-1", "Semi 2-2"
   if ((x = t.match(/\bSF\s*(\d)\s*(?:[-.]|M|\s)\s*(\d)\b/i))) return `SF${x[1]}-${x[2]}`; // "SF2-1", "SF2M1"
   if ((x = t.match(/\bFinals?\s*(?:game\s*|match\s*)?#?\s*(\d)\b/i)) || (x = t.match(/\bF-?(\d)\b/))) return `F-${x[1]}`; // "Finals 2", "F2", "F-2"
