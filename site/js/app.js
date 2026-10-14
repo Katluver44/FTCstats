@@ -625,7 +625,16 @@ async function team(r) {
       ${[100, 200, 300, 400, 500].map((x) => `<line x1="${x}" y1="1" x2="${x}" y2="149" class="wf-line"/>`).join("")}
       <line x1="1" y1="75" x2="599" y2="75" class="wf-line"/>
       <path d="M40 112 C 160 112, 200 38, 300 38 S 440 112, 560 112" class="wf-path"/>
-      <g class="wf-bot"><rect x="-17" y="-17" width="34" height="34" rx="7" class="wf-body"/><rect x="-21" y="-14" width="5" height="11" rx="2" class="wf-wheel"/><rect x="16" y="-14" width="5" height="11" rx="2" class="wf-wheel"/><rect x="-21" y="3" width="5" height="11" rx="2" class="wf-wheel"/><rect x="16" y="3" width="5" height="11" rx="2" class="wf-wheel"/><circle cx="0" cy="-5" r="4" class="wf-eye"/></g>
+      <g class="wf-bot"><g transform="scale(1.35)">
+        <rect x="-22" y="-22" width="44" height="44" rx="3" class="wf-frame"/>
+        ${[[-19, -24], [9, -24], [-19, 17], [9, 17]].map(([x, y], i) => `<g transform="translate(${x} ${y})"><rect width="11" height="7" rx="2" class="wf-wheel"/>${[2, 5, 8].map((d) => `<line x1="${d}" y1="${i < 2 ? 0 : 7}" x2="${d + 2}" y2="${i < 2 ? 7 : 0}" class="wf-roller"/>`).join("")}</g>`).join("")}
+        <rect x="-15" y="-15" width="24" height="30" rx="2" class="wf-plate"/>
+        <rect x="-11" y="-7" width="11" height="8" rx="1.5" class="wf-hub"/>
+        <rect x="-14" y="-12" width="26" height="3" rx="1" class="wf-slide"/><rect x="-14" y="9" width="26" height="3" rx="1" class="wf-slide"/>
+        <rect x="16" y="-18" width="8" height="36" rx="2" class="wf-intake"/>
+        ${[-12, -4, 4, 12].map((y) => `<circle cx="20" cy="${y}" r="2.2" class="wf-wheel"/>`).join("")}
+        <rect x="-22" y="-25" width="14" height="3" rx="1" class="wf-num"/><rect x="-22" y="22" width="14" height="3" rx="1" class="wf-num"/>
+      </g></g>
     </svg>`;
     const header = p ? `<div class="card card-pad team-hero"><div class="th-top">
         <div class="th-id">
@@ -633,7 +642,7 @@ async function team(r) {
           <div class="muted">${esc(p.loc ?? "")}</div>
         </div>
         <div class="th-epa">
-          <div class="label" title="Carried over from its past seasons; it moves once the team plays">Predicted EPA · before its first match</div>
+          <div class="label" title="Carried over from its past seasons; it moves once the team plays">Predicted EPA</div>
           <b>${fmt(p.np)}</b>
           <div class="th-ranks"><span>Auto <b>${fmt(p.auto)}</b></span><span>Teleop <b>${fmt(p.teleop)}</b></span><span>Endgame <b>${fmt(p.endgame)}</b></span></div>
         </div>
@@ -642,8 +651,8 @@ async function team(r) {
       <div class="card card-pad section no-matches">
         ${waiting}
         <h2>${p ? `No matches in ${seasonLabel(season, "")} yet` : `Team ${n}${seasons[0] ? ` · ${esc(seasons[0][1].name)}` : ""} has no matches in ${seasonLabel(season, "")}`}</h2>
-        <p class="muted">${p ? "Its EPA starts from last season and updates after its first match." : seasons.length ? "It played these seasons:" : "No FTC matches on record."}</p>
-        ${seasons.length ? `<div class="small muted nm-label">${p ? "Seasons it played (world rank)" : "World rank each season"}</div>${others}` : ""}
+        ${!p && !seasons.length ? `<p class="muted">No FTC matches on record.</p>` : ""}
+        ${others}
       </div>`;
     return;
   }
