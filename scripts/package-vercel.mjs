@@ -30,7 +30,8 @@ await fs.writeFile(path.join(out, "vercel.json"), JSON.stringify({
     // Browsers reuse files for 5 minutes, and serve a stale copy instantly while
     // fetching a fresh one in the background, instead of checking every file on
     // every visit. Data changes hourly; code at most every deploy.
-    { source: "/data/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=600, stale-while-revalidate=86400" }] },
+    // /data is a public read-only API (see #/api): any site may fetch it
+    { source: "/data/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=600, stale-while-revalidate=86400" }, { key: "Access-Control-Allow-Origin", value: "*" }] },
     { source: "/(js|css)/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400" }] },
   ],
 }, null, 2));

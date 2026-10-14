@@ -1058,3 +1058,9 @@ body.home-fit .hero { flex-shrink: 0; }
 /* sits out in the left margin, so the search box keeps lining up with the table */
 @media (min-width: 901px) { .toolbar .view-pick { margin-left: calc(var(--gutter) / -2); } }
 @media (max-width: 640px) { .chart-controls { margin-left: 0; } .view-pick button { padding: 5px 9px; } }
+.csv-btn { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--glass-strong); color: var(--muted); cursor: pointer; }
+.csv-btn:hover { color: var(--accent); border-color: var(--accent); }
+button.pill { font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+pre.code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+.api-table td:first-child { white-space: nowrap; vertical-align: top; }
+.api-table code, .prose code { font-size: 12.5px; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }

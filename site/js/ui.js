@@ -315,6 +315,21 @@ function niceStep(raw) {
   return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * mag;
 }
 
+// Save rows as a CSV file. cols: [{ label, get(row) }]
+export function downloadCsv(filename, cols, rows) {
+  const cell = (v) => {
+    const s = v == null ? "" : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const text = [cols.map((c) => cell(c.label)), ...rows.map((r) => cols.map((c) => cell(c.get(r))))].map((l) => l.join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/csv" }));
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+export const CSV_ICON = '<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1.5v7.5M3.8 6 7 9.2 10.2 6M2 12.5h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
 // Sortable table: cols [{ key, label, cls, render(row), sort? }]
 export function sortableTable(el, rows, cols, { sortKey, desc = true, pageSize = 100 } = {}) {
   let key = sortKey, dir = desc ? -1 : 1, shown = pageSize;
@@ -340,7 +355,11 @@ export function sortableTable(el, rows, cols, { sortKey, desc = true, pageSize =
     if (more) more.onclick = () => { shown += pageSize * 2; draw(); };
   };
   draw();
-  return { setRows(r) { rows = r; shown = pageSize; draw(); } };
+  return {
+    setRows(r) { rows = r; shown = pageSize; draw(); },
+    // every row (not just the shown page), in the current sort order
+    sorted() { return [...rows].sort((a, b) => { const av = a[key], bv = b[key]; if (av == null) return 1; if (bv == null) return -1; return (av > bv ? 1 : av < bv ? -1 : 0) * dir; }); },
+  };
 }
 
 
