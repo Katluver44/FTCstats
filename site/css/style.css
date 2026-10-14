@@ -26,7 +26,7 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   --pop-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
   --radius: 8px;
-  --zebra: rgba(0, 0, 0, 0.028); /* every other table row, and alternate chart bands */
+  --zebra: rgba(0, 0, 0, 0.04); /* every other table row, and alternate chart bands */
   /* side margin: grows gently with the window (5%), 48px to 120px; no hard content cap,
      which left wide empty bands beside full-width rows on big screens */
   --gutter: clamp(48px, 5vw, 120px);
@@ -59,7 +59,7 @@
     --dot: #4da3ea;
     --dot-off: #2f3a46;
     --shadow: none;
-    --zebra: rgba(255, 255, 255, 0.035);
+    --zebra: rgba(255, 255, 255, 0.055);
     --pop-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
     color-scheme: dark;
   }
@@ -88,7 +88,7 @@
   --dot: #4da3ea;
   --dot-off: #2f3a46;
   --shadow: none;
-  --zebra: rgba(255, 255, 255, 0.035);
+  --zebra: rgba(255, 255, 255, 0.055);
   --pop-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
   color-scheme: dark;
 }
