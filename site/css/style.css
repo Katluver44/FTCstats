@@ -985,3 +985,30 @@ body.home-fit .hero { flex-shrink: 0; }
   .toolbar .col-pick { position: static; }
   .toolbar .col-pick > div { left: 14px; right: 14px; width: auto; max-width: none; top: calc(100% - 6px); }
 }
+
+/* compete modes (Predict a match | Head to head) sit at the right of the page head */
+.mode-pick { align-self: center; }
+/* head to head: tale of the tape, mirrored bars with the label in the middle */
+.tape-head { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 10px; margin-bottom: 4px; border-bottom: 1px solid var(--line); font-size: 15px; }
+.tape-head a { color: inherit; }
+.tape { display: grid; }
+.tape-row { display: grid; grid-template-columns: 84px 1fr minmax(110px, 170px) 1fr 84px; align-items: center; gap: 12px; height: 42px; border-bottom: 1px solid var(--line); }
+.tape-row:last-child { border-bottom: 0; }
+.tape-v { font-variant-numeric: tabular-nums; font-size: 15px; }
+.tape-v.r { text-align: right; }
+.tape-v.muted { font-weight: 500; }
+.tape-k { text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); }
+.tape-k small { display: block; font-weight: 500; font-size: 11px; }
+.tape-bar { display: flex; height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.tape-bar.left { justify-content: flex-end; }
+.tape-bar i { display: block; height: 100%; }
+.tape-bar i.red { background: var(--red); }
+.tape-bar i.blue { background: var(--blue); }
+@media (max-width: 640px) {
+  .tape-row { grid-template-columns: 60px 1fr 84px 1fr 60px; gap: 6px; }
+  .tape-v { font-size: 13px; }
+  .tape-k { font-size: 12px; }
+}
+/* head to head meetings: long event names wrap instead of widening the table */
+.meet td { white-space: normal; }
+@media (max-width: 640px) { .meet td, .meet th { padding-left: 8px; padding-right: 8px; } }

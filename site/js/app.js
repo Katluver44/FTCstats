@@ -25,7 +25,7 @@ function parseHash() {
 }
 
 // tab title for pages with no heading (the lists, "not found" messages) and while loading
-const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", about: "Our methodology" };
+const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", about: "Our methodology" };
 const setTitle = (name) => (document.title = name ? `${name} · FTCstats` : "FTCstats · FTC ratings & match predictions");
 
 async function route() {
@@ -38,7 +38,7 @@ async function route() {
   document.body.classList.toggle("home-fit", !r.page);
   window.scrollTo(0, 0);
   app.innerHTML = `<div class="loading">Loading…</div>`;
-  const pages = { "": home, teams, team, events, event, match, compete, about };
+  const pages = { "": home, teams, team, events, event, match, compete, h2h, about };
   const fn = pages[r.page] ?? notFound;
   setTitle(r.page && (PAGE_TITLES[r.page] ?? "Page not found"));
   try {
@@ -56,7 +56,7 @@ async function route() {
 // the same kind of page in another season; event codes differ by season, so events go to the list
 function seasonHref(s, { page, args }) {
   const keep = {
-    teams: "teams", events: "events", compete: "compete", about: "about", event: "events", match: "events",
+    teams: "teams", events: "events", compete: "compete", h2h: `h2h?${new URLSearchParams(location.hash.split("?")[1] ?? "")}`, about: "about", event: "events", match: "events",
     team: `team/${args.join("/")}`,
   }[page] ?? "";
   return `#/${s}/${keep}`;
@@ -75,7 +75,7 @@ function renderNav(r) {
   closeSeasonMenu(false);
   $$("header [data-page]").forEach((a) => {
     a.href = `#/${season}/${a.dataset.page}`;
-    a.classList.toggle("active", a.dataset.page === page);
+    a.classList.toggle("active", a.dataset.page === (page === "h2h" ? "compete" : page));
   });
   $(".logo").href = `#/${season}/`;
 }
@@ -461,7 +461,8 @@ async function team(r) {
   const n = /^\d{1,6}$/.test(args[0] ?? "") ? +args[0] : null, view = args[1] ?? "matches";
   if (n == null) { app.innerHTML = `<div class="card empty">That isn't a team number.</div>`; return; }
   // just the season summary and this team's file (ranks are precomputed); the radar fills in from the team list after
-  const [meta, t, videos] = await Promise.all([data.meta(season), data.team(season, n).catch(() => null), data.videos(season)]);
+  const [meta, t] = await Promise.all([data.meta(season), data.team(season, n).catch(() => null)]);
+  const videos = t ? await data.videos(season, (t.events ?? []).map((e) => e.code)) : {};
   if (stale(r)) return;
   if (!t) {
     app.innerHTML = `<div class="card empty">Team ${n} has no matches in ${season}. ${state.seasons.filter((s) => s !== season).map((s) => `<a class="link" href="#/${s}/team/${n}">Try ${s}</a>`).join(" ")}</div>`;
@@ -929,7 +930,7 @@ async function events(r) {
 async function event(r) {
   const { season, args } = r;
   const code = args[0], tab = args[1] ?? "matches";
-  const [meta, ev, videos, official] = await Promise.all([data.meta(season), data.event(season, code).catch(() => null), data.videos(season), data.alliances(season)]);
+  const [meta, ev, videos, official] = await Promise.all([data.meta(season), data.event(season, code).catch(() => null), data.videos(season, [code]), data.alliances(season)]);
   if (stale(r)) return;
   if (!ev) {
     app.innerHTML = `<div class="card empty">No event with code “${esc(code)}” in ${seasonLabel(season, meta.game)}. <a class="link" href="#/${season}/events">Browse events →</a></div>`;
@@ -1254,7 +1255,7 @@ function matchTitle(d) {
 async function match(r) {
   const { season, args } = r;
   const code = args[0], d = decodeURIComponent(args[1] ?? "");
-  const [meta, ev, videos] = await Promise.all([data.meta(season), data.event(season, code).catch(() => null), data.videos(season)]);
+  const [meta, ev, videos] = await Promise.all([data.meta(season), data.event(season, code).catch(() => null), data.videos(season, [code])]);
   if (stale(r)) return;
   if (!ev) {
     app.innerHTML = `<div class="card empty">No event with code “${esc(code)}” in ${seasonLabel(season, meta.game)}. <a class="link" href="#/${season}/events">Browse events →</a></div>`;
@@ -1475,7 +1476,7 @@ async function compete(r) {
         <div class="kicker">${seasonLabel(season, meta.game)}</div>
         <h1>Compete</h1>
         <p class="muted" style="margin:4px 0 0">Put any teams against each other and see the predicted score, who wins and how often. Uses each team's current EPA.</p>
-      </div></div></div>
+      </div>${competeModes(season, "compete")}</div></div>
       <div class="compete-bar section">
         <div class="row"><button type="button" class="pill" id="swap">⇄ Swap sides</button><button type="button" class="pill" id="random">Random</button><button type="button" class="pill" id="clear">Clear</button></div>
       </div>
@@ -1701,6 +1702,193 @@ async function compete(r) {
   };
   st.shown = st.r.some(Boolean) && st.b.some(Boolean);
   shell();
+}
+
+// Predict a match | Head to head: the two Compete modes
+const competeModes = (season, cur) => `<nav class="chart-pick mode-pick" aria-label="Compete mode">
+  ${[["compete", "Predict a match"], ["h2h", "Head to head"]].map(([k, l]) => `<a href="#/${season}/${k}" class="${k === cur ? "active" : ""}">${l}</a>`).join("")}</nav>`;
+
+// Type-ahead for one team input (number or name), strongest first; same look as Compete's.
+function teamTypeahead(el, list, meta, onPick) {
+  const box = el.parentElement.querySelector(".pick");
+  let items = [], sel = 0;
+  const draw = () => {
+    const q = el.value.trim().toLowerCase();
+    items = list.filter((t) => !q || String(t.team).startsWith(q) || t.name.toLowerCase().includes(q)).slice(0, 8);
+    sel = Math.min(sel, Math.max(0, items.length - 1));
+    box.innerHTML = items.length
+      ? items.map((t, k) => `<button type="button" class="pick-item ${k === sel ? "sel" : ""}" data-k="${k}"><b>${t.team}</b><span>${esc(t.name)}</span><small class="faint">${t.matches} match${t.matches === 1 ? "" : "es"}</small>${epa(t.np, meta)}</button>`).join("")
+      : `<div class="pick-empty">No team matches “${esc(el.value.trim())}”</div>`;
+    box.classList.add("open");
+  };
+  const choose = (k) => { const t = items[k]; if (!t) return; el.value = `${t.team}`; box.classList.remove("open"); onPick(t.team); };
+  el.onfocus = () => { sel = 0; draw(); };
+  el.oninput = () => { sel = 0; draw(); };
+  el.onblur = () => setTimeout(() => box.classList.remove("open"), 120);
+  el.onkeydown = (e) => {
+    if (e.key === "ArrowDown") { sel = Math.min(items.length - 1, sel + 1); draw(); e.preventDefault(); }
+    else if (e.key === "ArrowUp") { sel = Math.max(0, sel - 1); draw(); e.preventDefault(); }
+    else if (e.key === "Enter") { if (/^\d{1,6}$/.test(el.value.trim()) && !items.length) onPick(+el.value.trim()); else choose(sel); e.preventDefault(); }
+    else if (e.key === "Escape") { box.classList.remove("open"); el.blur(); }
+  };
+  box.onmousedown = (e) => { const b = e.target.closest("[data-k]"); if (b) { e.preventDefault(); choose(+b.dataset.k); } };
+}
+
+// Head to head: two teams side by side, this season or across every season.
+// ?a=<team>&b=<team>&view=season|career
+async function h2h(r) {
+  const { season, query } = r;
+  const num = (k) => (/^\d{1,6}$/.test(query.get(k) ?? "") ? +query.get(k) : null);
+  const A = num("a"), B = num("b"), view = query.get("view") === "career" ? "career" : "season";
+  const [meta, rows] = await Promise.all([data.meta(season), data.teams(season)]);
+  if (stale(r)) return;
+  const byEpa = [...rows].sort((x, y) => y.np - x.np);
+  const href = (o) => `#/${season}/h2h?${new URLSearchParams(Object.entries({ a: A ?? "", b: B ?? "", view, ...o }).filter(([, v]) => v !== "" && v != null && !(v === "season"))).toString()}`;
+  const slot = (side, n) => `<div class="side card ${side === "a" ? "red" : "blue"}">
+      <div class="side-head"><b class="${side === "a" ? "red" : "blue"}-text">${side === "a" ? "Team A" : "Team B"}</b></div>
+      <div class="slot"><input autocomplete="off" placeholder="Team # or name" id="h2h-${side}" value="${n ?? ""}" aria-label="${side === "a" ? "First" : "Second"} team"><div class="pick" role="listbox"></div><div class="who" id="who-${side}"></div></div></div>`;
+  app.innerHTML = `
+    <div class="card card-pad"><div class="page-head"><div>
+      <div class="kicker">${seasonLabel(season, meta.game)}</div>
+      <h1>Head to head</h1>
+      <p class="muted" style="margin:4px 0 0">Two teams side by side: this season's ratings and every match they've played against or with each other, or their whole careers.</p>
+    </div>${competeModes(season, "h2h")}</div></div>
+    <div class="compete-bar section">
+      <nav class="chart-pick" aria-label="Compare over">${[["season", "This season"], ["career", "Career"]].map(([k, l]) => `<a href="${href({ view: k })}" class="${k === view ? "active" : ""}">${l}</a>`).join("")}</nav>
+      <div class="row"><button type="button" class="pill" id="h2h-swap">⇄ Swap</button></div>
+    </div>
+    <div class="predictor section">${slot("a", A)}<div class="vs"><span>VS</span></div>${slot("b", B)}</div>
+    <div id="out"></div>`;
+  teamTypeahead($("#h2h-a"), byEpa, meta, (n) => (location.hash = href({ a: n })));
+  teamTypeahead($("#h2h-b"), byEpa, meta, (n) => (location.hash = href({ b: n })));
+  $("#h2h-swap").onclick = () => (location.hash = href({ a: B ?? "", b: A ?? "" }));
+
+  const seasons = view === "career" ? [...state.seasons].sort((x, y) => x - y) : [season];
+  const load = (n) => (n == null ? Promise.resolve(null) : Promise.all(seasons.map((s) => data.team(s, n).catch(() => null))));
+  const [ta, tb] = await Promise.all([load(A), load(B)]);
+  if (stale(r)) return;
+  const cur = (all) => all?.[seasons.indexOf(season)] ?? null;
+  const anyOf = (all) => all?.find(Boolean) ?? null;
+  for (const [side, n, all] of [["a", A, ta], ["b", B, tb]]) {
+    const t = view === "career" ? anyOf(all) : cur(all);
+    $(`#who-${side}`).innerHTML = n == null ? "" : t ? `<a href="#/${season}/team/${n}">${esc(t.name)}</a>` : `<span class="faint">No ${view === "career" ? "" : `${season} `}matches for team ${n}</span>`;
+  }
+  const out = $("#out");
+  if (A == null || B == null || !(view === "career" ? anyOf(ta) && anyOf(tb) : cur(ta) && cur(tb))) {
+    out.innerHTML = `<div class="section"><div class="card empty">Pick two teams${view === "season" ? " that have played this season" : ""}.</div></div>`;
+    return;
+  }
+  if (A === B) { out.innerHTML = `<div class="section"><div class="card empty">Pick two different teams.</div></div>`; return; }
+
+  // one row of the tale of the tape: mirrored bars, the better side in its colour
+  const tape = (label, va, vb, show, { low = false, tip = "", text = null } = {}) => {
+    const ok = va != null && vb != null;
+    const better = !ok || va === vb ? 0 : (low ? va < vb : va > vb) ? -1 : 1;
+    const size = (v, o) => {
+      if (v == null) return 0;
+      // low = a rank share (0 = best, 1 = last): the bar is the share of teams it beat
+      if (low) return Math.max(2, Math.round((1 - v) * 100));
+      const top = Math.max(v, o ?? 0, 1e-9);
+      return Math.max(0, Math.round((Math.max(0, v) / top) * 100));
+    };
+    return `<div class="tape-row"${tip ? ` title="${esc(tip)}"` : ""}>
+      <b class="tape-v ${better === -1 ? "win red-text" : "muted"}">${va == null ? "–" : text ? text[0] : show(va)}</b>
+      <span class="tape-bar left"><i class="red" style="width:${size(va, vb)}%"></i></span>
+      <span class="tape-k">${label}</span>
+      <span class="tape-bar"><i class="blue" style="width:${size(vb, va)}%"></i></span>
+      <b class="tape-v r ${better === 1 ? "win blue-text" : "muted"}">${vb == null ? "–" : text ? text[1] : show(vb)}</b></div>`;
+  };
+  const rate = (x) => (x.length ? x.filter((m) => m.score > m.oppScore).length / x.length : null);
+  const rpSum = (t) => (meta.rpNames.length ? meta.rpNames.reduce((sum, _, i) => sum + Math.min(1, Math.max(0, t.epa.rp?.[i] ?? 0)), 0) : null);
+  const names = (n, t) => `<a href="#/${season}/team/${n}"><b>${n}</b> ${esc(t.name)}</a>`;
+  const headRow = (ta1, tb1) => `<div class="tape-head"><span class="red-text">${names(A, ta1)}</span><span class="blue-text r">${names(B, tb1)}</span></div>`;
+
+  // matches the two shared, from A's side: against each other, and as partners
+  const shared = (ma, s) => {
+    const vs = ma.filter((m) => m.opps.includes(B)), withB = ma.filter((m) => m.partners.includes(B));
+    return { vs, withB, s };
+  };
+  const recordOf = (ms) => {
+    const w = ms.filter((m) => m.score > m.oppScore).length, l = ms.filter((m) => m.score < m.oppScore).length;
+    return `${w}-${l}${ms.length - w - l ? `-${ms.length - w - l}` : ""}`;
+  };
+  const meetTable = (groups, evNames) => {
+    const rowsH = groups.flatMap(({ vs, withB, s }) => [...vs.map((m) => ({ m, s, kind: "vs" })), ...withB.map((m) => ({ m, s, kind: "with" }))])
+      .sort((x, y) => (y.m.time ?? 0) - (x.m.time ?? 0));
+    if (!rowsH.length) return `<div class="card empty">They haven't played ${view === "career" ? "each other or together in any season" : "each other or together this season"}.</div>`;
+    return `<div class="card"><div class="table-wrap"><table class="meet">
+      <thead><tr>${view === "career" ? "<th>Season</th>" : ""}<th>Event</th><th>Match</th><th>How</th><th class="c" title="${A}'s alliance first">Score</th><th class="c hide-sm">Result for ${A}</th></tr></thead>
+      <tbody>${rowsH.map(({ m, s, kind }) => `<tr>
+        ${view === "career" ? `<td class="small muted">${s}–${String(s + 1).slice(2)}</td>` : ""}
+        <td class="small"><a href="#/${s}/event/${m.ev}">${esc(evNames.get(`${s}:${m.ev}`) ?? m.ev)}</a></td>
+        <td><a class="match-link" href="${matchHref(s, m.ev, m.m)}">${esc(m.m)}</a></td>
+        <td class="small">${kind === "vs" ? "Against" : `<span class="muted">Together</span>`}</td>
+        <td class="c"><span class="final"><span class="${m.score > m.oppScore ? "w" : "l"}">${m.score}</span><span class="faint">–</span><span class="${m.oppScore > m.score ? "w" : "l"}">${m.oppScore}</span></span></td>
+        <td class="c small hide-sm">${m.score > m.oppScore ? "Won" : m.score < m.oppScore ? "Lost" : "Tie"}</td></tr>`).join("")}</tbody></table></div></div>`;
+  };
+  const evNames = new Map();
+  seasons.forEach((s, i) => { for (const t of [ta[i], tb[i]]) for (const e of t?.events ?? []) evNames.set(`${s}:${e.code}`, e.name); });
+
+  if (view === "season") {
+    const a = cur(ta), b = cur(tb);
+    const g = shared(a.matches, season);
+    out.innerHTML = `
+      <div class="section card card-pad">${headRow(a, b)}<div class="tape">
+        ${tape("EPA", a.epa.np, b.epa.np, (v) => fmt(v), { tip: EPA_TIP })}
+        ${tape("Auto", a.epa.auto, b.epa.auto, (v) => fmt(v))}
+        ${tape("Teleop", a.epa.teleop, b.epa.teleop, (v) => fmt(v))}
+        ${tape("Endgame", a.epa.endgame, b.epa.endgame, (v) => fmt(v))}
+        ${meta.rpNames.length ? tape("Bonus RPs", rpSum(a), rpSum(b), (v) => fmt(v), { tip: "Bonus ranking points earned in an average match" }) : ""}
+        ${tape("Win rate", rate(a.matches), rate(b.matches), (v) => pct(v), { tip: "Share of matches won (partners count too)" })}
+        ${tape("Matches", a.matches.length, b.matches.length, (v) => fmtInt(v))}
+        ${tape("World rank", a.rank / a.of, b.rank / b.of, () => "", { low: true, text: [`#${fmtInt(a.rank)}`, `#${fmtInt(b.rank)}`], tip: `Bars: share of the season's ${fmtInt(a.of)} teams ranked below` })}
+        ${tape("Awards", (a.awards ?? []).length, (b.awards ?? []).length, (v) => fmtInt(v))}
+      </div></div>
+      <div class="section-title"><h2>EPA through the season</h2><p class="muted" style="margin:6px 0 0">By match number (1st match, 2nd, …) so seasons of different lengths line up.</p></div>
+      <div class="card card-pad"><div id="chart"></div></div>
+      <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(g.vs)}</b> for ${A} · Together: <b>${recordOf(g.withB)}</b> · scores show ${A}'s alliance first</p></div>
+      ${meetTable([g], evNames)}`;
+    const len = Math.max(a.matches.length, b.matches.length);
+    const pad = (arr) => Array.from({ length: len }, (_, i) => arr[i] ?? null);
+    mountLineChart($("#chart"), {
+      series: [
+        { name: `${A} ${a.name}`, color: "var(--red)", values: pad(a.matches.map((m) => m.epa[0])), width: 2.5 },
+        { name: `${B} ${b.name}`, color: "var(--blue)", values: pad(b.matches.map((m) => m.epa[0])), width: 2.5 },
+      ],
+      tooltip: (i) => [[A, a.matches[i]], [B, b.matches[i]]].filter(([, m]) => m).map(([n, m]) => `<b>${n}</b> · ${esc(shortEvent(evNames.get(`${season}:${m.ev}`) ?? m.ev))} ${esc(m.m)} · EPA ${fmt(m.epa[0])}`).join("<br>") + `<br><span class="faint">match ${i + 1}</span>`,
+    });
+    return;
+  }
+
+  // career: raw EPA isn't comparable across games, so seasons compare by world rank (top x%)
+  const groups = seasons.map((s, i) => (ta[i] && tb[i] ? shared(ta[i].matches, s) : null)).filter(Boolean);
+  const total = (all) => {
+    const ss = all.filter(Boolean), ms = ss.flatMap((t) => t.matches), aw = ss.flatMap((t) => t.awards ?? []);
+    const best = ss.reduce((bst, t, i) => (t.rank && (!bst || t.rank / t.of < bst.p) ? { p: t.rank / t.of, t } : bst), null);
+    return { seasons: ss.length, matches: ms.length, rate: rate(ms), awards: aw.length, banners: aw.filter(isBanner).length, best: best?.p ?? null };
+  };
+  const ca = total(ta), cb = total(tb);
+  const topPct = (p) => `Top ${Math.max(1, Math.round(p * 100))}%`;
+  const seasonRows = seasons.map((s, i) => {
+    const a = ta[i], b = tb[i];
+    if (!a && !b) return "";
+    return tape(`${s}–${String(s + 1).slice(2)} <small class="faint">${esc(SEASONS[s]?.game ?? "")}</small>`, a?.rank ? a.rank / a.of : null, b?.rank ? b.rank / b.of : null,
+      (v) => topPct(v), { low: true, text: [a ? `#${fmtInt(a.rank)}` : "–", b ? `#${fmtInt(b.rank)}` : "–"], tip: `${a ? `${A}: #${fmtInt(a.rank)} of ${fmtInt(a.of)}, EPA ${fmt(a.epa.np)}` : `${A} didn't play`} · ${b ? `${B}: #${fmtInt(b.rank)} of ${fmtInt(b.of)}, EPA ${fmt(b.epa.np)}` : `${B} didn't play`}` });
+  }).reverse().join("");
+  const allVs = groups.flatMap((x) => x.vs), allWith = groups.flatMap((x) => x.withB);
+  out.innerHTML = `
+    <div class="section card card-pad">${headRow(anyOf(ta), anyOf(tb))}<div class="tape">
+      ${tape("Seasons", ca.seasons, cb.seasons, (v) => fmtInt(v))}
+      ${tape("Matches", ca.matches, cb.matches, (v) => fmtInt(v))}
+      ${tape("Win rate", ca.rate, cb.rate, (v) => pct(v))}
+      ${tape("Best season", ca.best, cb.best, (v) => topPct(v), { low: true, tip: "Best world rank in any season, as a share of that season's teams" })}
+      ${tape("Awards", ca.awards, cb.awards, (v) => fmtInt(v))}
+      ${tape("Wins (banners)", ca.banners, cb.banners, (v) => fmtInt(v), { tip: "Event wins and Inspire awards" })}
+    </div></div>
+    <div class="section-title"><h2>Season by season</h2><p class="muted" style="margin:6px 0 0">World rank each season; bars compare it as a share of that season's teams, since each game scores differently and EPAs don't compare across seasons. Hover for EPAs.</p></div>
+    <div class="card card-pad"><div class="tape">${seasonRows}</div></div>
+    <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(allVs)}</b> for ${A} · Together: <b>${recordOf(allWith)}</b> · scores show ${A}'s alliance first</p></div>
+    ${meetTable(groups, evNames)}`;
 }
 
 // ---------------- about / accuracy ----------------
