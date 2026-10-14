@@ -158,30 +158,13 @@ export const PLAY_ICON = '<svg width="10" height="10" viewBox="0 0 10 10" aria-h
 // outline play-circle, as in Statbotics' video column
 const VIDEO_ICON = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.3"/><path d="M7.1 5.6v6.8L12.4 9Z" fill="currentColor"/></svg>';
 
-// Rare row tints, each about 1 in 50-100 matches (checked on 2023-2025): a big upset
-// (a 90%+ favourite lost), the event's highest combined score (highScore: that
-// score), and a perfect call (both alliances within 4% of the prediction, min 2 points).
-function matchFlag(m, highScore) {
-  if (!m.played || !m.redScore || !m.blueScore) return null;
-  const rs = m.redScore.total ?? m.redScore.np, bs = m.blueScore.total ?? m.blueScore.np;
-  const p = m.pred?.pRed;
-  if (p != null && rs !== bs && Math.max(p, 1 - p) >= 0.9 && (p > 0.5) !== (rs > bs))
-    return ["upset", `Big upset: the ${p > 0.5 ? "red" : "blue"} alliance was a ${Math.round(Math.max(p, 1 - p) * 100)}% favourite and lost`];
-  if (highScore != null && rs + bs >= highScore) return ["high", `Event high score: ${rs + bs} points combined, the most of any match at this event`];
-  const pr = m.pred?.red?.total ?? m.pred?.red?.np, pb = m.pred?.blue?.total ?? m.pred?.blue?.np;
-  const near = (a, e) => e != null && Math.abs(a - e) <= Math.max(2, 0.04 * e);
-  if (near(rs, pr) && near(bs, pb)) return ["perfect", `Perfect call: predicted ${Math.round(pr)}–${Math.round(pb)}, final ${rs}–${bs}`];
-  return null;
-}
-
-export function matchTable(s, matches, { me, rpNames = [], video, href, highScore } = {}) {
+export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
   if (!matches.length) return `<div class="empty">No matches yet.</div>`;
   const slots = Math.max(2, ...matches.map((m) => Math.max(m.red.length, m.blue.length)));
   const teams = (side, nums) => Array.from({ length: slots }, (_, i) =>
     nums[i] != null ? `<td class="c"><a class="tn ${side} ${nums[i] === me ? "me" : ""}" href="#/${s}/team/${nums[i]}">${nums[i]}</a></td>` : "<td></td>").join("");
   const rows = matches.map((m) => {
     const rs = m.redScore?.total ?? m.redScore?.np, bs = m.blueScore?.total ?? m.blueScore?.np;
-    const flag = matchFlag(m, highScore);
     const pr = m.pred?.red?.rp?.map((p) => p > 0.5), pb = m.pred?.blue?.rp?.map((p) => p > 0.5);
     const pred = m.pred?.red?.np != null
       ? `${rpDots("red", pr, rpNames, "likely to earn")} <span class="pscore">${fmt(m.pred.red.total ?? m.pred.red.np, 0)}–${fmt(m.pred.blue.total ?? m.pred.blue.np, 0)}</span> ${rpDots("blue", pb, rpNames, "likely to earn")}`
@@ -189,7 +172,7 @@ export function matchTable(s, matches, { me, rpNames = [], video, href, highScor
     const final = m.played
       ? `${rpDots("red", m.redScore.rp, rpNames)} <span class="final"><span class="${rs > bs ? "w" : "l"}">${rs}</span><span class="faint">–</span><span class="${bs > rs ? "w" : "l"}">${bs}</span></span> ${rpDots("blue", m.blueScore.rp, rpNames)}`
       : `<span class="faint small">upcoming</span>`;
-    return `<tr${flag ? ` class="flag-${flag[0]}" title="${esc(flag[1])}"` : ""}>
+    return `<tr>
       ${m.evName ? `<td class="small"><a href="#/${s}/event/${m.ev}">${esc(m.evName)}</a></td>` : ""}
       ${video ? `<td class="vid-cell">${(() => {
         if (!m.played) return "";
@@ -205,7 +188,7 @@ export function matchTable(s, matches, { me, rpNames = [], video, href, highScor
     </tr>`;
   }).join("");
   return `<div class="table-wrap"><table class="mt">
-    <thead><tr>${video ? '<th class="c vid-cell">Video</th>' : ""}${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c" colspan="${slots}">Red</th><th class="c" colspan="${slots}">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Icons: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue. Rare tinted rows: red = big upset (a 90%+ favourite lost), gold = the event's highest-scoring match, green = perfect call. Hover a row for details.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Icons: bonus RPs earned (hover them to see which)." : ""}">Final</span></th></tr></thead>
+    <thead><tr>${video ? '<th class="c vid-cell">Video</th>' : ""}${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c" colspan="${slots}">Red</th><th class="c" colspan="${slots}">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Icons: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Icons: bonus RPs earned (hover them to see which)." : ""}">Final</span></th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
 }
 
@@ -276,6 +259,61 @@ export function mountLineChart(el, { series, bands = [], tooltip, zero = true, m
   draw();
   const ro = new ResizeObserver(() => draw());
   ro.observe(box);
+}
+
+// Scatter of labelled dots: points [{ x, y, r?, label, href, tip, hl? }], dashed lines at
+// the median x and y split it into four quadrants (the strategy-binder "pick map").
+export function mountScatter(el, { points, xLabel, yLabel }) {
+  const box = document.createElement("div");
+  box.className = "chart scatter";
+  el.replaceChildren(box);
+  const draw = () => {
+    const W = box.clientWidth || 600, H = Math.min(520, Math.max(320, W * 0.62)), P = { l: 44, r: 14, t: 12, b: 40 };
+    const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
+    const span = (vs) => {
+      const lo = Math.min(0, ...vs), hi = Math.max(10, ...vs);
+      const pad = (hi - lo) * 0.06;
+      return [lo < 0 ? lo - pad : 0, hi + pad];
+    };
+    const [x0, x1] = span(xs), [y0, y1] = span(ys);
+    const x = (v) => P.l + ((v - x0) / (x1 - x0)) * (W - P.l - P.r);
+    const y = (v) => P.t + (1 - (v - y0) / (y1 - y0)) * (H - P.t - P.b);
+    const med = (vs) => { const a = [...vs].sort((p, q) => p - q); return a.length ? (a[(a.length - 1) >> 1] + a[a.length >> 1]) / 2 : 0; };
+    let g = "";
+    const sx = niceStep((x1 - x0) / 5), sy = niceStep((y1 - y0) / 4);
+    for (let v = Math.ceil(y0 / sy) * sy; v <= y1; v += sy)
+      g += `<line class="grid-line" x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}"/><text x="${P.l - 6}" y="${y(v) + 4}" text-anchor="end">${Math.round(v)}</text>`;
+    for (let v = Math.ceil(x0 / sx) * sx; v <= x1; v += sx)
+      g += `<text x="${x(v)}" y="${H - P.b + 16}" text-anchor="middle">${Math.round(v)}</text>`;
+    g += `<text class="axis-title" x="${(P.l + W - P.r) / 2}" y="${H - 4}" text-anchor="middle">${esc(xLabel)} →</text>`;
+    g += `<text class="axis-title" transform="translate(12 ${(P.t + H - P.b) / 2}) rotate(-90)" text-anchor="middle">${esc(yLabel)} →</text>`;
+    if (points.length >= 4) {
+      const mx = x(med(xs)), my = y(med(ys));
+      g += `<line class="median" x1="${mx}" x2="${mx}" y1="${P.t}" y2="${H - P.b}"/><line class="median" x1="${P.l}" x2="${W - P.r}" y1="${my}" y2="${my}"/>`;
+    }
+    // small dots first so big ones stay on top; labels sit to the right of each dot
+    const order = points.map((p, i) => i).sort((a, b) => (points[a].hl ? 1 : 0) - (points[b].hl ? 1 : 0) || (points[a].r ?? 5) - (points[b].r ?? 5));
+    const dots = order.map((i) => {
+      const p = points[i], r = p.r ?? 5;
+      return `<a href="${p.href}" data-i="${i}"><circle cx="${x(p.x).toFixed(1)}" cy="${y(p.y).toFixed(1)}" r="${r}" class="${p.hl ? "hl" : ""}"/>` +
+        `<text x="${(x(p.x) + r + 3).toFixed(1)}" y="${(y(p.y) + 4).toFixed(1)}" class="dot-label${p.hl ? " hl" : ""}">${esc(p.label)}</text></a>`;
+    }).join("");
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}">${g}${dots}</svg><div class="tip"></div>`;
+    const svg = box.querySelector("svg"), tip = box.querySelector(".tip");
+    svg.onpointermove = (e) => {
+      const a = e.target.closest("a[data-i]");
+      if (!a) { tip.style.display = "none"; return; }
+      const p = points[+a.dataset.i], r = svg.getBoundingClientRect();
+      tip.innerHTML = p.tip;
+      tip.style.display = "block";
+      const left = (x(p.x) / W) * r.width, top = (y(p.y) / H) * r.height;
+      tip.style.left = `${Math.max(4, Math.min(left + 12, r.width - tip.offsetWidth - 4))}px`;
+      tip.style.top = `${Math.max(4, top - tip.offsetHeight - 10)}px`;
+    };
+    svg.onpointerleave = () => (tip.style.display = "none");
+  };
+  draw();
+  new ResizeObserver(() => draw()).observe(box);
 }
 
 function niceStep(raw) {

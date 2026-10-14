@@ -1,6 +1,6 @@
 import {
   $, $$, esc, data, getJSON, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
-  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, PLAY_ICON } from "./ui.js";
+  trend, matchTable, mountLineChart, mountScatter, sortableTable, radar, winBar, videoFor, PLAY_ICON } from "./ui.js";
 import { SEASONS } from "./seasons.js";
 import { playoffs } from "./playoffs.js";
 import { initAnalytics, trackPage } from "./analytics.js";
@@ -314,6 +314,7 @@ function fitHome() {
   const lists = ["#top-teams .hl", "#home-events .hl"].map((q) => $(q)).filter(Boolean);
   homeRows = lists.map((l) => [l, [...l.children]]);
   refitHome();
+  document.fonts?.ready.then(refitHome); // row heights change once the web font is in
 }
 function refitHome() {
   if (!homeRows || !document.body.classList.contains("home-fit") || !homeRows[0][0].isConnected) return;
@@ -326,6 +327,9 @@ function refitHome() {
     while (box.scrollHeight > box.clientHeight + 1 && l.children.length > 1) l.lastElementChild.remove();
     if (box.scrollHeight > box.clientHeight + 1 || l.children.length < 3) fits = false;
   }
+  // same number of rows on both sides, so the two cards line up
+  const n = Math.min(...homeRows.map(([l]) => l.children.length));
+  for (const [l] of homeRows) while (l.children.length > n) l.lastElementChild.remove();
   // too short a window for a useful one-screen page: put every row back and scroll
   if (!fits) {
     for (const [l, rows] of homeRows) l.replaceChildren(...rows);
@@ -533,7 +537,9 @@ async function team(r) {
 
   if (view === "charts") {
     // ?g=epa | scores | win | compare (&vs=team for compare)
-    const GRAPHS = [["epa", "EPA"], ["scores", "Scores"], ["win", "Win chance"], ["compare", "Compare"]];
+    // ?g=reliable only where FTC's score data credits some points to each robot
+    const specs = SEASONS[season]?.solo ?? [];
+    const GRAPHS = [["epa", "EPA"], ["scores", "Scores"], ["win", "Win chance"], ...(specs.length ? [["reliable", "Reliability"]] : []), ["compare", "Compare"]];
     const g = GRAPHS.some(([k]) => k === r.query.get("g")) ? r.query.get("g") : "epa";
     $("#view").innerHTML = `<div class="card card-pad section">
       <div class="chart-head"><nav class="chart-pick">${GRAPHS.map(([k, l]) => `<a href="#/${season}/team/${n}/charts${k === "epa" ? "" : `?g=${k}`}" class="${k === g ? "active" : ""}">${l}</a>`).join("")}</nav>
@@ -582,6 +588,29 @@ async function team(r) {
         ],
         bands, max: 100,
         tooltip: (i) => `${head(ms[i])}<br>${ms[i].pWin != null ? `${pct(ms[i].pWin)} to win · ` : ""}${result(ms[i])}`,
+      });
+    } else if (g === "reliable") {
+      // quals where this robot's own points are known; share of the last 10 that scored each element
+      const qs = ms.filter((m) => m.solo);
+      const qBands = [];
+      qs.forEach((m, i) => {
+        const last = qBands[qBands.length - 1];
+        if (last && last.ev === m.ev) last.to = i;
+        else qBands.push({ ev: m.ev, from: i, to: i, label: shortEvent(evName.get(m.ev) ?? m.ev) });
+      });
+      const did = (m, j) => (m.solo[j] ?? 0) > 0;
+      const COLORS = ["#f59e0b", "#10b981", "var(--accent)", "#a855f7", "var(--red)"];
+      const total = specs.map((sp, j) => `${sp.label} ${qs.filter((m) => did(m, j)).length} of ${qs.length}`).join(" · ");
+      note(qs.length
+        ? `These are the only things FTC's score sheet credits to one robot rather than the alliance, so they're the closest public data gets to scouting a robot. Lines show the share of its last 10 qualification matches it did each one. A miss is usually a robot problem, but some strong teams skip one on purpose, so check the match video before reading too much into it. This season: ${total}.`
+        : "No qualification matches with per-robot scores yet.");
+      if (qs.length) mountLineChart($("#chart"), {
+        series: specs.map((sp, j) => ({
+          name: sp.label[0].toUpperCase() + sp.label.slice(1), color: COLORS[j % COLORS.length], width: 2.5,
+          values: qs.map((_, i) => { const w = qs.slice(Math.max(0, i - 9), i + 1); return Math.round((w.filter((m) => did(m, j)).length / w.length) * 100); }),
+        })),
+        bands: qBands, max: 100,
+        tooltip: (i) => `${head(qs[i])}<br>${specs.map((sp, j) => `${did(qs[i], j) ? "✓" : "✗"} ${esc(sp.label)}`).join("<br>")}`,
       });
     } else {
       const vs = /^\d{1,6}$/.test(r.query.get("vs") ?? "") ? +r.query.get("vs") : null;
@@ -632,7 +661,7 @@ async function team(r) {
           <div><span class="k">EPA out</span><b>${fmt(ev.epaEnd)}${ev.epaStart != null && ev.epaEnd != null && Math.abs(ev.epaEnd - ev.epaStart) >= 0.5 ? `<span class="delta ${ev.epaEnd > ev.epaStart ? "trend-up" : "trend-down"}">${ev.epaEnd > ev.epaStart ? "▲" : "▼"}</span>` : ""}</b></div>
         </div>
       </div>
-      ${matchTable(season, ms, { me: n, rpNames: meta.rpNames, highScore: ev.high, video, href: (m) => matchHref(season, ev.code, m.d) })}
+      ${matchTable(season, ms, { me: n, rpNames: meta.rpNames, video, href: (m) => matchHref(season, ev.code, m.d) })}
     </div>`;
   }).join("");
 }
@@ -836,12 +865,6 @@ function toMatch(m, me) {
   };
 }
 
-// the event's highest combined score among played matches (gold row), or null
-const eventHigh = (ms) => {
-  const t = ms.filter((m) => m.played && m.redScore && m.blueScore).map((m) => (m.redScore.total ?? m.redScore.np) + (m.blueScore.total ?? m.blueScore.np));
-  return t.length ? Math.max(...t) : null;
-};
-
 // ---------------- events ----------------
 
 async function events(r) {
@@ -931,7 +954,7 @@ async function event(r) {
     const qualsDone = hasQuals && matches.every((m) => m.level !== "Quals" || (m.actuallyPlayed ?? m.played));
     const canForecast = (hasQuals && !qualsDone) || (!matches.length && ev.teamList.length >= 4);
     const hasPlayoffs = matches.some((m) => m.level && m.level !== "Quals");
-    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(hasPlayoffs ? [["playoffs", "Playoffs"]] : []), ...(canForecast ? [["forecast", "Rankings forecast"]] : [])];
+    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(ev.teamList.length >= 4 ? [["pickmap", "Pick map"]] : []), ...(hasPlayoffs ? [["playoffs", "Playoffs"]] : []), ...(canForecast ? [["forecast", "Rankings forecast"]] : [])];
     app.innerHTML = `
       <div class="card card-pad"><div class="page-head">
         <div>
@@ -949,9 +972,10 @@ async function event(r) {
       <nav class="tabs seg glass">${tabs.map(([k, label]) => `<a href="#/${season}/event/${code}/${k}" class="${k === (tabs.some(([t]) => t === tab) ? tab : "matches") ? "active" : ""}">${label}</a>`).join("")}</nav>
       <div id="tab"></div>`;
     if (tab === "teams") eventTeams(season, meta, ev);
+    else if (tab === "pickmap" && ev.teamList.length >= 4) eventPickMap(season, ev, r);
     else if (tab === "playoffs" && hasPlayoffs) eventPlayoffs(season, meta, ev, matches, official[code], (m) => videoFor(videos, code, m.time));
     else if (tab === "forecast" && canForecast) eventForecast(season, meta, ev, matches);
-    else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames, highScore: eventHigh(matches), video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
+    else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
   };
 
   draw();
@@ -1099,6 +1123,44 @@ function eventTeams(season, meta, ev) {
     { key: "delta", label: "Change", cls: "r small", render: (r) => trend(r.delta) },
     { key: "epa", label: "EPA now", cls: "r hide-sm", render: (r) => epa(r.epa, meta) },
   ], { sortKey: "epaEnd" });
+}
+
+// Strategy-binder style pick map: every team at the event by auto vs teleop EPA
+// (after its last match here, or its current EPA if it hasn't played here yet),
+// dot size = endgame EPA. ?hl=<team> highlights one team.
+function eventPickMap(season, ev, r) {
+  const hl = /^\d{1,6}$/.test(r.query.get("hl") ?? "") ? +r.query.get("hl") : null;
+  const rows = ev.teamList.map((t) => {
+    const v = t.epaOut ?? (t.epaNow ? [t.epaNow.np, t.epaNow.auto, t.epaNow.teleop, t.epaNow.endgame] : null);
+    return v && { ...t, np: v[0], auto: v[1], teleop: v[2], endgame: v[3], here: !!t.epaOut };
+  }).filter(Boolean);
+  const eg = rows.map((t) => t.endgame), egLo = Math.min(...eg), egHi = Math.max(...eg);
+  const rank = new Map([...rows].sort((a, b) => b.np - a.np).map((t, i) => [t.team, i + 1]));
+  $("#tab").innerHTML = `<div class="card card-pad">
+    <div class="chart-head"><div>
+        <h2 style="margin:0">Pick map</h2>
+        <p class="small muted" style="margin:4px 0 0">Up and right is better. Dashed lines are the event medians, dot size is endgame EPA. ${rows.some((t) => !t.here) ? "Teams that haven't played here yet use their current EPA." : "EPAs as each team left this event."} Click a dot for the team.</p>
+      </div>
+      <form id="hl-form" class="scatter-tools"><input id="hl" inputmode="numeric" placeholder="Highlight team" value="${hl ?? ""}" aria-label="Team to highlight"><button class="btn btn-solid">Show</button></form>
+    </div>
+    ${hl != null && !rows.some((t) => t.team === hl) ? `<p class="small muted">Team ${hl} isn't at this event.</p>` : ""}
+    <div id="pm"></div>
+    <p class="small muted">Total EPA is still the first thing to sort by. The map shows <i>how</i> each team gets there, so when two candidates are close you can pick the one that covers your gaps (a strong auto next to a teleop specialist, say).</p>
+  </div>`;
+  $("#hl-form").onsubmit = (e) => {
+    e.preventDefault();
+    const v = $("#hl").value.trim();
+    location.hash = `#/${season}/event/${ev.code}/pickmap${/^\d{1,6}$/.test(v) ? `?hl=${v}` : ""}`;
+  };
+  mountScatter($("#pm"), {
+    xLabel: "Auto EPA", yLabel: "Teleop EPA",
+    points: rows.map((t) => ({
+      x: t.auto, y: t.teleop, label: String(t.team), hl: t.team === hl,
+      r: egHi > egLo ? 4 + (6 * (t.endgame - egLo)) / (egHi - egLo) : 5,
+      href: `#/${season}/team/${t.team}`,
+      tip: `<b>${t.team}</b> ${esc(t.name)}<br>EPA ${fmt(t.np)} (#${rank.get(t.team)} here)${t.rank ? ` · ranked ${t.rank}` : ""}<br>Auto ${fmt(t.auto)} · Teleop ${fmt(t.teleop)} · Endgame ${fmt(t.endgame)}`,
+    })),
+  });
 }
 
 function eventForecast(season, meta, ev, matches) {
@@ -1372,7 +1434,6 @@ async function match(r) {
 
 // Any teams on either side (1-4 robots each), predicted with the season's model.
 // Real FTC matches are 2 v 2; other sizes just add up each robot's ratings.
-const PRESETS = [[2, 2], [1, 1], [1, 2], [1, 3], [2, 3], [3, 3]];
 async function compete(r) {
   const { season, query } = r;
   const [meta, teams] = await Promise.all([data.meta(season), data.teams(season)]);
@@ -1380,12 +1441,14 @@ async function compete(r) {
   const byNum = new Map(teams.map((t) => [t.team, t]));
   const list = (k) => (query.get(k) ?? "").split(",").map((s) => s.trim());
   const size = (k, d = 2) => Math.min(4, Math.max(1, +query.get(`${k}n`) || Math.max(d, list(k).filter(Boolean).length)));
-  const st = { r: list("r"), b: list("b"), rn: size("r"), bn: size("b") };
+  // shown: a prediction is on screen. Editing teams dims it until Predict is pressed again;
+  // a shared link with teams on both sides predicts straight away
+  const st = { r: list("r"), b: list("b"), rn: size("r"), bn: size("b"), shown: false };
   const rpNames = meta.rpNames ?? [];
 
   const shell = () => {
-    const input = (side, i) => `<div class="slot"><input inputmode="numeric" list="team-list" placeholder="Team #" data-side="${side}" data-i="${i}" value="${esc(st[side][i] ?? "")}" aria-label="${side === "r" ? "Red" : "Blue"} robot ${i + 1}">
-      ${st[`${side}n`] > 1 ? `<button type="button" class="slot-x" data-drop="${side}${i}" aria-label="Remove this robot">×</button>` : ""}<div class="who" id="who-${side}${i}"></div></div>`;
+    const input = (side, i) => `<div class="slot"><input autocomplete="off" placeholder="Team # or name" data-side="${side}" data-i="${i}" value="${esc(st[side][i] ?? "")}" aria-label="${side === "r" ? "Red" : "Blue"} robot ${i + 1}">
+      ${st[`${side}n`] > 1 ? `<button type="button" class="slot-x" data-drop="${side}${i}" aria-label="Remove this robot">×</button>` : ""}<div class="pick" role="listbox"></div><div class="who" id="who-${side}${i}"></div></div>`;
     const sideBox = (side) => `<div class="side card ${side === "r" ? "red" : "blue"}">
       <div class="side-head"><b class="${side === "r" ? "red" : "blue"}-text">${side === "r" ? "Red" : "Blue"} alliance</b><span class="faint small">${st[`${side}n`]} robot${st[`${side}n`] > 1 ? "s" : ""}</span></div>
       ${Array.from({ length: st[`${side}n`] }, (_, i) => input(side, i)).join("")}
@@ -1397,21 +1460,61 @@ async function compete(r) {
         <p class="muted" style="margin:4px 0 0">Put any teams against each other and see the predicted score, who wins and how often. Uses each team's current EPA.</p>
       </div></div></div>
       <div class="compete-bar section">
-        <nav class="chart-pick" aria-label="Alliance sizes">${PRESETS.map(([a, b]) => `<a href="#" data-size="${a},${b}" class="${st.rn === a && st.bn === b ? "active" : ""}">${a} v ${b}</a>`).join("")}</nav>
         <div class="row"><button type="button" class="pill" id="swap">⇄ Swap sides</button><button type="button" class="pill" id="top4">Top 4</button><button type="button" class="pill" id="clear">Clear</button></div>
       </div>
-      <div class="predictor section">${sideBox("r")}<div class="vs">VS</div>${sideBox("b")}</div>
-      <div id="out"></div>
-      <datalist id="team-list">${teams.map((t) => `<option value="${t.team}">${esc(t.name)}</option>`).join("")}</datalist>`;
-    $$(".predictor input").forEach((el) => (el.oninput = () => { st[el.dataset.side][+el.dataset.i] = el.value.trim(); run(); }));
-    $$("[data-size]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); [st.rn, st.bn] = a.dataset.size.split(",").map(Number); shell(); }));
+      <div class="predictor section">${sideBox("r")}<div class="vs"><span>VS</span><button type="button" class="btn btn-solid" id="go">Predict</button></div>${sideBox("b")}</div>
+      <div id="out"></div>`;
+    $$(".predictor input").forEach((el) => teamPicker(el));
     $$("[data-add]").forEach((b) => (b.onclick = () => { st[`${b.dataset.add}n`]++; shell(); $(`.predictor input[data-side="${b.dataset.add}"][data-i="${st[`${b.dataset.add}n`] - 1}"]`)?.focus(); }));
-    $$("[data-drop]").forEach((b) => (b.onclick = () => { const s = b.dataset.drop[0], i = +b.dataset.drop.slice(1); st[s].splice(i, 1); st[`${s}n`]--; shell(); }));
+    $$("[data-drop]").forEach((b) => (b.onclick = () => { const s = b.dataset.drop[0], i = +b.dataset.drop.slice(1); st[s].splice(i, 1); st[`${s}n`]--; const prev = st.shown && $("#out").innerHTML; st.shown = false; shell(); keepDimmed(prev); }));
     $("#swap").onclick = () => { [st.r, st.b, st.rn, st.bn] = [st.b, st.r, st.bn, st.rn]; shell(); };
-    $("#clear").onclick = () => { st.r = []; st.b = []; shell(); $(".predictor input")?.focus(); };
+    $("#clear").onclick = () => { st.r = []; st.b = []; st.shown = false; shell(); $(".predictor input")?.focus(); };
+    $("#go").onclick = () => { st.shown = true; run(); };
     // the season's best four, split #1 + #4 vs #2 + #3
-    $("#top4").onclick = () => { const t = [...teams].sort((a, b) => b.np - a.np).slice(0, 4).map((x) => `${x.team}`); [st.r, st.b, st.rn, st.bn] = [[t[0], t[3]], [t[1], t[2]], 2, 2]; shell(); };
+    $("#top4").onclick = () => { const t = [...teams].sort((a, b) => b.np - a.np).slice(0, 4).map((x) => `${x.team}`); [st.r, st.b, st.rn, st.bn, st.shown] = [[t[0], t[3]], [t[1], t[2]], 2, 2, true]; shell(); };
     run();
+  };
+
+  // Team picker for one slot: type a number or a name, pick from the season's teams
+  // (strongest first), arrow keys + Enter work. Typing a full number works without picking.
+  const byEpa = [...teams].sort((a, b) => b.np - a.np);
+  const teamPicker = (el) => {
+    const box = el.parentElement.querySelector(".pick");
+    let items = [], sel = 0;
+    const set = (v) => { if ((st[el.dataset.side][+el.dataset.i] ?? "") !== v) { st[el.dataset.side][+el.dataset.i] = v; edited(); } };
+    const draw = () => {
+      const q = el.value.trim().toLowerCase();
+      const taken = new Set([...st.r, ...st.b].filter((v, k) => v && v !== el.value.trim()).map(Number));
+      const match = (t) => !q || String(t.team).startsWith(q) || t.name.toLowerCase().includes(q);
+      items = byEpa.filter((t) => !taken.has(t.team) && match(t)).slice(0, 8);
+      sel = Math.min(sel, Math.max(0, items.length - 1));
+      box.innerHTML = items.length
+        ? items.map((t, k) => `<button type="button" class="pick-item ${k === sel ? "sel" : ""}" data-k="${k}"><b>${t.team}</b><span>${esc(t.name)}</span>${epa(t.np, meta)}</button>`).join("")
+        : `<div class="pick-empty">No ${seasonLabel(season, "")} team matches “${esc(el.value.trim())}”</div>`;
+      box.classList.add("open");
+    };
+    const close = () => box.classList.remove("open");
+    const choose = (k) => {
+      const t = items[k];
+      if (!t) return;
+      el.value = `${t.team}`;
+      set(el.value);
+      close();
+      // jump to the next empty slot, so building a match is just pick, pick, pick
+      const next = $$(".predictor input").find((x) => !x.value.trim());
+      if (next) next.focus(); else $("#go").focus();
+    };
+    el.onfocus = () => { sel = 0; draw(); };
+    // a half-typed name isn't a team yet: only numbers count until one is picked
+    el.oninput = () => { sel = 0; draw(); set(/^\d+$/.test(el.value.trim()) ? el.value.trim() : ""); };
+    el.onblur = () => setTimeout(close, 120);
+    el.onkeydown = (e) => {
+      if (e.key === "ArrowDown") { sel = Math.min(items.length - 1, sel + 1); draw(); e.preventDefault(); }
+      else if (e.key === "ArrowUp") { sel = Math.max(0, sel - 1); draw(); e.preventDefault(); }
+      else if (e.key === "Enter") { choose(sel); e.preventDefault(); }
+      else if (e.key === "Escape") { close(); el.blur(); }
+    };
+    box.onmousedown = (e) => { const b = e.target.closest("[data-k]"); if (b) { e.preventDefault(); choose(+b.dataset.k); } };
   };
 
   const run = () => {
@@ -1429,11 +1532,11 @@ async function compete(r) {
     }
     const keep = (side) => st[side].slice(0, st[`${side}n`]).filter(Boolean).join(",");
     syncQuery({ r: keep("r"), b: keep("b"), rn: st.rn !== 2 || st.bn !== 2 ? st.rn : "", bn: st.rn !== 2 || st.bn !== 2 ? st.bn : "" });
-    $$("[data-size]").forEach((a) => a.classList.toggle("active", a.dataset.size === `${st.rn},${st.bn}`));
-    if (!nums.r.length || !nums.b.length) {
-      $("#out").innerHTML = `<div class="section"><div class="card empty">Enter at least one team on each side.</div></div>`;
-      return;
-    }
+    const ready = nums.r.length > 0 && nums.b.length > 0;
+    $("#go").disabled = !ready;
+    $("#go").title = ready ? "" : "Add at least one team on each side";
+    if (!ready) st.shown = false;
+    if (!st.shown) { $("#out").innerHTML = ""; return; }
 
     const model = modelFromMeta(meta);
     for (const n of [...nums.r, ...nums.b]) {
@@ -1488,6 +1591,7 @@ async function compete(r) {
       });
     }).join("");
 
+    $("#out").classList.remove("stale");
     $("#out").innerHTML = `
       <div class="section">${board}</div>
       ${uneven ? `<p class="small muted section compete-note">Real FTC matches are 2 v 2. With other sizes each side's score is the sum of its robots' ratings, so read it as a what-if (field space and shared goals aren't modelled).</p>` : ""}
@@ -1500,6 +1604,17 @@ async function compete(r) {
         <thead><tr><th>Team</th><th class="c">EPA</th><th class="r hide-sm">Auto</th><th class="r hide-sm">Teleop</th><th class="r hide-sm">Endgame</th><th class="r">Share</th><th class="r hide-sm">Record</th></tr></thead>
         <tbody>${robotRows}</tbody></table></div></div>`;
   };
+  // a team changed: keep the old prediction on screen, dimmed, until Predict is pressed
+  const keepDimmed = (prev) => {
+    if (prev && !$("#go").disabled) { $("#out").innerHTML = prev; $("#out").classList.add("stale"); }
+  };
+  const edited = () => {
+    const prev = $("#out").innerHTML;
+    st.shown = false;
+    run();
+    keepDimmed(prev);
+  };
+  st.shown = st.r.some(Boolean) && st.b.some(Boolean);
   shell();
 }
 

@@ -447,6 +447,8 @@ export async function build(season, params = {}, epaOver = {}) {
           rp: x.elim || !hasRp ? null : pre[side].rp.map((p, i) => (p > 0.5 ? 1 : 0) + (x.actual[side].rp[i] ? 2 : 0)),
           orp: x.elim || !hasRp ? null : pre[side === "red" ? "blue" : "red"].rp.map((p, i) => (p > 0.5 ? 1 : 0) + (x.actual[side === "red" ? "blue" : "red"].rp[i] ? 2 : 0)),
           epa: epaAfter.get(x).get(t), // EPA track (pWin / pred above are the prediction track)
+          // this robot's own points from each per-robot element (SEASONS[season].solo), quals only
+          ...(x.actual[side].solo && mine.length === 2 ? { solo: x.actual[side].solo.map((pair) => pair[mine.indexOf(t)]) } : {}),
         });
       }
     }
@@ -654,6 +656,8 @@ export async function build(season, params = {}, epaOver = {}) {
           ...(start.zone ? { zone: start.zone.map(r3) } : {}),
         } : null,
         epaEnd: h.length ? h[h.length - 1].epa[0] : null,
+        // [np, auto, teleop, endgame] after its last match here, for the event's pick map
+        epaOut: h.length ? h[h.length - 1].epa : null,
         epaNow: e ? { np: r1(e.np), auto: r1(e.auto), teleop: r1(e.teleop), endgame: r1(e.endgame) } : null,
       };
     });
