@@ -95,7 +95,6 @@ export function scatter(el, rows, { x, y, href, labelTop = 8 }) {
       <circle class="dot-ring" r="8" style="display:none"/>
       <text class="axis-title" x="${(P.l + W - P.r) / 2}" y="${H - 8}" text-anchor="middle">${esc(x.label)}</text>
       <text class="axis-title" transform="translate(14 ${(P.t + H - P.b) / 2}) rotate(-90)" text-anchor="middle">${esc(y.label)}</text>
-      ${corr != null ? `<text class="corr" x="${P.l + 10}" y="${P.t + 16}">r = ${corr.toFixed(2)} · ${n.toLocaleString()} teams</text>` : ""}
     </svg><div class="tip"></div>`;
     const svg = el.querySelector("svg"), tip = el.querySelector(".tip"), ring = el.querySelector(".dot-ring");
     const px = pts.map((p) => [X(p.vx), Y(p.vy)]);
