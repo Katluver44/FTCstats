@@ -22,6 +22,7 @@ const LEAD = 20;
 const up = await readJson(path.join("site", "videos", "uploads.json"), {});
 const tsFile = path.join("site", "videos", "timestamped.json");
 const ts = {}; // only what this run places; merged into the file at the end
+const approxFit = (x) => !x.error && x.halves?.[0] != null && x.halves?.[1] != null && Math.abs(x.halves[0] - x.halves[1]) < 300 && x.lift > 3 && x.rival > 0.9 && x.o != null;
 for (const season of seasons) {
   const cacheFile = path.join(".cache", "calibration", `uploads-${season}.json`);
   const cache = await readJson(cacheFile, {});
@@ -64,13 +65,16 @@ for (const season of seasons) {
       if (direct) fits.push({ code, id, r: { score: 1 + direct.found, ok: true }, ms, pos, via: "overlay-direct", spots: direct.spots });
       else if (ocrOk) fits.push({ code, id, r: { ...cache[k], o: o.o, ok: true, score: 1 + o.agree }, ms, pos, via: "overlay" });
       else if (cache[k].ok) fits.push({ code, id, r: cache[k], ms, pos, via: "rhythm" });
+      // a strong rhythm fit whose only doubt is a near-equal rival one match cycle away (both
+      // halves of the day agree): placed anyway, at most about one match off (Arjun's call)
+      else if (approxFit(cache[k])) fits.push({ code, id, r: { ...cache[k], ok: true, score: cache[k].score * 0.5 }, ms, pos, via: "rhythm-approx" });
     }
   }
   // a video that fits several events (same venue, morning and afternoon sessions) goes to
   // the one it fits clearly best, or to none
   for (const [id, fs_] of Map.groupBy(fits, (f) => f.id)) {
     // overlay readings beat rhythm; within a kind, the clearly better fit wins
-    fs_.sort((a, b) => b.via.startsWith("overlay") - a.via.startsWith("overlay") || b.r.score - a.r.score);
+    fs_.sort((a, b) => b.via.startsWith("overlay") - a.via.startsWith("overlay") || (a.via === "rhythm-approx") - (b.via === "rhythm-approx") || b.r.score - a.r.score);
     if (fs_[1] && fs_[1].via !== fs_[0].via) fs_.length = 1;
     if (fs_[1] && fs_[1].r.score > fs_[0].r.score * 0.8) { if (verbose) console.log(`  ${id}: fits ${fs_.map((f) => f.code).join(" and ")} about equally, skipped`); continue; }
     const { code, r, ms, pos } = fs_[0];
