@@ -337,13 +337,14 @@ function shuffle(a) {
 // Correlated strengths and the simulated tiebreaker are off by default here:
 // random schedules are already well calibrated, and both made the 2023-2025
 // backtest worse (corr=1 underconfident; tb "sim" -0.01 Spearman in 2023/2024).
-export function forecastFromRoster(season, meta, ev, { perTeam = 5, sims = 2000, bonus = false, corr = 0, tb = "legacy", rpProb = null } = {}) {
+// model: pass one to reuse (e.g. strength of schedule compares against a replay's model)
+export function forecastFromRoster(season, meta, ev, { perTeam = 5, sims = 2000, bonus = false, corr = 0, tb = "legacy", rpProb = null, model: given = null } = {}) {
   reseed(ev.teamList.length * 7919 + perTeam);
   const { rankBy } = SEASONS[season];
   const byScore = rankBy === "score";
-  const model = modelFromMeta(meta, null, ev.type);
+  const model = given ?? modelFromMeta(meta, null, ev.type);
   const teams = ev.teamList.map((t) => t.team);
-  for (const t of ev.teamList) if (t.state) model.setTeam(t.team, t.state);
+  if (!given) for (const t of ev.teamList) if (t.state) model.setTeam(t.team, t.state);
   const N = teams.length;
   if (N < 4) return [];
   const idx = new Map(teams.map((t, i) => [t, i]));
