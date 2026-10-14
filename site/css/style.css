@@ -883,8 +883,9 @@ a.th-add:hover { color: var(--accent); border-color: var(--accent); }
 .vs #go:disabled { opacity: 0.45; cursor: not-allowed; }
 #out.stale { opacity: 0.4; transition: opacity 0.15s; }
 /* compete: while the predicted match plays out, hold back everything but the score */
-#out .out-rest, #out .feature-foot { transition: opacity 0.4s; }
-#out.playing .out-rest, #out.playing .feature-foot { opacity: 0; pointer-events: none; }
+#out .out-rest, #out .feature-foot p { transition: opacity 0.4s; }
+#out.playing .out-rest, #out.playing .feature-foot p { opacity: 0; pointer-events: none; }
+#out.playing .feature-foot .wp-red { transition: width 0.12s linear; }
 #out.playing .match-board { cursor: pointer; }
 #out .feature-score .score { font-variant-numeric: tabular-nums; }
 .compete-note { padding: 10px var(--gutter) 0; margin: 0; }

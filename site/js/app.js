@@ -405,7 +405,7 @@ async function teams(r) {
     { key: "teleop", label: "Teleop", cls: "r", render: (r) => fmt(r.teleop) },
     { key: "endgame", label: "Endgame", cls: "r", render: (r) => fmt(r.endgame) },
     ...(rpNames.length ? [{ key: "rps", label: `<span title="Bonus ranking points earned in an average match (${rpNames.join(", ")})">Bonus RPs</span>`, cls: "r small hide-sm",
-      render: (r) => `<span title="${rpNames.map((n, i) => `${n} ${pct(rpRate(r, i))}`).join(" · ")}">${fmt(r.rps)} <span class="faint">/ ${rpNames.length}</span></span>` }] : []),
+      render: (r) => `<span title="${rpNames.map((n, i) => `${n} ${pct(rpRate(r, i))}`).join(" · ")}">${fmt(r.rps)}</span>` }] : []),
     { key: "wins", label: "Record", cls: "r small", render: (r) => `${r.wins}-${r.losses}${r.ties ? `-${r.ties}` : ""}` },
     { key: "wr", label: "Win rate", cls: "r small", render: (r) => (r.wr == null ? "–" : pct(r.wr)) },
     { key: "trend", label: "Trend", cls: "r small", render: (r) => `<span title="EPA change over the last 10 matches">${trend(r.trend)}</span>` },
@@ -1435,6 +1435,15 @@ async function match(r) {
 
 // Any teams on either side (1-4 robots each), predicted with the season's model.
 // Real FTC matches are 2 v 2; other sizes just add up each robot's ratings.
+// inverse error function (Giles' approximation), for turning a win chance back into a z-score
+function inverf(x) {
+  const w = -Math.log((1 - x) * (1 + x));
+  let p;
+  if (w < 5) { const v = w - 2.5; p = 2.81022636e-08; for (const c of [3.43273939e-07, -3.5233877e-06, -4.39150654e-06, 0.00021858087, -0.00125372503, -0.00417768164, 0.246640727, 1.50140941]) p = c + p * v; }
+  else { const v = Math.sqrt(w) - 3; p = -0.000200214257; for (const c of [0.000100950558, 0.00134934322, -0.00367342844, 0.00573950773, -0.0076224613, 0.00943887047, 1.00167406, 2.83297682]) p = c + p * v; }
+  return p * x;
+}
+
 async function compete(r) {
   const { season, query } = r;
   const [meta, played, preTable] = await Promise.all([data.meta(season), data.teams(season), getJSON(`data/${season}/teams-pre.json`).catch(() => null)]);
@@ -1620,30 +1629,63 @@ async function compete(r) {
     if (st.animate) { st.animate = false; playMatch(p, `${nums.r.length} v ${nums.b.length}`); }
   };
 
-  // Play the predicted match out over ~5 s: a 2:30 match clock with auto points
-  // coming in during the first 30 s, teleop across the rest, endgame (park/base)
-  // in the last 15 s, then penalties. Click the board to skip.
+  // Play the predicted match out over ~3 s on a 2:30 match clock: auto points in the
+  // first 30 s, teleop across the rest, endgame in the last 15 s. Each alliance runs a
+  // little ahead of or behind its pace (a random wobble that fades out by the buzzer),
+  // so the lead swings and the win bar swings with a live win chance before settling
+  // on the prediction. Click the board to skip.
   const playMatch = (p, label) => {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const out = $("#out"), board = $(".match-board", out);
     const red = $(".feature-score .score.red", out), blue = $(".feature-score .score.blue", out), phase = $(".phase", out);
+    const bar = $(".feature-foot .wp-red", out), pctEl = $(".feature-foot .wp-label", out);
     out.classList.add("playing");
-    const token = (st.anim = (st.anim ?? 0) + 1), T = 4600, END = 5000, t0 = performance.now();
-    const ramp = (t, a, b) => Math.min(1, Math.max(0, (t - a) / (b - a)));
-    const at = (o, sec, done) => o.auto * ramp(sec, 0, 30) + o.teleop * ramp(sec, 30, 150) + o.endgame * ramp(sec, 135, 150) + (done ? o.total - o.np : 0);
-    const finish = () => { out.classList.remove("playing"); phase.textContent = label; red.textContent = fmt(p.red.total, 0); blue.textContent = fmt(p.blue.total, 0); };
+    const token = (st.anim = (st.anim ?? 0) + 1), T = 2700, END = 3000, t0 = performance.now();
+    const clip = (sec, a, b) => Math.min(1, Math.max(0, (sec - a) / (b - a)));
+    // a side's pace: share of a period's points done at u (0-1), pushed ahead or behind by
+    // two slow random waves; the u(1-u) factor pins it to 0 at the start and 1 at the end
+    const pace = () => {
+      const w = [0, 1].map(() => ({ f: 1 + Math.random() * 2, ph: Math.random() * 6.3, a: 0.5 + Math.random() * 0.5 }));
+      return (u) => Math.min(1, Math.max(0, u + 1.1 * u * (1 - u) * w.reduce((sum, x) => sum + x.a * Math.sin(6.283 * x.f * u + x.ph), 0) / 2));
+    };
+    const curves = (o) => ({ auto: pace(), teleop: pace(), o, best: 0 });
+    const R = curves(p.red), B = curves(p.blue);
+    // never let a score go down, whatever the wobble does
+    const at = (c, sec) => (c.best = Math.max(c.best, c.o.auto * c.auto(clip(sec, 0, 30)) + c.o.teleop * c.teleop(clip(sec, 30, 150)) + c.o.endgame * clip(sec, 135, 150)));
+    // live win chance: lead so far plus the expected rest of the margin, with the
+    // spread shrinking as less of the match is left (its full size implied by pRed)
+    const erf = (x) => { const t = 1 / (1 + 0.3275911 * Math.abs(x)); const y = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; };
+    const Phi = (z) => 0.5 * (1 + erf(z / Math.SQRT2));
+    const E = p.red.total - p.blue.total, avg = (p.red.total + p.blue.total) / 2 || 1;
+    const zPred = Math.abs(p.pRed - 0.5) > 0.01 ? Math.SQRT2 * inverf(2 * p.pRed - 1) : 0;
+    const sigma = Math.max(avg * 0.2, zPred && Math.sign(zPred) === Math.sign(E) ? E / zPred : avg * 0.3);
+    const setBar = (q) => {
+      const r100 = Math.round(q * 100);
+      if (bar) bar.style.width = `${r100}%`;
+      if (pctEl) { pctEl.textContent = `${Math.max(r100, 100 - r100)}%`; pctEl.className = `wp-label ${r100 >= 50 ? "red" : "blue"}`; }
+    };
+    const finish = () => {
+      out.classList.remove("playing"); phase.textContent = label;
+      red.textContent = fmt(p.red.total, 0); blue.textContent = fmt(p.blue.total, 0); setBar(p.pRed);
+    };
     board.onclick = () => { st.anim++; finish(); };
     // a timer rather than requestAnimationFrame, so a background tab still finishes
-    const timer = setInterval(() => frame(performance.now()), 33);
+    const timer = setInterval(() => frame(performance.now()), 30);
     const frame = (now) => {
       if (token !== st.anim || !red.isConnected) return clearInterval(timer);
       const el = now - t0, sec = Math.min(150, (el / T) * 150), done = el >= T;
       const left = Math.ceil(150 - sec);
       phase.textContent = done ? "Penalties" : `${sec < 30 ? "Auto" : sec < 120 ? "Teleop" : "Endgame"} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
-      red.textContent = fmt(at(p.red, sec, done), 0);
-      blue.textContent = fmt(at(p.blue, sec, done), 0);
+      const rs = at(R, sec), bs = at(B, sec);
+      red.textContent = fmt(done ? p.red.total : rs, 0);
+      blue.textContent = fmt(done ? p.blue.total : bs, 0);
+      const rem = Math.max(0, 1 - (sec / 150));
+      // swing freely early on, then ease onto the prediction over the last ~40 s
+      const live = Phi((rs - bs + E * rem) / (sigma * Math.sqrt(rem) + 1e-6));
+      setBar(done ? p.pRed : p.pRed + (live - p.pRed) * Math.min(1, rem / 0.27));
       if (el >= END) { clearInterval(timer); finish(); }
     };
+    frame(t0);
   };
   // a team changed: keep the old prediction on screen, dimmed, until Predict is pressed
   const keepDimmed = (prev) => {
