@@ -485,7 +485,7 @@ async function teams(r) {
       : chart.type === "dist" ? `<label class="sel-label"><span>Stat</span><select data-c="m">${opts(m.key)}</select></label>`
       : `<div class="pl-legend small"><span><i class="auto"></i>Auto</span><span><i class="teleop"></i>Teleop</span><span><i class="endgame"></i>Endgame</span></div>`;
     const note = {
-      scatter: `Each dot is a team that has played; the top 8 by EPA are orange. Grey dashes mark the medians, orange dashes the trend. Click a dot to open the team.`,
+      scatter: `Each dot is a team that has played; the top 8 by EPA are gold. Grey dashes mark the medians, red dashes the trend. Click a dot to open the team.`,
       dist: "How many teams sit at each level. The markers show the median and what it takes to be in the top 10% and top 1%.",
       breakdown: "The 25 best teams by EPA in this list, split into what each scores in auto, teleop and endgame.",
     }[chart.type];

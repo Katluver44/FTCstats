@@ -31,7 +31,15 @@ function responsive(el, draw) {
 
 // metric: { key, label, get(row), show(value) }
 export function scatter(el, rows, { x, y, href, labelTop = 8 }) {
-  const pts = rows.map((r) => ({ r, vx: x.get(r), vy: y.get(r) })).filter((p) => Number.isFinite(p.vx) && Number.isFinite(p.vy));
+  let pts = rows.map((r) => ({ r, vx: x.get(r), vy: y.get(r) })).filter((p) => Number.isFinite(p.vx) && Number.isFinite(p.vy));
+  // a few far-low outliers (slightly negative EPAs) stretch the axes and push the
+  // crowd into the bottom-left corner: cut the lowest 1%, and start at 0 when
+  // nearly everything is positive
+  if (pts.length > 200) {
+    const cut = (vals) => { vals.sort((a, b) => a - b); const q = quantile(vals, 0.01); return quantile(vals, 0.05) >= 0 ? Math.max(0, q) : q; };
+    const loX = cut(pts.map((p) => p.vx)), loY = cut(pts.map((p) => p.vy));
+    pts = pts.filter((p) => p.vx >= loX && p.vy >= loY);
+  }
   if (!pts.length) { el.innerHTML = `<div class="empty">Nothing to plot.</div>`; return; }
   // best teams (by EPA) get labels and draw on top
   pts.sort((a, b) => a.r.np - b.r.np);
@@ -67,7 +75,7 @@ export function scatter(el, rows, { x, y, href, labelTop = 8 }) {
     const boxes = [];
     const labels = pts.filter((p) => top.has(p.r.team)).reverse().map((p) => {
       const cx = X(p.vx), cy = Y(p.vy), w = String(p.r.team).length * 7 + 2, h = 13;
-      const spots = [[8, -h / 2], [-8 - w, -h / 2], [-w / 2, -h - 7], [-w / 2, 7], [7, -h - 4], [-7 - w, -h - 4], [7, 4], [-7 - w, 4]];
+      const spots = [[6, -h - 3], [8, -h / 2], [-w / 2, -h - 7], [-6 - w, -h - 3], [-8 - w, -h / 2], [6, 3], [-w / 2, 7], [-6 - w, 3]];
       for (const [dx, dy] of spots) {
         const b = [cx + dx, cy + dy, cx + dx + w, cy + dy + h];
         if (b[0] < P.l || b[2] > W - P.r || b[1] < P.t || b[3] > H - P.b) continue;
