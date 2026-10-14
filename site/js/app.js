@@ -421,7 +421,7 @@ async function teams(r) {
         <input id="filter" placeholder="Search teams…" value="${esc(query.get("q") ?? "")}">
         <select id="country" aria-label="Country"><option value="" data-all="All countries">Country</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
         <select id="state" aria-label="State or region" hidden></select>
-        <select id="minm" aria-label="Number of matches played" title="Teams that have played at least this many matches; 'Any' adds teams that haven't played yet (on the EPA they start the season with)"><option value="0">Any (incl. not played yet)</option><option value="1" selected>1+ matches</option><option value="5">5+ matches</option><option value="10">10+ matches</option><option value="25">25+ matches</option></select>
+        <select id="minm" aria-label="Number of matches played" title="Teams that have played at least this many matches; Predicted also shows teams that haven't played yet (on the EPA they start the season with)"><option value="0">Predicted</option><option value="1" selected>1+ matches</option><option value="5">5+ matches</option><option value="10">10+ matches</option><option value="25">25+ matches</option></select>
         ${hasOff ? `<div class="seg scope" role="group" aria-label="Which events count">
           ${[["official", "Season only", "Official events only: off-season events (often modified rules and lineups) never move these ratings"],
              ["full", "All events", "Adds every off-season event at 40%; modified-rules events left out"]]
