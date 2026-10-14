@@ -15,7 +15,7 @@ write-up and accuracy table; read it before changing the model.
 - `site/js/app.js`, `ui.js`, `live.js` — the framework-free static site.
   `config.js` holds editable settings (analytics ID, photo API URL).
 - `photo-service/` — Vercel functions for team photo uploads (Vercel Blob,
-  reviewed at `/admin.html`).
+  live on upload; removed at `/admin.html`).
 - `scripts/package-vercel.mjs` — assembles `site/` + `photo-service/` into `dist/`.
 - `scripts/rank-backtest.mjs`, `check-rs.mjs`, `compare.mjs`, `experiments.mjs`,
   `tune.mjs` — evaluation. `research/` exists on research branches only.
