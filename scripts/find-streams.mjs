@@ -74,6 +74,13 @@ export async function findStreams(season) {
       const r = await yt("videos", { part: "snippet", id: seedIds.slice(i, i + 50).join(",") }, 1);
       for (const v of r.items) { cache.videos[v.id] ??= { seed: true }; cache.channels[v.snippet.channelId] ??= {}; }
     }
+    // 1c. channels that streamed FTC events in other seasons (organizers stream year after
+    // year) and hand-added ones; scanning a channel is cheap, searching is not
+    const other = await Promise.all([2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026].filter((s) => s !== season)
+      .map((s) => readJson(path.join(".cache", "streams", `${s}.json`), { videos: {} })));
+    const known = new Set([...other.flatMap((c) => Object.values(c.videos).filter((v) => v.channel && v.start && v.end).map((v) => v.channel)),
+      ...await readJson(path.join("site", "videos", "channels.json"), [])]);
+    for (const id of known) if (/^UC[\w-]{22}$/.test(id)) cache.channels[id] ??= {};
     // 2. each channel's uploads this season, then details for the new ones
     scanChannels = async () => { for (const [id, ch] of Object.entries(cache.channels)) {
       if (ch.scanned && ch.scanned > to) continue; // season over when we last looked

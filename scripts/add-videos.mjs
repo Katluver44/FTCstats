@@ -16,6 +16,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { youtubeId } from "./videos.mjs";
+import { pageDetailsMany } from "./yt-page.mjs";
 import { parseTimestamps, matchEvent } from "./find-timestamped.mjs";
 
 const args = process.argv.slice(2);
@@ -77,11 +78,21 @@ cands = cands.filter((c) => /^[\w-]{11}$/.test(c.id ?? ""));
 // details, 50 per call (1 quota unit each)
 const info = {};
 const ids = [...new Set(cands.map((c) => c.id))];
-for (let i = 0; i < ids.length; i += 50) {
+let i = 0;
+for (; i < ids.length; i += 50) {
   const u = `https://www.googleapis.com/youtube/v3/videos?part=snippet,liveStreamingDetails,contentDetails,status&id=${ids.slice(i, i + 50).join(",")}&key=${key}`;
   const r = await (await fetch(u)).json();
+  if (r.error && /quota/i.test(r.error.message)) break;
   if (r.error) throw new Error(`YouTube: ${r.error.message}`);
   for (const v of r.items ?? []) info[v.id] = v;
+}
+if (i < ids.length) { // API quota used up: YouTube's own player data instead
+  console.log(`  API quota used up; reading ${ids.length - i} videos from YouTube's pages`);
+  const got = await pageDetailsMany(ids.slice(i), { log: console.log });
+  const later = new Set(got.__blocked ?? []);
+  delete got.__blocked;
+  Object.assign(info, got);
+  if (later.size) { console.log(`  ${later.size} videos left for the next run`); cands = cands.filter((c) => !later.has(c.id)); }
 }
 
 const evCache = new Map();

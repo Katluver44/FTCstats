@@ -1,4 +1,4756 @@
 {
+ "2019": {
+  "LACHAMP": {
+   "dFsAwpcfEUk": {
+    "F-3": 0
+   },
+   "cHiUg8GYzC0": {
+    "F-2": 0
+   },
+   "XzhQKAOJ2E4": {
+    "F-1": 0
+   }
+  },
+  "LACHAMPGALILEO": {
+   "xgGTvEPRN1Q": {
+    "Q-3": 0
+   },
+   "KTssQyN8VhQ": {
+    "Q-2": 0
+   },
+   "PZjSXbdaaYg": {
+    "Q-1": 0
+   },
+   "NcBgixJYsXo": {
+    "Q-2": 0
+   },
+   "kmQa3h0r4lQ": {
+    "Q-2": 0
+   },
+   "HhluieXAiss": {
+    "Q-1": 0
+   },
+   "hX9kSOQZQJM": {
+    "Q-1": 0
+   },
+   "gDdRA-9AyQc": {
+    "Q-30": 0
+   },
+   "Q9q69DRk26o": {
+    "Q-29": 0
+   },
+   "1PZIT0hWSmc": {
+    "Q-28": 0
+   },
+   "l0yDKuZ-A48": {
+    "Q-27": 0
+   },
+   "fm1XAFhiUR8": {
+    "Q-26": 0
+   },
+   "YF-Lkv-yJbE": {
+    "Q-25": 0
+   },
+   "BAEY-ar48XA": {
+    "Q-24": 0
+   },
+   "zy_y8t1OPuk": {
+    "Q-23": 0
+   },
+   "OmZ3lvqicA4": {
+    "Q-22": 0
+   },
+   "fFIFvfibdqU": {
+    "Q-21": 0
+   },
+   "QbJo0D9swr0": {
+    "Q-20": 0
+   },
+   "Fy6vwQamf9k": {
+    "Q-19": 0
+   },
+   "M-LmW8iaZ-8": {
+    "Q-18": 0
+   },
+   "aOoQie55Rjs": {
+    "Q-17": 0
+   },
+   "JvD_-aKNPP4": {
+    "Q-16": 0
+   },
+   "H51U6IY2OrA": {
+    "Q-15": 0
+   },
+   "vvYyzQG9QsU": {
+    "Q-14": 0
+   },
+   "UUxD0diwI9I": {
+    "Q-13": 0
+   },
+   "KRaTltaKlpc": {
+    "Q-12": 0
+   },
+   "lNMO57nae_4": {
+    "Q-11": 0
+   },
+   "icMtruALSu8": {
+    "Q-10": 0
+   },
+   "eUWLxBANJBk": {
+    "Q-9": 0
+   },
+   "zi8KYXu0F7s": {
+    "Q-8": 0
+   },
+   "1SKP5WqUYIs": {
+    "Q-7": 0
+   },
+   "vkPMLVlFRUc": {
+    "Q-6": 0
+   },
+   "hAOUVAEzLPA": {
+    "Q-5": 0
+   },
+   "741rq-ucG-k": {
+    "Q-4": 0
+   },
+   "mGevpRH7hCo": {
+    "Q-3": 0
+   },
+   "FtcOEngX0fQ": {
+    "Q-2": 0
+   },
+   "R8FhwR1aaKw": {
+    "Q-1": 0
+   }
+  },
+  "63704852674.0609": {
+   "1zfxzLz3CFs": {
+    "SF1-1": 0
+   },
+   "1THkLZu08wY": {
+    "SF1-2": 0
+   },
+   "TN8ijrePn9E": {
+    "F-1": 0
+   },
+   "ZeW3aGcrJfw": {
+    "F-2": 0
+   },
+   "1JtUNy9fmnw": {
+    "Q-4": 0
+   },
+   "c8MKPLu4mds": {
+    "SF1-3": 0
+   }
+  },
+  "CASDPTLT": {
+   "l9DKeVT9Yjw": {
+    "F-3": 0
+   },
+   "Xd66MkLfonc": {
+    "F-1": 0
+   },
+   "fuFSvu0tE-w": {
+    "F-2": 0
+   }
+  },
+  "SAM3": {
+   "0pu9wjZD3OY": {
+    "Q-13": 0
+   },
+   "aEuDZ4qymMA": {
+    "Q-12": 0
+   },
+   "sF1KqWjgE9E": {
+    "Q-11": 0
+   },
+   "T469BvEjvQk": {
+    "Q-10": 0
+   },
+   "eTKIkzEEGXQ": {
+    "Q-9": 0
+   },
+   "WkPW6xuXJHc": {
+    "Q-8": 0
+   },
+   "PsR7HtkPQo4": {
+    "Q-7": 0
+   },
+   "HVHysUAhVy8": {
+    "Q-6": 0
+   },
+   "IY0kMSEqUaI": {
+    "Q-5": 0
+   },
+   "gEkZBePmcEc": {
+    "Q-4": 0
+   },
+   "VyVUPtdACG0": {
+    "Q-14": 0
+   }
+  },
+  "SAM4": {
+   "6dGK4kGvMe0": {
+    "Q-18": 0
+   },
+   "t7y_wF0dBy4": {
+    "Q-20": 0
+   },
+   "DUZiQFFTZp8": {
+    "Q-19": 0
+   },
+   "hzJdohiWi8k": {
+    "Q-16": 0
+   },
+   "wZ2yQ9S4vXw": {
+    "Q-17": 0
+   },
+   "EXMgLRHCiR8": {
+    "Q-15": 0
+   },
+   "C_ujAQEAvZ0": {
+    "Q-14": 0
+   },
+   "n9TSrwAmKgA": {
+    "Q-13": 0
+   },
+   "deXFITZECo0": {
+    "Q-12": 0
+   },
+   "Ws5g1D0kzOQ": {
+    "Q-10": 0
+   },
+   "tVn0_xnEtZ8": {
+    "Q-11": 0
+   },
+   "p36S7TNX4wA": {
+    "Q-9": 0
+   },
+   "0qwleLZG54o": {
+    "Q-8": 0
+   },
+   "gZ6qq-IHaTg": {
+    "Q-7": 0
+   },
+   "ZPAdeaKEkvI": {
+    "Q-6": 0
+   },
+   "2TPGKsY5xEM": {
+    "Q-5": 0
+   },
+   "4M_Oqx6Y7vM": {
+    "Q-4": 0
+   },
+   "xKohvHTju9U": {
+    "Q-3": 0
+   },
+   "n0iLnTnAWwI": {
+    "Q-2": 0
+   },
+   "OxPy7N2l6Nk": {
+    "Q-1": 0
+   }
+  },
+  "AL1": {
+   "hUTFr8pzkYk": {
+    "Q-24": 0
+   },
+   "ioEbwud0w84": {
+    "Q-28": 0
+   },
+   "eRUxEbju7II": {
+    "Q-33": 0
+   },
+   "EPbzzckK5sM": {
+    "Q-9": 0
+   },
+   "8s-5Mo0sZZw": {
+    "F-1": 0
+   },
+   "4cWxnjoHayc": {
+    "F-2": 0
+   }
+  },
+  "RU104": {
+   "8v_7K2HwD9o": {
+    "SF2-2": 0
+   }
+  },
+  "19MICMP2WOODIEFLOWER": {
+   "ipcxKzkuk7w": {
+    "Q-53": 0
+   },
+   "cAVXpvd4QxI": {
+    "Q-40": 0
+   },
+   "klpkN26-HAo": {
+    "Q-34": 0
+   },
+   "Clf-W1z3EiI": {
+    "Q-27": 0
+   },
+   "fMJPrlqsiSw": {
+    "Q-18": 0
+   },
+   "494liUwzHD8": {
+    "Q-8": 0
+   },
+   "si-fQqJevOw": {
+    "F-3": 0
+   },
+   "z46Wp8-mH0g": {
+    "F-2": 0
+   },
+   "dhe3dArkF7Q": {
+    "Q-2": 0
+   },
+   "0pfEdZq2sog": {
+    "Q-1": 0
+   }
+  },
+  "19MICMP2": {
+   "QucfvN5s0CU": {
+    "F-3": 0
+   },
+   "lY9_t7H9vQc": {
+    "F-2": 0
+   },
+   "qXGIwH8MZNA": {
+    "F-1": 0
+   }
+  },
+  "2019WIC1": {
+   "UN3AlPLB3tQ": {
+    "F-1": 0
+   }
+  },
+  "2019INSQ1": {
+   "HdA8sbYCLg8": {
+    "F-1": 0
+   },
+   "IiLmhJHkxU0": {
+    "F-2": 0
+   }
+  },
+  "2019INLT2": {
+   "WgatIiiC0TQ": {
+    "SF1-1": 0
+   },
+   "EOtwtB0NWI8": {
+    "SF1-2": 0
+   },
+   "Wp_cZcIQFJs": {
+    "SF2-1": 0
+   },
+   "VGSDIrvZJ8I": {
+    "SF2-2": 0
+   },
+   "En558_2FjaM": {
+    "F-1": 0
+   },
+   "QNtwtBYs5BI": {
+    "F-2": 0
+   },
+   "AW58Ru2jOK0": {
+    "F-3": 0
+   }
+  },
+  "2019OHQ2": {
+   "VUO4468_lxI": {
+    "Q-36": 0
+   },
+   "BVHsJBKaIgI": {
+    "Q-35": 0
+   },
+   "kEhgmtGnDuU": {
+    "Q-34": 0
+   },
+   "3ysoGC-hbcc": {
+    "Q-33": 0
+   },
+   "iVaqAGA1l0A": {
+    "Q-32": 0
+   },
+   "9QjT8cEkh-M": {
+    "Q-31": 0
+   },
+   "aiIehUfk_7A": {
+    "Q-30": 0
+   },
+   "DOS4cHHGo2c": {
+    "Q-29": 0
+   },
+   "0kfbk1Rmgy4": {
+    "Q-28": 0
+   },
+   "mtvWlWzUr0w": {
+    "Q-27": 0
+   },
+   "puTBf9T0ZRI": {
+    "Q-26": 0
+   },
+   "dsj0clAnplI": {
+    "Q-24": 0
+   },
+   "EmKOdYMedOc": {
+    "Q-23": 0
+   },
+   "jhZr9t8TBuY": {
+    "Q-22": 0
+   },
+   "mao2LPYYJP0": {
+    "Q-21": 0
+   },
+   "ihPs2r_TvzM": {
+    "Q-20": 0
+   },
+   "C_Lklz7jqls": {
+    "Q-19": 0
+   },
+   "sagd9gGdNa4": {
+    "Q-18": 0
+   },
+   "dyzqO42x_u8": {
+    "Q-17": 0
+   },
+   "i-kRbmSyoFI": {
+    "Q-16": 0
+   },
+   "MHr6RLptc-E": {
+    "Q-15": 0
+   },
+   "ICb43oHmAwM": {
+    "Q-14": 0
+   },
+   "cYqguWltHAk": {
+    "Q-13": 0
+   },
+   "hcVZEa1zue4": {
+    "Q-12": 0
+   },
+   "iZDkxUsCbIQ": {
+    "Q-11": 0
+   },
+   "SqOli2-QXls": {
+    "Q-10": 0
+   },
+   "XMeBfvDwzA8": {
+    "Q-9": 0
+   },
+   "sRpSiVcboAI": {
+    "Q-8": 0
+   },
+   "7_VVPYidkgE": {
+    "Q-7": 0
+   },
+   "5z2Hvfrd05s": {
+    "Q-6": 0
+   },
+   "DeIIhQEtZ8I": {
+    "Q-5": 0
+   },
+   "OliPwprhNj0": {
+    "Q-4": 0
+   },
+   "5QMy_BqBxJA": {
+    "Q-3": 0
+   },
+   "h4Sim4K9aec": {
+    "Q-1": 0
+   },
+   "F5-yfryr2Po": {
+    "F-2": 0
+   },
+   "2qFZMrFw__A": {
+    "F-1": 0
+   },
+   "j5MnCQLmxpU": {
+    "SF2-3": 0
+   },
+   "vbXUAp2S8b4": {
+    "SF2-2": 0
+   },
+   "A_e7phtAhRs": {
+    "SF2-1": 0
+   },
+   "QMXDmLdxuGE": {
+    "SF1-3": 0
+   },
+   "-erQg9Sh7tA": {
+    "SF1-2": 0
+   },
+   "75JKPPhZ5Xo": {
+    "SF1-1": 0
+   }
+  },
+  "RU105": {
+   "Jrs5FR9p5mk": {
+    "F-1": 0
+   },
+   "qcpDRF6x0Jk": {
+    "Q-1": 0
+   }
+  },
+  "RU106": {
+   "7Zks4mDcNfw": {
+    "SF1-2": 0
+   }
+  },
+  "2019ILM20": {
+   "6BPlocI4FSk": {
+    "Q-13": 0
+   },
+   "6QV28Ql5g00": {
+    "Q-4": 0
+   },
+   "D0d7BuSpb9o": {
+    "Q-6": 0
+   },
+   "EVECkvjtc7s": {
+    "Q-2": 0
+   },
+   "H59AAiFv7Ak": {
+    "Q-12": 0
+   },
+   "O93EcmAes5Q": {
+    "Q-7": 0
+   },
+   "WqZYJix-L58": {
+    "Q-10": 0
+   },
+   "bCA16R8tmZ0": {
+    "Q-3": 0
+   },
+   "bgwdoWHmR-Y": {
+    "Q-11": 0
+   },
+   "eajSUeZ2tLk": {
+    "Q-8": 0
+   },
+   "rvZpfq0XcPE": {
+    "Q-5": 0
+   },
+   "tW7IKWG-1sg": {
+    "Q-9": 0
+   },
+   "w1-ypwmxXp8": {
+    "Q-1": 0
+   }
+  },
+  "2020ILMT3": {
+   "EzZONVSOleM": {
+    "Q-12": 0
+   },
+   "FFMF4MYHY6g": {
+    "Q-10": 0
+   },
+   "Hu5s9TKMwYs": {
+    "Q-6": 0
+   },
+   "O2GoQbpd3dg": {
+    "Q-3": 0
+   },
+   "O5_IzTlLQVE": {
+    "Q-5": 0
+   },
+   "OR7M1EREA3E": {
+    "Q-11": 0
+   },
+   "RQVoxmr5L6I": {
+    "Q-8": 0
+   },
+   "VaWOmnp5fPY": {
+    "Q-13": 0
+   },
+   "YpGKApuMfMQ": {
+    "Q-2": 0
+   },
+   "bie3pMbeR5Y": {
+    "Q-7": 0
+   },
+   "iypXKrDDSok": {
+    "Q-9": 0
+   },
+   "nnuuHl842l8": {
+    "Q-1": 0
+   },
+   "rAkcMIO4Oe4": {
+    "Q-4": 0
+   }
+  },
+  "MACHAMP": {
+   "6Bq20ePJBqs": {
+    "Q-4": 0
+   },
+   "g4Oksqc94_A": {
+    "Q-22": 0
+   },
+   "D1EAbKORJL4": {
+    "Q-35": 0
+   },
+   "1M9IgIrwnbU": {
+    "Q-41": 0
+   },
+   "CE-a7P8g8rE": {
+    "SF1-1": 0
+   }
+  },
+  "2019GACMP": {
+   "6pmUuC3_MSY": {
+    "F-3": 0
+   },
+   "UDJrd6aulxk": {
+    "F-2": 0
+   }
+  },
+  "2019GACMPPEMBERTON": {
+   "GFp9PBnEoT8": {
+    "F-2": 0
+   },
+   "_MXlCIBTzmQ": {
+    "F-1": 0
+   },
+   "aacLCBrAY2A": {
+    "Q-4": 0
+   },
+   "T6iDrDu2H30": {
+    "Q-2": 0
+   },
+   "QkHVIO9UJKQ": {
+    "Q-1": 0
+   },
+   "feJgaSNbuEo": {
+    "Q-3": 0
+   },
+   "CWBkCDgt1G4": {
+    "Q-36": 0
+   },
+   "IKY4LRKF1hM": {
+    "Q-33": 0
+   },
+   "QLzCPnhHnXA": {
+    "Q-34": 0
+   },
+   "ZcmxUfiksEo": {
+    "Q-35": 0
+   },
+   "Nyz_YgOwQYQ": {
+    "Q-32": 0
+   },
+   "Mb8cjydFGEc": {
+    "Q-31": 0
+   },
+   "aRRWuEUYDZw": {
+    "Q-30": 0
+   },
+   "n7LpC9_EhJQ": {
+    "Q-29": 0
+   },
+   "OKiVTwDdPgw": {
+    "Q-28": 0
+   },
+   "sl9E-7XUhIU": {
+    "Q-27": 0
+   },
+   "JC6ds0ci4es": {
+    "Q-26": 0
+   },
+   "KrkYsD7WH4E": {
+    "Q-23": 0
+   },
+   "wlc4gChVMUg": {
+    "Q-24": 0
+   },
+   "CPQxGy54NpM": {
+    "Q-25": 0
+   },
+   "KxEmAd2YE6I": {
+    "Q-22": 0
+   },
+   "mcg7BZi1rk8": {
+    "Q-21": 0
+   },
+   "73MUs_UhnBI": {
+    "Q-19": 0
+   },
+   "cKsS9QvJVMY": {
+    "Q-20": 0
+   },
+   "m5Kn5cUgllA": {
+    "Q-18": 0
+   },
+   "tpt0H6AZJGU": {
+    "Q-17": 0
+   },
+   "8-j8xJ-GFp8": {
+    "Q-16": 0
+   },
+   "bvSWMtB4yRQ": {
+    "Q-14": 0
+   },
+   "BhpEX31gNOc": {
+    "Q-15": 0
+   },
+   "92vJZ8ou2Cw": {
+    "Q-13": 0
+   },
+   "ZvCJbKyva8E": {
+    "Q-12": 0
+   },
+   "E4GsI5GNSUI": {
+    "Q-4": 0
+   },
+   "Uuxt9RckVq0": {
+    "Q-11": 0
+   },
+   "zKQSuXKsSnc": {
+    "Q-10": 0
+   },
+   "OgZMIK4T6LQ": {
+    "Q-9": 0
+   },
+   "izbZdZV3cZc": {
+    "Q-6": 0
+   },
+   "ShTjSMnB6Po": {
+    "Q-5": 0
+   },
+   "mNNKcMrvFI4": {
+    "Q-8": 0
+   },
+   "tFc4_ttAJ0Q": {
+    "Q-7": 0
+   },
+   "l2L4WYFPjDA": {
+    "Q-2": 0
+   },
+   "LwcFoghCj78": {
+    "Q-3": 0
+   }
+  },
+  "2019GACMPKILRAIN": {
+   "ImwkeqeSsAI": {
+    "Q-3": 0
+   },
+   "FF45gCZ4TF0": {
+    "F-3": 0
+   },
+   "G1rT4-qqnIo": {
+    "Q-1": 0
+   },
+   "HXX9CFCkOSY": {
+    "F-2": 0
+   },
+   "teGGh-vyCBY": {
+    "F-1": 0
+   },
+   "zrTm7Yrda04": {
+    "Q-2": 0
+   },
+   "1hvuc6M8W0M": {
+    "Q-4": 0
+   },
+   "BvFV5UITLb4": {
+    "Q-32": 0
+   },
+   "GflYFP1QRkM": {
+    "Q-34": 0
+   },
+   "Kgrbq9MU1m0": {
+    "Q-35": 0
+   },
+   "6Dda5izXlkQ": {
+    "Q-31": 0
+   },
+   "oqFwNBtQ4fs": {
+    "Q-36": 0
+   },
+   "du9Y7ow9YCg": {
+    "Q-33": 0
+   },
+   "DjaJFW1mrD0": {
+    "Q-28": 0
+   },
+   "GivWWIrCczo": {
+    "Q-29": 0
+   },
+   "hXECBW6xuSw": {
+    "Q-30": 0
+   },
+   "8rDbnq2Sxng": {
+    "Q-22": 0
+   },
+   "z6eVNQcza7M": {
+    "Q-27": 0
+   },
+   "UfHekrxESJw": {
+    "Q-26": 0
+   },
+   "vkYk-7c5FJM": {
+    "Q-25": 0
+   },
+   "wm8j5P-SNeE": {
+    "Q-24": 0
+   },
+   "mGhwgLd_c5U": {
+    "Q-23": 0
+   },
+   "GHNz9zfs6KQ": {
+    "Q-21": 0
+   },
+   "oidArhD-C14": {
+    "Q-20": 0
+   },
+   "w_5D3ZkCkCs": {
+    "Q-19": 0
+   },
+   "CV-RtFPKVFM": {
+    "Q-17": 0
+   },
+   "4vUIrJ3kX9M": {
+    "Q-18": 0
+   },
+   "-QIJtUp1qZA": {
+    "Q-14": 0
+   },
+   "Nlo_oIxWTVI": {
+    "Q-16": 0
+   },
+   "lGNbBMxaUic": {
+    "Q-15": 0
+   },
+   "uwccdUsT258": {
+    "Q-13": 0
+   },
+   "XOb9SspamYY": {
+    "Q-10": 0
+   },
+   "MEfAvqir6Wg": {
+    "Q-12": 0
+   },
+   "2l4MEBJuZR8": {
+    "Q-4": 0
+   },
+   "MkPGZdsVbMM": {
+    "Q-11": 0
+   },
+   "KIHdOaHDQnU": {
+    "Q-7": 0
+   },
+   "6RVCm8yUNa8": {
+    "Q-8": 0
+   },
+   "5l2v0ocqBCc": {
+    "Q-9": 0
+   },
+   "ykHWSI7EZps": {
+    "Q-6": 0
+   },
+   "VxQnmp78ARM": {
+    "Q-5": 0
+   },
+   "vFSFIl390lU": {
+    "Q-3": 0
+   },
+   "egaLH12kip4": {
+    "Q-2": 0
+   },
+   "Fsz2scGzoN8": {
+    "Q-1": 0
+   }
+  },
+  "2019FLC1": {
+   "--Oa5UqrTZ4": {
+    "F-2": 0
+   },
+   "UrcjSliglEQ": {
+    "F-1": 0
+   }
+  },
+  "2019FLC1SCOTT": {
+   "WsY1EzKLpcY": {
+    "F-3": 0
+   },
+   "JfR5Ng6sW7s": {
+    "F-2": 0
+   },
+   "xas5mjM9TA0": {
+    "F-1": 0
+   },
+   "_Tgt9cbg1KQ": {
+    "SF2-2": 0
+   },
+   "3Yv1F6XGPJk": {
+    "SF1-2": 0
+   },
+   "vFMuPLb0zGA": {
+    "SF2-1": 0
+   },
+   "pZBciNFA4wk": {
+    "SF1-1": 0
+   }
+  },
+  "2019FLC1LAWRENCE": {
+   "nt2taFHas_E": {
+    "F-2": 0
+   },
+   "OsFmRf25XDQ": {
+    "F-1": 0
+   },
+   "PwWayGiw03o": {
+    "SF1-3": 0
+   },
+   "2SozSKFzuTU": {
+    "SF2-2": 0
+   },
+   "uzyBQ6oIPqM": {
+    "SF2-1": 0
+   },
+   "QWzb1J8k9AU": {
+    "SF1-1": 0
+   }
+  },
+  "IDCHAMP": {
+   "DZZW5e-y30E": {
+    "Q-5": 0
+   },
+   "c3xpeBjVZyQ": {
+    "Q-17": 0
+   },
+   "nYa2v4hZkAE": {
+    "Q-2": 0
+   },
+   "6--q6U93g2U": {
+    "Q-24": 0
+   },
+   "uRlOqmno7hg": {
+    "Q-6": 0
+   },
+   "3sfZQxvArQU": {
+    "Q-33": 0
+   },
+   "pHlqdXSi2yQ": {
+    "Q-8": 0
+   },
+   "sabMAOdf9So": {
+    "Q-28": 0
+   },
+   "HU0zVvC9wss": {
+    "Q-37": 0
+   },
+   "wGAzY85Vm9w": {
+    "Q-11": 0
+   },
+   "MUccXRlx-Kk": {
+    "Q-32": 0
+   },
+   "EaqgQW9AJVw": {
+    "Q-30": 0
+   },
+   "CW23BjCebIM": {
+    "Q-20": 0
+   },
+   "b7ZSqGI-SU8": {
+    "Q-25": 0
+   },
+   "EHwrkI6pnkg": {
+    "Q-18": 0
+   },
+   "LrV2U43w90s": {
+    "Q-7": 0
+   },
+   "uz3nV5mpmQY": {
+    "Q-34": 0
+   },
+   "_K1FAWaHCdY": {
+    "Q-19": 0
+   },
+   "TlaHGooJ6hk": {
+    "Q-12": 0
+   },
+   "vqwqNQCYS1U": {
+    "Q-27": 0
+   },
+   "cjYiIw1pkiA": {
+    "Q-38": 0
+   },
+   "RHDoNbjtD-M": {
+    "Q-23": 0
+   },
+   "CC8cFMfkDTA": {
+    "Q-21": 0
+   },
+   "BLzG8UaRJPE": {
+    "Q-10": 0
+   },
+   "YQ1tKxm7Oew": {
+    "Q-40": 0
+   },
+   "ReHUfvjDlTo": {
+    "Q-4": 0
+   },
+   "Q9gGHNjoHlg": {
+    "Q-14": 0
+   },
+   "O97r4aQlhjc": {
+    "Q-36": 0
+   },
+   "pwVdjW98VvE": {
+    "Q-22": 0
+   },
+   "IRxoL_aePIQ": {
+    "Q-29": 0
+   },
+   "wJ0CmEJl44k": {
+    "Q-15": 0
+   },
+   "u7LChnZROuc": {
+    "Q-31": 0
+   },
+   "tIYD1NTnKUo": {
+    "Q-1": 0
+   },
+   "k0itmQ_7h_E": {
+    "Q-39": 0
+   },
+   "_MLUoPq9NG4": {
+    "Q-35": 0
+   },
+   "YqUyu3y5Sy8": {
+    "Q-3": 0
+   },
+   "WXRb5veSBI8": {
+    "Q-26": 0
+   },
+   "PhT3ygNO88w": {
+    "Q-16": 0
+   },
+   "K3J9p2IsSI4": {
+    "Q-13": 0
+   },
+   "3IxJDG0IkZQ": {
+    "Q-9": 0
+   }
+  },
+  "NVFTCSC": {
+   "ksFmMJ5EunM": {
+    "Q-36": 0
+   },
+   "bz29-J7d1sY": {
+    "Q-48": 0
+   },
+   "yZJ5IhCS7r8": {
+    "Q-37": 0
+   },
+   "x6e8XpBuSXI": {
+    "Q-52": 0
+   },
+   "kDyW3gXinOY": {
+    "Q-32": 0
+   },
+   "S-zJiMULUm0": {
+    "Q-49": 0
+   },
+   "OTC_NXDw0KE": {
+    "Q-54": 0
+   },
+   "xnvzzFC5A8c": {
+    "Q-46": 0
+   },
+   "Q_jWEW7vYek": {
+    "Q-39": 0
+   },
+   "HD6s8SmEEoU": {
+    "Q-30": 0
+   },
+   "0jxPVjqsoug": {
+    "Q-41": 0
+   },
+   "wiXdnIGb08M": {
+    "Q-42": 0
+   },
+   "jERljXvqqIM": {
+    "Q-44": 0
+   },
+   "Ra9L09FnR1Q": {
+    "Q-43": 0
+   },
+   "2w8mjWelTT4": {
+    "Q-35": 0
+   },
+   "xUUZ3YR8_gw": {
+    "Q-38": 0
+   },
+   "r8Oh80L9nac": {
+    "Q-31": 0
+   },
+   "qBzC-JTcdXM": {
+    "Q-51": 0
+   },
+   "af1xkQKRFP0": {
+    "Q-47": 0
+   },
+   "_e28bthok48": {
+    "Q-33": 0
+   },
+   "VWveTdWEpQM": {
+    "Q-40": 0
+   },
+   "VFc2S2jXUb4": {
+    "Q-50": 0
+   },
+   "RX4LUstMfnw": {
+    "Q-45": 0
+   },
+   "9OzABmi1Or8": {
+    "Q-34": 0
+   },
+   "-Sfqafp1qyU": {
+    "Q-53": 0
+   },
+   "g45DX1yirp4": {
+    "Q-10": 0
+   },
+   "TJbcFcg7W1o": {
+    "Q-13": 0
+   },
+   "wXptSPHjOAM": {
+    "Q-15": 0
+   },
+   "7DgA_nYr89c": {
+    "Q-22": 0
+   },
+   "53Pc_j9o03s": {
+    "Q-7": 0
+   },
+   "NTIGTbpWeRk": {
+    "Q-9": 0
+   },
+   "RIaNz6-zMFE": {
+    "Q-21": 0
+   },
+   "2rdGrugux8M": {
+    "Q-24": 0
+   },
+   "4JfhFngsA4k": {
+    "Q-17": 0
+   },
+   "9waAyzCIZ_M": {
+    "Q-2": 0
+   },
+   "6Q-lqdf_E-g": {
+    "Q-3": 0
+   },
+   "-m78EBliV4k": {
+    "Q-16": 0
+   },
+   "L8TtLAdmw-s": {
+    "Q-23": 0
+   },
+   "R608zpIINdI": {
+    "Q-11": 0
+   },
+   "ofQgi2ps6xA": {
+    "Q-25": 0
+   },
+   "Lg3z89IIQyQ": {
+    "Q-4": 0
+   },
+   "z70bHRVn2G4": {
+    "Q-12": 0
+   },
+   "4azY0hjBFs8": {
+    "Q-14": 0
+   },
+   "n4jELmAK-hg": {
+    "Q-27": 0
+   },
+   "cl9UDN8LAWI": {
+    "Q-29": 0
+   },
+   "VctJZ_8Rhh8": {
+    "Q-19": 0
+   },
+   "JBQSgJcbyEU": {
+    "Q-20": 0
+   },
+   "J7bNAYdaP9s": {
+    "Q-6": 0
+   },
+   "IkuAoyczKB4": {
+    "Q-18": 0
+   },
+   "D09sjgbeaZg": {
+    "Q-26": 0
+   },
+   "7yYkZ2JihMc": {
+    "Q-28": 0
+   },
+   "7RO1PbEz9Ik": {
+    "Q-8": 0
+   },
+   "3PCCtQ2hDL0": {
+    "Q-1": 0
+   },
+   "0CPf540p0P0": {
+    "Q-5": 0
+   }
+  },
+  "63706312915.4044": {
+   "Jpvw4ffPrLE": {
+    "Q-4": 0
+   },
+   "PHNXUX5v48I": {
+    "Q-15": 0
+   },
+   "We8vlrbEZyM": {
+    "Q-10": 0
+   },
+   "DJjWxo_qYG8": {
+    "Q-7": 0
+   }
+  },
+  "63706323736.2843": {
+   "we-C6k55CXo": {
+    "Q-5": 0
+   },
+   "khGDFFFtM70": {
+    "Q-5": 0
+   },
+   "TOToLufZ0iQ": {
+    "Q-1": 0
+   },
+   "wFd9GjRqqV0": {
+    "Q-15": 0
+   },
+   "zhVjJfPNLFI": {
+    "Q-12": 0
+   },
+   "NGjudAhFvXQ": {
+    "Q-7": 0
+   }
+  },
+  "63706830793.0767": {
+   "1VJfWeNAAMY": {
+    "SF2-4": 0
+   },
+   "p2x5ZJts2j0": {
+    "SF2-3": 0
+   },
+   "YEeUhBeGCdM": {
+    "SF2-1": 0
+   },
+   "tK54_FY9UZs": {
+    "SF2-2": 0
+   },
+   "sLIfzEzGC2A": {
+    "Q-36": 0
+   },
+   "l_4fT-sIH4I": {
+    "Q-26": 0
+   },
+   "8bN8zkL64yo": {
+    "Q-19": 0
+   },
+   "RTEsbxZUySQ": {
+    "Q-15": 0
+   },
+   "zAny8zcvWCw": {
+    "Q-4": 0
+   }
+  },
+  "FTCAZWV": {
+   "yY93B9HTIuM": {
+    "Q-3": 0
+   },
+   "tgfBzJYMRlQ": {
+    "SF2-1": 0
+   },
+   "peul-SASRds": {
+    "Q-8": 0
+   },
+   "n8FBD5MGGto": {
+    "Q-28": 0
+   },
+   "hixdHkTeQL8": {
+    "Q-14": 0
+   },
+   "PUiVKfGpst4": {
+    "Q-24": 0
+   },
+   "LGTSP1NNOKI": {
+    "F-2": 0
+   }
+  },
+  "AZQCKQU": {
+   "hf2hs6swDI0": {
+    "Q-5": 0
+   },
+   "gqvJ4ZTlFrQ": {
+    "Q-14": 0
+   },
+   "gb0VbUbOpZ8": {
+    "SF2-1": 0
+   },
+   "a1fJKeaLMuM": {
+    "Q-20": 0
+   },
+   "TZwi4nJHsrs": {
+    "SF2-2": 0
+   },
+   "L4hBejQ_6Nc": {
+    "Q-25": 0
+   },
+   "Ix7ic9XjUuY": {
+    "Q-8": 0
+   }
+  },
+  "AZDNPHXQ": {
+   "u8mj6i292Cc": {
+    "Q-10": 0
+   },
+   "VIiL6G85oYk": {
+    "Q-7": 0
+   },
+   "HSi0kG4oF2M": {
+    "Q-1": 0
+   },
+   "8XUWQzfB2mQ": {
+    "SF1-2": 0
+   },
+   "5pycI4Asz-Y": {
+    "Q-14": 0
+   },
+   "-1xsn5MxI3I": {
+    "SF1-1": 0
+   },
+   "ep9mXfKOMEQ": {
+    "F-2": 0
+   },
+   "oXPvRbmYMW4": {
+    "F-1": 0
+   },
+   "7_4zTFBppFE": {
+    "Q-2": 0
+   },
+   "oiEUbNDtT-o": {
+    "Q-2": 0
+   },
+   "AipSJNJf6XQ": {
+    "Q-1": 0
+   },
+   "xeKEEZON898": {
+    "Q-1": 0
+   },
+   "1AJEd-8gb3k": {
+    "Q-15": 0
+   },
+   "JN6roFm_j14": {
+    "Q-14": 0
+   },
+   "SwzvZn1OUxM": {
+    "Q-13": 0
+   },
+   "KlRHWJOUdwE": {
+    "Q-12": 0
+   },
+   "EKnCsHxOryM": {
+    "Q-11": 0
+   },
+   "KMnVZIH_Wng": {
+    "Q-10": 0
+   },
+   "1TATFVLWMMo": {
+    "Q-9": 0
+   },
+   "nqkb-PbiRA8": {
+    "Q-8": 0
+   },
+   "vtC-qrjynWA": {
+    "Q-7": 0
+   },
+   "4xdnQwbEOU8": {
+    "Q-6": 0
+   },
+   "5BHHHqGynhI": {
+    "Q-5": 0
+   },
+   "2DxZAJS5gkc": {
+    "Q-4": 0
+   },
+   "ZYzkp-kN4uc": {
+    "Q-3": 0
+   },
+   "-7tLPv-Bpn0": {
+    "Q-2": 0
+   },
+   "7QGuC2OHAQA": {
+    "Q-1": 0
+   }
+  },
+  "AZFTCCPGRANDCANYON": {
+   "0o7J8uLeaSc": {
+    "SF1-1": 0
+   }
+  },
+  "63709253698.4327": {
+   "Wz0ETidB0pE": {
+    "F-1": 0
+   },
+   "t-vq2yaNBko": {
+    "F-2": 0
+   },
+   "pXtAq-eSKks": {
+    "F-1": 0
+   },
+   "SxejeGO4mpw": {
+    "F-2": 0
+   }
+  },
+  "63709253779.8239": {
+   "MClAOWIthdQ": {
+    "SF2-3": 0
+   },
+   "RNu1k5tj8fc": {
+    "Q-2": 0
+   },
+   "03zx-nSGB8A": {
+    "Q-30": 0
+   }
+  },
+  "63708557917.8784": {
+   "xPQ8w_Jiu2M": {
+    "F-1": 0
+   },
+   "jUM9l54d-UM": {
+    "F-2": 0
+   },
+   "wizqS2JJjR4": {
+    "Q-1": 0
+   },
+   "-mre_SB-r_w": {
+    "Q-2": 0
+   },
+   "aqVCApZP7ig": {
+    "Q-3": 0
+   },
+   "DstwMb0DWFs": {
+    "Q-4": 0
+   },
+   "pxakg3UGoZg": {
+    "Q-5": 0
+   }
+  },
+  "NVFTCNF": {
+   "GGcVzm4a3s8": {
+    "Q-24": 0
+   },
+   "D21GyEJSBXU": {
+    "Q-23": 0
+   },
+   "vL_EgAoMN-s": {
+    "Q-22": 0
+   },
+   "cRVLFuwaK7M": {
+    "Q-21": 0
+   },
+   "u_3tx5VPxWA": {
+    "Q-20": 0
+   },
+   "raH3Q46v7po": {
+    "Q-19": 0
+   },
+   "5rfVJYwh8XA": {
+    "Q-18": 0
+   },
+   "rizkHqLX7zQ": {
+    "Q-17": 0
+   },
+   "UJk-d7asVFo": {
+    "Q-16": 0
+   },
+   "biffpEdl6k8": {
+    "Q-15": 0
+   },
+   "JjiUl7hXJiQ": {
+    "Q-14": 0
+   },
+   "igxU3Pr5BpY": {
+    "Q-13": 0
+   },
+   "hvnoKHggITE": {
+    "Q-12": 0
+   },
+   "M1Iroqn7PLk": {
+    "Q-11": 0
+   },
+   "IeQxv9QKxvo": {
+    "Q-10": 0
+   },
+   "qAzIQRz63QQ": {
+    "Q-9": 0
+   },
+   "CEAaSwaSNMw": {
+    "Q-8": 0
+   },
+   "hbKn3ylQe7w": {
+    "Q-7": 0
+   },
+   "ywhWB3JKcKc": {
+    "Q-6": 0
+   },
+   "UPYJy2qSpZQ": {
+    "Q-5": 0
+   },
+   "ydPIb0_WVZY": {
+    "Q-4": 0
+   },
+   "xc-vt_qVs4Y": {
+    "Q-3": 0
+   },
+   "nkVgGMHgfn8": {
+    "Q-2": 0
+   },
+   "qo2smHf8Zxg": {
+    "Q-1": 0
+   }
+  }
+ },
+ "2020": {
+  "USWIMICT1": {
+   "ARghvInTCxA": {
+    "Q-31": 0
+   },
+   "KsPuiW9TeWc": {
+    "Q-25": 0
+   },
+   "j7-JGb473lQ": {
+    "Q-21": 0
+   },
+   "PFGES28DybU": {
+    "Q-17": 0
+   },
+   "BUROSp5kO3A": {
+    "Q-7": 0
+   },
+   "aIkcPuaktHk": {
+    "Q-2": 0
+   }
+  },
+  "USWIHAQ1": {
+   "P4tBl0jC64Y": {
+    "Q-12": 0
+   },
+   "M-AQmlx1-IU": {
+    "Q-18": 0
+   },
+   "48L1_Ni5AnA": {
+    "F-2": 0
+   },
+   "yiStLD8G1k4": {
+    "Q-14": 0
+   },
+   "ydPTN170ysc": {
+    "F-1": 0
+   },
+   "xwNOgegF4xo": {
+    "Q-10": 0
+   },
+   "xl-USscyN2w": {
+    "Q-17": 0
+   },
+   "x9AKLBKzJGE": {
+    "Q-16": 0
+   },
+   "w9710iDfDaI": {
+    "SF2-1": 0
+   },
+   "u-ucfsz5YZ8": {
+    "SF1-1": 0
+   },
+   "oLRNOb3v450": {
+    "Q-20": 0
+   },
+   "k0EaEIU245A": {
+    "Q-9": 0
+   },
+   "hlj3R4rAfGc": {
+    "Q-1": 0
+   },
+   "bVNh4xycn30": {
+    "Q-2": 0
+   },
+   "a6dnhBqxqlM": {
+    "SF1-2": 0
+   },
+   "O0OYMQDvrSg": {
+    "Q-7": 0
+   },
+   "NhgZSspDy4g": {
+    "Q-4": 0
+   },
+   "NHe19rlCCWw": {
+    "Q-8": 0
+   },
+   "MyyIYfel9SQ": {
+    "Q-3": 0
+   },
+   "KcSYte0GH8U": {
+    "SF2-2": 0
+   },
+   "I2ERfxNojDc": {
+    "Q-5": 0
+   },
+   "BLQHlL0czk0": {
+    "Q-6": 0
+   },
+   "9HwcJNQdw1c": {
+    "Q-15": 0
+   },
+   "7XZbab_GXRQ": {
+    "Q-19": 0
+   },
+   "5R3BT4fPEBY": {
+    "Q-11": 0
+   },
+   "0bLuQqB2Jmo": {
+    "Q-13": 0
+   }
+  },
+  "TWKSMCT1": {
+   "kFPgEVbOAFA": {
+    "F-3": 0
+   },
+   "u2OAu-4zYCs": {
+    "F-2": 0
+   },
+   "uZ480aR4JcQ": {
+    "F-1": 0
+   }
+  },
+  "RUSTM2": {
+   "P3RLjKcn5Gc": {
+    "Q-1": 3503,
+    "Q-2": 4230,
+    "Q-3": 5122,
+    "Q-4": 6688,
+    "Q-5": 8092,
+    "Q-6": 9026,
+    "Q-7": 11983,
+    "Q-8": 12942,
+    "Q-9": 13819,
+    "Q-10": 14496,
+    "Q-11": 15074,
+    "Q-12": 15808,
+    "Q-13": 16644,
+    "Q-14": 17602,
+    "Q-15": 18274
+   }
+  },
+  "RUSTM3": {
+   "sBZER2y1cLA": {
+    "Q-1": 3191,
+    "Q-2": 3855,
+    "Q-3": 4799,
+    "Q-4": 9205,
+    "Q-5": 6955,
+    "Q-6": 8361,
+    "Q-7": 10066,
+    "Q-8": 13495,
+    "Q-9": 14710,
+    "Q-10": 15510,
+    "Q-11": 16552,
+    "Q-12": 17167,
+    "Q-13": 18095,
+    "Q-14": 19281,
+    "Q-15": 20033
+   }
+  },
+  "RUSTLT1": {
+   "qOapH5tbKHU": {
+    "Q-1": 3035,
+    "Q-2": 4455,
+    "Q-3": 5925,
+    "Q-4": 7106,
+    "Q-5": 7937
+   },
+   "QM1a6fRtcm8": {
+    "Q-6": 253,
+    "Q-7": 827,
+    "Q-8": 1668,
+    "Q-9": 2703,
+    "Q-10": 3657,
+    "Q-11": 4470,
+    "Q-12": 5269,
+    "Q-13": 6293,
+    "Q-14": 7109,
+    "Q-15": 7702
+   }
+  },
+  "RUSTQT1": {
+   "V3_yBE8ilTA": {
+    "Q-1": 3583,
+    "Q-2": 4657,
+    "Q-3": 5238,
+    "Q-4": 6036,
+    "Q-5": 7275,
+    "Q-6": 8157
+   },
+   "MxC5dqZhoog": {
+    "Q-7": 747,
+    "Q-8": 1479,
+    "Q-9": 2072,
+    "Q-10": 2898,
+    "Q-11": 3779,
+    "Q-12": 4497,
+    "Q-13": 5271,
+    "Q-14": 6074,
+    "Q-15": 6918,
+    "Q-16": 7670,
+    "Q-17": 8423,
+    "Q-18": 9141
+   }
+  },
+  "RUSIKRQT1": {
+   "l8-kbC0bGRk": {
+    "Q-1": 1968,
+    "Q-2": 2686,
+    "Q-3": 3478,
+    "Q-4": 4073,
+    "Q-5": 4815,
+    "Q-6": 5583,
+    "Q-7": 6255,
+    "Q-8": 6900,
+    "Q-9": 7516,
+    "Q-10": 8128,
+    "Q-11": 9008,
+    "Q-12": 9759
+   }
+  },
+  "RUNNNICT1": {
+   "FpVxRGtmd9Y": {
+    "Q-1": 2640,
+    "Q-2": 3500,
+    "Q-3": 4375,
+    "Q-4": 5138,
+    "Q-5": 6054,
+    "Q-6": 6928,
+    "Q-7": 7778,
+    "Q-8": 8590,
+    "Q-9": 9153,
+    "Q-10": 9769,
+    "Q-11": 14594,
+    "Q-12": 15327,
+    "Q-13": 16769,
+    "Q-14": 17883,
+    "Q-15": 19105,
+    "Q-16": 20075,
+    "Q-17": 20765,
+    "Q-18": 21505,
+    "Q-19": 22347,
+    "Q-20": 23220,
+    "Q-21": 24083,
+    "Q-22": 25196
+   },
+   "xmI_VG1T92w": {
+    "Q-23": 656,
+    "Q-24": 1299,
+    "Q-25": 1985,
+    "Q-26": 4735,
+    "Q-27": 5590
+   }
+  },
+  "USCHSLHOS": {
+   "05rKawyjteY": {
+    "Q-47": 0
+   },
+   "0OdHlI7p448": {
+    "Q-28": 0
+   },
+   "0b0FV0_gHC4": {
+    "Q-14": 0
+   },
+   "2CHrt_KK4mo": {
+    "Q-4": 0
+   },
+   "3CI-XRnciCc": {
+    "Q-58": 0
+   },
+   "49tAUZE87oM": {
+    "Q-21": 0
+   },
+   "4DEk6T91xgc": {
+    "Q-18": 0
+   },
+   "5eOM7QjXdDE": {
+    "Q-49": 0
+   },
+   "6-GX8ZbKtZU": {
+    "Q-32": 0
+   },
+   "61269g2TAZE": {
+    "Q-45": 0
+   },
+   "6yn0NNwbMdM": {
+    "Q-53": 0
+   },
+   "6ytgT6Ymhe8": {
+    "Q-46": 0
+   },
+   "73PK5Aue9nk": {
+    "Q-44": 0
+   },
+   "8EctnOfJuJ8": {
+    "Q-26": 0
+   },
+   "8P1_PiGNDTs": {
+    "Q-7": 0
+   },
+   "9-Uo-ZCiQ0U": {
+    "Q-48": 0
+   },
+   "Bg0JcA-By0Q": {
+    "Q-62": 0
+   },
+   "EbDYXZxiwNc": {
+    "Q-5": 0
+   },
+   "Eyhzry0h_do": {
+    "Q-1": 0
+   },
+   "FMdGV1NWLo0": {
+    "Q-60": 0
+   },
+   "H3FgNivbaUM": {
+    "Q-2": 0
+   },
+   "H7W9JRbaz_Y": {
+    "Q-56": 0
+   },
+   "JJaEIK41jYo": {
+    "Q-71": 0
+   },
+   "K8HbA1auo6E": {
+    "Q-38": 0
+   },
+   "MBTbGVJsSAk": {
+    "Q-6": 0
+   },
+   "NIFmE_xDp3U": {
+    "Q-11": 0
+   },
+   "NPTHNtbSHuI": {
+    "Q-9": 0
+   },
+   "OEiIqzPoKIs": {
+    "Q-42": 0
+   },
+   "O_EGAfz3eVo": {
+    "Q-13": 0
+   },
+   "PKPXOYRtY3A": {
+    "Q-27": 0
+   },
+   "Pp1yVY5xp5E": {
+    "Q-23": 0
+   },
+   "Q09t5VqFfCE": {
+    "Q-40": 0
+   },
+   "QkmsaEOZhLo": {
+    "Q-37": 0
+   },
+   "QvV35Vga1AU": {
+    "Q-22": 0
+   },
+   "S23U3oUczVs": {
+    "Q-52": 0
+   },
+   "TQcb3g8Eb5g": {
+    "Q-24": 0
+   },
+   "U9zdWMyLLDI": {
+    "Q-34": 0
+   },
+   "Va28PfU2kRA": {
+    "Q-12": 0
+   },
+   "Vten3pMY7K0": {
+    "Q-25": 0
+   },
+   "Wa9f-juo038": {
+    "Q-68": 0
+   },
+   "WydAatNPoPc": {
+    "Q-66": 0
+   },
+   "X_FH9Tm0E60": {
+    "Q-65": 0
+   },
+   "Z6LrUEkQ6ww": {
+    "Q-63": 0
+   },
+   "ZM_dxqbAPEc": {
+    "Q-51": 0
+   },
+   "_NerX4nmxfo": {
+    "Q-20": 0
+   },
+   "aPo2NhsvnM4": {
+    "Q-30": 0
+   },
+   "f5PeSAX92u4": {
+    "Q-50": 0
+   },
+   "g-IY9Ua8PzY": {
+    "Q-59": 0
+   },
+   "gfHpM29Xdi4": {
+    "Q-41": 0
+   },
+   "gon7MBXyAbQ": {
+    "Q-72": 0
+   },
+   "h-dvp-CFw9g": {
+    "Q-16": 0
+   },
+   "jo2T9MFAkVo": {
+    "Q-29": 0
+   },
+   "kAXxex1-nTU": {
+    "Q-15": 0
+   },
+   "l1zaZCsdw0I": {
+    "Q-19": 0
+   },
+   "lXuYxuKGdg4": {
+    "Q-70": 0
+   },
+   "llfln7K0FfM": {
+    "Q-17": 0
+   },
+   "ly3gJMQ06Og": {
+    "Q-39": 0
+   },
+   "n5XqvUf7ec0": {
+    "Q-54": 0
+   },
+   "p6R6v19FfV4": {
+    "Q-10": 0
+   },
+   "pSK1LXVmHNA": {
+    "Q-61": 0
+   },
+   "qCQd4qPsPsY": {
+    "Q-57": 0
+   },
+   "rEfxSbvDrDU": {
+    "Q-35": 0
+   },
+   "s7EC_pvv_uM": {
+    "Q-67": 0
+   },
+   "sR2aNIIdPxw": {
+    "Q-55": 0
+   },
+   "vHBImKdkEIE": {
+    "Q-43": 0
+   },
+   "ypMNNwImZSM": {
+    "Q-33": 0
+   },
+   "zIE-luNTdDU": {
+    "Q-64": 0
+   },
+   "zyGQXe1pnrU": {
+    "Q-3": 0
+   },
+   "zzAjRWoDGuI": {
+    "Q-8": 0
+   }
+  },
+  "USNJMKCT1PKWY": {
+   "52Ur0RSBwoo": {
+    "Q-8": 0
+   },
+   "ARDzgnRAs4Y": {
+    "Q-1": 0
+   },
+   "IQc8F0Ip_W4": {
+    "Q-11": 0
+   },
+   "Kg65OIy2xo0": {
+    "Q-2": 0
+   },
+   "LluNoB-yidg": {
+    "F-2": 0
+   },
+   "MBhpaLqddgY": {
+    "Q-20": 0
+   },
+   "X-bfhFoFGm0": {
+    "F-1": 0
+   },
+   "gh0zRUUs4s8": {
+    "Q-1": 0
+   },
+   "n96rRdJ8jug": {
+    "Q-14": 0
+   }
+  },
+  "USNJMKCT1": {
+   "lq8JPgexV2g": {
+    "F-1": 0
+   },
+   "t1hFT4_XbiU": {
+    "F-2": 0
+   }
+  },
+  "USMSOBOS1": {
+   "sRmifAzisrY": {
+    "F-1": 0
+   },
+   "pVyo11UKV2o": {
+    "F-2": 0
+   },
+   "XeG6AQqj2po": {
+    "Q-7": 0
+   },
+   "nIZcMuLPEG4": {
+    "Q-8": 0
+   },
+   "yKAoffNfp2E": {
+    "Q-9": 0
+   },
+   "kHQY1aMMpoU": {
+    "Q-12": 0
+   },
+   "5s4HzWg69Rw": {
+    "Q-15": 0
+   },
+   "gWDNeEHacY4": {
+    "Q-16": 0
+   },
+   "MmgGA5Dyob0": {
+    "Q-17": 0
+   },
+   "YGh2v-OU9Gw": {
+    "Q-18": 0
+   },
+   "3osZzdiKmcQ": {
+    "Q-1": 0
+   },
+   "hLEOcyx9MTo": {
+    "Q-2": 0
+   },
+   "Z45RtgpS7lY": {
+    "Q-3": 0
+   },
+   "QAF05shwxaY": {
+    "Q-4": 0
+   },
+   "4qiljPEcpgU": {
+    "Q-5": 0
+   },
+   "tevE_Wuhrpo": {
+    "Q-6": 0
+   },
+   "86hv_3cu7cI": {
+    "Q-2": 0
+   },
+   "aHus48zi2Aw": {
+    "Q-1": 0
+   },
+   "jzseonGmpHk": {
+    "Q-2": 0
+   },
+   "gGcK_leEBSU": {
+    "Q-1": 0
+   },
+   "Xe7Ft8UwH_A": {
+    "Q-10": 0
+   },
+   "87u4Gdah33U": {
+    "Q-11": 0
+   },
+   "U6rmQJAn408": {
+    "Q-13": 0
+   },
+   "mqLRJWf7oiM": {
+    "Q-14": 0
+   }
+  },
+  "USARSPCT1": {
+   "HK9djxMADl0": {
+    "Q-2": 0
+   },
+   "1KWCKZtg8VE": {
+    "Q-4": 0
+   },
+   "sVYr4pahXhc": {
+    "Q-2": 0
+   },
+   "3bieFttmjUU": {
+    "Q-3": 0
+   },
+   "3bpEeCyZCQc": {
+    "Q-1": 0
+   },
+   "buFdkkqbo0I": {
+    "F-2": 0
+   },
+   "e2d6EOHvq3w": {
+    "F-1": 0
+   },
+   "XcGWWjW6GCM": {
+    "Q-5": 0
+   },
+   "5wOOFwFU-Kw": {
+    "Q-6": 0
+   },
+   "pqq_5X75BEo": {
+    "Q-1": 0
+   }
+  },
+  "USTXSACT1": {
+   "kfxJdPifjFA": {
+    "F-1": 0
+   },
+   "VuGfH2f79T8": {
+    "F-2": 0
+   },
+   "81klCNVVJJ4": {
+    "F-2": 0
+   }
+  },
+  "USTXSACT1ARMA": {
+   "I2yNUAQYOhE": {
+    "Q-1": 0
+   },
+   "GIzo63kMFyc": {
+    "Q-2": 0
+   },
+   "c99suHyjhBw": {
+    "Q-3": 0
+   },
+   "8XERx3OET50": {
+    "Q-4": 0
+   },
+   "QrIayqUnOgs": {
+    "Q-5": 0
+   },
+   "O2U9am9Bd_o": {
+    "Q-6": 0
+   },
+   "st-tNnko0bE": {
+    "Q-1": 0
+   },
+   "637-QPQ3Fbs": {
+    "Q-2": 0
+   },
+   "El8v0_Vxsuo": {
+    "F-3": 0
+   },
+   "5VzCfwS7ywI": {
+    "F-2": 0
+   },
+   "uyy7ggdT_iw": {
+    "F-1": 0
+   },
+   "h5JvLYynFPI": {
+    "Q-24": 0
+   },
+   "4UzRRqkKKVU": {
+    "F-3": 0
+   },
+   "05m9zJruhEo": {
+    "F-2": 0
+   },
+   "GF3S2zC3taE": {
+    "SF1-2": 0
+   }
+  },
+  "USTXNSHLT1": {
+   "eVhejqnXPJY": {
+    "F-2": 0
+   },
+   "wuFLqmq_-Ow": {
+    "F-1": 0
+   },
+   "-KoU8xRxzLs": {
+    "F-1": 0
+   },
+   "_GT766H49hU": {
+    "F-2": 0
+   }
+  },
+  "USUTPCQT1": {
+   "kkxgieLBqiA": {
+    "F-2": 0
+   },
+   "em-tLt395Mk": {
+    "F-1": 0
+   },
+   "hDJIWhXORAM": {
+    "SF2-3": 0
+   },
+   "eP3hkuP8wzM": {
+    "SF2-2": 0
+   },
+   "-wlW9AzAmkE": {
+    "SF1-2": 0
+   },
+   "zvg-0zZitPg": {
+    "SF2-1": 0
+   },
+   "uGKyiDV1aiw": {
+    "SF1-1": 0
+   },
+   "A461pV-qn0Q": {
+    "Q-28": 0
+   },
+   "LdsweMJbb5A": {
+    "Q-27": 0
+   },
+   "tkZ7efQEqAY": {
+    "Q-26": 0
+   },
+   "0Pppi-XiR3M": {
+    "Q-25": 0
+   },
+   "FebETZ0C8YM": {
+    "Q-24": 0
+   },
+   "HXKdrdcU2gU": {
+    "Q-23": 0
+   },
+   "7XXJJ-pAPnk": {
+    "Q-22": 0
+   },
+   "K-ylp0oZOLs": {
+    "Q-21": 0
+   },
+   "AZEsHl7i1b4": {
+    "Q-20": 0
+   },
+   "DrVfpVT64zw": {
+    "Q-19": 0
+   },
+   "d_se32Ov2Hg": {
+    "Q-18": 0
+   },
+   "67QaPAe2CkU": {
+    "Q-17": 0
+   },
+   "NW0vumuUUPY": {
+    "Q-16": 0
+   },
+   "-kXXJz1hEmE": {
+    "Q-15": 0
+   },
+   "9ys2itiUZlA": {
+    "Q-14": 0
+   },
+   "wkrdqCYdqBA": {
+    "Q-13": 0
+   },
+   "YOGFnn2rIDI": {
+    "Q-12": 0
+   },
+   "8p1QZjVPJOM": {
+    "Q-11": 0
+   },
+   "ewwrwzfx9Zo": {
+    "Q-10": 0
+   },
+   "JR2XXuADC6Y": {
+    "Q-9": 0
+   },
+   "6D1HrD0KRwE": {
+    "Q-8": 0
+   },
+   "KBNbs08wq6k": {
+    "Q-7": 0
+   },
+   "5eVXgqTZDq0": {
+    "Q-6": 0
+   },
+   "a8F7HChXtFQ": {
+    "Q-5": 0
+   },
+   "edT67J2CWas": {
+    "Q-4": 0
+   },
+   "chaU-OaXMdk": {
+    "Q-3": 0
+   },
+   "V57XToE_ANQ": {
+    "Q-2": 0
+   },
+   "vLyoVIiYsp4": {
+    "Q-1": 0
+   }
+  }
+ },
+ "2021": {
+  "USCANOSAQ2": {
+   "MPhAns2CgK8": {
+    "F-3": 0
+   },
+   "KbspGKWMd14": {
+    "F-2": 0
+   },
+   "6pBwTfQfHKc": {
+    "F-1": 0
+   },
+   "mg4KNts91B0": {
+    "Q-2": 0
+   },
+   "wO3UJ9K0wBU": {
+    "Q-1": 0
+   }
+  },
+  "ILYAS1": {
+   "gTBkq1Flutc": {
+    "F-2": 0
+   },
+   "zmOjKO470yQ": {
+    "F-1": 0
+   }
+  },
+  "TWKCOS": {
+   "CUVO_RA3GCY": {
+    "SF2-3": 0
+   },
+   "RZMY43uoY84": {
+    "SF2-2": 0
+   },
+   "7QSpmqliDMY": {
+    "SF2-1": 0
+   }
+  },
+  "RUSTPS1": {
+   "-pAO-GaOfrU": {
+    "Q-5": 338,
+    "Q-6": 1122,
+    "Q-7": 1707,
+    "Q-8": 2524,
+    "Q-9": 3353,
+    "Q-10": 4119,
+    "Q-11": 4938,
+    "Q-12": 5548,
+    "Q-13": 6123,
+    "Q-14": 6633,
+    "Q-15": 7311,
+    "Q-16": 7920,
+    "Q-17": 8423,
+    "Q-18": 9042,
+    "Q-19": 9639,
+    "Q-20": 10338,
+    "Q-21": 10933
+   }
+  },
+  "USIAAMM1": {
+   "7Ucmq2GfRPQ": {
+    "Q-1": 455,
+    "Q-2": 988,
+    "Q-3": 1430,
+    "Q-4": 1946,
+    "Q-5": 2417,
+    "Q-6": 3011,
+    "Q-7": 4046,
+    "Q-8": 4473,
+    "Q-9": 5247,
+    "Q-10": 8116,
+    "Q-11": 8578,
+    "Q-12": 9049,
+    "Q-13": 9500,
+    "Q-14": 10100,
+    "Q-15": 10707,
+    "Q-16": 11234,
+    "Q-17": 11768,
+    "Q-18": 12247,
+    "Q-19": 12711,
+    "Q-20": 13110
+   }
+  },
+  "USIANOM3": {
+   "JYEVXdPjzj4": {
+    "Q-1": 631,
+    "Q-2": 1219,
+    "Q-3": 1815,
+    "Q-4": 2473,
+    "Q-5": 3167,
+    "Q-6": 3778,
+    "Q-7": 4373,
+    "Q-8": 4821,
+    "Q-9": 5522,
+    "Q-10": 5987,
+    "Q-11": 6904,
+    "Q-12": 7384,
+    "Q-13": 7872,
+    "Q-14": 8282,
+    "Q-15": 8902
+   }
+  },
+  "USIANOM4": {
+   "pUcD_xxveoM": {
+    "Q-1": 611,
+    "Q-2": 1071,
+    "Q-3": 1577,
+    "Q-4": 2137,
+    "Q-5": 2641,
+    "Q-6": 3066,
+    "Q-7": 3563,
+    "Q-8": 3968,
+    "Q-9": 4474,
+    "Q-10": 5028,
+    "Q-11": 5689,
+    "Q-12": 6184,
+    "Q-13": 6651,
+    "Q-14": 7058,
+    "Q-15": 7464,
+    "Q-16": 8064,
+    "Q-17": 8588,
+    "Q-18": 9047
+   }
+  },
+  "USIANOM5": {
+   "G5--eqJB998": {
+    "Q-1": 627,
+    "Q-2": 1051,
+    "Q-3": 1573,
+    "Q-4": 2083,
+    "Q-5": 2959,
+    "Q-6": 3576,
+    "Q-7": 4111,
+    "Q-8": 4922,
+    "Q-9": 5473,
+    "Q-10": 6134,
+    "Q-11": 6604,
+    "Q-12": 7311,
+    "Q-13": 8580,
+    "Q-14": 9135,
+    "Q-15": 9716,
+    "Q-16": 10165,
+    "Q-17": 10898,
+    "Q-18": 11349,
+    "Q-19": 11828,
+    "Q-20": 12314,
+    "Q-21": 12756,
+    "Q-22": 13234,
+    "Q-23": 13816,
+    "Q-24": 14300,
+    "Q-25": 14856,
+    "Q-26": 15294,
+    "Q-27": 15840
+   }
+  },
+  "USMICMP1EDSN": {
+   "4XhArxqEy28": {
+    "F-2": 0
+   },
+   "uwpaoD3JDwE": {
+    "F-1": 0
+   }
+  },
+  "USMICOQ": {
+   "h7qUmrZHv8A": {
+    "F-3": 0
+   },
+   "T03Ka3S9sto": {
+    "F-2": 0
+   },
+   "fTist9io7Y8": {
+    "F-1": 0
+   }
+  },
+  "USINNCM6": {
+   "bh572iP1fDM": {
+    "Q-3": 0
+   },
+   "xj7ZRRgNrfE": {
+    "Q-5": 0
+   },
+   "hspkVmz5NgI": {
+    "Q-7": 0
+   },
+   "1_YAus53B24": {
+    "Q-9": 0
+   },
+   "8IFbrhrjAa0": {
+    "Q-12": 0
+   }
+  },
+  "USIADAM1": {
+   "sYMzdX-N2tw": {
+    "Q-1": 600,
+    "Q-2": 1062,
+    "Q-3": 1800,
+    "Q-4": 2393,
+    "Q-5": 2940,
+    "Q-6": 3480,
+    "Q-7": 4223,
+    "Q-8": 4703,
+    "Q-9": 5242,
+    "Q-10": 5942,
+    "Q-11": 6380,
+    "Q-12": 7004,
+    "Q-13": 7459,
+    "Q-14": 8032,
+    "Q-15": 8607,
+    "Q-16": 8951,
+    "Q-17": 9440,
+    "Q-18": 10131
+   }
+  },
+  "USIADUM1": {
+   "MpYK4ZipcI0": {
+    "Q-1": 1260,
+    "Q-2": 1710,
+    "Q-3": 2508,
+    "Q-4": 3060,
+    "Q-5": 3766,
+    "Q-6": 4352,
+    "Q-7": 4753,
+    "Q-8": 5312,
+    "Q-9": 5841,
+    "Q-10": 6491,
+    "Q-11": 6851,
+    "Q-12": 7586,
+    "Q-13": 8083,
+    "Q-14": 8518
+   }
+  },
+  "USIANOM2": {
+   "Y39nX8lcAt4": {
+    "Q-1": 480,
+    "Q-2": 1327,
+    "Q-3": 1939,
+    "Q-4": 2491,
+    "Q-5": 3471,
+    "Q-6": 4093,
+    "Q-7": 4791,
+    "Q-8": 5664,
+    "Q-9": 6831,
+    "Q-10": 7412,
+    "Q-11": 8252,
+    "Q-12": 9009,
+    "Q-13": 9587,
+    "Q-14": 10170,
+    "Q-15": 10615,
+    "Q-16": 11118,
+    "Q-17": 11607,
+    "Q-18": 12216,
+    "Q-19": 12851,
+    "Q-20": 13312,
+    "Q-21": 13853
+   }
+  },
+  "USIARIM2": {
+   "3Z5SbtiWNPc": {
+    "Q-1": 360,
+    "Q-2": 930,
+    "Q-3": 1440,
+    "Q-4": 2100,
+    "Q-5": 2536,
+    "Q-6": 3259,
+    "Q-7": 3830,
+    "Q-8": 4639,
+    "Q-9": 5193,
+    "Q-10": 5621,
+    "Q-11": 6416,
+    "Q-12": 6814,
+    "Q-13": 7227
+   }
+  },
+  "USIARISQ": {
+   "jg6pzNlswrU": {
+    "Q-1": 3039,
+    "Q-2": 3403,
+    "Q-3": 3766,
+    "Q-4": 4206,
+    "Q-5": 4558,
+    "Q-6": 4864,
+    "Q-7": 5227,
+    "Q-8": 5650,
+    "Q-9": 6055,
+    "Q-10": 6364,
+    "Q-11": 8614,
+    "Q-12": 9002,
+    "Q-13": 9521
+   }
+  },
+  "USOKCMP": {
+   "bjG1V06rVwc": {
+    "Q-1": 4160,
+    "Q-2": 4488,
+    "Q-3": 5055,
+    "Q-4": 5513,
+    "Q-5": 5864,
+    "Q-6": 6221,
+    "Q-7": 6479,
+    "Q-8": 6779,
+    "Q-9": 7023,
+    "Q-10": 7315,
+    "Q-11": 7638,
+    "Q-12": 8327,
+    "Q-13": 8763,
+    "Q-14": 9260,
+    "Q-15": 9615,
+    "Q-16": 9921,
+    "Q-17": 10635,
+    "Q-18": 11456,
+    "Q-19": 11733,
+    "Q-20": 12153,
+    "Q-21": 12964,
+    "Q-22": 13457,
+    "Q-23": 13771,
+    "Q-24": 14075,
+    "Q-25": 14385,
+    "Q-26": 15229,
+    "Q-27": 15463,
+    "Q-28": 15903,
+    "Q-29": 16294,
+    "Q-30": 16590,
+    "Q-31": 17230,
+    "Q-32": 17509,
+    "Q-33": 17794,
+    "Q-34": 18614,
+    "Q-35": 18887,
+    "Q-36": 19241,
+    "Q-37": 19634,
+    "Q-38": 19931,
+    "Q-39": 20448,
+    "Q-40": 20848,
+    "Q-41": 21559,
+    "Q-42": 21880,
+    "Q-43": 22240,
+    "Q-44": 22648,
+    "Q-45": 23177,
+    "Q-46": 23415,
+    "Q-47": 23908,
+    "Q-48": 24211
+   }
+  },
+  "USCHSCMPCARR": {
+   "sC3JUxVgso4": {
+    "Q-16": 0
+   },
+   "nNCicHtRFKo": {
+    "Q-33": 0
+   },
+   "ku9fSVde27g": {
+    "Q-29": 0
+   },
+   "KqbRlvS4ZyI": {
+    "Q-7": 0
+   },
+   "y0qoPbZPNHg": {
+    "Q-37": 0
+   },
+   "mTtwRfXMC1s": {
+    "Q-23": 0
+   },
+   "_XTf6yrw-oo": {
+    "Q-30": 0
+   },
+   "4wBazpsPJqc": {
+    "Q-41": 0
+   },
+   "-x7vCL4gkJQ": {
+    "Q-43": 0
+   },
+   "zIXzAErpsss": {
+    "Q-1": 0
+   },
+   "wRBDrlDiOBI": {
+    "Q-34": 0
+   },
+   "s5myWLXYXcI": {
+    "Q-40": 0
+   },
+   "s49_Xxr2yJU": {
+    "Q-38": 0
+   },
+   "qUZDsH6ua4c": {
+    "Q-45": 0
+   },
+   "oSksYRS6wlc": {
+    "Q-46": 0
+   },
+   "neCtCjloEPQ": {
+    "Q-12": 0
+   },
+   "lbFSuyT2-GA": {
+    "Q-18": 0
+   },
+   "jynb6gA9xg8": {
+    "Q-48": 0
+   },
+   "fvdJVg18cgs": {
+    "Q-19": 0
+   },
+   "eDV4ZPCKFXg": {
+    "Q-4": 0
+   },
+   "cvEZCdsfFGg": {
+    "Q-2": 0
+   },
+   "beiX-_qPtzQ": {
+    "Q-39": 0
+   },
+   "b4LPCMoBr-4": {
+    "Q-36": 0
+   },
+   "b3sfz00UngI": {
+    "Q-24": 0
+   },
+   "aEVUHpQ_k8Y": {
+    "Q-42": 0
+   },
+   "_ooN7NycANU": {
+    "Q-25": 0
+   },
+   "ZPoRDuKImsU": {
+    "Q-5": 0
+   },
+   "YN5fhb3BGTI": {
+    "Q-22": 0
+   },
+   "Y-UTP5t4HIc": {
+    "Q-17": 0
+   },
+   "XRmS-bnBeks": {
+    "Q-14": 0
+   },
+   "VC40tVXZ78A": {
+    "Q-9": 0
+   },
+   "UzaobvxTZn8": {
+    "Q-8": 0
+   },
+   "ULu_rXOqVuo": {
+    "Q-10": 0
+   },
+   "T4o7td7bnTY": {
+    "Q-20": 0
+   },
+   "SfDwIp7DgcY": {
+    "Q-28": 0
+   },
+   "P35FeTtSSWE": {
+    "Q-11": 0
+   },
+   "OnlSw_xhF8k": {
+    "Q-44": 0
+   },
+   "OcKZ7nXZojE": {
+    "Q-15": 0
+   },
+   "OKFPcG-irxo": {
+    "Q-21": 0
+   },
+   "MEiCgLS362E": {
+    "Q-32": 0
+   },
+   "I0rEicCoBhE": {
+    "Q-50": 0
+   },
+   "H4vZpmpaM8Y": {
+    "Q-6": 0
+   },
+   "CCbG-hhm73o": {
+    "Q-47": 0
+   },
+   "B7-dbAVs06o": {
+    "Q-3": 0
+   },
+   "8GzErC1plVs": {
+    "Q-31": 0
+   },
+   "7mKobUR74Pk": {
+    "Q-49": 0
+   },
+   "7heCrSSDGcU": {
+    "Q-13": 0
+   },
+   "5eQBpfVkg10": {
+    "Q-26": 0
+   },
+   "4AOrG8nt7IY": {
+    "Q-35": 0
+   },
+   "3C2xkEARAW8": {
+    "Q-27": 0
+   }
+  },
+  "USCHSCMPSUBS": {
+   "d6U8YdXPGGo": {
+    "Q-8": 0
+   },
+   "s4NZ1jb5NLs": {
+    "Q-36": 0
+   },
+   "r6E2qSshbDA": {
+    "Q-20": 0
+   },
+   "hGWpKYZNgmQ": {
+    "Q-47": 0
+   },
+   "_5bU3XoNgfw": {
+    "Q-35": 0
+   },
+   "IBGQaHs5oBo": {
+    "Q-24": 0
+   },
+   "G7wc_yK22d0": {
+    "Q-31": 0
+   },
+   "FVFfZqkxSN0": {
+    "Q-39": 0
+   },
+   "CwgUf0ocx18": {
+    "Q-13": 0
+   },
+   "3sGxvoA7790": {
+    "Q-18": 0
+   },
+   "wODs4f6Svgg": {
+    "Q-14": 0
+   },
+   "gOsvH8voj5I": {
+    "Q-38": 0
+   },
+   "aUUoUwxglKw": {
+    "Q-34": 0
+   },
+   "a82eegKMNEY": {
+    "Q-45": 0
+   },
+   "EQfBeei32E0": {
+    "Q-42": 0
+   },
+   "svxKo5em4uE": {
+    "Q-17": 0
+   },
+   "rpqUZFyoaTY": {
+    "Q-10": 0
+   },
+   "lraeaHV-dLc": {
+    "Q-33": 0
+   },
+   "lnG3Ko5YRKE": {
+    "Q-9": 0
+   },
+   "kfG1tvCfadc": {
+    "Q-28": 0
+   },
+   "kKEFcLhOeOQ": {
+    "Q-21": 0
+   },
+   "iYA_LYT-G8c": {
+    "Q-15": 0
+   },
+   "hSnXZGw_QfA": {
+    "Q-48": 0
+   },
+   "cY3DzHT-Qt8": {
+    "Q-44": 0
+   },
+   "cAhXlGph3BQ": {
+    "Q-29": 0
+   },
+   "XBvg432IA2c": {
+    "Q-25": 0
+   },
+   "V60oC-842JU": {
+    "Q-46": 0
+   },
+   "UmdpECWSGhE": {
+    "Q-49": 0
+   },
+   "TdXOtuaCrYg": {
+    "Q-30": 0
+   },
+   "QbSxyDwwGZ4": {
+    "Q-26": 0
+   },
+   "Ow5bKdO3jQY": {
+    "Q-50": 0
+   },
+   "NgGtVyX3K70": {
+    "Q-19": 0
+   },
+   "MJKVGbEoSn8": {
+    "Q-43": 0
+   },
+   "K3npv1QKbrc": {
+    "Q-23": 0
+   },
+   "K3TRRRgXFUA": {
+    "Q-32": 0
+   },
+   "GwAZOaxwFT4": {
+    "Q-11": 0
+   },
+   "G7XRBQwPLhk": {
+    "Q-40": 0
+   },
+   "CvOOhWcAiN8": {
+    "Q-16": 0
+   },
+   "BOuAh6jcuj8": {
+    "Q-37": 0
+   },
+   "47Pv2z-0sq0": {
+    "Q-27": 0
+   },
+   "3tAV8yeLJQk": {
+    "Q-12": 0
+   },
+   "3k36bYkqos8": {
+    "Q-41": 0
+   },
+   "1wcHBfBTHgg": {
+    "Q-22": 0
+   }
+  },
+  "USCHSMRQ1": {
+   "oUWy4pzjRHw": {
+    "Q-2": 0
+   },
+   "Kf_CfCGgDL8": {
+    "Q-1": 0
+   },
+   "yQacr_CTCx0": {
+    "Q-3": 0
+   },
+   "rQ5KUpCHQmM": {
+    "Q-4": 0
+   },
+   "z102z_nDQUM": {
+    "Q-15": 0
+   },
+   "tdoFNz-KDbg": {
+    "Q-13": 0
+   },
+   "pwmiCRRA3oY": {
+    "Q-20": 0
+   },
+   "p72nm72ry0g": {
+    "Q-16": 0
+   },
+   "lHljjm8CJsQ": {
+    "Q-26": 0
+   },
+   "iRPbKJQlhDU": {
+    "Q-6": 0
+   },
+   "YlgRlLSzqfk": {
+    "Q-14": 0
+   },
+   "XIm9YlNp0LA": {
+    "Q-27": 0
+   },
+   "TH4RB9GNv2Q": {
+    "Q-34": 0
+   },
+   "Ro--8a5cEqA": {
+    "Q-29": 0
+   },
+   "Qo61N07yDEo": {
+    "Q-11": 0
+   },
+   "QQkScQ-oIM4": {
+    "Q-33": 0
+   },
+   "NVX4z0aP15w": {
+    "Q-8": 0
+   },
+   "9Vg_Maltk1E": {
+    "Q-22": 0
+   },
+   "8rPvwKeeCJ4": {
+    "Q-9": 0
+   },
+   "5t7vaUNp4LI": {
+    "Q-23": 0
+   },
+   "0XAJymdfMKs": {
+    "Q-5": 0
+   },
+   "zAqRlZrYlcE": {
+    "Q-32": 0
+   },
+   "xPbxNE_EXVg": {
+    "Q-28": 0
+   },
+   "v9mdER7WFRs": {
+    "Q-17": 0
+   },
+   "n-F4bmdV_Zk": {
+    "Q-18": 0
+   },
+   "jJvJXXChT18": {
+    "Q-12": 0
+   },
+   "eT5oKle_cJQ": {
+    "Q-30": 0
+   },
+   "cGNHtgbVEmo": {
+    "Q-10": 0
+   },
+   "Vt1d8rUrEh8": {
+    "Q-7": 0
+   },
+   "VcztedtvcIc": {
+    "Q-21": 0
+   },
+   "JYSfrzS0ZT4": {
+    "Q-24": 0
+   },
+   "CE5ump55cag": {
+    "Q-19": 0
+   },
+   "3YhBfIklwjA": {
+    "Q-31": 0
+   },
+   "-QLLKJxNL5c": {
+    "Q-25": 0
+   }
+  },
+  "USCHSNOQ1": {
+   "1XHorGV9kkA": {
+    "Q-9": 0
+   },
+   "W4No6N-kSlE": {
+    "Q-42": 0
+   },
+   "bR2ISvArf48": {
+    "Q-41": 0
+   },
+   "UlLpLs8QdDg": {
+    "Q-40": 0
+   },
+   "TkADn0nAL3k": {
+    "Q-39": 0
+   },
+   "Qo46B789n68": {
+    "Q-38": 0
+   },
+   "WDmL61kGagg": {
+    "Q-37": 0
+   },
+   "_WSsl6NdjdA": {
+    "Q-36": 0
+   },
+   "7Fe51HEPCQ8": {
+    "Q-35": 0
+   },
+   "Ygan5pRVp6Q": {
+    "Q-34": 0
+   },
+   "wasMNvbZdCs": {
+    "Q-33": 0
+   },
+   "rZjbF5qzlow": {
+    "Q-32": 0
+   },
+   "0qPxJxCTHEU": {
+    "Q-31": 0
+   },
+   "TS221qKTlzI": {
+    "Q-30": 0
+   },
+   "uwWwQfn-hAw": {
+    "Q-29": 0
+   },
+   "Cv3cYpFVj_c": {
+    "Q-28": 0
+   },
+   "sTNVH4v9DTM": {
+    "Q-27": 0
+   },
+   "zoueXWc8kBk": {
+    "Q-26": 0
+   },
+   "sWz01UPr1f4": {
+    "Q-25": 0
+   },
+   "OctsQt8a580": {
+    "Q-24": 0
+   },
+   "qYOJ5StSaqY": {
+    "Q-23": 0
+   },
+   "pdhBtIZzR1I": {
+    "Q-22": 0
+   },
+   "Amy9kIxe0_s": {
+    "Q-21": 0
+   },
+   "LgehKfsdXNU": {
+    "Q-20": 0
+   },
+   "Tc_WM1rcXZU": {
+    "Q-19": 0
+   },
+   "L4XHE-3fFro": {
+    "Q-18": 0
+   },
+   "A4NKKRWyAGQ": {
+    "Q-17": 0
+   },
+   "pcBjvp1jUsg": {
+    "Q-16": 0
+   },
+   "bS7lTCJ34Og": {
+    "Q-15": 0
+   },
+   "JZhbv7VjJUU": {
+    "Q-14": 0
+   },
+   "rD-OTjt_6pc": {
+    "Q-13": 0
+   },
+   "fREVE8ED128": {
+    "Q-12": 0
+   },
+   "lPvsZx70n1o": {
+    "Q-11": 0
+   },
+   "-cd2vhxQqew": {
+    "Q-10": 0
+   },
+   "0JEOWlCCX1k": {
+    "Q-8": 0
+   },
+   "Df5Xdqw04XI": {
+    "Q-7": 0
+   },
+   "Ndan3fMe7M8": {
+    "Q-6": 0
+   },
+   "FY53l-H5-XQ": {
+    "Q-5": 0
+   },
+   "2cAyJWqAM98": {
+    "Q-4": 0
+   },
+   "qV9OTzwGQmY": {
+    "Q-3": 0
+   },
+   "ZR_7uYa_iU4": {
+    "Q-2": 0
+   },
+   "_x13HVVLb-0": {
+    "Q-1": 0
+   }
+  },
+  "USCHSHAQ1": {
+   "lw54yBPwjlI": {
+    "Q-32": 0
+   },
+   "604r7vrx5w4": {
+    "Q-21": 0
+   },
+   "fYBU7kD3KZc": {
+    "Q-39": 0
+   },
+   "jMatOyShAzA": {
+    "Q-38": 0
+   },
+   "BM1jcto3-UI": {
+    "Q-37": 0
+   },
+   "kCpmGlkpPd8": {
+    "Q-36": 0
+   },
+   "2Kv72xXEDFo": {
+    "Q-35": 0
+   },
+   "b9tAEef4f2I": {
+    "Q-34": 0
+   },
+   "ltBcnujTLp8": {
+    "Q-33": 0
+   },
+   "ggk9Lp5PduQ": {
+    "Q-31": 0
+   },
+   "08LJ9tz9LHc": {
+    "Q-30": 0
+   },
+   "eoR3GK-cZ6I": {
+    "Q-29": 0
+   },
+   "HHvCtBMz2ow": {
+    "Q-28": 0
+   },
+   "1lp3-jJZAjU": {
+    "Q-27": 0
+   },
+   "qB8XGUZ0ISM": {
+    "Q-26": 0
+   },
+   "uikBF5Po5Yw": {
+    "Q-25": 0
+   },
+   "bb55Eo910iw": {
+    "Q-24": 0
+   },
+   "yPsGh2SIw1c": {
+    "Q-23": 0
+   },
+   "YV3Tya1bXN8": {
+    "Q-12": 0
+   },
+   "eaJ3FZSI-bw": {
+    "Q-22": 0
+   },
+   "mYvaNJ8wqwA": {
+    "Q-20": 0
+   },
+   "5G1h7FE5MGA": {
+    "Q-19": 0
+   },
+   "sYDd5IeFBzg": {
+    "Q-18": 0
+   },
+   "P_EXOGur6RE": {
+    "Q-17": 0
+   },
+   "aXwGKIL44ps": {
+    "Q-16": 0
+   },
+   "rRFpoiQiM5k": {
+    "Q-15": 0
+   },
+   "cAnLp-bWZWs": {
+    "Q-14": 0
+   },
+   "-PHmmzqQk5k": {
+    "Q-13": 0
+   },
+   "RtFCfRrgoU4": {
+    "Q-11": 0
+   },
+   "gHM995yu53Y": {
+    "Q-6": 0
+   },
+   "O_R0S_OZaj8": {
+    "Q-10": 0
+   },
+   "iSMKiSCzfZM": {
+    "Q-9": 0
+   },
+   "QULobsR0vpQ": {
+    "Q-8": 0
+   },
+   "YX4vo7lGhBg": {
+    "Q-7": 0
+   },
+   "yudFedjwiXo": {
+    "Q-5": 0
+   },
+   "K4LXriFemh4": {
+    "Q-4": 0
+   },
+   "qrG94nvj3eE": {
+    "Q-3": 0
+   },
+   "WKka2nCUycY": {
+    "Q-2": 0
+   },
+   "hkD4hAe1fa8": {
+    "Q-1": 0
+   }
+  },
+  "USCHSALQ1": {
+   "QoUpIjX4X_M": {
+    "Q-41": 0
+   },
+   "PWSXJ8Xp8Q8": {
+    "Q-42": 0
+   },
+   "GYpVOIuPVyo": {
+    "Q-46": 0
+   },
+   "A9-mDuxAjvs": {
+    "Q-45": 0
+   },
+   "3_eMeEx0Jno": {
+    "Q-44": 0
+   },
+   "WPfXEnWzI7Y": {
+    "Q-43": 0
+   },
+   "NN8TboD1XdA": {
+    "Q-40": 0
+   },
+   "N3deZ2Lq7yY": {
+    "Q-39": 0
+   },
+   "cp9RnWyUe4Y": {
+    "Q-27": 0
+   },
+   "DO0N7VzjhO0": {
+    "Q-28": 0
+   },
+   "BvSAMDcj-bQ": {
+    "Q-38": 0
+   },
+   "PdY8JeRUrg0": {
+    "Q-37": 0
+   },
+   "ExTr228-UiM": {
+    "Q-36": 0
+   },
+   "wXlSaZiKlXs": {
+    "Q-35": 0
+   },
+   "3uinGwVgPlE": {
+    "Q-34": 0
+   },
+   "j6hRydhglwc": {
+    "Q-33": 0
+   },
+   "-N8jwjsSeVg": {
+    "Q-26": 0
+   },
+   "5_qN_cpUsk8": {
+    "Q-32": 0
+   },
+   "RJeho-HUfOA": {
+    "Q-31": 0
+   },
+   "n8QrOMzaEqg": {
+    "Q-30": 0
+   },
+   "n7J39NMoXYo": {
+    "Q-29": 0
+   },
+   "Jkaljv99yRc": {
+    "Q-25": 0
+   },
+   "M5shVolicoQ": {
+    "Q-24": 0
+   },
+   "pL4ezQB9_nE": {
+    "Q-23": 0
+   },
+   "1qXX6dP1SJU": {
+    "Q-22": 0
+   },
+   "uFTm6rnnXsQ": {
+    "Q-21": 0
+   },
+   "GmYpWxzbV90": {
+    "Q-20": 0
+   },
+   "OH9hfcpxZrA": {
+    "Q-19": 0
+   },
+   "RX_mBtHq9Xo": {
+    "Q-18": 0
+   },
+   "oXd7YbVNtng": {
+    "Q-8": 0
+   },
+   "ru60iUihNok": {
+    "Q-17": 0
+   },
+   "--TCvhRLeCI": {
+    "Q-15": 0
+   },
+   "BKvfjl87Fzk": {
+    "Q-16": 0
+   },
+   "EWLW1iEftgc": {
+    "Q-14": 0
+   },
+   "QCVKCpEMzyw": {
+    "Q-13": 0
+   },
+   "tx2WrIR0No0": {
+    "Q-12": 0
+   },
+   "Gph-Iy8gQV4": {
+    "Q-11": 0
+   },
+   "ttPl-rXiysk": {
+    "Q-10": 0
+   },
+   "XdLaH9KZV9A": {
+    "Q-2": 0
+   },
+   "1GwbqjjyyLQ": {
+    "Q-9": 0
+   },
+   "HNPj5WAEXPw": {
+    "Q-7": 0
+   },
+   "jnDwdSLe_F4": {
+    "Q-6": 0
+   },
+   "8EdBiPgzC1o": {
+    "Q-5": 0
+   },
+   "NxQnJ9qKoV4": {
+    "Q-4": 0
+   },
+   "gVsSAMA4dlQ": {
+    "Q-3": 0
+   },
+   "_Z2iy8b9bU0": {
+    "Q-1": 0
+   }
+  },
+  "USCHSFAQ2": {
+   "qsn0sUCKQyw": {
+    "Q-6": 0
+   },
+   "mngurJ4vzQQ": {
+    "Q-15": 0
+   },
+   "hvzIb38-HdY": {
+    "Q-5": 0
+   },
+   "PLBE-FT7imo": {
+    "Q-16": 0
+   },
+   "P6YV3p62nho": {
+    "Q-13": 0
+   },
+   "DGAUZZKOGBg": {
+    "Q-12": 0
+   },
+   "9CKeGzEmnFc": {
+    "Q-10": 0
+   },
+   "7nu8uw0yq3k": {
+    "Q-3": 0
+   },
+   "6X8ZvOfd9Oo": {
+    "Q-11": 0
+   },
+   "-e0nqqUsXiQ": {
+    "Q-8": 0
+   },
+   "xRqiqpgjXEE": {
+    "Q-7": 0
+   },
+   "dpSXwWIlsS0": {
+    "Q-9": 0
+   },
+   "PKzwyOo_Xmc": {
+    "Q-1": 0
+   },
+   "KfNi5Fhdo_k": {
+    "Q-4": 0
+   },
+   "JJ7XqWtg9MQ": {
+    "Q-2": 0
+   },
+   "Gi4W0RCkhV8": {
+    "Q-14": 0
+   }
+  },
+  "USCHSLAQ3": {
+   "ir5CeImoaH4": {
+    "Q-48": 0
+   },
+   "a1Oxj0LAbZc": {
+    "Q-47": 0
+   },
+   "pOhqKj74hJE": {
+    "Q-46": 0
+   },
+   "cn4s_TLxQYw": {
+    "Q-45": 0
+   },
+   "jYPAkzrWsBg": {
+    "Q-44": 0
+   },
+   "la_RCcBWs54": {
+    "Q-43": 0
+   },
+   "6Q2ZxLd_Im4": {
+    "Q-42": 0
+   },
+   "K9nLxAR72Rk": {
+    "Q-41": 0
+   },
+   "OIEuOEC4il8": {
+    "Q-40": 0
+   },
+   "dCox2mHJpYo": {
+    "Q-39": 0
+   },
+   "JkFKqxqTQJA": {
+    "Q-38": 0
+   },
+   "b8z-yL1BkDU": {
+    "Q-37": 0
+   },
+   "DTdjgGckaeI": {
+    "Q-36": 0
+   },
+   "rAM7QceBa9Y": {
+    "Q-35": 0
+   },
+   "VFwuQBClqk4": {
+    "Q-34": 0
+   },
+   "UVYtfinWydA": {
+    "Q-33": 0
+   },
+   "qTlkIBxscTY": {
+    "Q-32": 0
+   },
+   "FP3i62wQOnU": {
+    "Q-31": 0
+   },
+   "nehJj7OpniY": {
+    "Q-30": 0
+   },
+   "CCkKcsTNKbE": {
+    "Q-29": 0
+   },
+   "I40jD4D5KVU": {
+    "Q-28": 0
+   },
+   "2Hd8ifMlPs4": {
+    "Q-27": 0
+   },
+   "mTgJrD-cxBU": {
+    "Q-26": 0
+   },
+   "ZuZBEN8FY18": {
+    "Q-25": 0
+   },
+   "ux2H7CynHhE": {
+    "Q-24": 0
+   },
+   "R5PRNfgjFOM": {
+    "Q-23": 0
+   },
+   "lgLO1DHDBBw": {
+    "Q-22": 0
+   },
+   "TzZ4-0atGfk": {
+    "Q-21": 0
+   },
+   "Icj1wY6rD4I": {
+    "Q-20": 0
+   },
+   "0jBX4ibpLXM": {
+    "Q-19": 0
+   },
+   "nEgkmK7vCnE": {
+    "Q-18": 0
+   },
+   "f-QRihO_8QE": {
+    "Q-17": 0
+   },
+   "i9iYeZ8S5pI": {
+    "Q-16": 0
+   },
+   "SuMQNzEW3v0": {
+    "Q-15": 0
+   },
+   "PdJngHhdW8c": {
+    "Q-14": 0
+   },
+   "LzSr9sLhXXo": {
+    "Q-13": 0
+   },
+   "ioGYF2pVTvg": {
+    "Q-12": 0
+   },
+   "WYi8iLtSvgs": {
+    "Q-11": 0
+   },
+   "qyoHXHyqwSc": {
+    "Q-10": 0
+   },
+   "vT2oOyKKjWU": {
+    "Q-9": 0
+   },
+   "CfW7bvxpnMA": {
+    "Q-8": 0
+   },
+   "Fa6FJoMAxzo": {
+    "Q-7": 0
+   },
+   "qoH0GRCvLiE": {
+    "Q-6": 0
+   },
+   "2Op1o8kbVYE": {
+    "Q-5": 0
+   },
+   "82Zp8e4tw14": {
+    "Q-4": 0
+   },
+   "8h1xORFLw-w": {
+    "Q-3": 0
+   },
+   "MrdvN6GYSgM": {
+    "Q-2": 0
+   },
+   "zDHoktRwplo": {
+    "Q-1": 0
+   }
+  },
+  "USCHSALQ4": {
+   "ukz9eE93rDk": {
+    "Q-3": 0
+   },
+   "uNF_6I2zrOs": {
+    "Q-2": 0
+   },
+   "fF9eYsUTqgs": {
+    "Q-6": 0
+   },
+   "amEbBc0L5gM": {
+    "Q-7": 0
+   },
+   "aVipxdutQ1g": {
+    "Q-5": 0
+   },
+   "UF9CbC0rCro": {
+    "Q-4": 0
+   },
+   "OzEdo6XBHtA": {
+    "Q-1": 0
+   },
+   "LrjXniJHfKs": {
+    "Q-18": 0
+   },
+   "WuzNw-1i6r0": {
+    "Q-25": 0
+   },
+   "IJk8rveTddc": {
+    "Q-24": 0
+   },
+   "zxYucm0uY1s": {
+    "Q-11": 0
+   },
+   "z9vep7pdTHs": {
+    "Q-37": 0
+   },
+   "vLsAI_SyFKA": {
+    "Q-26": 0
+   },
+   "v7twhCqdop4": {
+    "Q-17": 0
+   },
+   "rGpABCdKXFI": {
+    "Q-31": 0
+   },
+   "of1Fluqj7k8": {
+    "Q-34": 0
+   },
+   "l_61JVXL7lU": {
+    "Q-10": 0
+   },
+   "hm90nVTtoOk": {
+    "Q-30": 0
+   },
+   "hF9SHQsBIAM": {
+    "Q-36": 0
+   },
+   "YW5NyBhm2eQ": {
+    "Q-8": 0
+   },
+   "X4O2Fbuoysw": {
+    "Q-20": 0
+   },
+   "Vi54e92_LYU": {
+    "Q-15": 0
+   },
+   "TwgreIp47yM": {
+    "Q-32": 0
+   },
+   "SxFr5BEWZOU": {
+    "Q-29": 0
+   },
+   "S4kQO2VVHkg": {
+    "Q-27": 0
+   },
+   "RK_S_Q5dkgI": {
+    "Q-16": 0
+   },
+   "RArAU7Vaxp8": {
+    "Q-14": 0
+   },
+   "Q9J9-KRbJZc": {
+    "Q-28": 0
+   },
+   "OzdWRHL7UQg": {
+    "Q-9": 0
+   },
+   "OhyapjpG-sE": {
+    "Q-21": 0
+   },
+   "NL5jD707RUQ": {
+    "Q-19": 0
+   },
+   "JJUcQ2obPRs": {
+    "Q-35": 0
+   },
+   "DeQ3LGV8_vg": {
+    "Q-23": 0
+   },
+   "B1mouBPceW4": {
+    "Q-13": 0
+   },
+   "750LiNiwHOc": {
+    "Q-33": 0
+   },
+   "5t1ceOYkRlI": {
+    "Q-12": 0
+   },
+   "3qRP3vjp6l8": {
+    "Q-22": 0
+   }
+  },
+  "USCHSAAQ3": {
+   "hyJ5J704mWE": {
+    "Q-3": 0
+   },
+   "GwrHTTdqdbI": {
+    "Q-18": 0
+   },
+   "A0vDp3awmOo": {
+    "Q-6": 0
+   },
+   "wUJ4JZGULfU": {
+    "Q-4": 0
+   },
+   "sH9fcES12DA": {
+    "Q-1": 0
+   },
+   "rzS9GyPeagg": {
+    "Q-14": 0
+   },
+   "mgCjoeyc2xo": {
+    "Q-13": 0
+   },
+   "jpllu4cXJpA": {
+    "Q-8": 0
+   },
+   "h7uyIbOn1Qs": {
+    "Q-16": 0
+   },
+   "_zBAxyywVfM": {
+    "Q-12": 0
+   },
+   "_l5rB9Q4mO4": {
+    "Q-7": 0
+   },
+   "SnpppIOxRIQ": {
+    "Q-5": 0
+   },
+   "RF2arM_TFX0": {
+    "Q-11": 0
+   },
+   "Ootlk7P1dgg": {
+    "Q-17": 0
+   },
+   "JVpVIDY5gXs": {
+    "Q-2": 0
+   },
+   "FOrK-JQIQkQ": {
+    "Q-9": 0
+   },
+   "8-Gb0jHrT_w": {
+    "Q-15": 0
+   },
+   "1TOydq0dfQc": {
+    "Q-10": 0
+   }
+  },
+  "USCHSMCQ1": {
+   "zS-F0KEL0sM": {
+    "Q-21": 0
+   },
+   "z5Vr7X2OOxY": {
+    "Q-13": 0
+   },
+   "l771U4mYKxQ": {
+    "Q-19": 0
+   },
+   "dFP2AdYxuiA": {
+    "Q-20": 0
+   },
+   "b1XPv67xknY": {
+    "Q-12": 0
+   },
+   "ailhhjuvyWE": {
+    "Q-6": 0
+   },
+   "Z8puzksBqlw": {
+    "Q-1": 0
+   },
+   "SPS6Kdv7Ixk": {
+    "Q-16": 0
+   },
+   "QPpPKrdzXWo": {
+    "Q-2": 0
+   },
+   "MCyBx2WvW64": {
+    "Q-7": 0
+   },
+   "IjH01oQNr-A": {
+    "Q-9": 0
+   },
+   "DZ-OWDctBKY": {
+    "Q-3": 0
+   },
+   "Bu-eCvcuz2E": {
+    "Q-22": 0
+   },
+   "9loAnfSlZrM": {
+    "Q-4": 0
+   },
+   "6djnqUmpbPo": {
+    "Q-10": 0
+   },
+   "6YVCAcuaM9Q": {
+    "Q-11": 0
+   },
+   "52Fwg53N-Os": {
+    "Q-8": 0
+   },
+   "3bKOisaouQg": {
+    "Q-5": 0
+   },
+   "2emVaDkRxC0": {
+    "Q-18": 0
+   },
+   "2FXj_7hz_vE": {
+    "Q-17": 0
+   },
+   "1Kodqf8FC3Q": {
+    "Q-14": 0
+   },
+   "0uLWvSaSrBQ": {
+    "Q-15": 0
+   }
+  },
+  "USCHSFAQ1": {
+   "x9re9ra9PhA": {
+    "Q-8": 0
+   },
+   "wcLZzNzEYfA": {
+    "Q-30": 0
+   },
+   "wQwos-zGwQs": {
+    "Q-2": 0
+   },
+   "uC_SU5kqNgg": {
+    "Q-4": 0
+   },
+   "nxJsjkZHdFk": {
+    "Q-25": 0
+   },
+   "m1eDv98_OYg": {
+    "Q-12": 0
+   },
+   "kjlxsPOUDL4": {
+    "Q-15": 0
+   },
+   "hfxr6mjd5vI": {
+    "Q-11": 0
+   },
+   "gcWiLTR3Ivw": {
+    "Q-6": 0
+   },
+   "gbMPUWVEOqA": {
+    "Q-22": 0
+   },
+   "cdZ4_gUZ5PI": {
+    "Q-5": 0
+   },
+   "cRMiJW7_SWQ": {
+    "Q-18": 0
+   },
+   "__qhMso_OrE": {
+    "Q-29": 0
+   },
+   "_VOjcfqpgII": {
+    "Q-27": 0
+   },
+   "_8_5D7xdSUQ": {
+    "Q-10": 0
+   },
+   "_65jVvaXPW4": {
+    "Q-1": 0
+   },
+   "Vdu4iteaR0A": {
+    "Q-21": 0
+   },
+   "UFKdndyssqo": {
+    "Q-9": 0
+   },
+   "ToWgHbIPv_E": {
+    "Q-19": 0
+   },
+   "SJktQ-JOGhA": {
+    "Q-7": 0
+   },
+   "RO49Fmvueik": {
+    "Q-16": 0
+   },
+   "MlXkrynKR28": {
+    "Q-13": 0
+   },
+   "F6ujDhPu1nU": {
+    "Q-3": 0
+   },
+   "DpbOu45LHFo": {
+    "Q-24": 0
+   },
+   "CjP_nNJzOus": {
+    "Q-26": 0
+   },
+   "AVPPZkim-aE": {
+    "Q-28": 0
+   },
+   "9FgiYX72yc0": {
+    "Q-20": 0
+   },
+   "7-2t1edajR0": {
+    "Q-17": 0
+   },
+   "4Z9DDHQMbOc": {
+    "Q-14": 0
+   },
+   "0-hREwfLKGA": {
+    "Q-23": 0
+   }
+  },
+  "USNYEXCMP": {
+   "LiF3vXhXQPQ": {
+    "Q-30": 0
+   }
+  },
+  "USNYEXCOQ": {
+   "FKOhzfrHz6w": {
+    "F-1": 0
+   }
+  },
+  "USPACMP": {
+   "glEyV56Kr_4": {
+    "SF1-4": 0
+   },
+   "T2aV63Q_fSk": {
+    "SF1-3": 0
+   },
+   "PmZtnf-B_pg": {
+    "SF1-2": 0
+   },
+   "qS6hqNUAMDA": {
+    "SF1-1": 0
+   }
+  },
+  "USMACMP": {
+   "oM3kuREnA88": {
+    "F-2": 0
+   },
+   "EwzscznINKk": {
+    "F-1": 0
+   },
+   "dkKpQsfJYM8": {
+    "SF2-3": 0
+   },
+   "DyITLPe8r44": {
+    "SF2-2": 0
+   },
+   "w1Uz59YPhys": {
+    "SF2-1": 0
+   },
+   "1zag25dq3qU": {
+    "Q-33": 0
+   },
+   "kL_ssrJ4mG4": {
+    "Q-28": 0
+   },
+   "5IGOch3IHKM": {
+    "Q-23": 0
+   },
+   "MtjZFH4zH4M": {
+    "Q-6": 0
+   }
+  },
+  "USFLOVLT": {
+   "ITZ7g-pzEf8": {
+    "F-3": 0
+   },
+   "KRxmmM5ZOp8": {
+    "F-2": 0
+   },
+   "Z_a9ZU8brjA": {
+    "F-1": 0
+   },
+   "BmNNYsqMCSQ": {
+    "SF2-2": 0
+   },
+   "I13xp5a7kCc": {
+    "SF1-2": 0
+   },
+   "TIGaO-hsKtA": {
+    "SF2-1": 0
+   },
+   "KKMuft_PsZA": {
+    "SF1-1": 0
+   },
+   "mmzOiR-m5XE": {
+    "Q-35": 0
+   },
+   "np0AG3lylDY": {
+    "Q-33": 0
+   },
+   "0kWgDkXVD6o": {
+    "Q-34": 0
+   },
+   "kfe0XhSyUXM": {
+    "Q-31": 0
+   },
+   "vzZ4prSrBd0": {
+    "Q-32": 0
+   },
+   "M66i_0AvYv4": {
+    "Q-30": 0
+   },
+   "RCv-2GOaI7c": {
+    "Q-26": 0
+   },
+   "uthKWRzLC5A": {
+    "Q-29": 0
+   },
+   "Iknec1fwhpM": {
+    "Q-27": 0
+   },
+   "sHj3Uys8emk": {
+    "Q-28": 0
+   },
+   "8c_Loao-9WY": {
+    "Q-25": 0
+   },
+   "1P34UdtNrMQ": {
+    "Q-23": 0
+   },
+   "0Lsg48AQLHg": {
+    "Q-24": 0
+   },
+   "usvPYswyRMM": {
+    "Q-22": 0
+   },
+   "F8YAgL54wQw": {
+    "Q-21": 0
+   },
+   "xoDXiQhWo1A": {
+    "Q-20": 0
+   },
+   "DtQhW3LDWs8": {
+    "Q-19": 0
+   },
+   "xOqDm_CkTdc": {
+    "Q-18": 0
+   },
+   "MnEGhOw9Yb8": {
+    "Q-17": 0
+   },
+   "8InbrfiNoQM": {
+    "Q-16": 0
+   },
+   "N7lLg701bEo": {
+    "Q-15": 0
+   },
+   "XXhaa22VJa4": {
+    "Q-14": 0
+   },
+   "bm0iEnY8tfY": {
+    "Q-12": 0
+   },
+   "JYdYkRYbpEM": {
+    "Q-13": 0
+   },
+   "mRmnVu5mASE": {
+    "Q-11": 0
+   },
+   "NLzNzYJkIOw": {
+    "Q-10": 0
+   },
+   "UTk8rNQbN7g": {
+    "Q-8": 0
+   },
+   "4jpmNMk5d_k": {
+    "Q-7": 0
+   },
+   "v2BDHZ-2gX8": {
+    "Q-9": 0
+   },
+   "ZfP__9BBaFY": {
+    "Q-6": 0
+   },
+   "uTPWTbJu488": {
+    "Q-4": 0
+   },
+   "jzMuyP37nAs": {
+    "Q-5": 0
+   },
+   "D6yRK77kefY": {
+    "Q-3": 0
+   },
+   "vtNUTnNa4b8": {
+    "Q-2": 0
+   },
+   "2GJcW2fNGBk": {
+    "Q-1": 0
+   }
+  },
+  "USFLSEM3": {
+   "BMnqcsoEKNw": {
+    "Q-27": 0
+   },
+   "NNjv_mvAHsM": {
+    "Q-26": 0
+   },
+   "zoVqALfa-vQ": {
+    "Q-25": 0
+   },
+   "ejKsaS6UNjA": {
+    "Q-24": 0
+   },
+   "QB3blwAmx38": {
+    "Q-23": 0
+   },
+   "XAyl2ooV4b0": {
+    "Q-22": 0
+   },
+   "fn_WcpkDFPE": {
+    "Q-21": 0
+   },
+   "SfhZQS1xdsA": {
+    "Q-20": 0
+   },
+   "h4_89JksjP4": {
+    "Q-19": 0
+   },
+   "krCEsvBDWZU": {
+    "Q-18": 0
+   },
+   "vnuf60hDllM": {
+    "Q-17": 0
+   },
+   "hcW2wiGLTrU": {
+    "Q-16": 0
+   },
+   "JGHZ2uko0h4": {
+    "Q-15": 0
+   },
+   "4nnPYLR0pss": {
+    "Q-14": 0
+   },
+   "1HE1770cY2E": {
+    "Q-13": 0
+   },
+   "Pav4SibMiAo": {
+    "Q-12": 0
+   },
+   "3x6pnLV81WM": {
+    "Q-11": 0
+   },
+   "R0KACV7fhgk": {
+    "Q-10": 0
+   },
+   "k_tXCeuHXZY": {
+    "Q-9": 0
+   },
+   "VZ_yvK4X9Bw": {
+    "Q-8": 0
+   },
+   "B5ZjKgH90GM": {
+    "Q-7": 0
+   },
+   "M5QUuRWWQHE": {
+    "Q-6": 0
+   },
+   "OQnkaSQ3DI8": {
+    "Q-5": 0
+   },
+   "lBjZg8PXLWA": {
+    "Q-4": 0
+   },
+   "57gkDBTBRno": {
+    "Q-3": 0
+   },
+   "y_nWzlnL8To": {
+    "Q-2": 0
+   },
+   "Ldqkz_AVfB0": {
+    "Q-1": 0
+   }
+  },
+  "USALCMP": {
+   "VePIoLbbAkA": {
+    "Q-3": 0
+   },
+   "a4u8HpugXuo": {
+    "Q-2": 0
+   },
+   "F_MITQ-usz8": {
+    "Q-1": 0
+   },
+   "fStVj6VuiT0": {
+    "Q-29": 0
+   },
+   "L5BhEIDi1JE": {
+    "Q-25": 0
+   },
+   "VKz0P2RHuOM": {
+    "Q-22": 0
+   },
+   "5o_RtaVfOug": {
+    "Q-17": 0
+   },
+   "5X1s65Tfiys": {
+    "Q-6": 0
+   },
+   "4bLa2Ca2a5A": {
+    "Q-4": 0
+   }
+  },
+  "USARCMP": {
+   "OfIhI3G1nyU": {
+    "Q-1": 0
+   },
+   "_3B8Jp2-Ru0": {
+    "Q-34": 0
+   },
+   "dvA63dIR1kQ": {
+    "Q-26": 0
+   },
+   "bfg2W5EpQTM": {
+    "Q-23": 0
+   },
+   "8GoUd5bU8fo": {
+    "Q-15": 0
+   },
+   "K8q_HLkXYTw": {
+    "Q-12": 0
+   },
+   "hCXu1tRQM8g": {
+    "Q-2": 0
+   },
+   "TsdMHfnB0hs": {
+    "F-3": 0
+   },
+   "BtKBODyRetk": {
+    "F-1": 0
+   }
+  },
+  "USTNCMP": {
+   "SQegewoHysM": {
+    "Q-3": 0
+   },
+   "-ltiFb3QNV4": {
+    "Q-1": 0
+   },
+   "Z7D5ylhC9mI": {
+    "Q-2": 0
+   },
+   "VZvNJm3AQKE": {
+    "Q-28": 0
+   },
+   "o7bT4ohqEo4": {
+    "Q-24": 0
+   },
+   "2Pp3wxGEnYg": {
+    "Q-18": 0
+   },
+   "TCsKGDk0uRI": {
+    "Q-7": 0
+   },
+   "WRc_Vth9qlA": {
+    "Q-4": 0
+   }
+  },
+  "USTXNOCMP": {
+   "SvKp0SdQYrQ": {
+    "F-1": 0
+   }
+  },
+  "FTCCMP1": {
+   "JqfEz-cV8LQ": {
+    "F-1": 0
+   },
+   "Z4FtJ372nw0": {
+    "F-2": 0
+   },
+   "64euKMI-chs": {
+    "F-3": 0
+   },
+   "moRMIaCxt_c": {
+    "F-3": 0
+   },
+   "VSv1EkcpSbU": {
+    "F-2": 0
+   },
+   "dXwsyxKDZWk": {
+    "F-1": 0
+   }
+  },
+  "FTCCMP1FRNK": {
+   "lBljA9zrxM8": {
+    "Q-10": 0
+   },
+   "QylsugI0B9M": {
+    "Q-25": 0
+   },
+   "McOvwyuk1SI": {
+    "Q-59": 0
+   },
+   "11l89QlO7EU": {
+    "Q-75": 0
+   },
+   "teofdHQ0FBU": {
+    "Q-92": 0
+   },
+   "RnDzbiRkT6M": {
+    "Q-104": 0
+   },
+   "IKQt-5HnyPo": {
+    "F-1": 0
+   },
+   "8o1bJQpfXrM": {
+    "F-1": 0
+   },
+   "n4n98NwJlH8": {
+    "Q-1": 0
+   },
+   "9ydFbUZ__NI": {
+    "Q-2": 0
+   },
+   "6IA8Flb3U2Y": {
+    "Q-4": 0
+   },
+   "UUI7WqGnHAU": {
+    "Q-8": 0
+   },
+   "wDC-GeE31qU": {
+    "Q-5": 0
+   },
+   "GRIUjYqNRvQ": {
+    "Q-6": 0
+   },
+   "rchLhpAqld8": {
+    "Q-7": 0
+   },
+   "jOpXYdNg_hc": {
+    "Q-3": 0
+   },
+   "KQ4W8Rfa3rk": {
+    "Q-9": 0
+   },
+   "P-7JQyRCofk": {
+    "Q-26": 0
+   },
+   "6whHfeTSUOw": {
+    "Q-45": 0
+   },
+   "eRqnoWDqwa0": {
+    "Q-74": 0
+   },
+   "uosc_nhtg50": {
+    "Q-86": 0
+   },
+   "HCa5-S3REsA": {
+    "Q-107": 0
+   },
+   "Vqy-xi10geY": {
+    "Q-132": 0
+   },
+   "K9G4pzh1nc4": {
+    "Q-160": 0
+   }
+  },
+  "USTXNOLESQ": {
+   "lMk41fwnUik": {
+    "Q-2": 0
+   }
+  },
+  "USTXNOPTM3": {
+   "0xj2iBACCdw": {
+    "Q-13": 0
+   }
+  },
+  "USTXNOPTM2": {
+   "udIeXIGLmsQ": {
+    "Q-5": 0
+   },
+   "_Ro_BdAa2BA": {
+    "Q-10": 0
+   },
+   "cIcxB4ftm-0": {
+    "Q-14": 0
+   },
+   "J__RqSlZNF0": {
+    "Q-18": 0
+   },
+   "b-yXWvo_pas": {
+    "Q-29": 0
+   },
+   "FHwbzgBk9hg": {
+    "Q-23": 0
+   }
+  },
+  "USTXHOPELT1": {
+   "igQ9DDJfQ78": {
+    "F-1": 0
+   }
+  },
+  "USTXCECMP": {
+   "VQRmpxFQKkE": {
+    "Q-20": 0
+   },
+   "H5PdcLM6tI8": {
+    "Q-42": 0
+   },
+   "Gvj2j_d85O0": {
+    "Q-28": 0
+   },
+   "nSd3NRS6Yj8": {
+    "Q-3": 0
+   },
+   "6GVLktAz6YQ": {
+    "Q-11": 0
+   }
+  },
+  "USTXCEAULTTEX": {
+   "Wumi1j8rqIE": {
+    "Q-27": 0
+   },
+   "uLOfv2yUC8Q": {
+    "Q-9": 0
+   },
+   "htpKSfFQb9I": {
+    "Q-2": 0
+   },
+   "gF9bfAQpBLY": {
+    "Q-19": 0
+   },
+   "_Uwf_YgSJr4": {
+    "Q-31": 0
+   }
+  },
+  "USORHILT": {
+   "3IsieBuEyqg": {
+    "F-3": 0
+   },
+   "Gulm2B9Lo0g": {
+    "F-1": 0
+   },
+   "Y1ODYBBKQKc": {
+    "Q-1": 0
+   }
+  },
+  "USWASHM1": {
+   "U3BHf9KD0hc": {
+    "Q-3": 0
+   },
+   "4XUkUCqDHaQ": {
+    "Q-2": 0
+   },
+   "rtL6EzjxnzA": {
+    "Q-1": 0
+   },
+   "LytS4LOWzjA": {
+    "Q-14": 0
+   },
+   "lAf2j-wg_kk": {
+    "Q-13": 0
+   },
+   "_RMammCib0A": {
+    "Q-12": 0
+   },
+   "R3jH_bul2Mc": {
+    "Q-11": 0
+   },
+   "sQ-7RcrcOPs": {
+    "Q-10": 0
+   },
+   "5sjRIY70Ll8": {
+    "Q-9": 0
+   },
+   "qAuYP5N0cdc": {
+    "Q-8": 0
+   },
+   "7vnrwIPxwaA": {
+    "Q-7": 0
+   },
+   "sjwVCBOZ5ME": {
+    "Q-6": 0
+   },
+   "EovZkqBJ02Q": {
+    "Q-5": 0
+   },
+   "75feKVvCx1I": {
+    "Q-4": 0
+   }
+  },
+  "USWASEM2": {
+   "GhCiHJmedK8": {
+    "Q-17": 0
+   },
+   "O-IKOENwVIY": {
+    "Q-16": 0
+   },
+   "oejWtmtR1GQ": {
+    "Q-15": 0
+   },
+   "8pHLUY9g1gY": {
+    "Q-14": 0
+   },
+   "XFSAnCaghVY": {
+    "Q-13": 0
+   },
+   "Pa79W57648k": {
+    "Q-12": 0
+   },
+   "zQen0fGpwKE": {
+    "Q-11": 0
+   },
+   "KMQ2XcXc_DA": {
+    "Q-10": 0
+   },
+   "fvqrLyXHjLE": {
+    "Q-9": 0
+   },
+   "okQFhqnZ8E8": {
+    "Q-8": 0
+   },
+   "3D2FR48cddc": {
+    "Q-7": 0
+   },
+   "Vr_x6AaEb-Q": {
+    "Q-5": 0
+   },
+   "vyNnMaUArMU": {
+    "Q-6": 0
+   },
+   "uVzDXTULjso": {
+    "Q-3": 0
+   },
+   "uxZVjY1Wtts": {
+    "Q-4": 0
+   },
+   "SMtMk4fNdjI": {
+    "Q-2": 0
+   },
+   "AF6e2KKKZ4I": {
+    "Q-1": 0
+   }
+  },
+  "USWAMCLT1": {
+   "xd8mZ8oCpK4": {
+    "F-1": 0
+   },
+   "_HUkaiARkS8": {
+    "F-2": 0
+   },
+   "SV9JXmZ8WCY": {
+    "SF1-1": 0
+   },
+   "n8dbof4akK8": {
+    "SF1-2": 0
+   },
+   "lV0eKqkgDBU": {
+    "Q-21": 0
+   },
+   "Nz7_laFCXu4": {
+    "Q-17": 0
+   },
+   "h24hmMwSBZ0": {
+    "Q-12": 0
+   },
+   "xNFo9vM3uio": {
+    "Q-10": 0
+   },
+   "Jp06lGU8wBw": {
+    "Q-8": 0
+   },
+   "I4OHntgMP2E": {
+    "Q-4": 0
+   }
+  },
+  "USWACMP": {
+   "49vnzJvSfIc": {
+    "F-1": 0
+   },
+   "TGjkwp52LOU": {
+    "F-2": 0
+   },
+   "WNBoy56nrVw": {
+    "SF2-1": 0
+   },
+   "JTbC3cEvoF8": {
+    "SF2-2": 0
+   },
+   "-953RnTk8G4": {
+    "Q-31": 0
+   },
+   "PyMnRzWkfL0": {
+    "Q-26": 0
+   },
+   "VgiZxxEWLgQ": {
+    "Q-23": 0
+   },
+   "huNi_68wAfE": {
+    "Q-18": 0
+   },
+   "1fxUmhorwcg": {
+    "Q-11": 0
+   },
+   "TybSKou9MZ4": {
+    "Q-4": 0
+   },
+   "JtGz6vqnO2E": {
+    "Q-31": 0
+   }
+  },
+  "USWAMCLT2": {
+   "DxZqFQY6TLM": {
+    "F-1": 0
+   },
+   "3hp7CmwUBB8": {
+    "F-2": 0
+   },
+   "9bVGjwPjz_w": {
+    "SF1-2": 0
+   },
+   "arhYiIDdlhs": {
+    "SF2-1": 0
+   },
+   "QMflDqd717Y": {
+    "SF1-1": 0
+   },
+   "zMfybYcKAa0": {
+    "SF2-2": 0
+   }
+  },
+  "USNVCMP": {
+   "vTEdBnMv9bw": {
+    "F-1": 0
+   },
+   "gE7DvBfKqyM": {
+    "F-2": 0
+   },
+   "OSUvVzCTNcc": {
+    "Q-1": 0
+   },
+   "jme4yMOE7d8": {
+    "Q-2": 0
+   },
+   "65pGIc3lYb4": {
+    "Q-1": 0
+   },
+   "yaxuo2ni0FM": {
+    "Q-2": 0
+   },
+   "4yNq3T77S_4": {
+    "Q-3": 0
+   },
+   "29kL5YX8ElE": {
+    "Q-4": 0
+   },
+   "-h98oi5RLV0": {
+    "Q-5": 0
+   },
+   "CWj4KNeyPG0": {
+    "Q-6": 0
+   }
+  },
+  "USAZCMPGG1": {
+   "O0tgrMNbpQ4": {
+    "F-1": 0
+   },
+   "fQkRDvRgD6E": {
+    "F-2": 0
+   }
+  },
+  "USAZWAQ1": {
+   "pXG3DE1a2wA": {
+    "Q-27": 0
+   },
+   "vI3CyKT2kgY": {
+    "Q-13": 0
+   },
+   "olBSpVqBFcI": {
+    "Q-1": 0
+   },
+   "UBml0dRzfgs": {
+    "F-2": 0
+   },
+   "Em8XDS3OXnc": {
+    "Q-24": 0
+   },
+   "2nI7qktuVCM": {
+    "F-1": 0
+   },
+   "2JO7dYjgVNY": {
+    "Q-8": 0
+   }
+  },
+  "USAZGLQ1": {
+   "z4RR6Wl1IiE": {
+    "Q-24": 0
+   },
+   "JSBfOh6B8sw": {
+    "Q-9": 0
+   },
+   "v2394suro2w": {
+    "F-3": 0
+   },
+   "rlSNTg1b5hs": {
+    "F-1": 0
+   },
+   "mpJvgnzIanQ": {
+    "Q-14": 0
+   },
+   "i7-F1aZZ4wE": {
+    "F-2": 0
+   },
+   "fcv9Uz4pBo8": {
+    "Q-18": 0
+   },
+   "DicQ4yfsTHw": {
+    "Q-4": 0
+   }
+  },
+  "USAZGIQ1": {
+   "vqR7HqoSgoQ": {
+    "Q-10": 0
+   },
+   "tANYtHbhE-c": {
+    "Q-22": 0
+   },
+   "nXWU5K3Gqq4": {
+    "Q-12": 0
+   },
+   "fEADNaO5Ejg": {
+    "Q-2": 0
+   },
+   "FW31DDewWg4": {
+    "Q-16": 0
+   }
+  }
+ },
  "2022": {
   "USWACMP": {
    "7N_UW6BNcnE": {
@@ -18,6 +4770,129 @@
    },
    "tnF94Kte_Ck": {
     "SF2-2": 0
+   },
+   "TwERiQhjUrk": {
+    "Q-37": 0
+   },
+   "J6-x3Q7ersU": {
+    "Q-1": 0
+   },
+   "jfnwGkNsTvM": {
+    "Q-2": 0
+   },
+   "PH4xPYTNUew": {
+    "Q-3": 0
+   },
+   "k0aVl2_uYNg": {
+    "Q-4": 0
+   },
+   "2SavNW7pf8Y": {
+    "Q-5": 0
+   },
+   "xbPH3KIRyto": {
+    "Q-6": 0
+   },
+   "Rml-x02mNx0": {
+    "Q-7": 0
+   },
+   "k6MX5xc1tPE": {
+    "Q-8": 0
+   },
+   "YzBBtpl6Dug": {
+    "Q-9": 0
+   },
+   "cZkmo4mmTIs": {
+    "Q-10": 0
+   },
+   "3xwMp0JzII0": {
+    "Q-11": 0
+   },
+   "11wRKlGQLOw": {
+    "Q-12": 0
+   },
+   "CaYQLfgJFPQ": {
+    "Q-13": 0
+   },
+   "M-LibXFlO7A": {
+    "Q-14": 0
+   },
+   "jeGan1wieYE": {
+    "Q-15": 0
+   },
+   "KiTnErB3qRc": {
+    "Q-16": 0
+   },
+   "2e3TwiM4P7U": {
+    "Q-17": 0
+   },
+   "ZNy_tIPc0Zg": {
+    "Q-18": 0
+   },
+   "ko0WhB93Xzo": {
+    "Q-19": 0
+   },
+   "pfjNnxefoK8": {
+    "Q-20": 0
+   },
+   "NNiA_Y3jx6w": {
+    "Q-21": 0
+   },
+   "ITpFWHanlfE": {
+    "Q-22": 0
+   },
+   "qWH4HO50Sxg": {
+    "Q-23": 0
+   },
+   "ID-rImOW-80": {
+    "Q-24": 0
+   },
+   "tTLSNwsjVpM": {
+    "Q-25": 0
+   },
+   "zxbg-iWWgDg": {
+    "Q-26": 0
+   },
+   "51ghTKZmWdA": {
+    "Q-27": 0
+   },
+   "aDCeNW9FjBc": {
+    "Q-28": 0
+   },
+   "JyOLfrC7lv4": {
+    "Q-29": 0
+   },
+   "jzvgwSA1K18": {
+    "Q-30": 0
+   },
+   "GhO6pidPkX0": {
+    "Q-31": 0
+   },
+   "Dunuif8fung": {
+    "Q-32": 0
+   },
+   "-JzkP94ONz0": {
+    "Q-33": 0
+   },
+   "v9x43Lk8LR4": {
+    "Q-34": 0
+   },
+   "Y-oFR2vzgfs": {
+    "Q-35": 0
+   },
+   "JCQk9IFIiac": {
+    "Q-36": 0
+   },
+   "8i0-CVcWRn4": {
+    "Q-37": 0
+   },
+   "DN9lAAdE9_k": {
+    "Q-38": 0
+   },
+   "ccyqJjmNu6o": {
+    "Q-39": 0
+   },
+   "0hvBbYaOPr8": {
+    "Q-40": 0
    }
   },
   "USWAPALT1": {
@@ -41,6 +4916,174 @@
    },
    "R_matuUTbSs": {
     "F-2": 0
+   },
+   "zCo_ZuVvFGA": {
+    "SF1-2": 0
+   },
+   "02JxNEUaGuM": {
+    "SF1-1": 0
+   },
+   "0_zcukp5xlM": {
+    "Q-39": 0
+   },
+   "MKkNErTYw6I": {
+    "Q-29": 0
+   },
+   "c7HxgVLnmZ0": {
+    "Q-24": 0
+   },
+   "s8ZPHRHXxN8": {
+    "Q-14": 0
+   },
+   "hgIeLPlDZ34": {
+    "Q-6": 0
+   },
+   "v53_zZd9dkY": {
+    "SF1-1": 0
+   },
+   "u5uV_aBiRGk": {
+    "Q-35": 0
+   },
+   "zYJVfZAIyCY": {
+    "Q-28": 0
+   },
+   "RJBJ-d8DOBI": {
+    "Q-21": 0
+   },
+   "R-zSR_HiMOo": {
+    "Q-14": 0
+   },
+   "NlbtUFWKBi8": {
+    "Q-7": 0
+   },
+   "ISVOajZcNIA": {
+    "Q-2": 0
+   },
+   "8tpk8dHZWJk": {
+    "SF1-1": 0
+   },
+   "r-H13zZ--3s": {
+    "F-2": 0
+   },
+   "HmTgSD01c5c": {
+    "F-1": 0
+   },
+   "xKdjwBzFhkI": {
+    "Q-1": 0
+   },
+   "r_WVDCpZ1Qw": {
+    "Q-2": 0
+   },
+   "FASGbuWhP68": {
+    "Q-3": 0
+   },
+   "EZ4GiYwfSKg": {
+    "Q-4": 0
+   },
+   "E0fUMYnYZFk": {
+    "Q-5": 0
+   },
+   "EgLZ93z8PYU": {
+    "Q-6": 0
+   },
+   "Zc8IGA9E7Ts": {
+    "Q-7": 0
+   },
+   "LaHwdodOuEM": {
+    "Q-8": 0
+   },
+   "b8SG2lgHr58": {
+    "Q-9": 0
+   },
+   "svjeAyRq3c8": {
+    "Q-10": 0
+   },
+   "HXNNiRa2eCg": {
+    "Q-11": 0
+   },
+   "pah8_hxCpYc": {
+    "Q-12": 0
+   },
+   "oPar5ypotK0": {
+    "Q-13": 0
+   },
+   "Rd4Y4pmEIgI": {
+    "Q-14": 0
+   },
+   "_0EY3G0chWE": {
+    "Q-15": 0
+   },
+   "W4PdAHVXxgw": {
+    "Q-16": 0
+   },
+   "tMC4h0KE00U": {
+    "Q-17": 0
+   },
+   "UtbbXYH1tbs": {
+    "Q-18": 0
+   },
+   "3TMwQJVrpWg": {
+    "Q-19": 0
+   },
+   "2h5AEgiKDdc": {
+    "Q-20": 0
+   },
+   "MiKVUk3fHTk": {
+    "Q-21": 0
+   },
+   "NeldbmsyT5o": {
+    "Q-22": 0
+   },
+   "BrRc1Xb-Ugk": {
+    "Q-23": 0
+   },
+   "aeu5h6AKTU0": {
+    "Q-24": 0
+   },
+   "H4UDFO752Bw": {
+    "Q-25": 0
+   },
+   "ql64V7TmOTA": {
+    "Q-26": 0
+   },
+   "lim2qUOksRE": {
+    "Q-27": 0
+   },
+   "aX3R-J_Td5w": {
+    "Q-28": 0
+   },
+   "SCjkDRCeEkk": {
+    "Q-29": 0
+   },
+   "pKO6dvkQoPs": {
+    "Q-30": 0
+   },
+   "uUX68Lo7eig": {
+    "Q-31": 0
+   },
+   "4Jlu7j7_jmY": {
+    "Q-32": 0
+   },
+   "QkJa3hd8A30": {
+    "Q-33": 0
+   },
+   "F3hlb5eW8Uk": {
+    "Q-34": 0
+   },
+   "BSojdkuOwL4": {
+    "Q-35": 0
+   },
+   "nQCNAGU6yZY": {
+    "Q-36": 0
+   },
+   "hWZedJfvVBc": {
+    "Q-37": 0
+   },
+   "GywqCsXDRBI": {
+    "Q-38": 0
+   },
+   "xfLmDCFvq60": {
+    "Q-39": 0
    }
   },
   "USWATELT": {
@@ -64,6 +5107,120 @@
    },
    "mc0yEtmproM": {
     "SF2-2": 0
+   },
+   "Sjn8B_p9T5U": {
+    "F-1": 0
+   },
+   "HHWYCWtv_Pk": {
+    "F-3": 0
+   },
+   "bMvGxcy7D1s": {
+    "Q-2": 0
+   },
+   "Imm8scHrIOQ": {
+    "Q-3": 0
+   },
+   "r9O7SbcQYDA": {
+    "Q-4": 0
+   },
+   "P31KFkH7W1g": {
+    "Q-6": 0
+   },
+   "VX1gyyncNqU": {
+    "Q-7": 0
+   },
+   "yX5lQaUUKk8": {
+    "Q-8": 0
+   },
+   "ZNNIGs4wJl0": {
+    "Q-9": 0
+   },
+   "Zj4Bxjp7bHA": {
+    "Q-10": 0
+   },
+   "chd-L1DTQT8": {
+    "Q-11": 0
+   },
+   "opnEoJRYq74": {
+    "Q-12": 0
+   },
+   "68Y1I7wzarI": {
+    "Q-13": 0
+   },
+   "n5FPzEf0b6I": {
+    "Q-14": 0
+   },
+   "DEb1gQM_ijw": {
+    "Q-15": 0
+   },
+   "gnV6a80Tu1Q": {
+    "Q-16": 0
+   },
+   "k0W7nUuwpXc": {
+    "Q-1": 0
+   },
+   "YLpkwnqqOjI": {
+    "Q-17": 0
+   },
+   "UoD-qiBN52A": {
+    "Q-18": 0
+   },
+   "65Pi0MDG970": {
+    "Q-19": 0
+   },
+   "MlyQz9jRd1E": {
+    "Q-20": 0
+   },
+   "RijMNxE1B_A": {
+    "Q-21": 0
+   },
+   "FusjJJoxCDo": {
+    "Q-22": 0
+   },
+   "id-fpN_zy1o": {
+    "Q-23": 0
+   },
+   "Hw1XTpNBPro": {
+    "Q-24": 0
+   },
+   "xUkao5aDO-c": {
+    "Q-25": 0
+   },
+   "ZBUI3yNoPbs": {
+    "Q-26": 0
+   },
+   "uCT0zEhtSw8": {
+    "Q-27": 0
+   },
+   "Rhs9Vi-RDnI": {
+    "Q-28": 0
+   },
+   "fsRPFRROA5w": {
+    "Q-29": 0
+   },
+   "R5LAUZfyrSs": {
+    "Q-30": 0
+   },
+   "0uPyLPtSWPY": {
+    "Q-31": 0
+   },
+   "3PvhbASk2ng": {
+    "Q-37": 0
+   },
+   "9fW1ty_zEPY": {
+    "Q-32": 0
+   },
+   "Lhtj1E_e-nM": {
+    "Q-33": 0
+   },
+   "W6liTxc5CsY": {
+    "Q-34": 0
+   },
+   "XBm8C-cPI0I": {
+    "Q-35": 0
+   },
+   "GtBm7F7U9Hc": {
+    "Q-36": 0
    }
   },
   "USWAFELT1": {
@@ -87,6 +5244,102 @@
    },
    "N1eJIjzmW78": {
     "F-2": 0
+   },
+   "ymZjKBQDKCA": {
+    "Q-1": 0
+   },
+   "ab5CQ1EiIMs": {
+    "Q-2": 0
+   },
+   "Iq9ea9N8veg": {
+    "Q-3": 0
+   },
+   "8j4ZApihAm4": {
+    "Q-4": 0
+   },
+   "MzhC0sceTL8": {
+    "Q-5": 0
+   },
+   "hu7LITQPj-8": {
+    "Q-6": 0
+   },
+   "wI3wYPTaOY4": {
+    "Q-7": 0
+   },
+   "f3eTJRgkT3c": {
+    "Q-8": 0
+   },
+   "v1QtKcqsVBM": {
+    "Q-9": 0
+   },
+   "GiHFJ0Sesyc": {
+    "Q-10": 0
+   },
+   "X6SLUqEkal0": {
+    "Q-11": 0
+   },
+   "IhlcnIFlJD0": {
+    "Q-12": 0
+   },
+   "rs3ElI20Gt8": {
+    "Q-13": 0
+   },
+   "GkOr7cpVc78": {
+    "Q-14": 0
+   },
+   "DEjvNxsa9ns": {
+    "Q-15": 0
+   },
+   "1n8L7jWSkwc": {
+    "Q-16": 0
+   },
+   "9pG_HEbMMTU": {
+    "Q-17": 0
+   },
+   "V-GfHnsJVx4": {
+    "Q-18": 0
+   },
+   "vSQP2Z8xyNk": {
+    "Q-19": 0
+   },
+   "MWO9T39WEHA": {
+    "Q-20": 0
+   },
+   "kqyGZnZlmD8": {
+    "Q-21": 0
+   },
+   "jiV1AC6IDnM": {
+    "Q-22": 0
+   },
+   "_bSDDk57PNQ": {
+    "Q-23": 0
+   },
+   "wOhBGrHtHfQ": {
+    "Q-24": 0
+   },
+   "xbofkoqGNGs": {
+    "Q-25": 0
+   },
+   "nnnMsE_I_4U": {
+    "Q-26": 0
+   },
+   "hJn2riLDErU": {
+    "Q-27": 0
+   },
+   "D8KpuQI5kvA": {
+    "Q-28": 0
+   },
+   "BfjVbiU3lOs": {
+    "Q-29": 0
+   },
+   "7XCnK_Y8SKo": {
+    "Q-30": 0
+   },
+   "pA_e57KrNFs": {
+    "Q-31": 0
+   },
+   "msOk2SqrZKY": {
+    "Q-32": 0
    }
   },
   "USCANOSBLT": {
@@ -137,6 +5390,9 @@
    },
    "GrNwfNyd6Ok": {
     "SF2-3": 0
+   },
+   "6otJ0FwQBMc": {
+    "Q-4": 0
    }
   },
   "USCANOSAQ": {
@@ -210,6 +5466,2644 @@
    },
    "z5HupZyUXJM": {
     "Q-33": 0
+   },
+   "FO4Q5U6WxJk": {
+    "Q-1": 0
+   },
+   "MDRdl38v3AU": {
+    "Q-11": 0
+   },
+   "u8dgL-CGGPE": {
+    "Q-15": 0
+   },
+   "bVGk0I2mGBo": {
+    "Q-25": 0
+   },
+   "rUXgNUmSiQw": {
+    "F-1": 0
+   },
+   "jYQ_4HIwwFQ": {
+    "F-2": 0
+   },
+   "2pPEosB8l_I": {
+    "F-2": 0
+   },
+   "M0lSY-XP7oM": {
+    "F-1": 0
+   }
+  },
+  "USCANOSBM3A": {
+   "PC42EDNr2RE": {
+    "Q-1": 0
+   },
+   "M-009WJ1DYA": {
+    "Q-2": 0
+   },
+   "L2BsKsuojsw": {
+    "Q-3": 0
+   },
+   "tkI0GcNbctg": {
+    "Q-4": 0
+   },
+   "R7WQKvycUxs": {
+    "Q-5": 0
+   },
+   "B1oyxN6V5lw": {
+    "Q-6": 0
+   },
+   "KALhOhnE_HQ": {
+    "Q-7": 0
+   },
+   "DpIgOaaJy2w": {
+    "Q-8": 0
+   },
+   "ffN4bDZLnmI": {
+    "Q-9": 0
+   },
+   "NYnj1vMB8as": {
+    "Q-10": 0
+   },
+   "Bv3WP3gRwsY": {
+    "Q-11": 0
+   },
+   "tTAqhahzGdA": {
+    "Q-12": 0
+   },
+   "C9VgCWWdNT0": {
+    "Q-13": 0
+   },
+   "XX6gkp_CbZw": {
+    "Q-14": 0
+   },
+   "VNSFfzTAzCs": {
+    "Q-15": 0
+   }
+  },
+  "USCANOSBM1A": {
+   "askjQjL7oiE": {
+    "Q-14": 0
+   },
+   "d_jPuK_b9tI": {
+    "Q-13": 0
+   },
+   "oRkEYbT5bcU": {
+    "Q-12": 0
+   },
+   "SoGGUOEeWGU": {
+    "Q-11": 0
+   },
+   "sVuQUqdhs9A": {
+    "Q-10": 0
+   },
+   "7B8GXboUNEk": {
+    "Q-9": 0
+   },
+   "AukjhpLIjBw": {
+    "Q-8": 0
+   },
+   "P1WZVZJLbIA": {
+    "Q-7": 0
+   },
+   "GkeJ28Yizic": {
+    "Q-6": 0
+   },
+   "-5jnFYmA3QY": {
+    "Q-5": 0
+   },
+   "vbdC2akRiNU": {
+    "Q-4": 0
+   },
+   "kEMKTLq7YOY": {
+    "Q-3": 0
+   },
+   "E2Fc647auXU": {
+    "Q-2": 0
+   },
+   "LwYG8n2A48o": {
+    "Q-1": 0
+   }
+  },
+  "USCANOCMPAU": {
+   "Bn85gySsHwQ": {
+    "SF2-2": 0
+   },
+   "kK4AsCfV3JI": {
+    "Q-3": 0
+   },
+   "P3FoWQGoCdY": {
+    "Q-2": 0
+   },
+   "UPznkvG5qrw": {
+    "Q-1": 0
+   }
+  },
+  "USINISM1": {
+   "t4kdvndlCXU": {
+    "Q-1": 0
+   },
+   "utTChp1qyh8": {
+    "Q-2": 0
+   },
+   "B3l_SkL-wIs": {
+    "Q-3": 0
+   },
+   "tlsLJpn8QVA": {
+    "Q-4": 0
+   },
+   "hOFIw3CoyJ0": {
+    "Q-5": 0
+   },
+   "eThZeOXx_Xw": {
+    "Q-6": 0
+   },
+   "nOc9JdiQ6zo": {
+    "Q-7": 0
+   },
+   "EG6ihBoN-GY": {
+    "Q-8": 0
+   },
+   "sAF8Wa6R1Xs": {
+    "Q-9": 0
+   },
+   "QsbIWxZQ4hM": {
+    "Q-10": 0
+   },
+   "SRnLM6V1xUs": {
+    "Q-11": 0
+   },
+   "fmSwIpWUgZA": {
+    "Q-12": 0
+   },
+   "rs439u-mfiU": {
+    "Q-13": 0
+   },
+   "AzzgVRbC-4k": {
+    "Q-14": 0
+   },
+   "8S3QZP9806E": {
+    "Q-15": 0
+   },
+   "WMF7akgqUPQ": {
+    "Q-16": 0
+   },
+   "8QXon3BBojw": {
+    "Q-17": 0
+   },
+   "w-zHy3-ezb8": {
+    "Q-18": 0
+   },
+   "0Xdusit1RPE": {
+    "Q-19": 0
+   },
+   "aAlVLiZp7OI": {
+    "Q-20": 0
+   },
+   "m3QxdGdTFeg": {
+    "Q-21": 0
+   },
+   "gp3LwIP31TE": {
+    "Q-22": 0
+   },
+   "U-SN0o3elDs": {
+    "Q-23": 0
+   },
+   "BPoBCiMuwKo": {
+    "Q-24": 0
+   },
+   "s1dmAbIIGhQ": {
+    "Q-25": 0
+   },
+   "ZC6jMafKmIw": {
+    "Q-26": 0
+   },
+   "wo_H6LopZSI": {
+    "Q-27": 0
+   },
+   "dYc2STv1YGU": {
+    "Q-28": 0
+   },
+   "6A9QzhO1g8U": {
+    "Q-29": 0
+   }
+  },
+  "USINISM2": {
+   "gdvMZpWMp44": {
+    "Q-1": 0
+   },
+   "IvvSEJGMMDI": {
+    "Q-2": 0
+   },
+   "C9wgZ5ie9UA": {
+    "Q-3": 0
+   },
+   "4KN7d94XgS8": {
+    "Q-4": 0
+   },
+   "RXUQmeELBHs": {
+    "Q-5": 0
+   },
+   "u_exhGyBRpg": {
+    "Q-6": 0
+   },
+   "mVZe_H-FFWc": {
+    "Q-7": 0
+   },
+   "CFzAVjXzE7o": {
+    "Q-8": 0
+   },
+   "egq10tqo488": {
+    "Q-9": 0
+   },
+   "ryyPBZwMeSE": {
+    "Q-10": 0
+   },
+   "jylFGLH8xuI": {
+    "Q-11": 0
+   },
+   "mhmYoBwQghM": {
+    "Q-12": 0
+   },
+   "mimWbnYpyYo": {
+    "Q-13": 0
+   },
+   "RzH3PA_L3js": {
+    "Q-14": 0
+   },
+   "CunLyMLRXSY": {
+    "Q-15": 0
+   },
+   "q2evIEAAWdQ": {
+    "Q-16": 0
+   },
+   "76JTWtnBFAM": {
+    "Q-17": 0
+   },
+   "Dg3IK8MkUVE": {
+    "Q-18": 0
+   },
+   "UEaTcCrqaRA": {
+    "Q-19": 0
+   },
+   "6KQBDK01--U": {
+    "Q-20": 0
+   },
+   "rOAJyh6Rzic": {
+    "Q-21": 0
+   },
+   "OAcpgVk6tTc": {
+    "Q-22": 0
+   },
+   "TIond7x5V_I": {
+    "Q-23": 0
+   },
+   "fGS-swy1hkE": {
+    "Q-24": 0
+   },
+   "vF2YOE0L03s": {
+    "Q-25": 0
+   },
+   "U0rYu8P2aXQ": {
+    "Q-26": 0
+   },
+   "2RlvbA6JSQE": {
+    "Q-27": 0
+   },
+   "BY2x3vlCuDU": {
+    "Q-28": 0
+   },
+   "46gQ24kXvDo": {
+    "Q-29": 0
+   },
+   "et5RHf3Yr8s": {
+    "Q-30": 0
+   }
+  },
+  "USINISM3": {
+   "Qa-Yw6WA5t4": {
+    "Q-3": 0
+   },
+   "WMjwGpSiMxI": {
+    "Q-4": 0
+   },
+   "AQ8hN7_m2dw": {
+    "Q-5": 0
+   },
+   "6dyLbCBHbA0": {
+    "Q-6": 0
+   },
+   "-SYj6wh-sHI": {
+    "Q-7": 0
+   },
+   "Y_hN4fQT2po": {
+    "Q-8": 0
+   },
+   "TxzOBhKneZM": {
+    "Q-9": 0
+   },
+   "d09qjbhfhy0": {
+    "Q-10": 0
+   },
+   "0Z54QyeMU-8": {
+    "Q-11": 0
+   },
+   "l0uRmlM5pUw": {
+    "Q-12": 0
+   },
+   "91yxGROzS8s": {
+    "Q-13": 0
+   },
+   "QLgyuzrxjM8": {
+    "Q-14": 0
+   },
+   "cyEfO58V-m0": {
+    "Q-15": 0
+   },
+   "tbPgVFPzDEg": {
+    "Q-16": 0
+   },
+   "-txcP7GbbiA": {
+    "Q-17": 0
+   },
+   "qr-nFuwC3iU": {
+    "Q-18": 0
+   },
+   "r4CMm5bn6nY": {
+    "Q-19": 0
+   },
+   "fIjWAaIjsw0": {
+    "Q-20": 0
+   },
+   "A2Y7xQI3ACk": {
+    "Q-21": 0
+   },
+   "_BSU-7qP-QU": {
+    "Q-22": 0
+   },
+   "Fd-0LpDtEks": {
+    "Q-23": 0
+   },
+   "fm5g6Wj0nFg": {
+    "Q-24": 0
+   },
+   "lmQpPTBC7sg": {
+    "Q-25": 0
+   },
+   "x1ZLSNFyJho": {
+    "Q-26": 0
+   },
+   "2SD2bUfFraI": {
+    "Q-27": 0
+   },
+   "Tio0pAcZNzs": {
+    "Q-28": 0
+   },
+   "z9jeXjH32m0": {
+    "Q-29": 0
+   },
+   "0jpimpYdC8k": {
+    "Q-30": 0
+   }
+  },
+  "ILCMP": {
+   "pe3jQX4cxqk": {
+    "F-3": 0
+   },
+   "sW1s_v9fE2M": {
+    "F-2": 0
+   },
+   "GXBziSPMSbI": {
+    "F-1": 0
+   }
+  },
+  "TWCMP": {
+   "mple0ErQMx4": {
+    "F-3": 0
+   },
+   "7i7CkVZcWOE": {
+    "F-2": 0
+   },
+   "auIqXVIBRPQ": {
+    "F-1": 0
+   },
+   "OkSRBRT2_qE": {
+    "Q-2": 0
+   },
+   "kYTojvy3v4Q": {
+    "Q-1": 0
+   }
+  },
+  "NLNLLT": {
+   "JQwwAAr3pUo": {
+    "F-1": 0
+   },
+   "M2I8Z_aXa6s": {
+    "F-2": 0
+   }
+  },
+  "USMNCMPGAL1": {
+   "gEDwesz6cWg": {
+    "Q-1": 0
+   },
+   "sWkQubppScw": {
+    "Q-23": 0
+   }
+  },
+  "USCHSGAQ": {
+   "1lnFjMjighU": {
+    "Q-17": 0
+   },
+   "AjQwM7ZeCfY": {
+    "Q-24": 0
+   },
+   "ByQ39xY0olI": {
+    "Q-21": 0
+   },
+   "H_nT023HaM8": {
+    "Q-12": 0
+   },
+   "MmjWHfW1hmA": {
+    "Q-16": 0
+   },
+   "P5aCBSaDWdQ": {
+    "Q-26": 0
+   },
+   "QQoRIEWc9jM": {
+    "Q-18": 0
+   },
+   "Qp0esP4wChw": {
+    "Q-13": 0
+   },
+   "ROmgJG1REjU": {
+    "Q-22": 0
+   },
+   "RY2jTvGpTPM": {
+    "Q-28": 0
+   },
+   "SBYuvDMUuO8": {
+    "Q-30": 0
+   },
+   "Uc_WcQ0hVU8": {
+    "Q-23": 0
+   },
+   "c7KqseWvHzM": {
+    "Q-20": 0
+   },
+   "oG-Dg3HvOas": {
+    "Q-27": 0
+   },
+   "ohcSpIoVUeU": {
+    "Q-25": 0
+   },
+   "qJFJDCL0irE": {
+    "Q-19": 0
+   },
+   "sBwf0yt0FdA": {
+    "Q-14": 0
+   },
+   "sFk92pNPUMI": {
+    "Q-29": 0
+   },
+   "zbzm0zG1Dt8": {
+    "Q-15": 0
+   }
+  },
+  "USCHSUBQ": {
+   "-cEqLwqlTes": {
+    "Q-20": 0
+   },
+   "0DDR8jWV3fE": {
+    "Q-14": 0
+   },
+   "By7hSpjh7O8": {
+    "Q-2": 0
+   },
+   "TfnkjSiLK0I": {
+    "Q-39": 0
+   },
+   "_kLWh4l74QU": {
+    "SF2-2": 0
+   },
+   "bapCxeA3JAE": {
+    "Q-27": 0
+   },
+   "qj6wDy_GNQw": {
+    "F-2": 0
+   }
+  },
+  "USCHSCMPSCA": {
+   "1p19x6WV2mc": {
+    "SF1-3": 0
+   },
+   "DbTWNMMozlY": {
+    "SF1-1": 0
+   },
+   "P3Cp_M9VmwM": {
+    "SF1-2": 0
+   },
+   "PiE5i685VRk": {
+    "Q-5": 0
+   },
+   "eITXrkKAbDQ": {
+    "Q-10": 0
+   },
+   "sWRJCgYr1co": {
+    "Q-15": 0
+   },
+   "tkLhyX-s8zU": {
+    "Q-28": 0
+   },
+   "zfu1VxLHGNo": {
+    "Q-23": 0
+   }
+  },
+  "USCHSWAQ1": {
+   "36EPZ6Jgt-k": {
+    "Q-27": 0
+   },
+   "3t1S7YCQ97M": {
+    "F-1": 0
+   },
+   "9Ogdsd-7qpY": {
+    "Q-20": 0
+   },
+   "DauWLNWO3QQ": {
+    "Q-33": 0
+   },
+   "M-xf1NvNce4": {
+    "SF1-2": 0
+   },
+   "dEoIhJXHWm8": {
+    "F-2": 0
+   },
+   "h2pRU-Ci88w": {
+    "SF1-1": 0
+   },
+   "htd1nGcR9fU": {
+    "Q-10": 0
+   },
+   "lUqCc8d-Hb8": {
+    "Q-2": 0
+   }
+  },
+  "USCHSCMP": {
+   "kS-9B-6vUqE": {
+    "F-2": 0
+   },
+   "kvuNSsalYv8": {
+    "F-1": 0
+   }
+  },
+  "USNHCMP": {
+   "561xALvOSxo": {
+    "Q-32": 0
+   }
+  },
+  "USPACMP": {
+   "MXD0l6Pyyrs": {
+    "F-3": 0
+   },
+   "fklPCHmn4cI": {
+    "F-1": 0
+   },
+   "VXZ21DAQtn8": {
+    "F-2": 0
+   }
+  },
+  "USPACOQ2": {
+   "dmt_fULbHFA": {
+    "SF1-2": 0
+   },
+   "BVCdsLPRVzE": {
+    "SF1-1": 0
+   },
+   "Ro24srQGHrw": {
+    "Q-2": 0
+   },
+   "jRKZLiZo3hA": {
+    "Q-5": 0
+   }
+  },
+  "USPAPHQ": {
+   "mJZdQnKX4ug": {
+    "Q-3": 0
+   },
+   "5KFNMMJ_S2s": {
+    "Q-17": 0
+   },
+   "ixBmtjVZhRQ": {
+    "Q-25": 0
+   },
+   "HvjgQzAmaPE": {
+    "Q-33": 0
+   },
+   "OBzBWN3URkE": {
+    "Q-40": 0
+   },
+   "ifGzZxYNWok": {
+    "Q-1": 0
+   },
+   "7iblrnYFbE4": {
+    "Q-3": 0
+   }
+  },
+  "USGACMP": {
+   "jwJmltVNz-M": {
+    "SF1-1": 0
+   },
+   "o4ulEfm0RfA": {
+    "F-2": 0
+   },
+   "FEfP_ZpZ2Q4": {
+    "F-1": 0
+   },
+   "Zy1akHhXWLw": {
+    "SF1-2": 0
+   },
+   "O7xns28YH1o": {
+    "SF1-3": 0
+   },
+   "OdUJNRqJ4vc": {
+    "SF2-2": 0
+   },
+   "6UZJgQo9-S4": {
+    "SF2-1": 0
+   },
+   "MTafTi9qiWg": {
+    "Q-43": 0
+   },
+   "7Wwzk1U47zs": {
+    "Q-44": 0
+   },
+   "WG3SAUI7s0M": {
+    "Q-41": 0
+   },
+   "kQOFxpk4FdY": {
+    "Q-42": 0
+   },
+   "tYoBxdqyGxU": {
+    "Q-40": 0
+   },
+   "fcXuuihc7Ig": {
+    "Q-39": 0
+   },
+   "7skshjmaUUg": {
+    "Q-38": 0
+   },
+   "h5XSDBFG688": {
+    "Q-37": 0
+   },
+   "3q-y5pfV24I": {
+    "Q-36": 0
+   },
+   "JAFiXRh9NdU": {
+    "Q-35": 0
+   },
+   "_j4BLNAd5c8": {
+    "Q-34": 0
+   },
+   "cWDaX0LwysQ": {
+    "Q-33": 0
+   },
+   "qEHDqUmmmp8": {
+    "Q-32": 0
+   },
+   "DSfur9TF_rE": {
+    "Q-31": 0
+   },
+   "JRuHddCZGTc": {
+    "Q-30": 0
+   },
+   "EtauR7s12HA": {
+    "Q-29": 0
+   },
+   "IujDzWyI4SI": {
+    "Q-28": 0
+   },
+   "bgfUEOPE0b4": {
+    "Q-27": 0
+   },
+   "RGRbdy5WQX4": {
+    "Q-26": 0
+   },
+   "XGun4wGy2UA": {
+    "Q-25": 0
+   },
+   "GHBJrFMI26U": {
+    "Q-24": 0
+   },
+   "jHdi3AkI6OM": {
+    "Q-23": 0
+   },
+   "nEG4yGxXld0": {
+    "Q-22": 0
+   },
+   "l1rMAINOGGc": {
+    "Q-21": 0
+   },
+   "n8ZGCR7LVk0": {
+    "Q-17": 0
+   },
+   "2GMGJDOmpmY": {
+    "Q-20": 0
+   },
+   "523wUnI5PCc": {
+    "Q-19": 0
+   },
+   "7y7Y2x6NH1U": {
+    "Q-18": 0
+   },
+   "jz5y8UWOz1s": {
+    "Q-16": 0
+   },
+   "ysVp0G0WArs": {
+    "Q-15": 0
+   },
+   "Qrg3BKusPoI": {
+    "Q-14": 0
+   },
+   "vjrghs8Oz60": {
+    "Q-13": 0
+   },
+   "R1dVa8YzA5E": {
+    "Q-12": 0
+   },
+   "qSpn3-aJUdQ": {
+    "Q-11": 0
+   },
+   "3rxH6MbLG4o": {
+    "Q-10": 0
+   },
+   "yFiJh21pRtg": {
+    "Q-9": 0
+   },
+   "ltkhbBU1Fso": {
+    "Q-8": 0
+   },
+   "iagabH6cYeI": {
+    "Q-7": 0
+   },
+   "z2f5thdJDxI": {
+    "Q-6": 0
+   },
+   "7d-khLsT2Dw": {
+    "Q-5": 0
+   },
+   "unT5CeT3oAM": {
+    "Q-4": 0
+   },
+   "0LY2pt2mDjM": {
+    "Q-3": 0
+   },
+   "xn72LDusUls": {
+    "Q-2": 0
+   },
+   "pIgugTGE-VA": {
+    "Q-1": 0
+   }
+  },
+  "USSCCHQ": {
+   "IXMzl40Kuak": {
+    "F-2": 0
+   },
+   "NcFarV4PXJE": {
+    "F-1": 0
+   },
+   "r05Tuljb6MY": {
+    "SF2-2": 0
+   },
+   "4kVGhkvbP6c": {
+    "SF1-2": 0
+   },
+   "ajm9g4b2NMM": {
+    "SF2-1": 0
+   },
+   "xTZZXtCH3sk": {
+    "SF1-1": 0
+   },
+   "kb8V9g2uFgE": {
+    "Q-27": 0
+   },
+   "0443bOACTDY": {
+    "Q-26": 0
+   },
+   "duMbonqwHyU": {
+    "Q-25": 0
+   },
+   "5VpplANILrc": {
+    "Q-24": 0
+   },
+   "fk-cRpJvdbg": {
+    "Q-23": 0
+   },
+   "0MwjGa3eKNg": {
+    "Q-22": 0
+   },
+   "GzF7PZpfzDE": {
+    "Q-21": 0
+   },
+   "yxa_a0opmcU": {
+    "Q-20": 0
+   },
+   "zVZR3tFK5lU": {
+    "Q-19": 0
+   },
+   "obJAN3ZmHMg": {
+    "Q-18": 0
+   },
+   "0kb_k6fOVN0": {
+    "Q-17": 0
+   },
+   "iV-tNUnJQwo": {
+    "Q-16": 0
+   },
+   "xRC92LLHhfM": {
+    "Q-15": 0
+   },
+   "sQGuxB8N86o": {
+    "Q-14": 0
+   },
+   "nWCEEEjtWe4": {
+    "Q-13": 0
+   },
+   "8zmS3v9-8ww": {
+    "Q-12": 0
+   },
+   "3qKDV5QNCE0": {
+    "Q-11": 0
+   },
+   "tzZRO3dcsX8": {
+    "Q-10": 0
+   },
+   "84mcN65xcqY": {
+    "Q-9": 0
+   },
+   "3zrbt4LC8iE": {
+    "Q-8": 0
+   },
+   "zeJdBUO8Yr8": {
+    "Q-7": 0
+   },
+   "KIItY2TgUMo": {
+    "Q-1": 0
+   },
+   "R5aqyUSNoKw": {
+    "Q-2": 0
+   },
+   "7xzGIL3UhZw": {
+    "Q-6": 0
+   },
+   "TS_7JNyEfGM": {
+    "Q-5": 0
+   },
+   "VFFo1FmPdn8": {
+    "Q-4": 0
+   }
+  },
+  "USSCFIQ": {
+   "KmywoMWm_VE": {
+    "Q-1": 0
+   },
+   "oJGKNiFgvxI": {
+    "F-3": 0
+   },
+   "MZNynuGqrjM": {
+    "F-2": 0
+   },
+   "eRYWV9VERUc": {
+    "F-1": 0
+   },
+   "Ns30C1frJFw": {
+    "SF2-2": 0
+   },
+   "g0M6uVucil0": {
+    "SF1-2": 0
+   },
+   "c6GCQJ7Zr3U": {
+    "SF2-1": 0
+   },
+   "z48fBUHoCqg": {
+    "SF1-1": 0
+   },
+   "7UEc4cRt0Fs": {
+    "Q-17": 0
+   },
+   "dEMhTWKFXYo": {
+    "Q-16": 0
+   },
+   "382o1m70qZ8": {
+    "Q-15": 0
+   },
+   "Ahhe7WoAbac": {
+    "Q-14": 0
+   },
+   "QGA7mKVg3Wk": {
+    "Q-13": 0
+   },
+   "7XEhoxBI4os": {
+    "Q-12": 0
+   },
+   "69_fQsxTLDI": {
+    "Q-11": 0
+   },
+   "gqDJ-wKW6os": {
+    "Q-10": 0
+   },
+   "xfbgec2oz8A": {
+    "Q-9": 0
+   },
+   "0S0aeAnIElw": {
+    "Q-8": 0
+   },
+   "2Cp9P6RojRU": {
+    "Q-7": 0
+   },
+   "ctz_ZnAwTaQ": {
+    "Q-6": 0
+   },
+   "BnycoWW-Kjk": {
+    "Q-5": 0
+   },
+   "rYBQMq85jlY": {
+    "Q-4": 0
+   },
+   "u7oKSYCf0Yo": {
+    "Q-3": 0
+   },
+   "Wob2SVwXDKM": {
+    "Q-2": 0
+   }
+  },
+  "USALCMP": {
+   "qdDjQAUgWtc": {
+    "Q-14": 0
+   },
+   "IxhPvWQS5OI": {
+    "Q-23": 0
+   },
+   "1_f7O6PTe6w": {
+    "Q-31": 0
+   },
+   "jTNGMJqqLBk": {
+    "Q-37": 0
+   },
+   "ToXvMaruBa8": {
+    "SF1-1": 0
+   },
+   "ViK5tudDsd8": {
+    "F-1": 0
+   },
+   "94XMHm_BpEM": {
+    "Q-1": 0
+   }
+  },
+  "FTCCMP1EDIS": {
+   "Zm0-vP5ufu0": {
+    "Q-13": 13,
+    "Q-14": 292,
+    "Q-15": 629,
+    "Q-16": 1001,
+    "Q-17": 1385,
+    "Q-18": 1671,
+    "Q-19": 2102,
+    "Q-20": 2398,
+    "Q-21": 2718,
+    "Q-22": 3043,
+    "Q-23": 3363,
+    "Q-24": 3927,
+    "Q-25": 4250,
+    "Q-26": 4632,
+    "Q-27": 5056,
+    "Q-28": 5332,
+    "Q-29": 5663,
+    "Q-30": 6050,
+    "Q-31": 6334,
+    "Q-32": 6690,
+    "Q-33": 7048,
+    "Q-34": 7469,
+    "Q-35": 7761,
+    "Q-36": 8061,
+    "Q-37": 8413,
+    "Q-38": 8711,
+    "Q-39": 9054,
+    "Q-40": 9364,
+    "Q-41": 9655,
+    "Q-42": 10120,
+    "Q-43": 15679,
+    "Q-44": 15944,
+    "Q-45": 16593,
+    "Q-46": 16887,
+    "Q-47": 17185,
+    "Q-48": 17495,
+    "Q-49": 17854,
+    "Q-50": 18284,
+    "Q-51": 18699,
+    "Q-52": 18971,
+    "Q-53": 19269,
+    "Q-54": 19691,
+    "Q-55": 20146,
+    "Q-56": 20405,
+    "Q-57": 20878,
+    "Q-58": 21135,
+    "Q-59": 21547,
+    "Q-60": 21849,
+    "Q-61": 22149,
+    "Q-62": 22476,
+    "Q-63": 22735,
+    "Q-64": 23412,
+    "Q-65": 23662,
+    "Q-66": 24159,
+    "Q-67": 24413,
+    "Q-68": 24732,
+    "Q-69": 25193,
+    "Q-70": 25537,
+    "Q-71": 25813,
+    "Q-72": 26255
+   },
+   "za8ATlSD1D0": {
+    "Q-73": 1098,
+    "Q-74": 1416,
+    "Q-75": 2180,
+    "Q-76": 2426,
+    "Q-77": 2720,
+    "Q-78": 3169,
+    "Q-79": 3467,
+    "Q-80": 3761,
+    "Q-81": 4061,
+    "Q-82": 4325,
+    "Q-83": 4690,
+    "Q-84": 5095,
+    "Q-85": 5374,
+    "Q-86": 5775,
+    "Q-87": 6034,
+    "Q-88": 6407,
+    "Q-89": 6812,
+    "Q-90": 7235,
+    "Q-91": 7568,
+    "Q-92": 8010,
+    "Q-93": 8288,
+    "Q-94": 8702,
+    "Q-95": 8942,
+    "Q-96": 9269,
+    "Q-97": 9522,
+    "Q-98": 9868,
+    "Q-99": 10119,
+    "Q-100": 10551,
+    "Q-101": 10812,
+    "Q-102": 11346,
+    "Q-103": 11604,
+    "Q-104": 12001,
+    "Q-105": 12350,
+    "Q-106": 12785,
+    "Q-107": 13106,
+    "Q-108": 13549,
+    "Q-109": 13820,
+    "Q-110": 14093,
+    "Q-111": 20837,
+    "Q-112": 21084,
+    "Q-113": 21579,
+    "Q-114": 21918,
+    "Q-115": 22187,
+    "Q-116": 22574,
+    "Q-117": 22984,
+    "Q-118": 23254,
+    "Q-119": 23677,
+    "Q-120": 24005,
+    "Q-121": 24322,
+    "Q-122": 24673,
+    "Q-123": 24982,
+    "Q-124": 25330,
+    "Q-125": 25726,
+    "Q-126": 26003,
+    "Q-127": 26287,
+    "Q-128": 26983,
+    "Q-129": 27246,
+    "Q-130": 27636,
+    "Q-131": 28083,
+    "Q-132": 28506
+   },
+   "VZFYRiUvGfE": {
+    "Q-46": 0
+   },
+   "8BqUghO4BR8": {
+    "Q-27": 0
+   },
+   "MuC8OPziVCM": {
+    "Q-19": 0
+   },
+   "nVF3B6UmSAk": {
+    "Q-11": 0
+   },
+   "L5d8zA9CSSs": {
+    "Q-11": 0
+   },
+   "s1iDHgq96ng": {
+    "Q-22": 0
+   },
+   "CT0QvPXHVl0": {
+    "Q-31": 0
+   },
+   "druFvFY8cmg": {
+    "Q-60": 0
+   },
+   "rtr5JpQVYB0": {
+    "Q-72": 0
+   },
+   "fFtCyqP99RQ": {
+    "Q-95": 0
+   },
+   "N1J1OGIAtRw": {
+    "Q-84": 0
+   },
+   "4LRrAXbq5KI": {
+    "Q-40": 0
+   },
+   "-2qt12jotjA": {
+    "SF1-1": 0
+   },
+   "lG7zyPJV2oY": {
+    "F-2": 0
+   },
+   "tt4EqRdjq3I": {
+    "F-1": 0
+   },
+   "SljxS-eUpJI": {
+    "SF1-3": 0
+   },
+   "HbutLf3ac-s": {
+    "SF1-2": 0
+   },
+   "vRallQ95nU4": {
+    "F-2": 0
+   },
+   "tQ3dV7NefDg": {
+    "F-1": 0
+   },
+   "cWbZJUz0geo": {
+    "F-1": 0
+   },
+   "eSLURXZPw0E": {
+    "F-1": 0
+   },
+   "-IW37lEXsZs": {
+    "Q-71": 0
+   }
+  },
+  "FTCCMP1JEMI": {
+   "6IY6P0iMjtY": {
+    "Q-13": 0,
+    "Q-14": 261,
+    "Q-15": 627,
+    "Q-16": 961,
+    "Q-17": 1277,
+    "Q-18": 1679,
+    "Q-19": 2044,
+    "Q-20": 2418,
+    "Q-21": 2774,
+    "Q-22": 3105,
+    "Q-23": 3948,
+    "Q-24": 4265,
+    "Q-25": 4716,
+    "Q-26": 5059,
+    "Q-27": 5396,
+    "Q-28": 5739,
+    "Q-29": 6064,
+    "Q-30": 6439,
+    "Q-31": 6760,
+    "Q-32": 7186,
+    "Q-33": 7535,
+    "Q-34": 7854,
+    "Q-35": 8258,
+    "Q-36": 8588,
+    "Q-37": 13726,
+    "Q-38": 14064,
+    "Q-39": 14473,
+    "Q-40": 14782,
+    "Q-41": 15077,
+    "Q-42": 15494,
+    "Q-43": 15768,
+    "Q-44": 16188,
+    "Q-45": 16485,
+    "Q-46": 16824,
+    "Q-47": 17164,
+    "Q-48": 17637,
+    "Q-49": 18080,
+    "Q-50": 18569,
+    "Q-51": 18894,
+    "Q-52": 19228,
+    "Q-53": 19887,
+    "Q-54": 20149,
+    "Q-55": 20523,
+    "Q-56": 20878,
+    "Q-57": 21349,
+    "Q-58": 21607,
+    "Q-59": 22210,
+    "Q-60": 22464,
+    "Q-61": 22817,
+    "Q-62": 23148,
+    "Q-63": 23442,
+    "Q-64": 23745,
+    "Q-65": 24108,
+    "Q-66": 24443,
+    "Q-67": 24775,
+    "Q-68": 25175,
+    "Q-69": 25517,
+    "Q-70": 25860,
+    "Q-71": 26170,
+    "Q-72": 26507
+   },
+   "qe2AB-Hxlk0": {
+    "Q-73": 1280,
+    "Q-74": 1824,
+    "Q-75": 2231,
+    "Q-76": 2536,
+    "Q-77": 3016,
+    "Q-78": 3357,
+    "Q-79": 3751,
+    "Q-80": 4028,
+    "Q-81": 4374,
+    "Q-82": 4699,
+    "Q-83": 5361,
+    "Q-84": 5662,
+    "Q-85": 6020,
+    "Q-86": 6333,
+    "Q-87": 6708,
+    "Q-88": 6964,
+    "Q-89": 7294,
+    "Q-90": 7560,
+    "Q-91": 7978,
+    "Q-92": 8263,
+    "Q-93": 8619,
+    "Q-94": 9049,
+    "Q-95": 9423,
+    "Q-96": 9738,
+    "Q-97": 10047,
+    "Q-98": 10439,
+    "Q-99": 10761,
+    "Q-100": 11094,
+    "Q-101": 11369,
+    "Q-102": 11664,
+    "Q-103": 12004,
+    "Q-104": 12309,
+    "Q-105": 19037,
+    "Q-106": 19277,
+    "Q-107": 19701,
+    "Q-108": 19922,
+    "Q-109": 20365,
+    "Q-110": 20659,
+    "Q-111": 20933,
+    "Q-112": 21214,
+    "Q-113": 21524,
+    "Q-114": 21819,
+    "Q-115": 22188,
+    "Q-116": 22509,
+    "Q-117": 22810,
+    "Q-118": 23130,
+    "Q-119": 23428,
+    "Q-120": 23721,
+    "Q-121": 24086,
+    "Q-122": 24371,
+    "Q-123": 24780,
+    "Q-124": 25127,
+    "Q-125": 25497,
+    "Q-126": 25889,
+    "Q-127": 26285,
+    "Q-128": 27051,
+    "Q-129": 27384,
+    "Q-130": 27749,
+    "Q-131": 28096,
+    "Q-132": 28434
+   },
+   "WZEUY5jJ95c": {
+    "Q-6": 0
+   },
+   "Iz5HQDEdiWM": {
+    "Q-16": 0
+   },
+   "amc3lU2msis": {
+    "Q-25": 0
+   },
+   "yg5BbkGKXR0": {
+    "Q-38": 0
+   },
+   "HuTi0mKeAEI": {
+    "Q-53": 0
+   },
+   "ub8TXGcy3ks": {
+    "Q-62": 0
+   },
+   "agUpHIr0Xlk": {
+    "Q-78": 0
+   },
+   "_AgILE8AxSk": {
+    "Q-87": 0
+   },
+   "6FzQmQPk-no": {
+    "Q-84": 0
+   },
+   "cHJ77iOzKlc": {
+    "SF1-2": 0
+   },
+   "8rblmvno6uY": {
+    "Q-24": 0
+   }
+  },
+  "FTCCMP1FRAN": {
+   "Kcse7pahgmY": {
+    "Q-13": 112,
+    "Q-14": 401,
+    "Q-15": 892,
+    "Q-16": 1271,
+    "Q-17": 1673,
+    "Q-18": 2023,
+    "Q-19": 2426,
+    "Q-20": 2700,
+    "Q-21": 3273,
+    "Q-22": 3981,
+    "Q-23": 4288,
+    "Q-24": 4613,
+    "Q-25": 4881,
+    "Q-26": 5177,
+    "Q-27": 5459,
+    "Q-28": 6057,
+    "Q-29": 6312,
+    "Q-30": 6649,
+    "Q-31": 6968,
+    "Q-32": 7305,
+    "Q-33": 7640,
+    "Q-34": 7992,
+    "Q-35": 8288,
+    "Q-36": 8612,
+    "Q-37": 13970,
+    "Q-38": 14219,
+    "Q-39": 14624,
+    "Q-40": 15053,
+    "Q-41": 15314,
+    "Q-42": 15721,
+    "Q-43": 16031,
+    "Q-44": 16318,
+    "Q-45": 16646,
+    "Q-46": 16956,
+    "Q-47": 17278,
+    "Q-48": 17607,
+    "Q-49": 17968,
+    "Q-50": 18389,
+    "Q-51": 18633,
+    "Q-52": 18984,
+    "Q-53": 19281,
+    "Q-54": 19714,
+    "Q-55": 20020,
+    "Q-56": 20370,
+    "Q-57": 20630,
+    "Q-58": 20938,
+    "Q-59": 21260,
+    "Q-60": 21602,
+    "Q-61": 21902,
+    "Q-62": 22184,
+    "Q-63": 22610,
+    "Q-64": 22891,
+    "Q-65": 23466,
+    "Q-66": 23713,
+    "Q-67": 24133,
+    "Q-68": 24450,
+    "Q-69": 24868,
+    "Q-70": 25173,
+    "Q-71": 25545,
+    "Q-72": 25917
+   },
+   "b3-zJtRrIW0": {
+    "Q-73": 1277,
+    "Q-74": 1630,
+    "Q-75": 1954,
+    "Q-76": 2272,
+    "Q-77": 2542,
+    "Q-78": 2898,
+    "Q-79": 3183,
+    "Q-80": 3695,
+    "Q-81": 4028,
+    "Q-82": 4386,
+    "Q-83": 4708,
+    "Q-84": 5269,
+    "Q-85": 5588,
+    "Q-86": 5859,
+    "Q-87": 6194,
+    "Q-88": 6478,
+    "Q-89": 6881,
+    "Q-90": 7200,
+    "Q-91": 7776,
+    "Q-92": 8025,
+    "Q-93": 8535,
+    "Q-94": 8866,
+    "Q-95": 9172,
+    "Q-96": 9593,
+    "Q-97": 9940,
+    "Q-98": 10280,
+    "Q-99": 10665,
+    "Q-100": 10961,
+    "Q-101": 11482,
+    "Q-102": 11832,
+    "Q-103": 12080,
+    "Q-104": 12531,
+    "Q-105": 19011,
+    "Q-106": 19298,
+    "Q-107": 19641,
+    "Q-108": 20000,
+    "Q-109": 20316,
+    "Q-110": 20611,
+    "Q-111": 21011,
+    "Q-112": 21345,
+    "Q-113": 21717,
+    "Q-114": 22027,
+    "Q-115": 22312,
+    "Q-116": 22599,
+    "Q-117": 22992,
+    "Q-118": 23263,
+    "Q-119": 23623,
+    "Q-120": 23881,
+    "Q-121": 24255,
+    "Q-122": 24547,
+    "Q-123": 24954,
+    "Q-124": 25277,
+    "Q-125": 25659,
+    "Q-126": 26009,
+    "Q-127": 26356,
+    "Q-128": 27017,
+    "Q-129": 27325,
+    "Q-130": 27674,
+    "Q-131": 28020,
+    "Q-132": 28341
+   },
+   "ZvzV0UVU-L4": {
+    "Q-21": 0
+   },
+   "1lhLEiGotIU": {
+    "Q-31": 0
+   },
+   "FXlvS70d3vo": {
+    "Q-39": 0
+   },
+   "jrfRxylvDbA": {
+    "Q-49": 0
+   },
+   "uK4cay1bzaA": {
+    "Q-61": 0
+   },
+   "s8TEGwev3kk": {
+    "Q-76": 0
+   },
+   "6cMnuwZM0Po": {
+    "Q-85": 0
+   },
+   "OIC_uvVYR2k": {
+    "Q-102": 0
+   },
+   "48qedSNWd-E": {
+    "Q-112": 0
+   },
+   "-RCP9jUdzdI": {
+    "Q-126": 0
+   },
+   "jBgmMW7yCTI": {
+    "F-1": 0
+   },
+   "P6kKT1P8ni4": {
+    "F-2": 0
+   },
+   "7xQkc1IqeBk": {
+    "F-3": 0
+   },
+   "Q3P-Xga37og": {
+    "Q-2": 0
+   },
+   "mQwJkxTkFwQ": {
+    "F-2": 0
+   },
+   "LvH8mJTT3sM": {
+    "F-3": 0
+   },
+   "zRNDmECYQbw": {
+    "Q-57": 0
+   }
+  },
+  "FTCCMP1OCHO": {
+   "XKOZwWq1ORs": {
+    "Q-13": 83,
+    "Q-14": 314,
+    "Q-15": 894,
+    "Q-16": 1156,
+    "Q-17": 1637,
+    "Q-18": 1873,
+    "Q-19": 2279,
+    "Q-20": 4263,
+    "Q-21": 4499,
+    "Q-22": 4932,
+    "Q-23": 5235,
+    "Q-24": 5615,
+    "Q-25": 6123,
+    "Q-26": 6376,
+    "Q-27": 6883,
+    "Q-28": 7180,
+    "Q-29": 7586,
+    "Q-30": 7837,
+    "Q-31": 8297,
+    "Q-32": 8644,
+    "Q-33": 8917,
+    "Q-34": 9272,
+    "Q-35": 9626,
+    "Q-36": 9888,
+    "Q-37": 10247,
+    "Q-38": 10522,
+    "Q-39": 10895,
+    "Q-40": 11205,
+    "Q-41": 11700,
+    "Q-42": 11967,
+    "Q-43": 16043,
+    "Q-44": 16283,
+    "Q-45": 16707,
+    "Q-46": 16945,
+    "Q-47": 17277,
+    "Q-48": 17546,
+    "Q-49": 17923,
+    "Q-50": 18218,
+    "Q-51": 18741,
+    "Q-52": 18998,
+    "Q-53": 19647,
+    "Q-54": 19889,
+    "Q-55": 20501,
+    "Q-56": 20760,
+    "Q-57": 21296,
+    "Q-58": 21632,
+    "Q-59": 22040,
+    "Q-60": 22283,
+    "Q-61": 22641,
+    "Q-62": 22934,
+    "Q-63": 23216,
+    "Q-64": 23556,
+    "Q-65": 23848,
+    "Q-66": 24163,
+    "Q-67": 24659,
+    "Q-68": 24929,
+    "Q-69": 25308,
+    "Q-70": 25604,
+    "Q-71": 25941,
+    "Q-72": 26630
+   },
+   "oteaKHW9ywU": {
+    "Q-73": 1321,
+    "Q-74": 1564,
+    "Q-75": 1951,
+    "Q-76": 2195,
+    "Q-77": 2605,
+    "Q-78": 2895,
+    "Q-79": 3304,
+    "Q-80": 3565,
+    "Q-81": 3918,
+    "Q-82": 4267,
+    "Q-83": 4613,
+    "Q-84": 5158,
+    "Q-85": 5401,
+    "Q-86": 5935,
+    "Q-87": 6177,
+    "Q-88": 6585,
+    "Q-89": 6827,
+    "Q-90": 7271,
+    "Q-91": 7529,
+    "Q-92": 7918,
+    "Q-93": 8177,
+    "Q-94": 8683,
+    "Q-95": 8956,
+    "Q-96": 9422,
+    "Q-97": 9659,
+    "Q-98": 10153,
+    "Q-99": 10407,
+    "Q-100": 10962,
+    "Q-101": 11191,
+    "Q-102": 11590,
+    "Q-103": 11838,
+    "Q-104": 12278,
+    "Q-105": 12517,
+    "Q-106": 12946,
+    "Q-107": 13427,
+    "Q-108": 13674,
+    "Q-109": 14036,
+    "Q-110": 14563,
+    "Q-111": 20758,
+    "Q-112": 20997,
+    "Q-113": 21309,
+    "Q-114": 21652,
+    "Q-115": 21935,
+    "Q-116": 22335,
+    "Q-117": 22583,
+    "Q-118": 22966,
+    "Q-119": 23253,
+    "Q-120": 23738,
+    "Q-121": 24012,
+    "Q-122": 24534,
+    "Q-123": 24808,
+    "Q-124": 25281,
+    "Q-125": 25595,
+    "Q-126": 26087,
+    "Q-127": 26419,
+    "Q-128": 28568,
+    "Q-129": 27564,
+    "Q-130": 27926,
+    "Q-131": 28381,
+    "Q-132": 28685
+   }
+  },
+  "FTCCMP1": {
+   "klYT7WRltq0": {
+    "F-2": 0
+   },
+   "3pT9A_U-yJQ": {
+    "F-1": 0
+   },
+   "qmBNE58gvmE": {
+    "F-2": 0
+   },
+   "WnP4OZn4Q4A": {
+    "F-1": 0
+   },
+   "V0CktL2NywY": {
+    "F-2": 0
+   },
+   "XO1aABV5wvM": {
+    "F-1": 0
+   }
+  },
+  "USTXNOCMP": {
+   "Gdfkjf57K8A": {
+    "Q-7": 0
+   },
+   "VlksuF-AzJw": {
+    "Q-26": 0
+   },
+   "hmanreeerXg": {
+    "Q-35": 0
+   },
+   "PZkeQLocy-c": {
+    "Q-43": 0
+   },
+   "KdbmvDRnA0Q": {
+    "Q-53": 0
+   }
+  },
+  "USTXCECMPTSLA": {
+   "sS5JoQm_y3A": {
+    "SF2-3": 0
+   }
+  },
+  "USTXCECMPJHNS": {
+   "BVTozBCFwqo": {
+    "Q-48": 0
+   },
+   "Al0XXH6MXkU": {
+    "Q-42": 0
+   },
+   "04dk5cTaFA4": {
+    "Q-33": 0
+   },
+   "3aSInUarkSw": {
+    "Q-25": 0
+   },
+   "ZsRxuaKdLls": {
+    "Q-14": 0
+   },
+   "_8gmACWXwfY": {
+    "Q-8": 0
+   }
+  },
+  "USTXSOCMP3": {
+   "G7DiPCMDb58": {
+    "Q-50": 0
+   },
+   "YMTIetjz33U": {
+    "Q-40": 0
+   },
+   "La3TSDEDxXs": {
+    "Q-23": 0
+   },
+   "_avTCij09do": {
+    "Q-15": 0
+   },
+   "NGCn8HPGwt0": {
+    "Q-8": 0
+   }
+  },
+  "USTXSOCULT": {
+   "Z68DghQi0Po": {
+    "Q-43": 0
+   },
+   "hsGkwDQOZpU": {
+    "Q-20": 0
+   },
+   "CRSTjyrJClI": {
+    "Q-13": 0
+   },
+   "_PDd1Ol1e3A": {
+    "Q-7": 0
+   }
+  },
+  "USTXSOCMP": {
+   "Psf4XH6voTk": {
+    "F-2": 0
+   },
+   "GHhhE3GAiVI": {
+    "F-1": 0
+   },
+   "EyLpAsdJXyo": {
+    "Q-1": 0
+   },
+   "EjmcMPdbpZw": {
+    "Q-2": 0
+   }
+  },
+  "USTXCECCS": {
+   "paFSzr1DI5E": {
+    "F-1": 0
+   },
+   "i_KzoyWPBZE": {
+    "F-2": 0
+   },
+   "NVlAylYLS8E": {
+    "F-2": 0
+   },
+   "Q5kO3QuQ0zY": {
+    "F-3": 0
+   }
+  },
+  "USAZWAQ": {
+   "t6eq-tY5hIE": {
+    "F-1": 0
+   },
+   "fh0yB6SmRwM": {
+    "F-2": 0
+   },
+   "bMkwQqJ14lY": {
+    "F-3": 0
+   }
+  },
+  "USAZGOQ": {
+   "qX9Z8-hXb7c": {
+    "Q-9": 0
+   },
+   "3ME3Et4vhB4": {
+    "Q-17": 0
+   },
+   "P3g0mx8QBg8": {
+    "Q-18": 0
+   },
+   "dJDEUd-f-2w": {
+    "Q-19": 0
+   },
+   "mieAfYUWWGo": {
+    "Q-20": 0
+   },
+   "VmAqoZ32Auo": {
+    "Q-21": 0
+   },
+   "-Z65dJiovTo": {
+    "Q-22": 0
+   },
+   "D1m-QCOfhDg": {
+    "F-2": 0
+   },
+   "hd2hFcRYtXk": {
+    "Q-23": 0
+   },
+   "dCW-IjqndLk": {
+    "Q-24": 0
+   },
+   "W_ipi6a8HMM": {
+    "Q-25": 0
+   },
+   "0OqsnBjm5us": {
+    "F-1": 0
+   },
+   "ummy7tRW0Aw": {
+    "Q-1": 0
+   },
+   "M0VDxbe2YfI": {
+    "Q-2": 0
+   },
+   "-dnvht7p_f0": {
+    "Q-3": 0
+   },
+   "iNjVKgaObNw": {
+    "Q-4": 0
+   },
+   "hPdXg_pLUHc": {
+    "Q-5": 0
+   },
+   "lgGDMnlRTRI": {
+    "Q-6": 0
+   },
+   "J5dkZuWeDbA": {
+    "Q-7": 0
+   },
+   "oChE6_VCK00": {
+    "Q-8": 0
+   },
+   "d5g7lJ41u5k": {
+    "Q-10": 0
+   },
+   "DJAO0k7v1iA": {
+    "Q-11": 0
+   },
+   "h7R15uQjTtU": {
+    "Q-12": 0
+   },
+   "WMw_sTTFEak": {
+    "Q-13": 0
+   },
+   "6rbyfS9Mi94": {
+    "Q-14": 0
+   },
+   "TIhnjL_zsFc": {
+    "Q-15": 0
+   },
+   "GSUgy3tEF6U": {
+    "Q-16": 0
+   }
+  },
+  "USWYCMP": {
+   "51a7tWOND2k": {
+    "F-1": 0
+   },
+   "lFrcw0y64dM": {
+    "F-2": 0
+   },
+   "eI3ryw_2EqY": {
+    "Q-1": 0
+   },
+   "Js1YnZ8_noU": {
+    "Q-13": 0
+   },
+   "RGWN3vD2mLc": {
+    "Q-2": 0
+   }
+  },
+  "USIDCMP": {
+   "ivnXVRbTz9A": {
+    "Q-28": 0
+   },
+   "yT57HQOSmpQ": {
+    "Q-16": 0
+   },
+   "vpqU3BCLRwo": {
+    "Q-12": 0
+   }
+  },
+  "USWATUM1": {
+   "-v4xkrcDh-A": {
+    "Q-20": 0
+   },
+   "-x-G9Ft60Cs": {
+    "Q-18": 0
+   },
+   "sV4H-p9YTks": {
+    "Q-15": 0
+   },
+   "M7NFLqY0XeM": {
+    "Q-12": 0
+   },
+   "lRW-IxwhAEA": {
+    "Q-8": 0
+   },
+   "otlVAwWJ7fs": {
+    "Q-3": 0
+   },
+   "-0g_nPT4Qgw": {
+    "Q-23": 0
+   },
+   "e0l5JeBgFso": {
+    "Q-21": 0
+   },
+   "rb3-pXU5DYY": {
+    "Q-16": 0
+   },
+   "04zOBYdIU0A": {
+    "Q-14": 0
+   },
+   "ysLtEG-798Y": {
+    "Q-9": 0
+   },
+   "x3lMMGBNFMM": {
+    "Q-6": 0
+   },
+   "KxCDjq_akWA": {
+    "Q-3": 0
+   }
+  },
+  "USWATUM2": {
+   "aHVuWhjmQHg": {
+    "Q-23": 0
+   },
+   "5JXHybglghk": {
+    "Q-19": 0
+   },
+   "WYw07BPiokw": {
+    "Q-14": 0
+   },
+   "0LICotvE5To": {
+    "Q-8": 0
+   },
+   "05ilj-5y9H8": {
+    "Q-5": 0
+   },
+   "WtDUDUqZXQo": {
+    "Q-2": 0
+   },
+   "tZWUt45oT_8": {
+    "Q-20": 0
+   },
+   "rZutP1mI0Ck": {
+    "Q-18": 0
+   },
+   "qkkpeP-5xK4": {
+    "Q-15": 0
+   },
+   "roBqQrQOWL8": {
+    "Q-10": 0
+   },
+   "jwjA3ArIoI4": {
+    "Q-8": 0
+   },
+   "vGOHyzfs004": {
+    "Q-4": 0
+   }
+  },
+  "USNMALQ": {
+   "cfGIA8tymgA": {
+    "Q-21": 0
+   },
+   "-jvx3nYTlRM": {
+    "Q-20": 0
+   },
+   "vcI0q0OttdY": {
+    "Q-19": 0
+   },
+   "le-6vQGH9IY": {
+    "Q-18": 0
+   },
+   "9jfXhYtQx0g": {
+    "Q-17": 0
+   },
+   "IKm6D3Rsseo": {
+    "Q-16": 0
+   },
+   "H7HjNxpFqPg": {
+    "Q-15": 0
+   },
+   "8YsSiz1feZQ": {
+    "Q-14": 0
+   },
+   "v-JAAkD0JP0": {
+    "Q-13": 0
+   },
+   "RgbSfXAdGuA": {
+    "Q-12": 0
+   },
+   "rNfjplN-Opg": {
+    "Q-11": 0
+   },
+   "BSpA79-Ab1U": {
+    "Q-10": 0
+   },
+   "J6-meAHJAL0": {
+    "Q-9": 0
+   },
+   "qIP-k2SPrlM": {
+    "Q-8": 0
+   },
+   "DthLoosFmLY": {
+    "Q-7": 0
+   },
+   "KEjJy8BjXNc": {
+    "Q-6": 0
+   },
+   "5JRC3_mIeOg": {
+    "Q-5": 0
+   },
+   "NtxVe70u85c": {
+    "Q-4": 0
+   },
+   "yFK2QNpAKBU": {
+    "Q-3": 0
+   },
+   "_f6V4YdJXLI": {
+    "Q-2": 0
+   },
+   "NWsNDJ3y0Is": {
+    "Q-1": 0
+   }
+  },
+  "USUTPRQ": {
+   "IPgeGTYjoyA": {
+    "F-2": 0
+   }
+  },
+  "USMTEHQ": {
+   "J8ALuxS4twE": {
+    "Q-28": 0
+   },
+   "m9rxksqu84U": {
+    "Q-27": 0
+   },
+   "5SZJgSgPB2M": {
+    "Q-25": 0
+   },
+   "u_Wz14ef80Q": {
+    "Q-24": 0
+   },
+   "Lj49G71nBJ0": {
+    "Q-23": 0
+   },
+   "z1U4QZUROvE": {
+    "Q-22": 0
+   },
+   "cg7oEofB3EA": {
+    "Q-21": 0
+   },
+   "N3kyOat2B2U": {
+    "Q-20": 0
+   },
+   "e5-Zi-yGqkY": {
+    "Q-19": 0
+   },
+   "I7hRnIEArCI": {
+    "Q-17": 0
+   },
+   "e27hAQ6Jy7Y": {
+    "Q-17": 0
+   },
+   "zVb_IKCv4H4": {
+    "Q-14": 0
+   },
+   "ZpnsWvlvago": {
+    "Q-13": 0
+   },
+   "XPmyGWhq708": {
+    "Q-12": 0
+   },
+   "4xDdwSAcd8c": {
+    "Q-11": 0
+   },
+   "C6Wxqv-3QiU": {
+    "Q-10": 0
+   },
+   "R0Xvxio0WII": {
+    "Q-9": 0
+   },
+   "_-xhe_crK60": {
+    "Q-8": 0
+   },
+   "i4QL_1Xt-8o": {
+    "Q-7": 0
+   },
+   "o9BF106aEHc": {
+    "Q-5": 0
+   },
+   "PjdOPsKC_l8": {
+    "Q-4": 0
+   },
+   "M_u8skNaNuQ": {
+    "Q-2": 0
+   },
+   "4Dm13M9PllA": {
+    "Q-3": 0
+   }
+  },
+  "USWABRM1": {
+   "xr3pCnYfImU": {
+    "Q-23": 0
+   },
+   "4Ru12nJ28ko": {
+    "Q-20": 0
+   },
+   "geslFaSI5KE": {
+    "Q-21": 0
+   },
+   "ZKMKM1Yx2pM": {
+    "Q-24": 0
+   },
+   "F_oMstBzqXQ": {
+    "Q-22": 0
+   },
+   "l4nIVXOjIGo": {
+    "Q-17": 0
+   },
+   "wyWJ-tRDUJw": {
+    "Q-19": 0
+   },
+   "-BQqemItp9A": {
+    "Q-16": 0
+   },
+   "k13KjuDOj-Y": {
+    "Q-18": 0
+   },
+   "Pu_nMwJ6E-c": {
+    "Q-15": 0
+   },
+   "NkHTsRWr2Hc": {
+    "Q-14": 0
+   },
+   "OFwwPU5Q6zk": {
+    "Q-13": 0
+   },
+   "9m4y7jJzDws": {
+    "Q-12": 0
+   },
+   "vPg1nC9JV8g": {
+    "Q-11": 0
+   },
+   "CPL1wnAv9rA": {
+    "Q-10": 0
+   },
+   "7qcvUKffDh8": {
+    "Q-9": 0
+   },
+   "IAHW7bbQnBE": {
+    "Q-8": 0
+   },
+   "ctPfCOl5T7w": {
+    "Q-7": 0
+   },
+   "ya6aJ8SWYiU": {
+    "Q-6": 0
+   },
+   "lilL-UQIcdc": {
+    "Q-5": 0
+   },
+   "DGZ3RDJBBro": {
+    "Q-4": 0
+   },
+   "Rccj8sH5f0A": {
+    "Q-3": 0
+   },
+   "NKGNqeBtF_E": {
+    "Q-2": 0
+   },
+   "wYbPIdGiuSI": {
+    "Q-1": 0
+   },
+   "poybzjHSTk4": {
+    "Q-24": 0
+   },
+   "LfA_WAsNwLg": {
+    "Q-23": 0
+   },
+   "RZTo2_0L38w": {
+    "Q-22": 0
+   },
+   "wsbrjXXUuFw": {
+    "Q-21": 0
+   },
+   "_R1fiefz1Ow": {
+    "Q-20": 0
+   },
+   "HK_uzAgVBuo": {
+    "Q-19": 0
+   },
+   "kHiL_fRD55Y": {
+    "Q-18": 0
+   },
+   "jeRmg2Tzedc": {
+    "Q-17": 0
+   },
+   "Q4AmmqX2RgI": {
+    "Q-16": 0
+   },
+   "e2GPTnQO5qk": {
+    "Q-15": 0
+   },
+   "-qFdn0GIVmQ": {
+    "Q-14": 0
+   },
+   "orLhU0nsbws": {
+    "Q-13": 0
+   },
+   "Iwmqcxo-P80": {
+    "Q-12": 0
+   },
+   "swHI1r-n-JQ": {
+    "Q-11": 0
+   },
+   "jazGCrbJUjc": {
+    "Q-10": 0
+   },
+   "2qDLcuZWbrc": {
+    "Q-9": 0
+   },
+   "xDjdH8s1cc8": {
+    "Q-8": 0
+   },
+   "quKTJFe7jcE": {
+    "Q-7": 0
+   },
+   "Xgu2HcwahVs": {
+    "Q-6": 0
+   },
+   "AHpTe5WvmbA": {
+    "Q-5": 0
+   },
+   "sE92H3zRouA": {
+    "Q-4": 0
+   },
+   "qAa4jzTwHgU": {
+    "Q-3": 0
+   },
+   "uzjtWlvTCO4": {
+    "Q-2": 0
+   },
+   "b2gk_8IzaNo": {
+    "Q-1": 0
+   }
+  },
+  "USWABES4": {
+   "3wanJ6YZBgM": {
+    "Q-1": 0
+   },
+   "EDzhgGGNVhM": {
+    "Q-2": 0
+   },
+   "9jMc_jEA6L8": {
+    "Q-3": 0
+   },
+   "uk19CAv5UcQ": {
+    "Q-4": 0
+   },
+   "YxxefdW9lAk": {
+    "Q-5": 0
+   },
+   "DTRRlWkTeP4": {
+    "Q-6": 0
+   },
+   "ZAUJO9ccjZo": {
+    "Q-7": 0
+   },
+   "Z2_DT9HEAOw": {
+    "Q-8": 0
+   },
+   "cV_y_fY_dyI": {
+    "Q-9": 0
+   },
+   "z1qyA6SHVoQ": {
+    "Q-10": 0
+   },
+   "QjVlcSPxcNU": {
+    "Q-11": 0
+   },
+   "tBfggGlsffA": {
+    "Q-12": 0
+   },
+   "-xrXhGYm94A": {
+    "Q-13": 0
+   },
+   "69tTfhHpUNQ": {
+    "Q-14": 0
+   },
+   "gmK5-HW42K0": {
+    "Q-16": 0
+   },
+   "SMHGjk4IQzU": {
+    "Q-17": 0
+   },
+   "RyWtmKm_ttc": {
+    "Q-18": 0
+   },
+   "AWWqCw5nm6k": {
+    "Q-19": 0
+   },
+   "XhbOFxbzf-c": {
+    "Q-20": 0
+   },
+   "Bo0mlv1Z9FE": {
+    "Q-21": 0
+   },
+   "XIp9gfsPK10": {
+    "Q-23": 0
+   },
+   "3qotym9SfxE": {
+    "Q-24": 0
+   },
+   "-FMuOwY_s7c": {
+    "Q-25": 0
+   },
+   "fGugx-R_Tdg": {
+    "SF1-1": 0
+   },
+   "lGVkSOp5Y1I": {
+    "SF1-2": 0
+   },
+   "blw5YyND69k": {
+    "SF2-1": 0
+   },
+   "9cvxy00JsJE": {
+    "SF2-2": 0
+   },
+   "sY2GLW4xTsE": {
+    "F-1": 0
+   },
+   "1Gm3gz871fA": {
+    "F-2": 0
+   }
+  },
+  "USWABAM2": {
+   "qzY2_TDoILY": {
+    "Q-24": 0
+   },
+   "2cLjVTygxsg": {
+    "Q-23": 0
+   },
+   "sZlv4JPbjm0": {
+    "Q-22": 0
+   },
+   "LBm2QvJbwhw": {
+    "Q-21": 0
+   },
+   "iXfHSkqiMsQ": {
+    "Q-20": 0
+   },
+   "TV6i4P7bG8U": {
+    "Q-19": 0
+   },
+   "HH-OJIlPjvc": {
+    "Q-18": 0
+   },
+   "2C1vhy2IVC8": {
+    "Q-17": 0
+   },
+   "a7n2LJX5TNQ": {
+    "Q-16": 0
+   },
+   "TU3EMSMlljw": {
+    "Q-15": 0
+   },
+   "T6TJ2899Rv8": {
+    "Q-14": 0
+   },
+   "y-2fX8Ubhac": {
+    "Q-13": 0
+   },
+   "PmZVNU7O4Q8": {
+    "Q-12": 0
+   },
+   "_jM8vdcJr2M": {
+    "Q-11": 0
+   },
+   "MU-ND5FWFpE": {
+    "Q-10": 0
+   },
+   "umEccHzPqiI": {
+    "Q-9": 0
+   },
+   "KY9i927fbLo": {
+    "Q-8": 0
+   },
+   "7EEYI2RE3sQ": {
+    "Q-7": 0
+   },
+   "L1nNAKxwN4Q": {
+    "Q-6": 0
+   },
+   "-HMICxuvzQE": {
+    "Q-5": 0
+   },
+   "vjbAb0Z5THo": {
+    "Q-4": 0
+   },
+   "ZkWtZZcgT74": {
+    "Q-3": 0
+   },
+   "9t_5hQIFxaA": {
+    "Q-2": 0
+   },
+   "PnWZs2Imb8U": {
+    "Q-1": 0
+   }
+  },
+  "USWABRM2": {
+   "UVwDmHnkgxQ": {
+    "Q-24": 0
+   },
+   "5efZ1krLR68": {
+    "Q-23": 0
+   },
+   "-F-xn8vXzXY": {
+    "Q-22": 0
+   },
+   "sGeCEGZCHjU": {
+    "Q-21": 0
+   },
+   "rIM7d3k6vxU": {
+    "Q-20": 0
+   },
+   "hl7PYif06GE": {
+    "Q-19": 0
+   },
+   "bfSejt4osfo": {
+    "Q-18": 0
+   },
+   "Aw1omA0Nz6k": {
+    "Q-17": 0
+   },
+   "Fqf1VMR5F0I": {
+    "Q-16": 0
+   },
+   "KF1Ft5MwBcA": {
+    "Q-15": 0
+   },
+   "jvrpjtx5fkE": {
+    "Q-14": 0
+   },
+   "u4NhC6SSbrA": {
+    "Q-13": 0
+   },
+   "rXJxd4vTyGc": {
+    "Q-12": 0
+   },
+   "i4l6sFxVQMU": {
+    "Q-11": 0
+   },
+   "fvKXlprt6p0": {
+    "Q-10": 0
+   },
+   "jJ-6cGMn7Vo": {
+    "Q-9": 0
+   },
+   "Nwk-A4VuLW4": {
+    "Q-8": 0
+   },
+   "H2T91ULf_1Y": {
+    "Q-7": 0
+   },
+   "0rceFRRYpX4": {
+    "Q-6": 0
+   },
+   "wm_oXZ5iJpk": {
+    "Q-5": 0
+   },
+   "btbVCeJVQsU": {
+    "Q-4": 0
+   },
+   "h4B-RFX0ZAA": {
+    "Q-3": 0
+   },
+   "BXaJDGxK37Y": {
+    "Q-2": 0
+   },
+   "0QDJy8nwf_w": {
+    "Q-1": 0
+   }
+  },
+  "USWASAM2": {
+   "c3IzmEM9aX0": {
+    "Q-21": 0
+   },
+   "V0Fqt2dAJJU": {
+    "Q-20": 0
+   },
+   "QNjR5WfSPkA": {
+    "Q-19": 0
+   },
+   "o447VP2xNH8": {
+    "Q-18": 0
+   },
+   "EMUBhHAucGw": {
+    "Q-17": 0
+   },
+   "8CngR3xy_JQ": {
+    "Q-16": 0
+   },
+   "hocuvwu-6tE": {
+    "Q-15": 0
+   },
+   "G0TL4zBqEHs": {
+    "Q-14": 0
+   },
+   "nncGfgsJNbQ": {
+    "Q-13": 0
+   },
+   "cKpzCN0FJss": {
+    "Q-12": 0
+   },
+   "BCylbmbFSVk": {
+    "Q-11": 0
+   },
+   "fGIh-6ejf0U": {
+    "Q-10": 0
+   },
+   "ADHsKlXCPbE": {
+    "Q-9": 0
+   },
+   "8f8D-zOOgZM": {
+    "Q-8": 0
+   },
+   "SNNGSTLkB1U": {
+    "Q-7": 0
+   },
+   "fmIwpqM9teY": {
+    "Q-6": 0
+   },
+   "5tC_l4VNc1g": {
+    "Q-5": 0
+   },
+   "1lpeKjtZcUI": {
+    "Q-4": 0
+   },
+   "08moRuTc96o": {
+    "Q-3": 0
+   },
+   "hjbleycmFGA": {
+    "Q-2": 0
+   },
+   "oHVVIeIw2eE": {
+    "Q-1": 0
+   }
+  },
+  "USWAKNM1": {
+   "OhgzATYi5aI": {
+    "Q-12": 0
+   },
+   "e7Vmk3ku9bU": {
+    "Q-11": 0
+   },
+   "_2I8ZeI15XY": {
+    "Q-10": 0
+   },
+   "CZvjD1-vuiM": {
+    "Q-9": 0
+   },
+   "iP53vsa4TKM": {
+    "Q-8": 0
+   },
+   "d8keuhEyLYI": {
+    "Q-7": 0
+   },
+   "MJRUEHfObbs": {
+    "Q-6": 0
+   },
+   "OHmpnW1zjiY": {
+    "Q-5": 0
+   },
+   "L25bS5tgV00": {
+    "Q-4": 0
+   },
+   "0T2W8ns1KZU": {
+    "Q-3": 0
+   },
+   "ved138FzOnI": {
+    "Q-2": 0
+   },
+   "nMHah6ZxE3o": {
+    "Q-1": 0
+   }
+  },
+  "USWASAM1": {
+   "Ni_lbZZKd_g": {
+    "Q-21": 0
+   },
+   "P4qamZNgo9g": {
+    "Q-20": 0
+   },
+   "GO4-lwmJ5mA": {
+    "Q-19": 0
+   },
+   "dv2lGb5Sxlc": {
+    "Q-18": 0
+   },
+   "vU66lCL2Pws": {
+    "Q-17": 0
+   },
+   "mzk5TBbI55A": {
+    "Q-16": 0
+   },
+   "RpOSILwxGfI": {
+    "Q-15": 0
+   },
+   "R382ZmDtBAw": {
+    "Q-14": 0
+   },
+   "qI6_pqZ-Afo": {
+    "Q-13": 0
+   },
+   "ik_Dd7lxBgg": {
+    "Q-12": 0
+   },
+   "6ZC1uf2mIDE": {
+    "Q-11": 0
+   },
+   "3KMmUpwoQN4": {
+    "Q-10": 0
+   },
+   "Kjhv72o4jRo": {
+    "Q-9": 0
+   },
+   "kXuFIMYY0XU": {
+    "Q-8": 0
+   },
+   "0Z3S3CvAOW8": {
+    "Q-7": 0
    }
   }
  },
@@ -318,6 +8212,2273 @@
    },
    "m5mNF5f_RZ8": {
     "Q-19": 0
+   }
+  },
+  "USCANOSBM3": {
+   "5KZPbZD3NTU": {
+    "Q-1": 0
+   },
+   "L3CJMXk6qUA": {
+    "Q-2": 0
+   },
+   "grvERP7cuLg": {
+    "Q-3": 0
+   },
+   "Xbl4OyCXssA": {
+    "Q-4": 0
+   },
+   "j8ZDX3oYJmU": {
+    "Q-5": 0
+   },
+   "VLA7IMai38o": {
+    "Q-6": 0
+   },
+   "_WwJkUNNXVI": {
+    "Q-7": 0
+   },
+   "WQ8Em5S_LwM": {
+    "Q-8": 0
+   },
+   "XWC-9HJYh1s": {
+    "Q-9": 0
+   },
+   "spfQC9p6zKs": {
+    "Q-10": 0
+   },
+   "QTIzZwUOQ3w": {
+    "Q-11": 0
+   },
+   "uv2CczMyHKk": {
+    "Q-12": 0
+   },
+   "2US9Lbak8vQ": {
+    "Q-13": 0
+   },
+   "zHFURi25iFk": {
+    "Q-14": 0
+   },
+   "_TZUoPiemJg": {
+    "Q-15": 0
+   },
+   "vM9bpB22Po8": {
+    "Q-16": 0
+   },
+   "HyjQg5waOw8": {
+    "Q-17": 0
+   },
+   "6UG8tzZiHhI": {
+    "Q-18": 0
+   }
+  },
+  "USCANOSBM2": {
+   "IcnpnemTlgI": {
+    "Q-1": 0
+   },
+   "DWmLBVLG1W8": {
+    "Q-2": 0
+   },
+   "RBrrNdZ0DwQ": {
+    "Q-3": 0
+   },
+   "sQp8lpY_GsE": {
+    "Q-4": 0
+   },
+   "kwA6Umnfoz8": {
+    "Q-5": 0
+   },
+   "cJoyJaSqoYc": {
+    "Q-6": 0
+   },
+   "_fykI41HuFI": {
+    "Q-7": 0
+   },
+   "yvNYEI7gOMg": {
+    "Q-8": 0
+   },
+   "JdOC6t1KUoo": {
+    "Q-9": 0
+   },
+   "M4B6kFT77N0": {
+    "Q-10": 0
+   },
+   "dOlqu1tC-zU": {
+    "Q-11": 0
+   },
+   "G7n7GlTIBks": {
+    "Q-12": 0
+   },
+   "XbTxKlAVVS0": {
+    "Q-14": 0
+   },
+   "9B6tgWjghnE": {
+    "Q-13": 0
+   },
+   "k-E-dSV5K9Y": {
+    "Q-15": 0
+   },
+   "zEBIO66e-lI": {
+    "Q-16": 0
+   },
+   "NQxrXNevu8U": {
+    "Q-17": 0
+   },
+   "4Pxm4z-P1Bg": {
+    "Q-18": 0
+   },
+   "Fik1CQMxHUA": {
+    "Q-19": 0
+   }
+  },
+  "USCALA7O2BLT1": {
+   "6T-mRhmgbC4": {
+    "F-1": 0
+   },
+   "_Rel73KYI1E": {
+    "Q-16": 0
+   },
+   "zK_D4XWujgg": {
+    "Q-11": 0
+   },
+   "XvSdf6S_HWs": {
+    "Q-4": 0
+   }
+  },
+  "USCALSCMP": {
+   "g8jne_4q_Ls": {
+    "F-2": 0
+   },
+   "m_zCbhaj1cs": {
+    "F-1": 0
+   }
+  },
+  "USCANOOAQ": {
+   "SO_R1LUIJsg": {
+    "F-1": 0
+   },
+   "EpQtZcwHXFk": {
+    "F-2": 0
+   }
+  },
+  "USCALAEM3": {
+   "WQFckAtlfYM": {
+    "Q-14": 0
+   },
+   "juTwrUNqw0U": {
+    "Q-11": 0
+   },
+   "J8QAgClOyl4": {
+    "Q-12": 0
+   },
+   "2kethEVZViM": {
+    "Q-13": 0
+   },
+   "f1X7JzY3OdE": {
+    "Q-10": 0
+   },
+   "g-A5TLsqb2Q": {
+    "Q-6": 0
+   },
+   "sAYAO4CNf-A": {
+    "Q-9": 0
+   },
+   "YbFg5QzRl7I": {
+    "Q-7": 0
+   },
+   "1xh3bC45MRw": {
+    "Q-5": 0
+   },
+   "aPyU5vmvPtc": {
+    "Q-4": 0
+   },
+   "R7FTn9vYFGQ": {
+    "Q-3": 0
+   },
+   "AxHZBoaH63w": {
+    "Q-8": 0
+   },
+   "oQx71YeG9Ng": {
+    "Q-2": 0
+   },
+   "swhrreV1xhY": {
+    "Q-1": 0
+   }
+  },
+  "USCALAEM2": {
+   "3AVYY6Cd7-s": {
+    "Q-11": 0
+   },
+   "mjK0vRFdaNE": {
+    "Q-14": 0
+   },
+   "_ZQtsTBxpxk": {
+    "Q-12": 0
+   },
+   "yNEt_qaZhmY": {
+    "Q-13": 0
+   },
+   "E82ClwKplzk": {
+    "Q-11": 0
+   },
+   "2G7MezqKfeU": {
+    "Q-10": 0
+   },
+   "jwJ_JJItCpA": {
+    "Q-8": 0
+   },
+   "w7m8K40L_tU": {
+    "Q-9": 0
+   },
+   "T9sH4G3VkFM": {
+    "Q-6": 0
+   },
+   "ojuM1bKV1KI": {
+    "Q-5": 0
+   },
+   "Y27KnmjprgY": {
+    "Q-7": 0
+   },
+   "AvGWVSHlLvM": {
+    "Q-4": 0
+   },
+   "3OlRP09_m2E": {
+    "Q-2": 0
+   },
+   "sK68vx02DP0": {
+    "Q-3": 0
+   },
+   "x1WclhcCIx8": {
+    "Q-1": 0
+   }
+  },
+  "USCALAEM1": {
+   "9poIRgVuLv0": {
+    "Q-1": 0
+   },
+   "0JXSGjEaqoU": {
+    "Q-4": 0
+   },
+   "3lq8rly_YxQ": {
+    "Q-2": 0
+   },
+   "La6nIM2Se7g": {
+    "Q-3": 0
+   },
+   "pVxhYycmeHo": {
+    "Q-6": 0
+   },
+   "c-RO-j9XrC4": {
+    "Q-5": 0
+   },
+   "yV1ZDg6_dlE": {
+    "Q-9": 0
+   },
+   "_9KSBzAt0Pk": {
+    "Q-7": 0
+   },
+   "bB7lGhHD_xk": {
+    "Q-8": 0
+   },
+   "G1TxC_acQAM": {
+    "Q-10": 0
+   },
+   "Q_yQd0YiF_8": {
+    "Q-11": 0
+   },
+   "F-k6NyeCElI": {
+    "Q-13": 0
+   },
+   "d_ATG4eYt0k": {
+    "Q-14": 0
+   },
+   "eTzgh8cjevQ": {
+    "Q-12": 0
+   }
+  },
+  "USCALAEM0": {
+   "sxYRkptWFJ8": {
+    "Q-6": 0
+   },
+   "tWPTXVnN7tA": {
+    "Q-5": 0
+   },
+   "_ZD_kUrHfRI": {
+    "Q-4": 0
+   },
+   "hrR-rFtk6Iw": {
+    "Q-7": 0
+   },
+   "qVVopzFBGbE": {
+    "Q-10": 0
+   },
+   "5y1CakUw-HI": {
+    "Q-3": 0
+   },
+   "2ky8GrRjFhg": {
+    "Q-9": 0
+   },
+   "5CK4cf4U-Ss": {
+    "Q-2": 0
+   },
+   "1_IdJK2CeiE": {
+    "Q-8": 0
+   },
+   "PQcuwyOJLaI": {
+    "Q-1": 0
+   }
+  },
+  "USIAJPM1": {
+   "4z407sM3WZo": {
+    "Q-1": 362,
+    "Q-2": 901,
+    "Q-3": 1298,
+    "Q-4": 2113,
+    "Q-5": 2555,
+    "Q-6": 2846,
+    "Q-7": 3174,
+    "Q-8": 3417,
+    "Q-9": 4102,
+    "Q-10": 4428,
+    "Q-11": 4714,
+    "Q-12": 5335,
+    "Q-13": 5898,
+    "Q-14": 6092,
+    "Q-15": 6475,
+    "Q-16": 6770,
+    "Q-17": 9652,
+    "Q-18": 9926,
+    "Q-19": 10229,
+    "Q-20": 10450,
+    "Q-21": 10745,
+    "Q-22": 11001,
+    "Q-23": 11290,
+    "Q-24": 11588
+   }
+  },
+  "USIAJPM2": {
+   "NjTZUYJ7FCA": {
+    "Q-1": 2177,
+    "Q-2": 2792,
+    "Q-3": 3169,
+    "Q-4": 3436,
+    "Q-5": 3736,
+    "Q-6": 4036,
+    "Q-7": 4297,
+    "Q-8": 4738,
+    "Q-9": 5034,
+    "Q-10": 5370,
+    "Q-11": 5815,
+    "Q-12": 6128,
+    "Q-13": 9417,
+    "Q-14": 9794,
+    "Q-15": 10191,
+    "Q-16": 10430,
+    "Q-17": 11137,
+    "Q-18": 11465,
+    "Q-19": 11881,
+    "Q-20": 12130,
+    "Q-21": 12451,
+    "Q-22": 13071,
+    "Q-23": 13362,
+    "Q-24": 13737,
+    "Q-25": 14024,
+    "Q-26": 14485,
+    "Q-27": 14729
+   }
+  },
+  "USIAJPM4": {
+   "FHBsDuKApcU": {
+    "Q-1": 749,
+    "Q-2": 1237,
+    "Q-3": 1868,
+    "Q-4": 2120,
+    "Q-5": 2445,
+    "Q-6": 3022,
+    "Q-7": 3548,
+    "Q-8": 4206,
+    "Q-9": 3869,
+    "Q-10": 4170,
+    "Q-11": 4627,
+    "Q-12": 4980,
+    "Q-13": 5340,
+    "Q-14": 5625,
+    "Q-15": 5971,
+    "Q-16": 8515,
+    "Q-17": 9137,
+    "Q-18": 9399,
+    "Q-19": 9659,
+    "Q-20": 10101,
+    "Q-21": 10470,
+    "Q-22": 11195,
+    "Q-23": 11475,
+    "Q-24": 11940,
+    "Q-25": 12300,
+    "Q-26": 12695,
+    "Q-27": 13330,
+    "Q-28": 13581,
+    "Q-29": 13581,
+    "Q-30": 13915
+   }
+  },
+  "USIAJPM5": {
+   "TSYOxByjA6g": {
+    "Q-1": 430,
+    "Q-2": 885,
+    "Q-3": 1235,
+    "Q-4": 1537,
+    "Q-5": 1891,
+    "Q-6": 2153,
+    "Q-7": 2406,
+    "Q-8": 2763,
+    "Q-9": 3177,
+    "Q-10": 3471,
+    "Q-11": 3827,
+    "Q-12": 4097,
+    "Q-13": 7639,
+    "Q-14": 8021,
+    "Q-15": 8369,
+    "Q-16": 8800,
+    "Q-17": 9073,
+    "Q-18": 9454,
+    "Q-19": 9728,
+    "Q-20": 10179,
+    "Q-21": 10458,
+    "Q-22": 10835,
+    "Q-23": 11760,
+    "Q-24": 12883,
+    "Q-25": 13327,
+    "Q-26": 13691,
+    "Q-27": 13964,
+    "Q-28": 14283,
+    "Q-29": 14678,
+    "Q-30": 14941,
+    "Q-31": 15481,
+    "Q-32": 15750,
+    "Q-33": 16062
+   }
+  },
+  "USNCELS": {
+   "Nz4rYOXKNFg": {
+    "Q-1": 7752,
+    "Q-2": 8378,
+    "Q-3": 9075,
+    "Q-4": 12188,
+    "Q-5": 12640,
+    "Q-6": 13173,
+    "Q-7": 13698,
+    "Q-8": 14270,
+    "Q-9": 14776,
+    "Q-10": 15380,
+    "Q-11": 15892,
+    "Q-12": 16462,
+    "Q-13": 17014,
+    "Q-15": 18203,
+    "Q-16": 18670,
+    "Q-17": 19212,
+    "Q-18": 19788,
+    "Q-19": 20236,
+    "Q-20": 20675,
+    "Q-21": 21260,
+    "Q-22": 21800,
+    "Q-23": 22277,
+    "SF1-1": 23537,
+    "SF2-1": 24235,
+    "SF1-2": 24888,
+    "SF2-2": 25470,
+    "F-1": 26300,
+    "F-2": 27062
+   }
+  },
+  "USINGRQ": {
+   "K7PUP47fg4Y": {
+    "Q-1": 0
+   },
+   "XTd95hfhDrs": {
+    "Q-2": 0
+   },
+   "5P4kn-CE9aQ": {
+    "Q-3": 0
+   },
+   "Enk8kCYr2Qk": {
+    "Q-4": 0
+   },
+   "uZSL0pTrawA": {
+    "Q-5": 0
+   },
+   "UnfBp_ilR-I": {
+    "Q-6": 0
+   },
+   "OkY6FIXOXL8": {
+    "Q-7": 0
+   },
+   "q_UN6uVuPSA": {
+    "Q-8": 0
+   },
+   "OG6FgCf694g": {
+    "Q-9": 0
+   },
+   "xqOIHTOnzV8": {
+    "Q-10": 0
+   },
+   "7A4ZF8iztkk": {
+    "Q-11": 0
+   },
+   "oreQAm_ijdY": {
+    "Q-12": 0
+   },
+   "Eq5QLCIhvWk": {
+    "Q-13": 0
+   },
+   "kLY14gt8Dn4": {
+    "Q-14": 0
+   },
+   "8qqLbrLfkt0": {
+    "Q-15": 0
+   },
+   "sBJxmKyEW9A": {
+    "Q-16": 0
+   },
+   "4oi3nhj8y0Y": {
+    "Q-17": 0
+   },
+   "2Eiqwa_HV4k": {
+    "Q-18": 0
+   },
+   "_mN8GnWYpRg": {
+    "Q-19": 0
+   },
+   "SCEhkBqR3sg": {
+    "Q-20": 0
+   },
+   "7HnCgrDIAUo": {
+    "Q-21": 0
+   },
+   "d8YIKWQpX44": {
+    "Q-22": 0
+   },
+   "Uxu_9FAbbPc": {
+    "Q-23": 0
+   },
+   "S-jjgXrKpOQ": {
+    "Q-24": 0
+   },
+   "f9OXzyVoxYA": {
+    "Q-25": 0
+   },
+   "_-LvglYGrrM": {
+    "Q-26": 0
+   },
+   "ARwinpkNfcg": {
+    "Q-27": 0
+   },
+   "CgbE6szf8Bs": {
+    "Q-28": 0
+   },
+   "XVBPPW_d55w": {
+    "Q-29": 0
+   },
+   "wOOuZQHtS-w": {
+    "Q-30": 0
+   },
+   "PDeZkQkFEIg": {
+    "Q-31": 0
+   },
+   "YkZxMQj2NpU": {
+    "Q-32": 0
+   },
+   "fy3DYoxvP0Y": {
+    "Q-33": 0
+   },
+   "ZoebivbkdlQ": {
+    "Q-34": 0
+   },
+   "cAHk7iY4QnE": {
+    "Q-35": 0
+   }
+  },
+  "USINDUQ": {
+   "H_1n5RBTZuM": {
+    "Q-1": 0
+   },
+   "3daYC8vh4Vo": {
+    "Q-2": 0
+   },
+   "h1dqQ167PUY": {
+    "Q-3": 0
+   },
+   "oVX9Jj3YneY": {
+    "Q-4": 0
+   },
+   "vmIihec6AME": {
+    "Q-5": 0
+   },
+   "_eGTKL9MJRg": {
+    "Q-6": 0
+   },
+   "OLTaYdDG4YI": {
+    "Q-7": 0
+   },
+   "0PRE-FcdKjk": {
+    "Q-8": 0
+   },
+   "d-mDqmQEEXY": {
+    "Q-9": 0
+   },
+   "oqVdO5A1Izk": {
+    "Q-10": 0
+   },
+   "onev4e-UVQw": {
+    "Q-11": 0
+   },
+   "oxP-8YQrLW0": {
+    "Q-12": 0
+   },
+   "fCAm3kJ2iyk": {
+    "Q-13": 0
+   },
+   "dI_b7NU38H8": {
+    "Q-14": 0
+   },
+   "PsZZtIDG6xI": {
+    "Q-15": 0
+   },
+   "FsfMIURRT7U": {
+    "Q-16": 0
+   },
+   "qSPERaeMN3E": {
+    "Q-17": 0
+   },
+   "ctOGDpSmQ7Y": {
+    "Q-18": 0
+   },
+   "IQKh7piNmeE": {
+    "Q-19": 0
+   },
+   "oRfVvQkv94Y": {
+    "Q-20": 0
+   },
+   "rzWC7GNFvg8": {
+    "Q-21": 0
+   },
+   "PzIC4oaubC8": {
+    "Q-22": 0
+   },
+   "qFoAIwpAf0Q": {
+    "Q-23": 0
+   },
+   "O7m_0CzmXlE": {
+    "Q-24": 0
+   },
+   "2JcmbiwDkVQ": {
+    "Q-25": 0
+   },
+   "KIbE-1PfaRM": {
+    "Q-26": 0
+   },
+   "y_CdEomkoz8": {
+    "Q-27": 0
+   },
+   "NYbOk3eZwHg": {
+    "Q-28": 0
+   },
+   "MemHIWPoYtU": {
+    "Q-29": 0
+   },
+   "zKK10dhUxLI": {
+    "Q-30": 0
+   },
+   "KL8lB6dn6mA": {
+    "Q-31": 0
+   },
+   "UNpxibsy-XY": {
+    "Q-32": 0
+   },
+   "W3zj-yG8sHI": {
+    "Q-33": 0
+   },
+   "Eo8yrywXQVE": {
+    "Q-34": 0
+   },
+   "lD8VAv6Htbc": {
+    "Q-35": 0
+   }
+  },
+  "USINLAQ": {
+   "6D8EahuZHKg": {
+    "Q-1": 0
+   },
+   "AuHYc98L-GM": {
+    "Q-2": 0
+   },
+   "6HMSHLzSCGE": {
+    "Q-3": 0
+   },
+   "WT9ovLsxA_I": {
+    "Q-5": 0
+   },
+   "Mdi64BrCzMY": {
+    "Q-6": 0
+   },
+   "L1fBmtaShzU": {
+    "Q-7": 0
+   },
+   "mpYzPVxQFQ8": {
+    "Q-8": 0
+   },
+   "qI8s_QnRdAw": {
+    "Q-9": 0
+   },
+   "KJw6iIbrlMU": {
+    "Q-10": 0
+   },
+   "uMVR4qCGbTg": {
+    "Q-11": 0
+   },
+   "yMYcQA5pVk0": {
+    "Q-12": 0
+   },
+   "seEoKVbJ--w": {
+    "Q-13": 0
+   },
+   "tPdRjJK4AW4": {
+    "Q-14": 0
+   },
+   "I9lNiYNYRkE": {
+    "Q-15": 0
+   },
+   "IXRo7Onzsq0": {
+    "Q-16": 0
+   },
+   "ZcbCtB7UjmE": {
+    "Q-17": 0
+   },
+   "yP3jSIGp2kM": {
+    "Q-18": 0
+   },
+   "vkQZE0UdatI": {
+    "Q-19": 0
+   },
+   "L5oSX6A9Rwk": {
+    "Q-20": 0
+   },
+   "rodpKi-yljo": {
+    "Q-21": 0
+   },
+   "oYLj5Bblgdg": {
+    "Q-22": 0
+   },
+   "e7zLUeATpak": {
+    "Q-23": 0
+   },
+   "1WuBXFJ5_ss": {
+    "Q-24": 0
+   },
+   "udff2YYWWgs": {
+    "Q-25": 0
+   },
+   "j8MCKR3esTc": {
+    "Q-26": 0
+   },
+   "nMWXHH1BcQ0": {
+    "Q-27": 0
+   },
+   "12UhXOajyR0": {
+    "Q-28": 0
+   },
+   "g_WilCqEUOk": {
+    "Q-29": 0
+   },
+   "9QeByy0u5pQ": {
+    "Q-30": 0
+   },
+   "Eg_T6Arymfk": {
+    "Q-31": 0
+   },
+   "WeogBgBnP_k": {
+    "Q-32": 0
+   },
+   "dDu0sGq4DUU": {
+    "Q-33": 0
+   }
+  },
+  "USWIBRQ": {
+   "z5_NoG7kJPo": {
+    "Q-1": 0
+   },
+   "xgsfk7TuA_U": {
+    "Q-6": 0
+   },
+   "rEtsxJ8Kj80": {
+    "Q-2": 0
+   },
+   "q2vUzVjWFRY": {
+    "Q-11": 0
+   },
+   "n84YSaw7CLw": {
+    "F-2": 0
+   },
+   "lgJqX2Osh2Q": {
+    "Q-15": 0
+   },
+   "j0t8MrSaedQ": {
+    "Q-16": 0
+   },
+   "gve3KAtRsuY": {
+    "Q-8": 0
+   },
+   "gkCTXeYzBpY": {
+    "Q-14": 0
+   },
+   "g_l_gzU9b6g": {
+    "Q-12": 0
+   },
+   "gPk981iL58s": {
+    "Q-10": 0
+   },
+   "cPwl2TqWEt4": {
+    "Q-4": 0
+   },
+   "X-fBESVHO8o": {
+    "Q-9": 0
+   },
+   "VAa-6F-k-To": {
+    "Q-13": 0
+   },
+   "TNl8e8HBozo": {
+    "F-1": 0
+   },
+   "Qh_Irt6oCtM": {
+    "Q-1": 0
+   },
+   "OPOxK1ZyoB0": {
+    "Q-2": 0
+   },
+   "NucwJnNRerE": {
+    "Q-2": 0
+   },
+   "Mp8dtTERF8o": {
+    "Q-7": 0
+   },
+   "FvOlrEbb6w4": {
+    "F-3": 0
+   },
+   "9MpoiXDCCeU": {
+    "Q-1": 0
+   },
+   "8Tj7HhKd6nw": {
+    "Q-3": 0
+   },
+   "4eSNR21cVis": {
+    "Q-5": 0
+   },
+   "-291WT8wlQA": {
+    "Q-17": 0
+   }
+  },
+  "CAONAUQ": {
+   "gm_IdNPnKT0": {
+    "Q-1": 0
+   },
+   "uDSqC_9kv80": {
+    "Q-2": 0
+   },
+   "rgafe6bxadY": {
+    "Q-3": 0
+   },
+   "BqdZuw0YqdU": {
+    "Q-6": 0
+   },
+   "lJeJsUpbWCs": {
+    "Q-7": 0
+   },
+   "-GBrb5aLJII": {
+    "Q-8": 0
+   },
+   "Khu1ZJqNC9g": {
+    "Q-9": 0
+   },
+   "dddQHXXTwlA": {
+    "Q-10": 0
+   },
+   "ml81oJxT_HM": {
+    "Q-11": 0
+   },
+   "HUsiRj3A-1o": {
+    "Q-12": 0
+   },
+   "54OABG-v2_s": {
+    "Q-13": 0
+   },
+   "6eCJ0B-U_Mc": {
+    "Q-14": 0
+   },
+   "8hIUZkhTXeE": {
+    "Q-27": 0
+   },
+   "MS2ljF_QYPo": {
+    "Q-26": 0
+   },
+   "BU3QthjWQcc": {
+    "Q-25": 0
+   },
+   "sAOwSuZEOCs": {
+    "Q-24": 0
+   },
+   "pgV0wNmuQI4": {
+    "Q-23": 0
+   },
+   "9C-zYz8wKG8": {
+    "Q-22": 0
+   },
+   "mq42rrVd3Kk": {
+    "Q-21": 0
+   },
+   "HS4QHi5HvNw": {
+    "Q-20": 0
+   },
+   "TNdGe4ZW1J0": {
+    "Q-19": 0
+   },
+   "HvxvxrUtDXE": {
+    "Q-18": 0
+   },
+   "cit0CIfyZlU": {
+    "Q-17": 0
+   },
+   "s27dS7Gx3yI": {
+    "Q-16": 0
+   },
+   "jPnaYb7jWdU": {
+    "Q-15": 0
+   },
+   "74Te3HfuSEQ": {
+    "Q-5": 0
+   },
+   "4hIlbbDSwOU": {
+    "Q-4": 0
+   }
+  },
+  "ILCMPGTMN": {
+   "7_SY6OcfPfk": {
+    "Q-3": 0
+   },
+   "l_JRAh_2ASA": {
+    "Q-2": 0
+   },
+   "0dI9yph8EPA": {
+    "Q-1": 0
+   },
+   "EabwIIwJlBU": {
+    "Q-30": 0
+   },
+   "7sFKXDneXvg": {
+    "Q-23": 0
+   },
+   "LHNaUe9r8RQ": {
+    "Q-17": 0
+   },
+   "E2Ttc0Zh0dM": {
+    "Q-13": 0
+   },
+   "fPIoMN4Ilfc": {
+    "Q-10": 0
+   },
+   "CZ1gazowoWc": {
+    "Q-3": 0
+   }
+  },
+  "NLCMP": {
+   "DWp3totFZzc": {
+    "F-1": 0
+   },
+   "m8j6ylVZ7KA": {
+    "F-2": 0
+   },
+   "Qg8CN1geAQU": {
+    "F-3": 0
+   }
+  },
+  "NLBNM7": {
+   "TWsTayxUdQA": {
+    "Q-5": 0
+   }
+  },
+  "GBLOQ": {
+   "JVGxui-JBlw": {
+    "F-1": 0
+   },
+   "BoFoGZVLZ_8": {
+    "F-2": 0
+   },
+   "MFD9-TkdXCw": {
+    "F-3": 0
+   }
+  },
+  "GBCMPOSDIV1": {
+   "3bauoTVhSXI": {
+    "Q-3": 0
+   },
+   "8vTVSquSvSk": {
+    "Q-24": 0
+   },
+   "HwtoY-gb1Og": {
+    "Q-13": 0
+   },
+   "IVnmPQqibyI": {
+    "Q-6": 0
+   },
+   "N2fR0X5uLHU": {
+    "Q-19": 0
+   },
+   "SblU4mNYBVY": {
+    "F-1": 0
+   },
+   "7Gz3MNFOB04": {
+    "F-2": 0
+   },
+   "TMG3bJlJCVM": {
+    "F-1": 0
+   }
+  },
+  "GBCMPOS": {
+   "coakp0aV8yI": {
+    "F-3": 0
+   },
+   "i0ek27MCQ70": {
+    "F-2": 0
+   },
+   "wMKF3a6tjk0": {
+    "F-1": 0
+   }
+  },
+  "KRCMP": {
+   "ZQYYZCzVCP0": {
+    "Q-8": 0
+   },
+   "Mo-A-wIJfSs": {
+    "Q-44": 0
+   },
+   "OXg5SjUFW_o": {
+    "Q-2": 0
+   }
+  },
+  "ILEYQ1": {
+   "0uya5lcazyM": {
+    "Q-15": 0
+   },
+   "3XC0k1FFFrA": {
+    "Q-27": 0
+   },
+   "40UXQP-y5Us": {
+    "Q-21": 0
+   },
+   "m9XShcravkc": {
+    "Q-1": 0
+   },
+   "yCka545Hbg8": {
+    "Q-33": 0
+   },
+   "bFiNrJCxYcM": {
+    "SF2-3": 0
+   },
+   "nbVIaWD_V-k": {
+    "SF2-1": 0
+   }
+  },
+  "USIAJOS": {
+   "g5A_KapcQzc": {
+    "Q-1": 211,
+    "Q-2": 814,
+    "Q-3": 1882,
+    "Q-4": 2300,
+    "Q-5": 3263,
+    "Q-6": 3782,
+    "Q-7": 4570,
+    "Q-8": 5077,
+    "Q-9": 5726,
+    "Q-10": 6217,
+    "Q-11": 6842,
+    "Q-12": 7223
+   }
+  },
+  "USIAMCM5": {
+   "yjhA5I_0t_g": {
+    "Q-1": 77,
+    "Q-2": 500,
+    "Q-3": 836,
+    "Q-4": 1182,
+    "Q-5": 1570,
+    "Q-6": 4117,
+    "Q-7": 4721,
+    "Q-8": 5130,
+    "Q-9": 5493,
+    "Q-10": 5809,
+    "Q-11": 6125,
+    "Q-12": 6485,
+    "Q-13": 7266,
+    "Q-14": 7576,
+    "Q-15": 7891,
+    "Q-16": 8289,
+    "Q-17": 8687,
+    "Q-18": 9756,
+    "Q-19": 10233,
+    "Q-20": 10550,
+    "Q-21": 10905,
+    "Q-22": 11485,
+    "Q-23": 11794,
+    "Q-24": 12148,
+    "Q-25": 12508,
+    "Q-26": 13144,
+    "Q-27": 13554,
+    "Q-28": 13867,
+    "Q-29": 14179
+   }
+  },
+  "USILCMPC": {
+   "1djuvaZNzKk": {
+    "Q-10": 0
+   },
+   "6V7m9QFCdfs": {
+    "SF1-2": 0
+   },
+   "8RGvYCJucjI": {
+    "Q-18": 0
+   },
+   "8xxL08ZrhDo": {
+    "Q-1": 0
+   },
+   "D-0XdN-0TMI": {
+    "Q-5": 0
+   },
+   "EkildFIXvWA": {
+    "Q-4": 0
+   },
+   "G--7g_D2uSw": {
+    "Q-6": 0
+   },
+   "L_lrjMo-S3M": {
+    "F-1": 0
+   },
+   "NETkZBWn7Io": {
+    "Q-9": 0
+   },
+   "Njjw7caW6qo": {
+    "Q-19": 0
+   },
+   "QPzS4DrQToU": {
+    "SF2-2": 0
+   },
+   "QaiSPBC8E58": {
+    "Q-16": 0
+   },
+   "RDgD7xXXo0I": {
+    "F-2": 0
+   },
+   "SYcFHHdJ84E": {
+    "Q-7": 0
+   },
+   "UhgpPuf9JM8": {
+    "Q-24": 0
+   },
+   "VJUnFhwgYZA": {
+    "Q-12": 0
+   },
+   "WGZH4d-TqvI": {
+    "Q-8": 0
+   },
+   "Wqhu3uz4s0w": {
+    "SF2-1": 0
+   },
+   "XH01gr8YJ4k": {
+    "Q-28": 0
+   },
+   "XdBk_9CXo-0": {
+    "Q-17": 0
+   },
+   "ZHgmIwZ5Q_U": {
+    "Q-11": 0
+   },
+   "byMtQFa6dvg": {
+    "Q-21": 0
+   },
+   "eim7YbFp3uM": {
+    "Q-25": 0
+   },
+   "f5CrmGGrq5o": {
+    "Q-14": 0
+   },
+   "gLc8OW32opo": {
+    "Q-23": 0
+   },
+   "ha7mYRhc-ik": {
+    "Q-15": 0
+   },
+   "iCHWThrPZWY": {
+    "Q-22": 0
+   },
+   "jKUQyO-g5M8": {
+    "Q-27": 0
+   },
+   "mrp9Dp8ts74": {
+    "Q-3": 0
+   },
+   "oy59sMf4t78": {
+    "Q-13": 0
+   },
+   "xmNkte_X9YI": {
+    "Q-2": 0
+   },
+   "zLZGq4Ijdzk": {
+    "Q-20": 0
+   },
+   "znBWFbiDZsE": {
+    "Q-26": 0
+   },
+   "zrC7YfaBS0M": {
+    "SF1-1": 0
+   }
+  },
+  "USILCMPS": {
+   "5j5XeyA6gvk": {
+    "SF1-1": 0
+   },
+   "6a7--cYrlp8": {
+    "Q-11": 0
+   },
+   "CLyAwXSi4gc": {
+    "Q-8": 0
+   },
+   "CYj_-r7RlzY": {
+    "Q-16": 0
+   },
+   "HkvEEv8RVvM": {
+    "Q-7": 0
+   },
+   "LfeiqcyGoPw": {
+    "Q-2": 0
+   },
+   "MTbXmKO0uCA": {
+    "Q-14": 0
+   },
+   "Q7kJXwma0z4": {
+    "Q-10": 0
+   },
+   "QUIVFfWldCA": {
+    "F-3": 0
+   },
+   "R5rhSQ_jl_Y": {
+    "Q-25": 0
+   },
+   "RkKSCb1ANi4": {
+    "F-2": 0
+   },
+   "UgT6rMma7WY": {
+    "Q-18": 0
+   },
+   "VNpIXoB8gnw": {
+    "Q-27": 0
+   },
+   "VRzYYBa5Acg": {
+    "Q-13": 0
+   },
+   "a0u9sgClWe0": {
+    "Q-26": 0
+   },
+   "b6FBswbbuHk": {
+    "SF1-2": 0
+   },
+   "gi5WQvv4TFA": {
+    "Q-5": 0
+   },
+   "gv9R7t_-obk": {
+    "Q-3": 0
+   },
+   "gy4SPvdiOqI": {
+    "Q-12": 0
+   },
+   "i2O9VFvqojw": {
+    "Q-15": 0
+   },
+   "iGITt-5jQ3I": {
+    "F-1": 0
+   },
+   "nsWO-kOizJc": {
+    "Q-4": 0
+   },
+   "o7P6iB2ZHRk": {
+    "Q-24": 0
+   },
+   "oAuVgWY0Rbg": {
+    "Q-19": 0
+   },
+   "ou8ATItNtIo": {
+    "Q-1": 0
+   },
+   "oyhjFeli-v8": {
+    "Q-9": 0
+   },
+   "pWysIEKwRjY": {
+    "Q-22": 0
+   },
+   "pbsVaBPQ-rQ": {
+    "SF2-1": 0
+   },
+   "rKqgNug0jr0": {
+    "Q-17": 0
+   },
+   "rTPS4aeW5mk": {
+    "Q-6": 0
+   },
+   "sQH4hd1b9Og": {
+    "Q-21": 0
+   },
+   "uBWgGn1nd2E": {
+    "SF2-2": 0
+   },
+   "u_ar-BQeuqQ": {
+    "Q-28": 0
+   },
+   "vjuWEuEjdMs": {
+    "Q-23": 0
+   },
+   "x1WEATyTQdo": {
+    "Q-20": 0
+   }
+  },
+  "USPACOQ1": {
+   "msNfzjf05Js": {
+    "Q-1": 1151,
+    "Q-2": 1527,
+    "Q-3": 1879,
+    "Q-4": 2218,
+    "Q-5": 2584,
+    "Q-6": 2894,
+    "Q-7": 3248,
+    "Q-8": 3548,
+    "Q-9": 3878,
+    "Q-10": 4177,
+    "Q-11": 4509,
+    "Q-12": 4823,
+    "Q-13": 5177,
+    "Q-14": 5490,
+    "Q-15": 5769,
+    "Q-16": 6116,
+    "Q-17": 6452,
+    "Q-18": 6729,
+    "Q-19": 7097,
+    "Q-20": 7406,
+    "Q-21": 7735,
+    "Q-22": 8047,
+    "Q-23": 8354,
+    "Q-24": 8681,
+    "Q-25": 9025,
+    "Q-26": 9301,
+    "Q-27": 9659,
+    "Q-28": 9981,
+    "Q-29": 10350,
+    "Q-30": 10663,
+    "Q-31": 10991,
+    "Q-32": 11453,
+    "Q-33": 11809,
+    "Q-34": 12105,
+    "Q-35": 12499
+   }
+  },
+  "USPACOQ2": {
+   "HJqNLPNFVWg": {
+    "Q-1": 1055,
+    "Q-2": 1398,
+    "Q-3": 1697,
+    "Q-4": 2038,
+    "Q-5": 2360,
+    "Q-6": 2638,
+    "Q-7": 3024,
+    "Q-8": 3316,
+    "Q-9": 3726,
+    "Q-10": 4183,
+    "Q-11": 4559,
+    "Q-12": 4846,
+    "Q-13": 5150,
+    "Q-14": 5459,
+    "Q-15": 7629,
+    "Q-16": 7965,
+    "Q-17": 8361,
+    "Q-18": 8729,
+    "Q-19": 9001,
+    "Q-20": 9288,
+    "Q-21": 9715,
+    "Q-22": 10157,
+    "Q-23": 10485,
+    "Q-24": 10780,
+    "Q-25": 11088,
+    "Q-26": 11540,
+    "Q-27": 11830,
+    "Q-28": 12162,
+    "Q-29": 12451,
+    "Q-30": 12757,
+    "Q-31": 13114,
+    "Q-32": 13459,
+    "Q-33": 13766,
+    "Q-34": 14154,
+    "Q-35": 14571
+   }
+  },
+  "USPACMP": {
+   "D-GaQVP3hqs": {
+    "Q-10": 344,
+    "Q-11": 644,
+    "Q-12": 949,
+    "Q-13": 1235,
+    "Q-14": 1606,
+    "Q-15": 1886,
+    "Q-16": 2163,
+    "Q-17": 2432,
+    "Q-18": 2920,
+    "Q-19": 3240,
+    "Q-20": 3622,
+    "Q-21": 3940,
+    "Q-22": 4266,
+    "Q-23": 4574,
+    "Q-24": 4966,
+    "Q-25": 5220,
+    "Q-26": 5513,
+    "Q-27": 5847,
+    "Q-28": 6110,
+    "Q-29": 6496,
+    "Q-30": 6920,
+    "Q-31": 7277,
+    "Q-32": 7665,
+    "Q-33": 8000,
+    "Q-34": 8273,
+    "Q-35": 8582,
+    "Q-36": 9020,
+    "Q-37": 9333,
+    "Q-38": 9609,
+    "Q-39": 9922,
+    "Q-40": 10241,
+    "Q-41": 10570,
+    "Q-42": 10910,
+    "Q-43": 11206,
+    "Q-44": 11591,
+    "Q-45": 11935
+   },
+   "yG7IvJ6cZxw": {
+    "F-1": 0
+   },
+   "u6PM5PudrJc": {
+    "F-2": 0
+   }
+  },
+  "USPAPHQ1": {
+   "7Z9ygkHgl_g": {
+    "Q-1": 0
+   }
+  },
+  "USPAYOQ1": {
+   "HPiOaNGM5pI": {
+    "F-3": 0
+   },
+   "52AKTliFBgA": {
+    "F-2": 0
+   },
+   "3o3rZdeb41c": {
+    "F-1": 0
+   },
+   "k0rUeO3nNEU": {
+    "Q-15": 0
+   }
+  },
+  "USMAANQ": {
+   "fsLzlsxUQeU": {
+    "SF1-2": 0
+   },
+   "qeG1x1nPDIs": {
+    "F-2": 0
+   },
+   "tQeR6_N6dmY": {
+    "Q-33": 0
+   },
+   "FdpVO3aB3Og": {
+    "Q-27": 0
+   },
+   "x5vyj9xOowc": {
+    "Q-14": 0
+   }
+  },
+  "USGACMP": {
+   "Oym0f3kl_bs": {
+    "SF2-3": 0
+   },
+   "R7mQGrMG5qM": {
+    "F-3": 0
+   },
+   "W5_eZ40yNM8": {
+    "F-1": 0
+   },
+   "YRt1gOj_JnY": {
+    "F-2": 0
+   },
+   "Xf1qfZv679w": {
+    "SF1-2": 0
+   },
+   "j-xo1AOc12A": {
+    "SF1-1": 0
+   },
+   "qIc2xOONegE": {
+    "SF2-2": 0
+   },
+   "hywOQlNcWkE": {
+    "SF2-1": 0
+   },
+   "Ub7N_CwSehc": {
+    "Q-44": 0
+   },
+   "9cHbv_j6Qt0": {
+    "Q-43": 0
+   },
+   "7bq7dsJDVHE": {
+    "Q-42": 0
+   },
+   "T9uCYo9Z_r8": {
+    "Q-41": 0
+   },
+   "utseidnZV1g": {
+    "Q-40": 0
+   },
+   "2SIHhdV2B2A": {
+    "Q-39": 0
+   },
+   "t3is6Qg3bMM": {
+    "Q-37": 0
+   },
+   "sP-tv8mWAy0": {
+    "Q-38": 0
+   },
+   "LjvDVe707TI": {
+    "Q-36": 0
+   },
+   "bgyp91wakgk": {
+    "Q-35": 0
+   },
+   "rQTtcyGeR2k": {
+    "Q-34": 0
+   },
+   "t-SNMPHGHVM": {
+    "Q-33": 0
+   },
+   "lCho8BMeyd0": {
+    "Q-32": 0
+   },
+   "wx2VCo9CGeU": {
+    "Q-31": 0
+   },
+   "NGUbG1M-N3s": {
+    "Q-28": 0
+   },
+   "n4F_Svm4Chc": {
+    "Q-30": 0
+   },
+   "Yr19rso85X8": {
+    "Q-29": 0
+   },
+   "ECbElxT3qD4": {
+    "Q-27": 0
+   },
+   "nr-7kaGFnUE": {
+    "Q-26": 0
+   },
+   "w8Rhy0OyHCY": {
+    "Q-25": 0
+   },
+   "_rTDuEKkOj8": {
+    "Q-23": 0
+   },
+   "7tq9kjCdTzw": {
+    "Q-24": 0
+   },
+   "rE0Li1ba1Ic": {
+    "Q-22": 0
+   },
+   "4ZEKRMHQnC0": {
+    "Q-21": 0
+   },
+   "0TcupSt5Jkg": {
+    "Q-12": 0
+   },
+   "0u2Ws0x3yDY": {
+    "Q-20": 0
+   },
+   "j6BfI-4n3NA": {
+    "Q-18": 0
+   },
+   "Nq6a7w1o02c": {
+    "Q-19": 0
+   },
+   "3wky6NjkHno": {
+    "Q-16": 0
+   },
+   "sxWTHeUMC0o": {
+    "Q-17": 0
+   },
+   "5oSH1fvJJEg": {
+    "Q-15": 0
+   },
+   "YjLv_irXdWY": {
+    "Q-14": 0
+   },
+   "J-bql_H8mDo": {
+    "Q-10": 0
+   },
+   "e2I-tv6TD3Y": {
+    "Q-13": 0
+   },
+   "ELVYDMGe22g": {
+    "Q-11": 0
+   },
+   "G8rXh9xJWFs": {
+    "Q-9": 0
+   },
+   "lBCbETeMoIU": {
+    "Q-8": 0
+   },
+   "MzBtGoaBWAY": {
+    "Q-7": 0
+   },
+   "YwaejyN7rOY": {
+    "Q-6": 0
+   },
+   "oZWfqW8IcnM": {
+    "Q-4": 0
+   },
+   "p0puXKucsiM": {
+    "Q-5": 0
+   },
+   "yF1hrjJ3_jE": {
+    "Q-3": 0
+   },
+   "7Oj2r-pFpEE": {
+    "Q-2": 0
+   },
+   "EUJJC5vWh-8": {
+    "Q-1": 0
+   }
+  },
+  "USSCCMP": {
+   "tvdoaQHA8ZA": {
+    "F-3": 0
+   },
+   "YyaRYPvq0V0": {
+    "F-2": 0
+   },
+   "Wf01-TyrAnk": {
+    "F-1": 0
+   },
+   "YIKa9-9VGmY": {
+    "Q-3": 0
+   },
+   "m9a79sT5W7M": {
+    "Q-3": 0
+   },
+   "HhTQ3jBGfs0": {
+    "Q-2": 0
+   },
+   "ABehHKuZ1g0": {
+    "Q-2": 0
+   },
+   "8PCuD2JmFIk": {
+    "Q-1": 0
+   },
+   "T2pFB_SnQWE": {
+    "Q-1": 0
+   },
+   "D905Tltdn1Q": {
+    "Q-35": 0
+   },
+   "xWYKyqZaXiQ": {
+    "Q-34": 0
+   },
+   "QD20tQMyJKE": {
+    "Q-33": 0
+   },
+   "wKP3Xle4KBc": {
+    "Q-32": 0
+   },
+   "jH2aUA0hG4g": {
+    "Q-31": 0
+   },
+   "dzN8yTpoiXA": {
+    "Q-30": 0
+   },
+   "1yZmxA40eug": {
+    "Q-29": 0
+   },
+   "kzjLT8pzcWQ": {
+    "Q-28": 0
+   },
+   "1ocK-Wa1260": {
+    "Q-27": 0
+   },
+   "ZBYuh9Cp6ic": {
+    "Q-26": 0
+   },
+   "uFYBL8r0tNc": {
+    "Q-25": 0
+   },
+   "JmELJtDOS-k": {
+    "Q-24": 0
+   },
+   "FvTqLcOxRHk": {
+    "Q-23": 0
+   },
+   "4LQkZWqQCGs": {
+    "Q-22": 0
+   },
+   "NdehxWfqsY0": {
+    "Q-21": 0
+   },
+   "PM8sqctuLgU": {
+    "Q-20": 0
+   }
+  },
+  "USFLFLGCM1": {
+   "qIpltyyHc3g": {
+    "Q-3": 175,
+    "Q-4": 604,
+    "Q-5": 910,
+    "Q-6": 1230,
+    "Q-7": 1602,
+    "Q-8": 2022,
+    "Q-9": 2327
+   },
+   "Gp5CqMmaoHs": {
+    "Q-10": 300,
+    "Q-11": 745,
+    "Q-12": 1032,
+    "Q-13": 1356,
+    "Q-14": 1792,
+    "Q-15": 2150,
+    "Q-16": 2474,
+    "Q-17": 2783,
+    "Q-18": 3075,
+    "Q-19": 3358,
+    "Q-20": 3608,
+    "Q-21": 3847,
+    "Q-22": 4226,
+    "Q-23": 4484,
+    "Q-24": 4715,
+    "Q-25": 5031,
+    "Q-26": 5258,
+    "Q-27": 5603,
+    "Q-28": 5814,
+    "Q-29": 6048,
+    "Q-30": 6335,
+    "Q-31": 6623,
+    "Q-32": 6948
+   }
+  },
+  "USALHUOS": {
+   "eLp-3ci3sY0": {
+    "F-2": 0
+   },
+   "n6isiyMdpYM": {
+    "F-1": 0
+   },
+   "wkeWDh7axTA": {
+    "Q-2": 0
+   },
+   "1Edk6JMgpQY": {
+    "Q-1": 0
+   },
+   "n7SkHPM9jZc": {
+    "Q-7": 0
+   },
+   "dqZXDy7qXCc": {
+    "Q-3": 0
+   },
+   "pm5d6UeDxQc": {
+    "Q-19": 0
+   },
+   "atajq9X95Ow": {
+    "Q-17": 0
+   },
+   "HtnUjio0RXY": {
+    "Q-13": 0
+   },
+   "dN2Z1BCVjc4": {
+    "Q-10": 0
+   }
+  },
+  "FTCCMP1JEMI": {
+   "xSZRaeFJ7qU": {
+    "SF1-1": 0
+   },
+   "szoo9o2zrSA": {
+    "SF2-1": 0
+   },
+   "qWyAzdRJ_u4": {
+    "SF2-2": 0
+   },
+   "d5dwej9fRtQ": {
+    "SF1-2": 0
+   },
+   "ZM3RPaZNWCI": {
+    "F-1": 0
+   },
+   "NKJDWcZ_yJg": {
+    "F-2": 0
+   },
+   "MJNerC9FCgg": {
+    "SF2-3": 0
+   }
+  },
+  "FTCCMP1OCHO": {
+   "ge_OTQwouCc": {
+    "F-2": 0
+   },
+   "tqUt73ZJDKU": {
+    "F-1": 0
+   },
+   "kMAerOrKmh4": {
+    "SF1-2": 0
+   },
+   "g-r8KEf7-nY": {
+    "SF2-1": 0
+   },
+   "bulKfQHapSk": {
+    "F-3": 0
+   },
+   "LYZZClErRv0": {
+    "SF2-2": 0
+   },
+   "KFtJ7UfrkuQ": {
+    "SF1-1": 0
+   }
+  },
+  "FTCCMP1EDIS": {
+   "tilGjZv6ksY": {
+    "SF1-1": 0
+   },
+   "YLvRh20nPog": {
+    "F-2": 0
+   },
+   "WR4QX-LGd1s": {
+    "SF2-2": 0
+   },
+   "ReAiZgA5YHE": {
+    "SF1-3": 0
+   },
+   "N7zTNZGdM4s": {
+    "SF1-2": 0
+   },
+   "ILEPjxyHvus": {
+    "F-1": 0
+   },
+   "4BFJ4T-e-M0": {
+    "SF2-3": 0
+   },
+   "2Z59uCUYbO0": {
+    "SF2-1": 0
+   },
+   "ZS1L9xfwp0c": {
+    "Q-1": 0
+   },
+   "QZP3zZg5x24": {
+    "Q-3": 0
+   },
+   "u_s8twPmdVU": {
+    "Q-14": 0
+   },
+   "A8KH3kx8KUs": {
+    "Q-24": 0
+   },
+   "VkBVyOF9Zf8": {
+    "Q-34": 0
+   },
+   "7FC-aZDMSuM": {
+    "Q-45": 0
+   },
+   "YXaK4nZbUW4": {
+    "Q-57": 0
+   },
+   "cJNjJLZ5zfM": {
+    "Q-81": 0
+   },
+   "VlPYF2sD4hU": {
+    "Q-92": 0
+   }
+  },
+  "FTCCMP1FRAN": {
+   "t75mC0y5gA8": {
+    "SF2-1": 0
+   },
+   "kOO0I5E2Nzk": {
+    "F-2": 0
+   },
+   "eixVnKKm2S0": {
+    "F-3": 0
+   },
+   "egTf772VNsI": {
+    "SF2-2": 0
+   },
+   "ZN7LdDZNLZc": {
+    "F-1": 0
+   },
+   "NA9iqQiDi4w": {
+    "SF2-3": 0
+   },
+   "6GVMOsfpzPA": {
+    "SF1-2": 0
+   },
+   "3zfCYae8Ckg": {
+    "SF1-1": 0
+   }
+  },
+  "USAZMEQ": {
+   "MmTleZtgXBI": {
+    "Q-5": 0
+   },
+   "4TNb_V-WhLU": {
+    "Q-4": 0
+   },
+   "1ZX1EQvOQrs": {
+    "Q-3": 0
+   },
+   "lAE7WMRRYOg": {
+    "Q-2": 0
+   },
+   "SgPDlbZRxSQ": {
+    "Q-1": 0
+   }
+  },
+  "USAZGOQ": {
+   "UA8Zp2XH0zc": {
+    "Q-23": 0
+   },
+   "BHOr1mFZq7I": {
+    "Q-22": 0
+   },
+   "cGoAuzeu9C8": {
+    "Q-21": 0
+   },
+   "YFp26ys_dSY": {
+    "Q-20": 0
+   },
+   "Db-qH3IvDFc": {
+    "Q-19": 0
+   },
+   "IJSxDZprLEY": {
+    "Q-18": 0
+   },
+   "ZwS6GeSBMew": {
+    "Q-17": 0
+   },
+   "RPHirx5pKk0": {
+    "Q-16": 0
+   },
+   "ktGOEjHSNnY": {
+    "Q-15": 0
+   },
+   "-zHoPLHnR7s": {
+    "Q-14": 0
+   },
+   "69ISmVx4Xhw": {
+    "Q-13": 0
+   },
+   "bJ3CedKIZ2U": {
+    "Q-12": 0
+   },
+   "M6f3ZlGYR2s": {
+    "Q-11": 0
+   },
+   "Yr4B_Ub9ZCo": {
+    "Q-10": 0
+   },
+   "iurvkzmPpIU": {
+    "Q-9": 0
+   },
+   "di_FAg3XVGk": {
+    "Q-8": 0
+   },
+   "awb2pQOW7-0": {
+    "Q-7": 0
+   },
+   "NYuCLu9RWcg": {
+    "Q-6": 0
+   },
+   "yWJMJaa-5JY": {
+    "Q-5": 0
+   },
+   "BA_8yNgV9CU": {
+    "Q-4": 0
+   },
+   "UTiHW_NGDEI": {
+    "Q-3": 0
+   },
+   "WErRH2mWnl4": {
+    "Q-2": 0
+   },
+   "b9pV2VUC3YM": {
+    "Q-1": 0
+   }
+  },
+  "USAZFLQ": {
+   "9UO3Bvl-GW8": {
+    "Q-17": 0
+   },
+   "CRNlgvOytXQ": {
+    "Q-16": 0
+   },
+   "BQVMBJeA7HE": {
+    "Q-14": 0
+   },
+   "sWlp_asuQ8M": {
+    "Q-13": 0
+   },
+   "m24ckCnED4I": {
+    "Q-12": 0
+   },
+   "K4FB5_pBXgA": {
+    "Q-11": 0
+   },
+   "4SsRnjSCtgM": {
+    "Q-10": 0
+   },
+   "2G-zT0Ar9d0": {
+    "Q-9": 0
+   },
+   "kkyYA4NMa-Y": {
+    "Q-8": 0
+   },
+   "I4AAcNqsSkY": {
+    "Q-7": 0
+   },
+   "fIvBX2pKbBc": {
+    "Q-6": 0
+   },
+   "vVLyZ4eG73o": {
+    "Q-5": 0
+   },
+   "WeRWB3gl5Is": {
+    "Q-4": 0
+   },
+   "EfHODalssLA": {
+    "Q-3": 0
+   },
+   "VryFjsd6HFk": {
+    "Q-2": 0
+   },
+   "5D6qWveum7I": {
+    "Q-1": 0
+   }
+  },
+  "USAZTEQ": {
+   "5zwBSpfruIk": {
+    "Q-35": 0
+   },
+   "wmKVumA4mg8": {
+    "Q-34": 0
+   },
+   "jjK-qY7eJDE": {
+    "Q-33": 0
+   },
+   "DW2mdTbyMBc": {
+    "Q-32": 0
+   },
+   "TB_P3uFQQsc": {
+    "Q-31": 0
+   },
+   "UaoFWlHTflw": {
+    "Q-30": 0
+   },
+   "4vjwvQWZPSM": {
+    "Q-29": 0
+   },
+   "0R7LOnDGTQM": {
+    "Q-28": 0
+   },
+   "oH2p1ICKXw0": {
+    "Q-27": 0
+   },
+   "xO642esY7Lw": {
+    "Q-26": 0
+   },
+   "SEp1TxJh9_o": {
+    "Q-25": 0
+   },
+   "fvnIQa5ir8M": {
+    "Q-24": 0
+   },
+   "FKS_ZEhC1bM": {
+    "Q-23": 0
+   },
+   "CKNoh08zGfg": {
+    "Q-22": 0
+   },
+   "BwZVQy9zDD0": {
+    "Q-21": 0
+   },
+   "y3oa0B5iB_k": {
+    "Q-19": 0
+   },
+   "j1kRzHq6M9A": {
+    "Q-18": 0
+   },
+   "7LIf4QkRwW8": {
+    "Q-17": 0
+   },
+   "hZ-PtU9Aer8": {
+    "Q-16": 0
+   },
+   "f4d7-2mrdSg": {
+    "Q-15": 0
+   },
+   "rLiGlGIXkfA": {
+    "Q-14": 0
+   },
+   "adJbSir_Fao": {
+    "Q-13": 0
+   },
+   "yPCkbuuv91Y": {
+    "Q-12": 0
+   },
+   "QpE7rlpuLTg": {
+    "Q-11": 0
+   },
+   "SkhwJ3uRmSY": {
+    "Q-10": 0
+   },
+   "F04Zx4bYA74": {
+    "Q-9": 0
+   },
+   "zoTZBuMVTVc": {
+    "Q-8": 0
+   },
+   "XtsMyUHA8Pk": {
+    "Q-7": 0
+   },
+   "xtO56xL2fno": {
+    "Q-6": 0
+   },
+   "-TOfum4ClLk": {
+    "Q-5": 0
+   },
+   "bzP3ZEKHgks": {
+    "Q-4": 0
+   },
+   "sXh9plOZf8s": {
+    "Q-3": 0
+   },
+   "K1OePXE_dWs": {
+    "Q-2": 0
+   },
+   "g5cUjAyNxkI": {
+    "Q-1": 0
+   }
+  },
+  "USAZGIQ": {
+   "ulO4wxlC5Is": {
+    "Q-32": 0
+   },
+   "8xqukXOMnoM": {
+    "Q-31": 0
+   },
+   "DoT6N1F6fWM": {
+    "Q-30": 0
+   },
+   "hhFmaL8Y9lI": {
+    "Q-29": 0
+   },
+   "LGjhtoVP0Zk": {
+    "Q-28": 0
+   },
+   "feKeijoLSTw": {
+    "Q-27": 0
+   },
+   "7zKPs1-1tMk": {
+    "Q-26": 0
+   },
+   "vJaChzB1ErU": {
+    "Q-25": 0
+   },
+   "T-CScCjlkmA": {
+    "Q-24": 0
+   },
+   "9SYjFzUZiIg": {
+    "Q-23": 0
+   },
+   "MIQgxfj_r7Q": {
+    "Q-22": 0
+   },
+   "Dw7y9LU2ACs": {
+    "Q-21": 0
+   },
+   "QBKfrjV9sGM": {
+    "Q-20": 0
+   },
+   "0VVyrI9KvoY": {
+    "Q-18": 0
+   },
+   "-hBqdbQQHeU": {
+    "Q-17": 0
+   },
+   "w7JCexLpLb0": {
+    "Q-16": 0
+   },
+   "GfBVufCMsbA": {
+    "Q-15": 0
+   },
+   "cg7akVkc0hM": {
+    "Q-14": 0
+   },
+   "OdwIl3mn_EM": {
+    "Q-13": 0
+   },
+   "cEmSwg8bHyw": {
+    "Q-12": 0
+   },
+   "loGEClLlrcw": {
+    "Q-11": 0
+   },
+   "kLIBUp1h1Ak": {
+    "Q-10": 0
+   },
+   "7Ka5SDm3B_0": {
+    "Q-9": 0
+   },
+   "_8zXLSUjEKU": {
+    "Q-8": 0
+   },
+   "3s9dj1Vy0J4": {
+    "Q-7": 0
+   },
+   "YdaVgQmlU14": {
+    "Q-5": 0
+   },
+   "CIKG91gYBT0": {
+    "Q-4": 0
+   },
+   "f6Sk--9sV6k": {
+    "Q-3": 0
+   },
+   "SRZDji2irrA": {
+    "Q-2": 0
+   },
+   "ukQjTyHjbUY": {
+    "Q-1": 0
+   }
+  },
+  "USWABAM2": {
+   "kFE9ve2InS4": {
+    "Q-2": 0
+   }
+  },
+  "USWACMP": {
+   "ap977tZjckU": {
+    "F-1": 0
+   }
+  },
+  "USCOCMP": {
+   "jJNidxOUKeU": {
+    "Q-33": 0
    }
   }
  },
@@ -1007,6 +11168,21 @@
    },
    "tqu9UCleLbk": {
     "M-1": 0
+   },
+   "phH-ssPLLwE": {
+    "M-4": 0
+   },
+   "Qj0G0GxKERk": {
+    "M-6": 0
+   },
+   "7pE-8mM3NSw": {
+    "M-3": 0
+   },
+   "3wZXRpWlsKE": {
+    "M-2": 0
+   },
+   "2HlawcyeHpw": {
+    "M-5": 0
    }
   },
   "CAONSCQ2": {
@@ -1065,6 +11241,21 @@
    },
    "_bAsPY3s8h0": {
     "M-1": 0
+   },
+   "xT7OngTqcUs": {
+    "M-6": 0
+   },
+   "iUuWInij5to": {
+    "M-5": 0
+   },
+   "aC4UKHjv9qs": {
+    "M-2": 0
+   },
+   "SEUGFUfe55U": {
+    "M-3": 0
+   },
+   "6KOrg8hm3nE": {
+    "M-4": 0
    }
   },
   "CAONBOQ": {
@@ -1100,6 +11291,30 @@
    },
    "eV_62ioHD8o": {
     "M-1": 0
+   },
+   "Xvmz7jz6pNY": {
+    "M-2": 0
+   },
+   "TKWyM8cr65w": {
+    "M-8": 0
+   },
+   "GNKIdk0V-2w": {
+    "M-3": 0
+   },
+   "0bB1pzu9MhI": {
+    "M-6": 0
+   },
+   "xpLkR8J4mAQ": {
+    "M-4": 0
+   },
+   "cnVyJgqdl-w": {
+    "M-5": 0
+   },
+   "Vd5xS09j3SA": {
+    "M-9": 0
+   },
+   "JDMrSCTfxWs": {
+    "M-7": 0
    }
   },
   "CAONWAQ": {
@@ -1135,6 +11350,33 @@
    },
    "HYXPyP-gQgE": {
     "M-1": 0
+   },
+   "fSWSz0dXeNY": {
+    "M-6": 0
+   },
+   "e4xrZR6QgVk": {
+    "M-8": 0
+   },
+   "NnXoIKIj3Ew": {
+    "M-4": 0
+   },
+   "NXQ6iwb7Ey0": {
+    "M-3": 0
+   },
+   "MtCeerO02_A": {
+    "M-2": 0
+   },
+   "Gz3gFeQEFrU": {
+    "M-5": 0
+   },
+   "G_HYPwBgSAs": {
+    "M-7": 0
+   },
+   "TkOE9EipxPg": {
+    "M-9": 0
+   },
+   "4b3Vh9cfy7o": {
+    "M-10": 0
    }
   },
   "CAONMIQ": {
@@ -1170,6 +11412,33 @@
    },
    "ARWS1z8xuJw": {
     "M-1": 0
+   },
+   "khKQoMEPde4": {
+    "M-5": 0
+   },
+   "il6pT0z7XfM": {
+    "M-6": 0
+   },
+   "hjDrW6v8SXk": {
+    "M-8": 0
+   },
+   "N7A9kbhRshQ": {
+    "M-9": 0
+   },
+   "B8YmNrNtsMA": {
+    "M-7": 0
+   },
+   "07GxqzWjV2M": {
+    "M-10": 0
+   },
+   "hYI1W0D1eRg": {
+    "M-4": 0
+   },
+   "G37DkrCioSk": {
+    "M-3": 0
+   },
+   "EtNiXmytA-A": {
+    "M-5": 0
    }
   },
   "CAONOTQ": {
@@ -1224,6 +11493,21 @@
    },
    "eS9DvRE7IF8": {
     "M-1": 0
+   },
+   "zc2TVWTxMRQ": {
+    "M-4": 0
+   },
+   "MbWQi7jqUV0": {
+    "M-3": 0
+   },
+   "ExujedJCFnI": {
+    "M-2": 0
+   },
+   "Z8jt6Cz6JFQ": {
+    "M-6": 0
+   },
+   "5reCGIGFOOQ": {
+    "M-5": 0
    }
   },
   "CAONSCQ1": {
@@ -1256,6 +11540,36 @@
    },
    "neN-xwoYE3w": {
     "M-10": 0
+   },
+   "SwMYHFqE5rc": {
+    "M-3": 0
+   },
+   "Lt6CCd3077o": {
+    "M-2": 0
+   },
+   "B76dzDrVDbo": {
+    "M-1": 0
+   },
+   "xwPv5WmX37w": {
+    "M-7": 0
+   },
+   "xLwAGNlCc4w": {
+    "M-6": 0
+   },
+   "s483rS79kws": {
+    "M-9": 0
+   },
+   "WhrY09X6p8g": {
+    "M-4": 0
+   },
+   "JPskNv_WxWk": {
+    "M-10": 0
+   },
+   "JNlyMihIPjA": {
+    "M-5": 0
+   },
+   "-TqfGVoLywc": {
+    "M-8": 0
    }
   },
   "USHICMP": {
@@ -2459,6 +12773,63 @@
   "USWIMAQ2": {
    "KdfHQwnGlu8": {
     "M-6": 0
+   },
+   "xxoubehOJEw": {
+    "M-1": 0
+   },
+   "ubRCDA6aNUk": {
+    "M-2": 0
+   },
+   "lapr065INLI": {
+    "M-6": 0
+   },
+   "i1HOiqsSlHE": {
+    "M-9": 0
+   },
+   "hzaUobg_OM0": {
+    "M-3": 0
+   },
+   "bdN1-jDnfc4": {
+    "M-5": 0
+   },
+   "UagN4mD-Olc": {
+    "M-3": 0
+   },
+   "SUsnQGoc7sA": {
+    "M-10": 0
+   },
+   "QzuOR9c1qN4": {
+    "M-9": 0
+   },
+   "Pq2FiCSonJg": {
+    "M-8": 0
+   },
+   "LillUqjGAJo": {
+    "M-7": 0
+   },
+   "DoptNThw9T4": {
+    "M-4": 0
+   },
+   "9Ka2Lu7WJVw": {
+    "M-5": 0
+   },
+   "7XDJUVSR6XM": {
+    "M-7": 0
+   },
+   "4stSXu_hMI4": {
+    "M-10": 0
+   },
+   "6hvYe8eAO6U": {
+    "M-1": 0
+   },
+   "6Fx75mL4DTY": {
+    "M-2": 0
+   },
+   "5B4XFvmrJH4": {
+    "M-4": 0
+   },
+   "0skY8NHqlFk": {
+    "M-8": 0
    }
   },
   "USILPM1": {
@@ -3749,6 +14120,36 @@
    },
    "5fGx4KnkwYc": {
     "M-4": 0
+   },
+   "LsZdUO9AgQ4": {
+    "M-7": 0
+   },
+   "CttK3PMl_gI": {
+    "M-6": 0
+   },
+   "juHzuTdosb4": {
+    "M-3": 0
+   },
+   "KFmZ8NUVp0s": {
+    "M-7": 0
+   },
+   "Ihs2Pt59CPs": {
+    "M-6": 0
+   },
+   "E0thX-LvbXw": {
+    "M-5": 0
+   },
+   "F2c1lhBzkzo": {
+    "M-4": 0
+   },
+   "XJi7aE6--hM": {
+    "M-3": 0
+   },
+   "9KvCuGPluzQ": {
+    "M-2": 0
+   },
+   "d2D_z-AXu-Q": {
+    "M-1": 0
    }
   },
   "ROSM5": {
@@ -4348,6 +14749,54 @@
    },
    "HOLn3ST5ehU": {
     "M-6": 0
+   },
+   "LLulEM0-X6U": {
+    "M-10": 0
+   },
+   "j80sPwS5hLg": {
+    "M-9": 0
+   },
+   "KjBe-IGQJFU": {
+    "M-8": 0
+   },
+   "huAoDyEkJR0": {
+    "M-7": 0
+   },
+   "gtf5kJP2jH0": {
+    "M-4": 0
+   },
+   "z2al42UQgDA": {
+    "M-3": 0
+   },
+   "1mh4dh8h8kU": {
+    "M-10": 0
+   },
+   "UxAGhTILi8w": {
+    "M-9": 0
+   },
+   "dSaIB-gf30E": {
+    "M-8": 0
+   },
+   "r7QTcdyazOU": {
+    "M-7": 0
+   },
+   "yYYr6Z0tw_8": {
+    "M-6": 0
+   },
+   "pw-RjQVsLOU": {
+    "M-5": 0
+   },
+   "OK7GWBsuA4E": {
+    "M-4": 0
+   },
+   "pY5fv28ETZE": {
+    "M-3": 0
+   },
+   "A58QtR3D9nA": {
+    "M-2": 0
+   },
+   "J4FDtAQf25I": {
+    "M-1": 0
    }
   },
   "USARBEQ": {
@@ -4419,6 +14868,12 @@
    },
    "cr4U8HrplsI": {
     "M-2": 0
+   },
+   "Qdb6oDVJIA0": {
+    "M-5": 0
+   },
+   "6V118gAHMfA": {
+    "M-3": 0
    }
   },
   "USORHIQ": {
@@ -4828,6 +15283,27 @@
    },
    "P60Zv3JIqNg": {
     "Q-20": 0
+   },
+   "-H6wjAJ-7Q8": {
+    "Q-4": 0
+   },
+   "FtR80ujUwS8": {
+    "Q-6": 0
+   },
+   "fC-SdgpEJEI": {
+    "Q-28": 0
+   },
+   "p-6C-0sCJRU": {
+    "Q-12": 0
+   },
+   "pfxsEHcTXEM": {
+    "Q-21": 0
+   },
+   "ufaMtkSW4gk": {
+    "Q-7": 0
+   },
+   "vxX0xOPhKZc": {
+    "Q-2": 0
    }
   },
   "USILCMPS": {
@@ -4920,11 +15396,86 @@
    },
    "xFLL3Fp2-kA": {
     "M-2": 0
+   },
+   "8Hu6uvQNv48": {
+    "Q-11": 0
+   },
+   "FKb28M2LdrU": {
+    "Q-7": 0
+   },
+   "JdCvVmNlYvg": {
+    "Q-21": 0
+   },
+   "LjRuE8eo6E0": {
+    "Q-28": 0
+   },
+   "NtGDQfNoE6g": {
+    "Q-15": 0
+   },
+   "X03uO4dDctU": {
+    "Q-6": 0
+   },
+   "_mzVIkFeGvc": {
+    "Q-12": 0
+   },
+   "o-0DaplUrlM": {
+    "Q-9": 0
    }
   },
   "CAONNYQ": {
    "oNm36bFXOpw": {
     "Q-1": 0
+   },
+   "wURvbCbqm1I": {
+    "Q-5": 0
+   },
+   "v-gw8d-NK38": {
+    "Q-14": 0
+   },
+   "t8Ucci7fz08": {
+    "Q-2": 0
+   },
+   "oJN-M-N7hcw": {
+    "Q-15": 0
+   },
+   "_dDdHFFz-yY": {
+    "Q-4": 0
+   },
+   "VCbQeJSvcdk": {
+    "Q-13": 0
+   },
+   "Nboyrqrpauw": {
+    "Q-7": 0
+   },
+   "MdjqZwhEbYI": {
+    "Q-3": 0
+   },
+   "6nDQj_LVes8": {
+    "Q-6": 0
+   },
+   "2cuYo8V0NkI": {
+    "Q-16": 0
+   },
+   "zbUstdoAUSI": {
+    "Q-18": 0
+   },
+   "nsA_MaLi_ck": {
+    "Q-19": 0
+   },
+   "ggCdeag6_Fc": {
+    "Q-17": 0
+   },
+   "dKSJ0X9R26o": {
+    "Q-23": 0
+   },
+   "SCrNtne068Q": {
+    "Q-22": 0
+   },
+   "O9H5zT0UkFc": {
+    "Q-21": 0
+   },
+   "MdJLnYivP2A": {
+    "Q-20": 0
    }
   },
   "USCANOPENM1": {
@@ -4998,6 +15549,12 @@
   "USWATELT": {
    "LQJsSaBATq8": {
     "Q-26": 0
+   },
+   "nUVuBef8Eg0": {
+    "M-7": 0
+   },
+   "rcYETFxGetU": {
+    "M-3": 0
    }
   },
   "USMICMP2CURE": {
@@ -6134,6 +16691,18 @@
     "M-8": 13160,
     "M-9": 13170,
     "M-10": 14270
+   },
+   "VS2A4rnZYjQ": {
+    "Q-3": 0
+   },
+   "5TDdqMXF1Ik": {
+    "Q-46": 0
+   },
+   "nPYScBhjFaY": {
+    "M-10": 0
+   },
+   "KYGGlo9AOyQ": {
+    "M-11": 0
    }
   },
   "USMIGOQ": {
@@ -6564,6 +17133,1116 @@
     "Q-43": 22628,
     "Q-44": 22923,
     "Q-45": 23228
+   }
+  },
+  "USCANOSBM2": {
+   "VWYaYjyccfg": {
+    "Q-3": 0
+   },
+   "OcAJFKRg_Rs": {
+    "Q-4": 0
+   },
+   "Dzw2HUmQR8E": {
+    "Q-5": 0
+   },
+   "NRue4glJYQU": {
+    "Q-6": 0
+   },
+   "_qCckMWuoXQ": {
+    "Q-7": 0
+   },
+   "0UBJyEcnuBk": {
+    "Q-9": 0
+   },
+   "uuY22OzHDJA": {
+    "Q-13": 0
+   },
+   "ADhm_yoghek": {
+    "Q-14": 0
+   },
+   "U5av8vLLJA4": {
+    "Q-15": 0
+   },
+   "G79PNOmRLoU": {
+    "Q-16": 0
+   },
+   "nTH7YWIipvc": {
+    "Q-17": 0
+   },
+   "RcvmXhatzi4": {
+    "Q-18": 0
+   }
+  },
+  "USIACELM1": {
+   "tURrdjyl59I": {
+    "Q-1": 452,
+    "Q-2": 884,
+    "Q-3": 1569,
+    "Q-4": 2302,
+    "Q-5": 2753,
+    "Q-6": 3341,
+    "Q-7": 6569,
+    "Q-8": 6916,
+    "Q-9": 7535,
+    "Q-10": 7921,
+    "Q-11": 8315,
+    "Q-12": 8976,
+    "Q-13": 9403,
+    "Q-14": 9969,
+    "Q-15": 10573,
+    "Q-16": 10970,
+    "Q-17": 11687
+   }
+  },
+  "USIACELM2": {
+   "PaoSvA1Bxgo": {
+    "Q-1": 612,
+    "Q-2": 971,
+    "Q-3": 1327,
+    "Q-4": 1691,
+    "Q-5": 2014,
+    "Q-6": 2414,
+    "Q-7": 5417,
+    "Q-8": 5776,
+    "Q-9": 6375,
+    "Q-10": 6769,
+    "Q-11": 7117,
+    "Q-12": 7536,
+    "Q-13": 7917,
+    "Q-14": 8175,
+    "Q-15": 8519,
+    "Q-16": 8893,
+    "Q-17": 9182,
+    "Q-18": 9527,
+    "Q-19": 10655,
+    "Q-20": 11033,
+    "Q-21": 11369,
+    "Q-22": 11759,
+    "Q-23": 12071,
+    "Q-24": 12360,
+    "Q-25": 12738,
+    "Q-26": 12992,
+    "Q-27": 13237,
+    "Q-28": 13535,
+    "Q-29": 13894
+   }
+  },
+  "USIACELM3": {
+   "WqFI99CmGy0": {
+    "Q-1": 181,
+    "Q-2": 617,
+    "Q-3": 3525,
+    "Q-5": 4764,
+    "Q-6": 5326,
+    "Q-7": 5885,
+    "Q-8": 6389,
+    "Q-9": 6979,
+    "Q-10": 7433,
+    "Q-11": 7867,
+    "Q-12": 8272,
+    "Q-13": 8652,
+    "Q-14": 9154,
+    "Q-15": 9777,
+    "Q-16": 10128,
+    "Q-17": 10573,
+    "Q-18": 10912,
+    "Q-4": 11530
+   }
+  },
+  "USORSFLT": {
+   "wV3BHxu-C_M": {
+    "Q-1": 1416,
+    "Q-2": 1700,
+    "Q-3": 1949,
+    "Q-4": 2216,
+    "Q-5": 2460,
+    "Q-6": 2846,
+    "Q-7": 3072,
+    "Q-8": 3335,
+    "Q-9": 3578,
+    "Q-10": 3871,
+    "Q-11": 6305,
+    "Q-12": 6563,
+    "Q-13": 6903,
+    "Q-14": 7148,
+    "Q-15": 7593,
+    "Q-16": 7864,
+    "Q-17": 8111,
+    "Q-18": 8141,
+    "Q-19": 8543,
+    "Q-20": 8798,
+    "Q-21": 9016,
+    "Q-22": 9280,
+    "Q-23": 9498,
+    "Q-24": 9797,
+    "Q-25": 10007,
+    "Q-26": 10303,
+    "Q-27": 10541,
+    "M-1": 15486,
+    "M-2": 15991,
+    "M-3": 16678,
+    "M-4": 16970,
+    "M-5": 17730,
+    "M-6": 18055,
+    "M-7": 18776,
+    "M-8": 19032,
+    "M-9": 20145,
+    "M-10": 21729
+   }
+  },
+  "USORSFM3": {
+   "3Na6snrdsOI": {
+    "Q-1": 60,
+    "Q-2": 402,
+    "Q-3": 700,
+    "Q-4": 1002,
+    "Q-5": 1305,
+    "Q-6": 1572,
+    "Q-7": 1952,
+    "Q-8": 2202,
+    "Q-9": 2553,
+    "Q-10": 2773,
+    "Q-11": 3113,
+    "Q-12": 3365,
+    "Q-13": 3673,
+    "Q-14": 3989,
+    "Q-15": 4910,
+    "Q-16": 5240,
+    "Q-17": 5482,
+    "Q-18": 5846,
+    "Q-19": 6073,
+    "Q-20": 6379,
+    "Q-21": 6695,
+    "Q-22": 6988,
+    "Q-23": 7289,
+    "Q-24": 7583,
+    "Q-25": 7886,
+    "Q-26": 8250,
+    "Q-27": 8527
+   }
+  },
+  "USPACOQ1": {
+   "mGoS8Tnn7LE": {
+    "Q-1": 1192,
+    "Q-2": 1477,
+    "Q-3": 1746,
+    "Q-4": 2008,
+    "Q-5": 2332,
+    "Q-6": 2598,
+    "Q-7": 2916,
+    "Q-8": 3199,
+    "Q-9": 3498,
+    "Q-10": 3874,
+    "Q-11": 4161,
+    "Q-12": 4413,
+    "Q-13": 4755,
+    "Q-14": 5063,
+    "Q-15": 5323,
+    "Q-16": 5595,
+    "Q-17": 8166,
+    "Q-18": 8421,
+    "Q-19": 8699,
+    "Q-20": 8967,
+    "Q-21": 9253,
+    "Q-22": 9542,
+    "Q-23": 9828,
+    "Q-24": 10122,
+    "Q-25": 10406,
+    "Q-26": 10910,
+    "Q-27": 11179,
+    "Q-28": 11563,
+    "Q-29": 11834,
+    "Q-30": 12106,
+    "Q-31": 12388,
+    "Q-32": 12655,
+    "Q-33": 12950,
+    "Q-34": 13234,
+    "Q-35": 13510,
+    "Q-36": 13798,
+    "Q-37": 14077,
+    "Q-38": 14338,
+    "Q-39": 14628,
+    "Q-40": 14913,
+    "Q-41": 15186,
+    "Q-42": 15456,
+    "Q-43": 15826,
+    "Q-44": 16081
+   }
+  },
+  "USPACOQ2": {
+   "_QVzc6gUfa4": {
+    "Q-1": 938,
+    "Q-2": 1239,
+    "Q-3": 1631,
+    "Q-4": 1929,
+    "Q-5": 2266,
+    "Q-6": 2621,
+    "Q-7": 2909,
+    "Q-8": 3186,
+    "Q-9": 3553,
+    "Q-10": 3817,
+    "Q-11": 4088,
+    "Q-12": 4429,
+    "Q-13": 4685,
+    "Q-14": 4950,
+    "Q-15": 5269,
+    "Q-16": 5546,
+    "Q-17": 8094,
+    "Q-18": 8346,
+    "Q-19": 8633,
+    "Q-20": 9026,
+    "Q-21": 9389,
+    "Q-22": 9708,
+    "Q-23": 10064,
+    "Q-24": 10346,
+    "Q-25": 10628,
+    "Q-26": 10905,
+    "Q-27": 11160,
+    "Q-28": 11439,
+    "Q-29": 11718,
+    "Q-30": 12000,
+    "Q-31": 12345,
+    "Q-32": 12717,
+    "Q-33": 13017,
+    "Q-34": 13297,
+    "Q-35": 13564,
+    "Q-36": 13857,
+    "Q-37": 14135,
+    "Q-38": 14389,
+    "Q-39": 14737,
+    "Q-40": 15021,
+    "Q-41": 15284,
+    "Q-42": 15533,
+    "Q-43": 15813,
+    "Q-44": 16061,
+    "Q-45": 16413
+   }
+  },
+  "USPALAQ1": {
+   "J8NVkH2mYPM": {
+    "Q-6": 271,
+    "Q-7": 570,
+    "Q-8": 845,
+    "Q-9": 1118,
+    "Q-10": 1506,
+    "Q-11": 1770,
+    "Q-12": 2068,
+    "Q-13": 2373,
+    "Q-14": 2659,
+    "Q-15": 2933,
+    "Q-16": 5075,
+    "Q-17": 5429,
+    "Q-18": 5937,
+    "Q-19": 6212,
+    "Q-20": 6478,
+    "Q-21": 6736,
+    "Q-22": 7057,
+    "Q-23": 7395,
+    "Q-24": 7666,
+    "Q-25": 8003,
+    "Q-26": 8374,
+    "Q-27": 8849,
+    "Q-28": 9235,
+    "Q-29": 9616,
+    "Q-30": 9884,
+    "Q-31": 10169,
+    "Q-32": 10476,
+    "Q-33": 10812,
+    "Q-34": 11157,
+    "Q-35": 11452,
+    "Q-36": 11791,
+    "Q-37": 12123,
+    "Q-38": 12382,
+    "Q-39": 12662
+   }
+  },
+  "USPALAQ2": {
+   "kEGCpjeWUTs": {
+    "Q-1": 950,
+    "Q-2": 1352,
+    "Q-3": 1772,
+    "Q-4": 2054,
+    "Q-5": 2394,
+    "Q-6": 2747,
+    "Q-7": 3057,
+    "Q-8": 3352,
+    "Q-9": 3788,
+    "Q-10": 4096,
+    "Q-11": 4389,
+    "Q-12": 4658,
+    "Q-13": 4989,
+    "Q-14": 5276,
+    "Q-15": 5640,
+    "Q-16": 8030,
+    "Q-17": 8303,
+    "Q-18": 8586,
+    "Q-19": 8865,
+    "Q-20": 9133,
+    "Q-21": 9733,
+    "Q-22": 10009,
+    "Q-23": 10283,
+    "Q-24": 10572,
+    "Q-25": 10934,
+    "Q-26": 11286,
+    "Q-27": 11589,
+    "Q-28": 11979,
+    "Q-29": 12247,
+    "Q-30": 12564,
+    "Q-31": 12960,
+    "Q-32": 13244,
+    "Q-33": 13502,
+    "Q-34": 13816,
+    "Q-35": 14128,
+    "Q-36": 14496,
+    "Q-37": 14777,
+    "Q-38": 15254
+   }
+  },
+  "USPAPHQ1": {
+   "FGEMqeRYSd4": {
+    "Q-1": 1330,
+    "Q-2": 1636,
+    "Q-3": 2034,
+    "Q-4": 2366,
+    "Q-5": 2758,
+    "Q-6": 3071,
+    "Q-7": 3443,
+    "Q-8": 3809,
+    "Q-9": 4100,
+    "Q-10": 4430,
+    "Q-11": 4700,
+    "Q-12": 5049,
+    "Q-13": 5418,
+    "Q-14": 5711,
+    "Q-15": 8258,
+    "Q-16": 8550,
+    "Q-17": 8845,
+    "Q-18": 9132,
+    "Q-19": 9423,
+    "Q-20": 9706,
+    "Q-21": 10067,
+    "Q-22": 10362,
+    "Q-23": 10666,
+    "Q-24": 10935,
+    "Q-25": 11259,
+    "Q-26": 11734,
+    "Q-27": 12009,
+    "Q-28": 12328,
+    "Q-29": 12611
+   }
+  },
+  "USPAPHQ2": {
+   "U1X8OYqzp5s": {
+    "Q-1": 1540,
+    "Q-2": 1844,
+    "Q-3": 2164,
+    "Q-4": 2482,
+    "Q-5": 2760,
+    "Q-6": 3042,
+    "Q-7": 3354,
+    "Q-8": 3732,
+    "Q-9": 4017,
+    "Q-10": 4358,
+    "Q-11": 4792,
+    "Q-12": 5237,
+    "Q-13": 5544,
+    "Q-14": 5804,
+    "Q-15": 6150,
+    "Q-16": 6479,
+    "Q-17": 8336,
+    "Q-18": 8788,
+    "Q-19": 9057,
+    "Q-20": 9367,
+    "Q-21": 9659,
+    "Q-22": 9941,
+    "Q-23": 10196,
+    "Q-24": 10487,
+    "Q-25": 10761,
+    "Q-26": 11090,
+    "Q-27": 11363,
+    "Q-28": 11692,
+    "Q-29": 11949,
+    "Q-30": 12211,
+    "Q-31": 12464,
+    "Q-32": 12799,
+    "Q-33": 13079,
+    "Q-34": 13336,
+    "Q-35": 13593,
+    "Q-36": 13860,
+    "Q-37": 14117,
+    "Q-38": 14374,
+    "Q-39": 14633,
+    "Q-40": 14947,
+    "Q-41": 15211,
+    "Q-42": 15490,
+    "Q-43": 15738,
+    "Q-44": 16104
+   }
+  },
+  "USPAUCQ1": {
+   "PLlKP1Y677s": {
+    "Q-1": 1452,
+    "Q-2": 1735,
+    "Q-3": 2129,
+    "Q-4": 2469,
+    "Q-5": 2929,
+    "Q-6": 3186,
+    "Q-7": 3505,
+    "Q-8": 3799,
+    "Q-9": 4093,
+    "Q-10": 4356,
+    "Q-11": 4729,
+    "Q-12": 5020,
+    "Q-13": 5372,
+    "Q-14": 5646,
+    "Q-15": 5926,
+    "Q-16": 6245,
+    "Q-17": 8458,
+    "Q-18": 8703,
+    "Q-19": 9065,
+    "Q-20": 9423,
+    "Q-21": 9712,
+    "Q-22": 10058,
+    "Q-23": 10438,
+    "Q-24": 10724,
+    "Q-25": 11039,
+    "Q-26": 11293,
+    "Q-27": 11607,
+    "Q-28": 11888,
+    "Q-29": 12175,
+    "Q-30": 12502,
+    "Q-31": 13019,
+    "Q-32": 13295,
+    "Q-33": 13553,
+    "Q-34": 13876,
+    "Q-35": 14379,
+    "Q-36": 14652,
+    "Q-37": 14919,
+    "Q-38": 15217
+   }
+  },
+  "USPAUCQ2": {
+   "PMWbWp99goY": {
+    "Q-1": 1306,
+    "Q-2": 1586,
+    "Q-3": 2086,
+    "Q-4": 2428,
+    "Q-5": 2758,
+    "Q-6": 3029,
+    "Q-7": 3355,
+    "Q-8": 3622,
+    "Q-9": 3955,
+    "Q-10": 4215,
+    "Q-11": 4648,
+    "Q-12": 4907,
+    "Q-13": 7023,
+    "Q-14": 7297,
+    "Q-15": 7544,
+    "Q-16": 7801,
+    "Q-17": 8268,
+    "Q-18": 8545,
+    "Q-19": 8945,
+    "Q-20": 9217,
+    "Q-21": 9607,
+    "Q-22": 9870,
+    "Q-23": 10320,
+    "Q-24": 10627,
+    "Q-25": 11042,
+    "Q-26": 11439,
+    "Q-27": 11712,
+    "Q-28": 12018,
+    "Q-29": 12299,
+    "Q-30": 12575,
+    "Q-31": 12936,
+    "Q-32": 13252,
+    "Q-33": 13546,
+    "Q-34": 13819,
+    "Q-35": 14110,
+    "Q-36": 14376,
+    "Q-37": 14727,
+    "Q-38": 14998
+   }
+  },
+  "USPAYOQ1": {
+   "y8n6x4JrFMw": {
+    "Q-1": 1177,
+    "Q-2": 1711,
+    "Q-3": 2335,
+    "Q-4": 2907,
+    "Q-5": 3435,
+    "Q-6": 4328,
+    "Q-7": 4719,
+    "Q-8": 5241,
+    "Q-9": 5681,
+    "Q-10": 8193,
+    "Q-11": 8728,
+    "Q-12": 9163,
+    "Q-13": 9570,
+    "Q-14": 10032,
+    "Q-15": 10501,
+    "Q-16": 10928,
+    "Q-17": 11365,
+    "Q-18": 11892,
+    "Q-19": 13074,
+    "Q-20": 13570,
+    "Q-21": 14007,
+    "Q-22": 14566
+   }
+  },
+  "USPAYOQ2": {
+   "jrLhUSAkti8": {
+    "Q-1": 990,
+    "Q-2": 1454,
+    "Q-3": 2073,
+    "Q-4": 2524,
+    "Q-5": 3161,
+    "Q-6": 3563,
+    "Q-7": 4016,
+    "Q-8": 4479,
+    "Q-9": 4991,
+    "Q-10": 5523,
+    "Q-11": 6017,
+    "Q-12": 6507,
+    "Q-13": 9287,
+    "Q-14": 9694,
+    "Q-15": 10147,
+    "Q-16": 10598,
+    "Q-17": 11061,
+    "Q-18": 11478,
+    "Q-19": 11851,
+    "Q-20": 12281,
+    "Q-21": 12698,
+    "Q-22": 13113,
+    "Q-23": 13467
+   }
+  },
+  "USWIGRQ": {
+   "sgB-KpRLpiY": {
+    "M-1": 0
+   },
+   "SPXuogVU5ec": {
+    "M-5": 0
+   },
+   "SKkCaOPw_MY": {
+    "M-6": 0
+   },
+   "_iGGndFTVL8": {
+    "M-3": 0
+   },
+   "ZpzUeXEAXJY": {
+    "M-2": 0
+   },
+   "Xi6Il3oKfAQ": {
+    "M-5": 0
+   },
+   "SBdKdLa1EOw": {
+    "M-6": 0
+   },
+   "S7QxyMphxPg": {
+    "M-1": 0
+   },
+   "RWHBKy0uIvM": {
+    "M-4": 0
+   },
+   "Gae8rkYZsq0": {
+    "M-3": 0
+   },
+   "DtTPkF49mXU": {
+    "M-4": 0
+   },
+   "Ddg2fKisftM": {
+    "M-2": 0
+   }
+  },
+  "USWISHQ": {
+   "yBrjnV_elaI": {
+    "M-7": 0
+   },
+   "uAL7RijTcbs": {
+    "M-5": 0
+   },
+   "rdtyC08r3T0": {
+    "M-6": 0
+   },
+   "qGBmb74xx1g": {
+    "M-8": 0
+   },
+   "wbQcUpnuKa4": {
+    "M-6": 0
+   },
+   "s0-aD8yqJwc": {
+    "M-1": 0
+   },
+   "iakt4BX0HZg": {
+    "M-7": 0
+   },
+   "hTivWh1dsqU": {
+    "M-10": 0
+   },
+   "dGxres0VEF8": {
+    "M-3": 0
+   },
+   "_I5XWd2XyxQ": {
+    "M-4": 0
+   },
+   "VbM6X41_Uys": {
+    "M-9": 0
+   },
+   "Qwf6AtHSvp8": {
+    "M-9": 0
+   },
+   "JUO1x1UWxro": {
+    "M-4": 0
+   },
+   "FZIAEn1RhEU": {
+    "M-2": 0
+   },
+   "FAAyrQZlabc": {
+    "M-2": 0
+   },
+   "AhBtR2BcCas": {
+    "M-8": 0
+   },
+   "6b3_uf2xReE": {
+    "M-1": 0
+   },
+   "-u83c3GWGOk": {
+    "M-10": 0
+   },
+   "-7tvoYPFrcU": {
+    "M-3": 0
+   }
+  },
+  "ILCMP": {
+   "nLpGR9XZHfI": {
+    "F-2": 0
+   },
+   "eMeGA_eI_wA": {
+    "F-1": 0
+   },
+   "uFzq2czFiek": {
+    "F-1": 0
+   },
+   "dwNa0Y6sI5c": {
+    "F-1": 0
+   }
+  },
+  "ILCMPPCF": {
+   "gPtJ-a74OLM": {
+    "Q-17": 0
+   },
+   "kiHufboDLpI": {
+    "Q-25": 0
+   },
+   "XzfuKflCbGA": {
+    "Q-8": 0
+   },
+   "9xidgQYuYM0": {
+    "Q-3": 0
+   },
+   "8ffiC1Un3wM": {
+    "Q-27": 0
+   },
+   "Arfl5IuIbO8": {
+    "Q-14": 0
+   }
+  },
+  "ILGBQ1": {
+   "BhAD9-oMRps": {
+    "M-11": 0
+   },
+   "QknFgow0euI": {
+    "M-10": 0
+   },
+   "iGBgMUIw1PE": {
+    "M-7": 0
+   },
+   "Uc7EA_wSHWQ": {
+    "M-3": 0
+   },
+   "vRoPpnfNE7U": {
+    "M-8": 0
+   }
+  },
+  "ILSHQ1": {
+   "l1-A3ur5SlE": {
+    "M-10": 0
+   },
+   "Y9KninRTCh4": {
+    "M-2": 0
+   },
+   "UM8IAIARN2M": {
+    "M-3": 0
+   }
+  },
+  "FPEEULOVE": {
+   "XmdM06wviIw": {
+    "Q-54": 0
+   }
+  },
+  "CNSHQ3": {
+   "iRC_4KEZk-0": {
+    "M-10": 0
+   }
+  },
+  "ROCMP": {
+   "43rMOlzAR_o": {
+    "Q-2": 138,
+    "Q-16": 730,
+    "Q-31": 1102,
+    "Q-50": 1406,
+    "Q-66": 1975,
+    "Q-80": 2498,
+    "M-2": 2736,
+    "M-5": 3238,
+    "M-10": 3711
+   }
+  },
+  "ROSLT": {
+   "RtelPxlvgLA": {
+    "Q-4": 191,
+    "Q-29": 515,
+    "Q-39": 1005,
+    "Q-46": 1363,
+    "Q-71": 1730,
+    "Q-83": 2260,
+    "M-4": 2517,
+    "M-8": 2895,
+    "M-10": 3265
+   }
+  },
+  "THMMOS": {
+   "vVrHxgJ4WpM": {
+    "M-7": 0
+   },
+   "gDXc1-ZqzkE": {
+    "M-4": 0
+   }
+  },
+  "USCHSDCQ1": {
+   "SEYqJxmLuVI": {
+    "Q-1": 1804,
+    "Q-2": 2217,
+    "Q-3": 2641,
+    "Q-4": 3041,
+    "Q-5": 3507,
+    "Q-6": 3885,
+    "Q-7": 4273,
+    "Q-8": 4615,
+    "Q-9": 4967,
+    "Q-10": 5275,
+    "Q-11": 5575,
+    "Q-12": 5861,
+    "Q-13": 6969,
+    "Q-14": 7291,
+    "Q-15": 10427,
+    "Q-16": 10872,
+    "Q-17": 11226,
+    "Q-18": 11495,
+    "Q-19": 11862,
+    "Q-20": 12178,
+    "Q-21": 12691,
+    "Q-22": 12955,
+    "Q-23": 13319,
+    "Q-24": 14083,
+    "Q-25": 14401,
+    "Q-26": 14862,
+    "Q-27": 15185,
+    "Q-28": 15828,
+    "Q-29": 16156,
+    "M-1": 18723,
+    "M-2": 19129,
+    "M-3": 19638,
+    "M-4": 20185,
+    "M-5": 20753,
+    "M-6": 21212,
+    "M-7": 21557,
+    "M-8": 21889,
+    "M-9": 23070,
+    "M-10": 23969
+   }
+  },
+  "USSCCMP": {
+   "KSIMy6MNpG8": {
+    "M-10": 0
+   },
+   "4Fp9PHNns2Y": {
+    "M-9": 0
+   },
+   "ZVs0l4N-HgE": {
+    "M-8": 0
+   },
+   "F_fVmFw66tw": {
+    "M-7": 0
+   },
+   "tofRyozQtzs": {
+    "M-6": 0
+   },
+   "e8E8r80wKGs": {
+    "M-5": 0
+   },
+   "FNwU_xK5Yxk": {
+    "M-4": 0
+   },
+   "BjaEzNknZTo": {
+    "M-3": 0
+   },
+   "LRXh5RSEM4c": {
+    "M-2": 0
+   },
+   "WnxQ-4U0Jmk": {
+    "M-1": 0
+   },
+   "rTH0KWpXdBo": {
+    "M-10": 0
+   },
+   "1MiiXRUmCvw": {
+    "M-9": 0
+   },
+   "cX-iE9o8ETI": {
+    "M-8": 0
+   },
+   "X3ylDBmZlgI": {
+    "M-7": 0
+   },
+   "Y0YbBu1iWTg": {
+    "M-6": 0
+   },
+   "fEqtkwPSnPo": {
+    "M-5": 0
+   },
+   "lLqqCWe-k00": {
+    "M-4": 0
+   },
+   "a6zn4p7-z1o": {
+    "M-3": 0
+   },
+   "vSDzz1qtv5Q": {
+    "M-2": 0
+   },
+   "Vw0Y_hPbvsc": {
+    "M-1": 0
+   }
+  },
+  "USSCLAQ": {
+   "cp1oSfIlATw": {
+    "F-1": 0
+   },
+   "H5jws-fI7UA": {
+    "Q-14": 0
+   },
+   "_Fb9ty1gZLg": {
+    "Q-13": 0
+   },
+   "fhJM-DclwWA": {
+    "Q-12": 0
+   },
+   "0n8YzuU1-Og": {
+    "Q-11": 0
+   },
+   "Av3osBxZmJ8": {
+    "Q-10": 0
+   },
+   "QJX-ZSva5BE": {
+    "Q-9": 0
+   },
+   "CTAG_tuFcvw": {
+    "Q-8": 0
+   },
+   "Q6gIPaVfmcU": {
+    "Q-7": 0
+   },
+   "ZC19r76ADcQ": {
+    "Q-6": 0
+   },
+   "pciEN4kqEDs": {
+    "Q-5": 0
+   },
+   "P2Ie4VeqO14": {
+    "Q-4": 0
+   },
+   "MeVdpK65nrI": {
+    "Q-3": 0
+   },
+   "0C1He6kXvtQ": {
+    "Q-2": 0
+   },
+   "m9VyPmgx2qc": {
+    "Q-1": 0
+   }
+  },
+  "USTXCNLT1": {
+   "fnTnE8EOAK8": {
+    "M-1": 0
+   },
+   "czvFuAO4QT4": {
+    "M-4": 0
+   },
+   "AiONRpNyQZI": {
+    "M-6": 0
+   }
+  },
+  "USTXTBSQLM": {
+   "g41ozLhq5DY": {
+    "M-11": 0
+   },
+   "QNBD2hi2Gk0": {
+    "M-10": 0
+   },
+   "Pr2W_EXDjSA": {
+    "M-7": 0
+   },
+   "5WGecEFb37A": {
+    "M-4": 0
+   },
+   "9T3ZisXln6Y": {
+    "Q-27": 0
+   },
+   "8jRyKJRiZiQ": {
+    "Q-24": 0
+   },
+   "UpyWUtInsBI": {
+    "Q-17": 0
+   },
+   "Z2cHov6x6RM": {
+    "Q-12": 0
+   },
+   "2jtO9kbcjjo": {
+    "Q-5": 0
+   }
+  },
+  "FTCCMP1": {
+   "_UmdXi4NJ_A": {
+    "M-5": 0
+   },
+   "0BhZoyJIF3U": {
+    "M-3": 0
+   },
+   "VQB5xwyvPXc": {
+    "M-4": 0
+   },
+   "lPsEpY4tLJI": {
+    "M-6": 0
+   }
+  },
+  "USORPHQ": {
+   "C3ZYyvHYiTg": {
+    "Q-15": 0,
+    "Q-16": 238,
+    "Q-17": 561,
+    "Q-18": 1013,
+    "Q-19": 1575,
+    "Q-20": 1909,
+    "Q-21": 2433,
+    "Q-22": 2716,
+    "Q-23": 3087,
+    "Q-24": 3367,
+    "Q-25": 3681,
+    "Q-26": 6471,
+    "Q-27": 6674,
+    "Q-28": 7013,
+    "Q-29": 7432,
+    "Q-30": 7674,
+    "Q-31": 8046,
+    "Q-32": 8329,
+    "Q-33": 8635,
+    "Q-34": 8942,
+    "Q-35": 9315,
+    "Q-36": 9683,
+    "Q-37": 9918,
+    "Q-38": 10224,
+    "Q-39": 10734,
+    "Q-40": 10986,
+    "Q-41": 11310,
+    "Q-42": 11695,
+    "Q-43": 11988,
+    "Q-44": 12365,
+    "M-1": 17082,
+    "M-2": 17519,
+    "M-3": 17951,
+    "M-4": 18489,
+    "M-5": 18961,
+    "M-6": 19732,
+    "M-7": 20132,
+    "M-8": 20558,
+    "M-9": 21662,
+    "M-10": 23646
+   },
+   "-nM7QVIlNwU": {
+    "Q-1": 0,
+    "Q-2": 443,
+    "Q-3": 791,
+    "Q-4": 1358,
+    "Q-5": 1748,
+    "Q-6": 2148,
+    "Q-7": 2518,
+    "Q-8": 2875,
+    "Q-9": 3313
+   }
+  },
+  "USORCMPBLUE": {
+   "nmlrNEVwgFU": {
+    "Q-13": 2633,
+    "Q-14": 3723,
+    "Q-15": 4110,
+    "Q-16": 4355,
+    "Q-17": 4685,
+    "Q-18": 5044,
+    "Q-19": 5465,
+    "Q-20": 5843,
+    "Q-21": 6203,
+    "Q-22": 6781,
+    "Q-23": 7048,
+    "Q-24": 7404,
+    "Q-25": 7675,
+    "Q-27": 8476,
+    "Q-26": 9643,
+    "Q-28": 10368,
+    "Q-29": 10718,
+    "Q-30": 10985,
+    "Q-31": 11248,
+    "Q-32": 11901,
+    "Q-33": 12150,
+    "Q-34": 12674,
+    "Q-35": 12968,
+    "Q-36": 13196,
+    "Q-37": 13495,
+    "Q-38": 13768,
+    "Q-39": 14038,
+    "Q-40": 14411,
+    "Q-41": 14678,
+    "Q-42": 14972,
+    "M-1": 20572,
+    "M-2": 21098,
+    "M-3": 21420,
+    "M-4": 21995,
+    "M-5": 22332,
+    "M-6": 22914,
+    "M-7": 23469,
+    "M-8": 23996,
+    "M-9": 24374,
+    "M-10": 25320,
+    "M-11": 26608
+   }
+  },
+  "USWASHM2": {
+   "39XzGxTn1Xg": {
+    "Q-4": 0
+   },
+   "KGLYmiGtckw": {
+    "Q-22": 0
+   },
+   "MVgjyDogrKE": {
+    "Q-18": 0
+   },
+   "0frhz25NNE8": {
+    "Q-14": 0
+   },
+   "_ZJsXQf_fT4": {
+    "Q-11": 0
+   },
+   "KZkS1DOrrag": {
+    "Q-6": 0
    }
   }
  },
@@ -10038,6 +21717,33 @@
    },
    "z68yknIxZBo": {
     "M-10": 0
+   },
+   "xmI2KVMRHtM": {
+    "Q-5": 0
+   },
+   "_TyGNbpd8Qg": {
+    "Q-19": 0
+   },
+   "YkjvR5OQ6cY": {
+    "Q-8": 0
+   },
+   "J4Ai2zWiYOQ": {
+    "Q-5": 0
+   },
+   "9ERtTigBMb8": {
+    "Q-23": 0
+   },
+   "XXuOO9OcYGE": {
+    "Q-32": 0
+   },
+   "VpcqLDxSbDw": {
+    "M-9": 0
+   },
+   "wg82v8462eo": {
+    "M-7": 0
+   },
+   "ZrzsFgzWrvc": {
+    "M-4": 0
    }
   },
   "USMOKSLSSQ": {
@@ -10150,6 +21856,9 @@
    },
    "R3bD2BQCg3s": {
     "Q-27": 0
+   },
+   "i3c_A3z_SrU": {
+    "M-5": 0
    }
   },
   "USCANOSCQ1": {
@@ -10191,6 +21900,18 @@
   },
   "USTXEDIM1": {
    "axKebOKVd5g": {
+    "Q-1": 0
+   },
+   "TQ_GkZYNybA": {
+    "Q-1": 0
+   },
+   "G1WH7ip3MuM": {
+    "Q-1": 0
+   },
+   "cGS6ZpUISh4": {
+    "Q-1": 0
+   },
+   "XHz8O1lO6qw": {
     "Q-1": 0
    }
   },
@@ -12287,6 +24008,45 @@
    },
    "Io7gmyG3wTM": {
     "M-1": 0
+   },
+   "r1BF8LHGjMM": {
+    "Q-3": 0
+   },
+   "sNeEASwjzpM": {
+    "Q-13": 0
+   },
+   "rW8by-gslEw": {
+    "Q-20": 0
+   },
+   "xkYjjemmvDA": {
+    "Q-27": 0
+   },
+   "eh5YSZqEoUg": {
+    "Q-34": 0
+   },
+   "d8lmBWfdpvU": {
+    "Q-40": 0
+   },
+   "hC5byxqrgZs": {
+    "Q-45": 0
+   },
+   "feB-cMWYInU": {
+    "Q-55": 0
+   },
+   "WU7KNNK07H8": {
+    "M-2": 0
+   },
+   "7FrRIzY945E": {
+    "M-7": 0
+   },
+   "9GTD-P_qIHY": {
+    "M-9": 0
+   },
+   "UsrJYrFoB5U": {
+    "M-12": 0
+   },
+   "EWzEmKbGdOs": {
+    "M-13": 0
    }
   },
   "AUBRQ1": {
@@ -12298,6 +24058,15 @@
    },
    "LRT8OxnhJ9o": {
     "M-3": 0
+   },
+   "Tg9mCdMhGOU": {
+    "M-1": 0
+   },
+   "Iz3scHou7OU": {
+    "M-2": 0
+   },
+   "6mXi0IlPFGE": {
+    "M-7": 0
    }
   },
   "USWABRM1": {
@@ -12318,15 +24087,54 @@
    },
    "Di4iUVOkgqs": {
     "Q-10": 0
+   },
+   "m70OrQrRXQk": {
+    "Q-17": 0
+   },
+   "GMzZGKJxe6Y": {
+    "Q-16": 0
+   },
+   "CaIJmc5hC4M": {
+    "Q-15": 0
+   },
+   "Fj1epevQaz4": {
+    "Q-14": 0
+   },
+   "Z_dtvTE3aak": {
+    "Q-12": 0
+   },
+   "Vc8cu361Aw0": {
+    "Q-13": 0
+   },
+   "jDpRlwV6faI": {
+    "Q-11": 0
+   },
+   "-qwiPYqHGmY": {
+    "Q-9": 0
+   },
+   "plap5J0iV8A": {
+    "Q-8": 0
+   },
+   "u_HyJxLEwLo": {
+    "Q-6": 0
    }
   },
   "GBBOQ": {
    "bCk_WSPhaMY": {
     "M-6": 0
+   },
+   "OkKophLOHfQ": {
+    "M-5": 0
    }
   },
   "THCMP": {
    "hULair-Jwis": {
+    "M-7": 0
+   },
+   "dgXNXkZm1SI": {
+    "M-10": 0
+   },
+   "D5gUIR8RWY0": {
     "M-7": 0
    }
   },
@@ -12459,6 +24267,938 @@
     "Q-16": 9287,
     "Q-17": 9876,
     "Q-18": 10527
+   }
+  },
+  "USCASDCMP": {
+   "-RKxQPbF7SQ": {
+    "M-10": 0
+   },
+   "34ik5gQTaXE": {
+    "M-7": 0
+   },
+   "4kk6DWNeyvU": {
+    "M-3": 0
+   },
+   "4pdDGqZPu64": {
+    "M-8": 0
+   },
+   "6XB5nELI_-0": {
+    "M-1": 0
+   },
+   "7rsu_aZfEKY": {
+    "M-5": 0
+   },
+   "96W0chCI--M": {
+    "M-6": 0
+   },
+   "B73i_brNgoQ": {
+    "M-10": 0
+   },
+   "_6T1teN8TD8": {
+    "M-9": 0
+   },
+   "_a22KCSZioU": {
+    "M-8": 0
+   },
+   "acipkCcLoCs": {
+    "M-9": 0
+   },
+   "egZ5IHAUnjE": {
+    "M-7": 0
+   },
+   "mG4_Ac7pjII": {
+    "M-1": 0
+   },
+   "pl3tUHHxNU8": {
+    "M-2": 0
+   },
+   "qz30AY1_hoA": {
+    "M-2": 0
+   },
+   "sGKWhgUSL3U": {
+    "M-4": 0
+   },
+   "tnX1uHiHb-w": {
+    "M-3": 0
+   },
+   "xUrYbQzFPoI": {
+    "M-4": 0
+   },
+   "yfJJSWOl-ZA": {
+    "M-6": 0
+   },
+   "zWk_pXRUOR0": {
+    "M-5": 0
+   }
+  },
+  "USCANOSJQ1": {
+   "vEjBheohFWc": {
+    "Q-11": 0
+   },
+   "aMbK8d0Oqpw": {
+    "Q-3": 0
+   }
+  },
+  "USCANOFOQ": {
+   "mjRWu_NmyzQ": {
+    "Q-7": 0
+   },
+   "LmQcKBYp22g": {
+    "Q-12": 0
+   },
+   "mZXCKYIyuUs": {
+    "Q-21": 0
+   },
+   "4xWyrKxlE3U": {
+    "Q-28": 0
+   },
+   "QxyyNcqhROM": {
+    "Q-7": 0
+   },
+   "8phYWU6xsOE": {
+    "Q-12": 0
+   },
+   "Kc8exRK1yQ8": {
+    "Q-33": 0
+   },
+   "ZKsYgxAIZvM": {
+    "Q-33": 0
+   },
+   "_JJWCAo41LI": {
+    "Q-21": 0
+   },
+   "IQN_W54rpMU": {
+    "Q-28": 0
+   }
+  },
+  "USCASDSDMLM4": {
+   "f5M-pkqsxtE": {
+    "Q-13": 0
+   }
+  },
+  "USMAANQ1": {
+   "_Bv32UisZ-M": {
+    "Q-1": 1287,
+    "Q-2": 1889,
+    "Q-3": 2376,
+    "Q-4": 3011,
+    "Q-5": 3561,
+    "Q-6": 4022,
+    "Q-7": 4518,
+    "Q-8": 5132,
+    "Q-9": 5626,
+    "Q-10": 6295,
+    "Q-11": 6827,
+    "Q-12": 7211,
+    "Q-13": 10504,
+    "Q-14": 11083,
+    "Q-15": 11536,
+    "Q-16": 12059,
+    "Q-17": 12453,
+    "Q-18": 12933,
+    "Q-19": 13367,
+    "Q-20": 13836,
+    "Q-21": 14248,
+    "Q-22": 14674,
+    "Q-23": 15085,
+    "Q-24": 15563,
+    "Q-25": 15953,
+    "M-1": 18441,
+    "M-2": 18907,
+    "M-3": 19748,
+    "M-4": 20418,
+    "M-5": 21336,
+    "M-6": 22467
+   }
+  },
+  "USMAANQ2": {
+   "Tb6LKw7GSC4": {
+    "Q-1": 1227,
+    "Q-2": 1902,
+    "Q-3": 2351,
+    "Q-4": 2821,
+    "Q-5": 3295,
+    "Q-6": 3923,
+    "Q-7": 4423,
+    "Q-8": 5026,
+    "Q-9": 5413,
+    "Q-10": 5905,
+    "Q-11": 6486,
+    "Q-12": 6909,
+    "Q-13": 7352,
+    "Q-14": 10459,
+    "Q-15": 11038,
+    "Q-16": 11426,
+    "Q-17": 11912,
+    "Q-18": 12495,
+    "Q-19": 12910,
+    "Q-20": 13348,
+    "Q-21": 13817,
+    "Q-22": 14363,
+    "Q-23": 14793,
+    "Q-24": 15172,
+    "Q-25": 15692,
+    "Q-26": 16231,
+    "Q-27": 16632,
+    "Q-28": 17166,
+    "Q-29": 17551,
+    "Q-30": 17978,
+    "M-1": 20410,
+    "M-2": 20924,
+    "M-3": 21341,
+    "M-4": 22035,
+    "M-5": 22578,
+    "M-6": 23034,
+    "M-7": 23631,
+    "M-8": 24115,
+    "M-9": 24969,
+    "M-10": 25910
+   }
+  },
+  "USMABRQ2": {
+   "JXMGIBMVDgU": {
+    "Q-1": 1462,
+    "Q-2": 2475,
+    "Q-3": 3046,
+    "Q-4": 3482,
+    "Q-5": 4028,
+    "Q-6": 4527,
+    "Q-7": 5796,
+    "Q-8": 6269,
+    "Q-9": 6771,
+    "Q-10": 7285,
+    "Q-11": 8067,
+    "Q-12": 10947,
+    "Q-13": 11442,
+    "Q-14": 11936,
+    "Q-15": 12563,
+    "Q-16": 13203,
+    "Q-17": 13773,
+    "Q-18": 14224,
+    "Q-19": 14879,
+    "Q-20": 15461,
+    "Q-21": 15970,
+    "Q-22": 16568,
+    "Q-23": 17025,
+    "Q-24": 17512,
+    "Q-25": 18062,
+    "Q-26": 18598,
+    "Q-27": 19158,
+    "Q-28": 19716,
+    "Q-29": 20301,
+    "M-1": 22659,
+    "M-2": 23181,
+    "M-3": 23640,
+    "M-4": 24167,
+    "M-5": 24733,
+    "M-6": 25192,
+    "M-7": 25717,
+    "M-8": 26183,
+    "M-9": 26990,
+    "M-10": 27917
+   }
+  },
+  "USMAMAQ": {
+   "9mdfa0U3y4A": {
+    "Q-1": 1135,
+    "Q-2": 1447,
+    "Q-3": 1778,
+    "Q-4": 2194,
+    "Q-5": 2481,
+    "Q-6": 2974,
+    "Q-7": 3282,
+    "Q-8": 3741,
+    "Q-9": 4036,
+    "Q-10": 4391,
+    "Q-11": 4674,
+    "Q-12": 5040,
+    "Q-13": 8155,
+    "Q-14": 8484,
+    "Q-15": 8745,
+    "Q-16": 9065,
+    "Q-17": 9452,
+    "Q-18": 10020,
+    "Q-19": 10320,
+    "Q-20": 10642,
+    "Q-21": 10995,
+    "Q-22": 11316,
+    "Q-23": 11604,
+    "Q-24": 12052,
+    "Q-25": 12335,
+    "Q-26": 12631,
+    "Q-27": 13001,
+    "Q-28": 13352,
+    "Q-29": 13647,
+    "Q-30": 13933,
+    "M-1": 16691,
+    "M-2": 17146,
+    "M-3": 17591,
+    "M-4": 18119,
+    "M-5": 18448,
+    "M-6": 18903,
+    "M-7": 19366,
+    "M-8": 19915,
+    "M-9": 20772,
+    "M-10": 21860
+   }
+  },
+  "USORHIS": {
+   "BAU0O1_mSYE": {
+    "Q-1": 0,
+    "Q-2": 483,
+    "Q-3": 793,
+    "Q-4": 1163,
+    "Q-5": 1542,
+    "Q-6": 1913,
+    "Q-7": 2234,
+    "Q-8": 2552,
+    "Q-9": 2822,
+    "Q-10": 3322,
+    "Q-11": 3580,
+    "Q-12": 3954,
+    "Q-13": 4372,
+    "Q-14": 4624,
+    "Q-15": 5109,
+    "Q-16": 5367,
+    "Q-17": 5855,
+    "Q-18": 6146,
+    "Q-19": 6372,
+    "Q-20": 6704,
+    "Q-21": 7014,
+    "Q-22": 7493
+   }
+  },
+  "USORPHQ": {
+   "LNoHfnyab6s": {
+    "Q-1": 340,
+    "Q-2": 700,
+    "Q-3": 1177,
+    "Q-4": 1634,
+    "Q-5": 2023,
+    "Q-6": 2374,
+    "Q-7": 2682,
+    "Q-8": 3034,
+    "Q-9": 3546,
+    "Q-10": 3932,
+    "Q-11": 4255,
+    "Q-12": 4732,
+    "Q-13": 5217,
+    "Q-14": 5711,
+    "Q-15": 6264,
+    "Q-16": 6576,
+    "Q-17": 6912,
+    "Q-18": 8273,
+    "Q-19": 8559,
+    "Q-20": 8945,
+    "Q-21": 9275,
+    "Q-22": 9780,
+    "Q-23": 10078,
+    "Q-24": 10619,
+    "Q-25": 11037,
+    "Q-26": 11620,
+    "Q-27": 11977,
+    "Q-28": 12358,
+    "Q-29": 14669,
+    "Q-30": 15074,
+    "Q-31": 15436,
+    "Q-32": 15837,
+    "Q-33": 16654,
+    "Q-34": 17148,
+    "Q-35": 17436,
+    "Q-36": 17716,
+    "Q-37": 18015,
+    "Q-38": 18505,
+    "Q-39": 18948,
+    "Q-40": 19337,
+    "Q-41": 19674,
+    "Q-42": 20091,
+    "Q-43": 20472,
+    "Q-44": 20756,
+    "Q-45": 21159,
+    "M-1": 25325,
+    "M-2": 25819,
+    "M-3": 26268,
+    "M-4": 26688,
+    "M-5": 27217,
+    "M-6": 27603,
+    "M-7": 28251,
+    "M-8": 28687,
+    "M-9": 29597,
+    "M-10": 30582
+   }
+  },
+  "USORRCLT": {
+   "vytSgpJsr1Q": {
+    "Q-1": 1302,
+    "Q-2": 1736,
+    "Q-3": 2170,
+    "Q-4": 2570,
+    "Q-5": 5354,
+    "Q-6": 18471,
+    "Q-7": 6350,
+    "Q-8": 6744,
+    "Q-9": 6998,
+    "Q-10": 7572,
+    "Q-11": 7966,
+    "Q-12": 8306,
+    "Q-13": 8718,
+    "Q-14": 9164,
+    "Q-15": 9588,
+    "Q-16": 9995,
+    "Q-17": 10420,
+    "Q-18": 10726,
+    "Q-19": 11272,
+    "Q-20": 12072,
+    "Q-21": 12670,
+    "Q-22": 13551
+   }
+  },
+  "USORSFLT": {
+   "Mk-uPcyF5ZQ": {
+    "Q-1": 1212,
+    "Q-2": 1470,
+    "Q-3": 1758,
+    "Q-4": 2049,
+    "Q-5": 2354,
+    "Q-6": 2612,
+    "Q-7": 2972,
+    "Q-8": 5114,
+    "Q-9": 5358,
+    "Q-10": 5616,
+    "Q-11": 5944,
+    "Q-12": 6377,
+    "Q-13": 6803,
+    "Q-14": 7043,
+    "Q-15": 7408,
+    "Q-16": 7659,
+    "Q-17": 8133,
+    "Q-18": 8559,
+    "Q-19": 8798,
+    "Q-20": 9141,
+    "Q-21": 9450,
+    "Q-22": 9685,
+    "Q-23": 10045,
+    "Q-24": 10512,
+    "Q-25": 10746,
+    "Q-26": 11437,
+    "Q-27": 11685,
+    "F-1": 14282,
+    "F-2": 14607,
+    "F-3": 15258,
+    "F-4": 15811,
+    "F-5": 16416,
+    "F-6": 16800,
+    "F-7": 17537,
+    "F-8": 18169,
+    "F-9": 19251
+   }
+  },
+  "USORSFM1": {
+   "RdX21BB0A80": {
+    "Q-1": 220,
+    "Q-2": 457,
+    "Q-3": 953,
+    "Q-4": 1337,
+    "Q-5": 1734,
+    "Q-6": 2073,
+    "Q-7": 2601,
+    "Q-8": 2839,
+    "Q-9": 3141,
+    "Q-10": 3590,
+    "Q-11": 3894,
+    "Q-12": 4904,
+    "Q-13": 5087,
+    "Q-14": 5635,
+    "Q-15": 5903,
+    "Q-16": 6288,
+    "Q-17": 7186,
+    "Q-18": 7892,
+    "Q-19": 8216,
+    "Q-20": 8533,
+    "Q-21": 8805,
+    "Q-22": 9063,
+    "Q-23": 9503,
+    "Q-24": 9859,
+    "Q-25": 10239,
+    "Q-26": 11050,
+    "Q-27": 11330
+   }
+  },
+  "USORSFM2": {
+   "f0qAfJo19Do": {
+    "Q-2": 248,
+    "Q-3": 560,
+    "Q-4": 1241,
+    "Q-5": 1467,
+    "Q-6": 1858,
+    "Q-7": 2310,
+    "Q-8": 2678,
+    "Q-9": 3184,
+    "Q-10": 3551,
+    "Q-11": 3935,
+    "Q-12": 4274,
+    "Q-13": 4575,
+    "Q-14": 4845,
+    "Q-15": 5110,
+    "Q-16": 5547,
+    "Q-17": 5795,
+    "Q-18": 6057,
+    "Q-19": 6488,
+    "Q-20": 6792,
+    "Q-21": 7141,
+    "Q-22": 7533,
+    "Q-23": 8002,
+    "Q-24": 8268,
+    "Q-25": 8714,
+    "Q-1": 9250
+   }
+  },
+  "USORSFM3": {
+   "RJA1dfgghXs": {
+    "Q-1": 94,
+    "Q-2": 329,
+    "Q-3": 632,
+    "Q-4": 950,
+    "Q-5": 1352,
+    "Q-6": 1626,
+    "Q-7": 1940,
+    "Q-8": 2356,
+    "Q-9": 2592,
+    "Q-10": 2982,
+    "Q-11": 3451,
+    "Q-12": 3854,
+    "Q-13": 4161,
+    "Q-14": 4642,
+    "Q-15": 4937,
+    "Q-16": 5193,
+    "Q-17": 5418,
+    "Q-18": 5744,
+    "Q-19": 5938,
+    "Q-20": 6256,
+    "Q-21": 6490,
+    "Q-22": 6859,
+    "Q-23": 7217,
+    "Q-24": 7446,
+    "Q-25": 7739,
+    "Q-26": 8013,
+    "Q-27": 8277
+   }
+  },
+  "USPACOQ1": {
+   "097g8OVMPWM": {
+    "Q-1": 930,
+    "Q-2": 1316,
+    "Q-3": 1608,
+    "Q-4": 1938,
+    "Q-5": 2235,
+    "Q-6": 2548,
+    "Q-7": 2899,
+    "Q-8": 3308,
+    "Q-9": 3611,
+    "Q-10": 4006,
+    "Q-11": 4477,
+    "Q-12": 4901,
+    "Q-13": 5184,
+    "Q-14": 5519,
+    "Q-15": 8094,
+    "Q-16": 8443,
+    "Q-17": 8708,
+    "Q-18": 9103,
+    "Q-19": 9429,
+    "Q-20": 9863,
+    "Q-21": 10130,
+    "Q-22": 10421,
+    "Q-23": 10769,
+    "Q-24": 11175,
+    "Q-25": 11501,
+    "Q-26": 12043,
+    "Q-27": 12401,
+    "Q-28": 12723,
+    "Q-29": 13036,
+    "Q-30": 13390,
+    "Q-31": 13749,
+    "Q-32": 14089,
+    "Q-33": 14490,
+    "Q-34": 14924,
+    "Q-35": 15363,
+    "Q-36": 15685,
+    "Q-37": 15977,
+    "Q-38": 16375,
+    "Q-39": 16792,
+    "Q-40": 17230,
+    "Q-41": 17589,
+    "Q-42": 17883,
+    "Q-43": 18256,
+    "Q-44": 18561,
+    "Q-45": 18844
+   }
+  },
+  "USPACOQ2": {
+   "j9oKhvmVXzk": {
+    "Q-1": 1158,
+    "Q-2": 1581,
+    "Q-3": 1876,
+    "Q-4": 2269,
+    "Q-5": 2541,
+    "Q-6": 2929,
+    "Q-7": 3308,
+    "Q-8": 3590,
+    "Q-9": 3988,
+    "Q-10": 4300,
+    "Q-11": 4572,
+    "Q-12": 4866,
+    "Q-13": 5278,
+    "Q-14": 5771,
+    "Q-15": 6249,
+    "Q-16": 8200,
+    "Q-17": 8684,
+    "Q-18": 9013,
+    "Q-19": 9481,
+    "Q-20": 9880,
+    "Q-21": 10327,
+    "Q-22": 10715,
+    "Q-23": 11044,
+    "Q-24": 11411,
+    "Q-25": 11800,
+    "Q-26": 12246,
+    "Q-27": 12645,
+    "Q-28": 12925,
+    "Q-29": 13347,
+    "Q-30": 13675,
+    "Q-31": 14119,
+    "Q-32": 14506,
+    "Q-33": 14781,
+    "Q-34": 15176,
+    "Q-35": 15603,
+    "Q-36": 15970,
+    "Q-37": 16355,
+    "Q-38": 16634,
+    "Q-39": 16970,
+    "Q-40": 17238,
+    "Q-41": 17659,
+    "Q-42": 17928,
+    "Q-43": 18198,
+    "Q-44": 18473,
+    "Q-45": 18832
+   }
+  },
+  "USPAHAQ1": {
+   "v6TjVvPdugs": {
+    "Q-1": 1014,
+    "Q-2": 1753,
+    "Q-3": 2351,
+    "Q-4": 2965,
+    "Q-5": 3525,
+    "Q-6": 4031,
+    "Q-7": 4672,
+    "Q-8": 5344,
+    "Q-9": 5930,
+    "Q-10": 8265,
+    "Q-11": 8754,
+    "Q-12": 9295,
+    "Q-13": 9865,
+    "Q-14": 10403,
+    "Q-15": 11079,
+    "Q-16": 11553,
+    "Q-17": 12077,
+    "Q-18": 12587,
+    "Q-19": 13166,
+    "Q-20": 13729
+   }
+  },
+  "USPAHAQ2": {
+   "ft-5neAqrSI": {
+    "Q-1": 1854,
+    "Q-2": 2212,
+    "Q-3": 2611,
+    "Q-4": 2990,
+    "Q-5": 3392,
+    "Q-6": 3955,
+    "Q-7": 4378,
+    "Q-8": 4829,
+    "Q-9": 5194,
+    "Q-10": 5755,
+    "Q-11": 6106,
+    "Q-12": 8858,
+    "Q-13": 9263,
+    "Q-14": 9645,
+    "Q-15": 9986,
+    "Q-16": 10377,
+    "Q-17": 10927,
+    "Q-18": 11419,
+    "Q-19": 11981,
+    "Q-20": 12408,
+    "Q-21": 12789,
+    "Q-22": 13226,
+    "Q-23": 13650
+   }
+  },
+  "USPALAQ1": {
+   "sMCWhWT0opA": {
+    "Q-1": 1211,
+    "Q-2": 1571,
+    "Q-3": 1970,
+    "Q-4": 2345,
+    "Q-5": 2643,
+    "Q-6": 2984,
+    "Q-7": 3731,
+    "Q-8": 4176,
+    "Q-9": 4613,
+    "Q-10": 4956,
+    "Q-11": 5242,
+    "Q-12": 5631,
+    "Q-13": 5987,
+    "Q-14": 6297,
+    "Q-15": 6658,
+    "Q-16": 8826,
+    "Q-17": 9165,
+    "Q-18": 9456,
+    "Q-19": 9871,
+    "Q-20": 10219,
+    "Q-21": 10534,
+    "Q-22": 10983,
+    "Q-23": 11339,
+    "Q-24": 11719,
+    "Q-25": 12036,
+    "Q-26": 12519,
+    "Q-27": 12831,
+    "Q-28": 13171,
+    "Q-29": 13569,
+    "Q-30": 13871,
+    "Q-31": 14242,
+    "Q-32": 14568,
+    "Q-33": 14870,
+    "Q-34": 15152,
+    "Q-35": 15554
+   }
+  },
+  "KZCMPJNB2": {
+   "ukMitv3YB4g": {
+    "Q-53": 0
+   },
+   "ZjpNsnlWQNs": {
+    "Q-34": 0
+   },
+   "TF7ajxTjdeM": {
+    "Q-23": 0
+   },
+   "K3KsdmKmxCM": {
+    "Q-4": 0
+   },
+   "pLPDrMjkpqc": {
+    "Q-6": 0
+   }
+  },
+  "ILKSQ2": {
+   "nrsfNW09yD0": {
+    "M-8": 0
+   },
+   "qwZ85V1QCHo": {
+    "M-6": 0
+   },
+   "PvYcBUsV8X8": {
+    "M-1": 0
+   },
+   "jrmj16wdYZg": {
+    "M-9": 0
+   }
+  },
+  "USPALAQ2": {
+   "YOFnlPCVD7s": {
+    "Q-1": 0,
+    "Q-2": 307,
+    "Q-3": 647,
+    "Q-4": 1036,
+    "Q-5": 1466,
+    "Q-6": 1808,
+    "Q-7": 2174,
+    "Q-8": 2489,
+    "Q-9": 3049,
+    "Q-10": 3374,
+    "Q-11": 3779,
+    "Q-12": 4147,
+    "Q-13": 4492,
+    "Q-14": 6981,
+    "Q-15": 7448,
+    "Q-16": 7748,
+    "Q-17": 8036,
+    "Q-18": 8663,
+    "Q-19": 9012,
+    "Q-20": 9341,
+    "Q-21": 9659,
+    "Q-22": 10143,
+    "Q-23": 10521,
+    "Q-24": 10863,
+    "Q-25": 11199,
+    "Q-26": 11593,
+    "Q-27": 11941,
+    "Q-28": 12305,
+    "Q-29": 12616,
+    "Q-30": 13177,
+    "Q-31": 13523,
+    "Q-32": 13836,
+    "Q-33": 14220
+   }
+  },
+  "USWAGIM1": {
+   "AvobTaPWDO4": {
+    "Q-18": 0
+   },
+   "3c26okFw-98": {
+    "Q-15": 0
+   },
+   "LchmQxFljmE": {
+    "Q-11": 0
+   },
+   "FZCFcQkn9_g": {
+    "Q-8": 0
+   },
+   "w2r3-h3Ei4c": {
+    "Q-6": 0
+   },
+   "oLnaRLmqaW8": {
+    "Q-1": 0
+   }
+  },
+  "USWAGIM2": {
+   "K5FDn1L9P1I": {
+    "Q-19": 0
+   },
+   "Hh--q58gPLw": {
+    "Q-13": 0
+   },
+   "GrE0Ic6No1w": {
+    "Q-16": 0
+   },
+   "2hPbtcgrkhY": {
+    "Q-9": 0
+   },
+   "xsdlhXNJ4hc": {
+    "Q-6": 0
+   },
+   "yT8XCGI7EG0": {
+    "Q-4": 0
+   }
+  },
+  "USWABOS1": {
+   "xEXhQw2k5xQ": {
+    "Q-19": 0
+   },
+   "8ROLiKEXt0Q": {
+    "Q-18": 0
+   },
+   "GET6aP4uzVg": {
+    "Q-16": 0
+   },
+   "XtpHQqgr5Wc": {
+    "Q-17": 0
+   },
+   "qjsKZEVn2wE": {
+    "Q-20": 0
+   },
+   "QhJ0CySWbU8": {
+    "Q-15": 0
+   },
+   "3qJiSxfGe8g": {
+    "Q-14": 0
+   },
+   "YMD5AAEaG_Q": {
+    "Q-13": 0
+   },
+   "EnToNrI5KB8": {
+    "Q-11": 0
+   },
+   "Vb0HdEcS56g": {
+    "Q-10": 0
+   },
+   "cC8kDXlWuoc": {
+    "Q-12": 0
+   },
+   "WIz9w-5MWuQ": {
+    "Q-8": 0
+   },
+   "U2sfi6DsbbY": {
+    "Q-7": 0
+   },
+   "vhFpwoHt4fw": {
+    "Q-9": 0
+   },
+   "I0PCJvHWzpE": {
+    "Q-4": 0
+   },
+   "_mVuAcBpkY0": {
+    "Q-5": 0
+   },
+   "Vbzgxhxx-mk": {
+    "Q-6": 0
+   },
+   "Xb3XIqz2Kxw": {
+    "Q-3": 0
+   },
+   "5LyYonsTTNQ": {
+    "Q-2": 0
+   }
+  },
+  "USWAWULT": {
+   "A9XoP66vcBw": {
+    "M-10": 0
+   },
+   "UoSlIPcl0_o": {
+    "M-9": 0
+   },
+   "nL4cHSaU0bg": {
+    "M-8": 0
+   },
+   "OQ6JTdOJm8c": {
+    "M-7": 0
+   },
+   "eu46qtUUJgA": {
+    "M-6": 0
+   },
+   "w7m1lRV8RuQ": {
+    "M-5": 0
+   },
+   "OVf4swDxEGs": {
+    "M-4": 0
+   },
+   "-vjm1tPA3HI": {
+    "M-3": 0
+   },
+   "rin0qFLk-v0": {
+    "M-2": 0
+   },
+   "YPuv6O36eR0": {
+    "M-1": 0
+   },
+   "QnJuGsJjmlE": {
+    "M-10": 0
+   },
+   "IlpaEFffcFU": {
+    "M-9": 0
+   },
+   "kHL954o7p4Q": {
+    "M-8": 0
+   },
+   "EPuK6wOF5AQ": {
+    "M-7": 0
+   },
+   "KVbGklwz7gk": {
+    "M-6": 0
+   },
+   "9uSlbax0ycg": {
+    "M-5": 0
+   },
+   "BKZ2QuENeBQ": {
+    "M-4": 0
+   },
+   "6vSX5PlOEqo": {
+    "M-3": 0
+   },
+   "17PE6dSpvYY": {
+    "M-2": 0
+   },
+   "i8gd-KQ56O0": {
+    "M-1": 0
    }
   }
  }
