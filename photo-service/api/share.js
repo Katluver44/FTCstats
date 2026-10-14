@@ -7,7 +7,7 @@ import { describe, cardQuery, esc } from "../lib/share.js";
 export default async function handler(req, res) {
   const q = new URL(req.url, "http://x").searchParams;
   const kind = q.get("kind"), season = q.get("season") ?? "", id = q.get("id") ?? "", d = q.get("d");
-  const origin = `https://${req.headers.host}`;
+  const origin = `${/^(localhost|127\.0\.0\.1)(:|$)/.test(req.headers.host ?? "") ? "http" : "https"}://${req.headers.host}`;
   let info;
   try {
     info = await describe(origin, kind, season, id, d);

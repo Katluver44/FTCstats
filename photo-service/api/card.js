@@ -98,7 +98,7 @@ function matchCard(c) {
 export default async function handler(req, res) {
   const q = new URL(req.url, "http://x").searchParams;
   try {
-    const info = await describe(`https://${req.headers.host}`, q.get("kind"), q.get("season") ?? "", q.get("id") ?? "", q.get("d"));
+    const info = await describe(`${/^(localhost|127\.0\.0\.1)(:|$)/.test(req.headers.host ?? "") ? "http" : "https"}://${req.headers.host}`, q.get("kind"), q.get("season") ?? "", q.get("id") ?? "", q.get("d"));
     const c = info.card;
     const tree = c.kind === "team" ? teamCard(c) : c.kind === "event" ? eventCard(c) : matchCard(c);
     const img = new ImageResponse(h("div", { width: "100%", height: "100%", fontFamily: "Roboto" }, tree), { width: 1200, height: 630, fonts: await loadFonts().catch(() => undefined) });

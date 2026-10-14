@@ -661,11 +661,12 @@ async function team(r) {
     if (stale(r) || !$("#radar")) return;
     const axes = teamAxes(meta, t, rows);
     $("#radar").innerHTML = radar(axes, { values: false });
-    $("#stat-grid").innerHTML = axes.map((ax) => {
+    const pill = (ax) => {
       const top = ax.value == null ? null : Math.max(1, Math.round((1 - ax.value) * 100));
-      return `<div class="stat-card" title="${esc(ax.tip)}"><div class="k">${esc(ax.label)}</div><b>${ax.display}</b>
-        <span class="stat-pct ${top === 1 ? "gold" : top != null && top <= 10 ? "hot" : top != null && top <= 25 ? "warm" : ""}">${top == null ? "–" : `Top ${top}%`}</span></div>`;
-    }).join("");
+      return `<span class="stat-pct ${top === 1 ? "gold" : top != null && top <= 10 ? "hot" : top != null && top <= 25 ? "warm" : ""}">${top == null ? "–" : `Top ${top}%`}</span>`;
+    };
+    $("#stat-grid").innerHTML = `<div class="stat-main">${axes.filter((a) => a.main).map((ax) => `<div class="stat-card" title="${esc(ax.tip)}"><div class="k">${esc(ax.label)}</div><b>${ax.display}</b>${pill(ax)}</div>`).join("")}</div>
+      <div class="stat-minor">${axes.filter((a) => !a.main).map((ax) => `<div class="stat-mini" title="${esc(ax.tip)}"><span class="k">${esc(ax.label)}</span><b>${ax.display}</b>${pill(ax)}</div>`).join("")}</div>`;
   }).catch(() => {});
 
   // photos come from a separate service; show the page now and add them when they arrive
@@ -826,15 +827,16 @@ function teamAxes(meta, t, rows) {
   const myRate = t.matches.length ? (w + ti / 2) / t.matches.length : null;
   const cons = t.cons !== undefined ? t.cons : rows?.find((x) => x.team === t.team)?.cons ?? null;
   const myRp = rpSum((i) => e.rp[i]);
+  // the three scoring periods lead; RPs, win rate and consistency are supporting numbers
+  const main = [period("auto", "Auto"), period("teleop", "Teleop"), period("endgame", "Endgame")].map((a) => ({ ...a, main: true }));
   return [
-    period("auto", "Auto"), period("teleop", "Teleop"), period("endgame", "Endgame"),
-    nRp
-      ? { label: "RPs", value: pctile(myRp, dist?.rp ?? pool.map((x) => rpSum((i) => x[`rp${i}`]))), display: `${fmt(myRp)} / ${nRp}`,
-        tip: `Bonus RPs a match: ${fmt(myRp)} of ${nRp} (${meta.rpNames.map((nm, i) => `${nm} ${pct(Math.min(1, Math.max(0, e.rp[i])))}`).join(", ")})` }
-      // steadier is better, so rank by the negative of the typical miss
-      : { label: "Consistency", value: cons == null ? null : pctile(-cons, dist?.cons ?? pool.filter((x) => x.cons != null).map((x) => -x.cons)),
-        display: cons == null ? "–" : `±${pct(cons)}`, tip: cons == null ? "Consistency: needs 5+ matches" : `Consistency: its alliance's score typically lands within ±${pct(cons)} of the prediction` },
+    ...main,
+    ...(nRp ? [{ label: "RPs", value: pctile(myRp, dist?.rp ?? pool.map((x) => rpSum((i) => x[`rp${i}`]))), display: fmt(myRp),
+      tip: `Bonus ranking points a match: ${fmt(myRp)} (${meta.rpNames.map((nm, i) => `${nm} ${pct(Math.min(1, Math.max(0, e.rp[i])))}`).join(", ")})` }] : []),
     { label: "Win rate", value: pctile(myRate, dist?.win ?? pool.map(rate)), display: pct(myRate), tip: `Won ${pct(myRate)} of its matches (partners count too)` },
+    // steadier is better, so rank by the negative of the typical miss
+    { label: "Consistency", value: cons == null ? null : pctile(-cons, dist?.cons ?? pool.filter((x) => x.cons != null).map((x) => -x.cons)),
+      display: cons == null ? "–" : `±${pct(cons)}`, tip: cons == null ? "Consistency: needs 5+ matches" : `Consistency: its alliance's score typically lands within ±${pct(cons)} of the prediction` },
   ];
 }
 
