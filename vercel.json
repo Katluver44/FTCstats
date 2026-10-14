@@ -1,0 +1,4 @@
+{
+  "$comment": "The site is deployed from GitHub Actions (scripts/package-vercel.mjs -> dist/). Vercel's Git integration must not build the bare repo: it has no output directory and every push would fail.",
+  "git": { "deploymentEnabled": { "main": false } }
+}
