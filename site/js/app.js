@@ -605,8 +605,6 @@ async function team(r) {
   const w = t.matches.filter((m) => m.score > m.oppScore).length;
   const l = t.matches.filter((m) => m.score < m.oppScore).length;
   const ti = t.matches.length - w - l;
-  const decided = t.matches.filter((m) => m.score !== m.oppScore);
-  const correct = decided.filter((m) => (m.pWin > 0.5) === (m.score > m.oppScore)).length;
 
   // world, country and state/province ranks (precomputed by the build), each [label, rank, out of]
   const places = t.places ?? {};
@@ -629,7 +627,6 @@ async function team(r) {
           <div class="th-facts">
             ${fact(`${w}-${l}${ti ? `-${ti}` : ""}`, "record")}
             ${fact(t.matches.length ? pct(w / t.matches.length) : "–", "win rate")}
-            ${fact(decided.length ? pct(correct / decided.length) : "–", "of its matches predicted")}
             ${addPhotoLink(n)}
             ${shareButton(`t/${season}/${n}`, `${n} ${t.name}`)}
           </div>
@@ -646,7 +643,6 @@ async function team(r) {
       <div class="th-body">
         <div class="radar-box" id="radar"></div>
         <div class="th-stats">
-          <div class="th-h">Compared with this season's teams (5+ matches)</div>
           <div class="stat-grid" id="stat-grid"></div>
         </div>
         <div class="th-photo" id="photo-slot" hidden></div>
@@ -833,7 +829,7 @@ function teamAxes(meta, t, rows) {
   return [
     period("auto", "Auto"), period("teleop", "Teleop"), period("endgame", "Endgame"),
     nRp
-      ? { label: "Bonus RPs", value: pctile(myRp, dist?.rp ?? pool.map((x) => rpSum((i) => x[`rp${i}`]))), display: `${fmt(myRp)} / ${nRp}`,
+      ? { label: "RPs", value: pctile(myRp, dist?.rp ?? pool.map((x) => rpSum((i) => x[`rp${i}`]))), display: `${fmt(myRp)} / ${nRp}`,
         tip: `Bonus RPs a match: ${fmt(myRp)} of ${nRp} (${meta.rpNames.map((nm, i) => `${nm} ${pct(Math.min(1, Math.max(0, e.rp[i])))}`).join(", ")})` }
       // steadier is better, so rank by the negative of the typical miss
       : { label: "Consistency", value: cons == null ? null : pctile(-cons, dist?.cons ?? pool.filter((x) => x.cons != null).map((x) => -x.cons)),
