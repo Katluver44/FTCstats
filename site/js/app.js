@@ -421,7 +421,7 @@ async function teams(r) {
         <input id="filter" placeholder="Search teams…" value="${esc(query.get("q") ?? "")}">
         <select id="country" aria-label="Country"><option value="" data-all="All countries">Country</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
         <select id="state" aria-label="State or region" hidden></select>
-        <select id="minm" aria-label="Number of matches played" title="Blank: every team, including ones that haven't played yet (on the EPA they start the season with)"><option value="" data-all="Any (incl. not played yet)"># of matches</option><option value="1">1+ matches</option><option value="5">5+ matches</option><option value="10">10+ matches</option><option value="25">25+ matches</option></select>
+        <select id="minm" aria-label="Number of matches played" title="Teams that have played at least this many matches; 'Any' adds teams that haven't played yet (on the EPA they start the season with)"><option value="0">Any (incl. not played yet)</option><option value="1" selected>1+ matches</option><option value="5">5+ matches</option><option value="10">10+ matches</option><option value="25">25+ matches</option></select>
         ${hasOff ? `<div class="seg scope" role="group" aria-label="Which events count">
           ${[["official", "Season only", "Official events only: off-season events (often modified rules and lineups) never move these ratings"],
              ["full", "All events", "Adds every off-season event at 40%; modified-rules events left out"]]
@@ -563,14 +563,15 @@ async function teams(r) {
     apply();
   };
 
-  if (query.get("min")) $("#minm").value = query.get("min");
-  if ($("#minm").selectedIndex < 0) $("#minm").value = "";
+  // default 1+ matches; ?min=0 shows teams that haven't played yet too
+  if (query.get("min") != null) $("#minm").value = query.get("min");
+  if ($("#minm").selectedIndex < 0) $("#minm").value = "1";
   labelFilters($(".toolbar"));
   const fillStates = regionSelect($("#state"), () => rows.filter((r) => r.country === $("#country").value), query.get("state"));
   const sync = () => {
     const m = +$("#minm").value;
     const ch = view === "chart" ? { view: "chart", chart: chart.type, ...(chart.type === "scatter" ? { x: chart.x, y: chart.y } : chart.type === "dist" ? { m: chart.m } : {}) } : {};
-    syncQuery({ q: $("#filter").value.trim(), country: $("#country").value, state: $("#state").value, min: m ? m : "", off: off === "official" ? "" : off, ...ch });
+    syncQuery({ q: $("#filter").value.trim(), country: $("#country").value, state: $("#state").value, min: m === 1 ? "" : m, off: off === "official" ? "" : off, ...ch });
   };
   const apply = () => {
     const q = $("#filter").value.trim().toLowerCase(), c = $("#country").value, m = +$("#minm").value, st = $("#state").value;
