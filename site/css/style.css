@@ -978,3 +978,9 @@ body.home-fit .hero { flex-shrink: 0; }
   body.home-fit .hero-below .section-title { padding-top: 8px; padding-bottom: 6px; }
   body.home-fit:not(.home-scroll) footer { padding-top: 8px; padding-bottom: 8px; }
 }
+/* phones: the column picker spans the toolbar instead of hanging off the Columns button */
+@media (max-width: 640px) {
+  .toolbar:has(.col-pick) { position: relative; }
+  .toolbar .col-pick { position: static; }
+  .toolbar .col-pick > div { left: 14px; right: 14px; width: auto; max-width: none; top: calc(100% - 6px); }
+}
