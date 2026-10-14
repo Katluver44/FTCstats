@@ -620,6 +620,7 @@ async function team(r) {
             ${fact(t.matches.length ? pct(w / t.matches.length) : "–", "win rate")}
             ${fact(decided.length ? pct(correct / decided.length) : "–", "of its matches predicted")}
             ${addPhotoLink(n)}
+            ${shareButton(`t/${season}/${n}`, `${n} ${t.name}`)}
           </div>
         </div>
         ${awards.length ? `<div class="th-awards">
@@ -981,6 +982,21 @@ function plaque(a, season) {
 }
 
 // YouTube's privacy-enhanced player: no cookies until the viewer presses play.
+// Share button: a short link (/t/2025/14270, /e/…, /m/…) whose preview shows a
+// card for that team, event or match (see photo-service/api/share.js)
+const SHARE_ICON = '<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 9V1.8M4 4.6 7 1.6l3 3M2.5 7.5v4.2h9V7.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const shareButton = (path, title) => `<button class="pill share-btn" data-share="${esc(path)}" data-title="${esc(title)}" title="Copy a link that shows a preview card when shared">${SHARE_ICON} Share</button>`;
+async function share(btn) {
+  const url = `${location.origin}${location.pathname.replace(/[^/]*$/, "")}${btn.dataset.share}`;
+  try {
+    if (navigator.share && matchMedia("(pointer: coarse)").matches) return await navigator.share({ title: btn.dataset.title, url });
+    await navigator.clipboard.writeText(url);
+    const old = btn.innerHTML;
+    btn.textContent = "Link copied";
+    setTimeout(() => (btn.innerHTML = old), 1600);
+  } catch {}
+}
+
 function openVideo(id, t, title) {
   const dlg = document.createElement("dialog");
   dlg.className = "video-dialog";
@@ -1112,6 +1128,7 @@ async function event(r) {
             ${liveAt ? `<span class="pill live">Live · updated ${liveAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>` : ""}
             <span class="pill">${ev.teams} teams</span><span class="pill">${played.length}/${matches.length} matches played</span>
             <a class="pill" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}" target="_blank" rel="noopener">FTCScout ↗</a>
+            ${shareButton(`e/${season}/${encodeURIComponent(code)}`, ev.name)}
             <button class="pill" id="ev-csv" title="Download every match, with scores and predictions, as a spreadsheet">${CSV_ICON} Matches CSV</button>
             ${videos?.[code]?.streams?.[0] ? `<button class="pill" data-video="${videos[code].streams[0].id}" data-t="0"${videos[code].streams[0].ext ? ' data-ext="1"' : ""} data-title="${esc(ev.name)}">▶ Event stream</button>` : ""}
           </div>
@@ -1556,6 +1573,7 @@ async function match(r) {
         <div class="row" style="margin-top:8px">
           <span class="pill">${esc(m.d)}</span>
           <a class="pill" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}/matches" target="_blank" rel="noopener">FTCScout ↗</a>
+          ${shareButton(`m/${season}/${encodeURIComponent(code)}/${encodeURIComponent(m.d)}`, `${ev.name} · ${m.d}`)}
         </div>
       </div>
       ${v ? (v.ext ? `<a class="btn btn-solid watch-cta" href="${ytUrl}" target="_blank" rel="noopener">${PLAY_ICON} Watch on YouTube ↗</a>`
@@ -2242,6 +2260,7 @@ async function boot() {
     box.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 
+  document.addEventListener("click", (e) => { const b = e.target.closest("[data-share]"); if (b) { e.preventDefault(); share(b); } });
   // match videos: one player dialog for every ▶ button
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-video]");

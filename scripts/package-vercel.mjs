@@ -25,6 +25,12 @@ const index = path.join(out, "index.html");
 await fs.writeFile(index, (await fs.readFile(index, "utf8")).replace(/((?:href|src)="(?:js\/[\w-]+\.js|css\/style\.css))"/g, `$1?v=${v}"`));
 
 await fs.writeFile(path.join(out, "vercel.json"), JSON.stringify({
+  // short share links with their own preview card (photo-service/api/share.js)
+  rewrites: [
+    { source: "/t/:season/:id", destination: "/api/share?kind=team&season=:season&id=:id" },
+    { source: "/e/:season/:id", destination: "/api/share?kind=event&season=:season&id=:id" },
+    { source: "/m/:season/:id/:d", destination: "/api/share?kind=match&season=:season&id=:id&d=:d" },
+  ],
   headers: [
     { source: "/admin.html", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
     // Vercel's CDN keeps each deployment's own cache and starts fresh on every deploy,
