@@ -419,8 +419,7 @@ async function teams(r) {
         <input id="filter" placeholder="Search teams…" value="${esc(query.get("q") ?? "")}">
         <select id="country" aria-label="Country"><option value="" data-all="All countries">Country</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
         <select id="state" aria-label="State or region" hidden></select>
-        <label class="sel-label" title="Predicted: every team, including ones that haven't played yet (on the EPA they start the season with)"><span># of matches</span>
-          <select id="minm"><option value="0">Predicted</option><option value="1">1+</option><option value="5">5+</option><option value="10">10+</option><option value="25">25+</option></select></label>
+        <select id="minm" aria-label="Number of matches played" title="Blank: every team, including ones that haven't played yet (on the EPA they start the season with)"><option value="" data-all="Any (incl. not played yet)"># of matches</option><option value="1">1+ matches</option><option value="5">5+ matches</option><option value="10">10+ matches</option><option value="25">25+ matches</option></select>
         ${hasOff ? `<div class="seg scope" role="group" aria-label="Which events count">
           ${[["official", "Season only", "Official events only: off-season events (often modified rules and lineups) never move these ratings"],
              ["full", "All events", "Adds every off-season event at 40%; modified-rules events left out"]]
@@ -553,8 +552,9 @@ async function teams(r) {
     apply();
   };
 
-  if (query.get("min") != null) $("#minm").value = query.get("min");
-  if (!$("#minm").value) $("#minm").value = "0";
+  if (query.get("min")) $("#minm").value = query.get("min");
+  if ($("#minm").selectedIndex < 0) $("#minm").value = "";
+  labelFilters($(".toolbar"));
   const fillStates = regionSelect($("#state"), () => rows.filter((r) => r.country === $("#country").value), query.get("state"));
   const sync = () => {
     const m = +$("#minm").value;
