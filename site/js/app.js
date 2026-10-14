@@ -307,8 +307,9 @@ async function home(r) {
   fitHome();
 }
 
-// Home on a desktop screen: show as many list rows as fit so the page never
-// scrolls (at least 3 a side); if even that doesn't fit, let it scroll.
+// Home on a desktop screen: the page fills the window below the header, footer
+// just out of sight, and shows as many list rows as fit (at least 4 a side);
+// if even 4 don't fit, it shows 4 and lets the page scroll.
 let homeRows = null;
 function fitHome() {
   const lists = ["#top-teams .hl", "#home-events .hl"].map((q) => $(q)).filter(Boolean);
@@ -319,20 +320,21 @@ function fitHome() {
 function refitHome() {
   if (!homeRows || !document.body.classList.contains("home-fit") || !homeRows[0][0].isConnected) return;
   document.body.classList.remove("home-scroll");
+  document.body.style.setProperty("--head-h", `${$("header")?.offsetHeight ?? 0}px`);
   for (const [l, rows] of homeRows) l.replaceChildren(...rows);
   if (!matchMedia("(min-width: 901px) and (min-height: 520px)").matches) return;
   let fits = true;
   for (const [l] of homeRows) {
     const box = l.parentElement; // the list's area inside its card
     while (box.scrollHeight > box.clientHeight + 1 && l.children.length > 1) l.lastElementChild.remove();
-    if (box.scrollHeight > box.clientHeight + 1 || l.children.length < 3) fits = false;
+    if (box.scrollHeight > box.clientHeight + 1 || l.children.length < 4) fits = false;
   }
   // same number of rows on both sides, so the two cards line up
   const n = Math.min(...homeRows.map(([l]) => l.children.length));
   for (const [l] of homeRows) while (l.children.length > n) l.lastElementChild.remove();
-  // too short a window for a useful one-screen page: put every row back and scroll
+  // too short a window for a useful one-screen page: 4 rows a side, and scroll
   if (!fits) {
-    for (const [l, rows] of homeRows) l.replaceChildren(...rows);
+    for (const [l, rows] of homeRows) l.replaceChildren(...rows.slice(0, 4));
     document.body.classList.add("home-scroll");
   }
 }
