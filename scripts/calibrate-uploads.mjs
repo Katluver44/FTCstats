@@ -20,6 +20,11 @@ const readJson = (f, fallback) => fs.readFile(f, "utf8").then(JSON.parse).catch(
 const LEAD = 20;
 
 const up = await readJson(path.join("site", "videos", "uploads.json"), {});
+// upload titles (from videos.mjs's details cache) to tell a full recording from "Part 2"
+const titles = {};
+for (const f of await fs.readdir(path.join(".cache", "videos")).catch(() => [])) {
+  for (const [id, v] of Object.entries(await readJson(path.join(".cache", "videos", f), {}))) if (v?.title) titles[id] = v.title;
+}
 const tsFile = path.join("site", "videos", "timestamped.json");
 const ts = {}; // only what this run places; merged into the file at the end
 const approxFit = (x) => !x.error && x.halves?.[0] != null && x.halves?.[1] != null && Math.abs(x.halves[0] - x.halves[1]) < 300 && x.lift > 3 && x.rival > 0.9 && x.o != null;
@@ -68,13 +73,17 @@ for (const season of seasons) {
       // a strong rhythm fit whose only doubt is a near-equal rival one match cycle away (both
       // halves of the day agree): placed anyway, at most about one match off (Arjun's call)
       else if (approxFit(cache[k])) fits.push({ code, id, r: { ...cache[k], ok: true, score: cache[k].score * 0.5 }, ms, pos, via: "rhythm-approx" });
+      // nothing placed it, but it's this event's full recording (add-videos checked the event):
+      // assume it starts ~10 min before the first match. Rough, but some video beats none.
+      else if (!cache[k].error && cache[k].len >= Math.min(pos.at(-1) * 0.6, 4 * 3600) && !/part\s*[2-9]|day\s*[2-4]|afternoon|session\s*2|playoff|final/i.test(titles[id] ?? ""))
+        fits.push({ code, id, r: { o: -600, len: cache[k].len, ok: true, score: 0.01 }, ms, pos, via: "estimate" });
     }
   }
   // a video that fits several events (same venue, morning and afternoon sessions) goes to
   // the one it fits clearly best, or to none
   for (const [id, fs_] of Map.groupBy(fits, (f) => f.id)) {
     // overlay readings beat rhythm; within a kind, the clearly better fit wins
-    fs_.sort((a, b) => b.via.startsWith("overlay") - a.via.startsWith("overlay") || (a.via === "rhythm-approx") - (b.via === "rhythm-approx") || b.r.score - a.r.score);
+    fs_.sort((a, b) => b.via.startsWith("overlay") - a.via.startsWith("overlay") || (a.via === "estimate") - (b.via === "estimate") || (a.via === "rhythm-approx") - (b.via === "rhythm-approx") || b.r.score - a.r.score);
     if (fs_[1] && fs_[1].via !== fs_[0].via) fs_.length = 1;
     if (fs_[1] && fs_[1].r.score > fs_[0].r.score * 0.8) { if (verbose) console.log(`  ${id}: fits ${fs_.map((f) => f.code).join(" and ")} about equally, skipped`); continue; }
     const { code, r, ms, pos } = fs_[0];
