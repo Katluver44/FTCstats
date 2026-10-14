@@ -809,8 +809,7 @@ async function team(r) {
         <div class="ev-box">
           <div><span class="k">Rank</span><b>${ev.rank ?? "–"}</b></div>
           <div><span class="k">Record</span><b>${ev.wins != null ? `${ev.wins}-${ev.losses}${ev.ties ? `-${ev.ties}` : ""}` : "–"}</b></div>
-          <div><span class="k">EPA in</span><b>${fmt(ev.epaStart)}</b></div>
-          <div><span class="k">EPA out</span><b>${fmt(ev.epaEnd)}${ev.epaStart != null && ev.epaEnd != null && Math.abs(ev.epaEnd - ev.epaStart) >= 0.5 ? `<span class="delta ${ev.epaEnd > ev.epaStart ? "trend-up" : "trend-down"}">${ev.epaEnd > ev.epaStart ? "▲" : "▼"}</span>` : ""}</b></div>
+          <div title="EPA after its last match at this event"><span class="k">EPA</span><b>${fmt(ev.epaEnd ?? ev.epaStart)}</b></div>
         </div>
       </div>
       ${matchTable(season, ms, { me: n, rpNames: meta.rpNames, video, href: (m) => matchHref(season, ev.code, m.d) })}
