@@ -572,10 +572,10 @@ async function team(r) {
       note("EPA after each match: points this team adds to its alliance, and how they split by period.");
       mountLineChart($("#chart"), {
         series: [
-          { name: "EPA", color: "var(--text)", values: ms.map((m) => m.epa[0]), width: 2.5 },
-          { name: "Auto", color: "#f59e0b", values: ms.map((m) => m.epa[1]) },
-          { name: "Teleop", color: "var(--accent)", values: ms.map((m) => m.epa[2]) },
-          { name: "Endgame", color: "#10b981", values: ms.map((m) => m.epa[3]) },
+          { name: "EPA", color: "var(--text)", values: ms.map((m) => m.epa[0]), width: 2.5, smooth: true },
+          { name: "Auto", color: "#f59e0b", values: ms.map((m) => m.epa[1]), smooth: true },
+          { name: "Teleop", color: "var(--accent)", values: ms.map((m) => m.epa[2]), smooth: true },
+          { name: "Endgame", color: "#10b981", values: ms.map((m) => m.epa[3]), smooth: true },
         ],
         bands,
         tooltip: (i) => `${head(ms[i])}<br>EPA ${fmt(ms[i].epa[0])} · ${result(ms[i])}`,
@@ -641,8 +641,8 @@ async function team(r) {
       const pad = (arr) => Array.from({ length: len }, (_, i) => arr[i] ?? null);
       mountLineChart($("#chart"), {
         series: [
-          { name: `${n} ${t.name}`, color: "var(--accent)", values: pad(ms.map((m) => m.epa[0])), width: 2.5 },
-          ...(other ? [{ name: `${vs} ${other.name}`, color: "#f59e0b", values: pad(om.map((m) => m.epa[0])), width: 2.5 }] : []),
+          { name: `${n} ${t.name}`, color: "var(--accent)", values: pad(ms.map((m) => m.epa[0])), width: 2.5, smooth: true },
+          ...(other ? [{ name: `${vs} ${other.name}`, color: "#f59e0b", values: pad(om.map((m) => m.epa[0])), width: 2.5, smooth: true }] : []),
         ],
         tooltip: (i) => [[n, ms[i]], [vs, om[i]]].filter(([, m]) => m).map(([num, m]) => `<b>${num}</b> · ${esc(evName.get(m.ev) ?? shortEvent(m.ev))} ${esc(m.m)} · EPA ${fmt(m.epa[0])}`).join("<br>") + `<br><span class="faint">match ${i + 1}</span>`,
       });
@@ -1831,6 +1831,23 @@ async function h2h(r) {
   const evNames = new Map();
   seasons.forEach((s, i) => { for (const t of [ta[i], tb[i]]) for (const e of t?.events ?? []) evNames.set(`${s}:${e.code}`, e.name); });
 
+  // awards side by side: one row per award either team has won, in the usual order
+  // (alliance results first, then judged awards); hover a row for where each was won
+  const awardsOf = (all) => seasons.flatMap((s, i) => (all[i]?.awards ?? []).map((a) => ({ ...a, s })));
+  const awardsCard = () => {
+    const la = awardsOf(ta), lb = awardsOf(tb);
+    const ORDER = ["Winner", "DivisionWinner", "Finalist", "DivisionFinalist", "ConferenceFinalist"];
+    const types = [...ORDER, ...Object.keys(AWARD_NAMES).filter((k) => !ORDER.includes(k))].filter((k) => la.some((a) => a.type === k) || lb.some((a) => a.type === k));
+    if (!types.length) return `<div class="card empty">Neither team has won an award ${view === "career" ? "yet" : "this season"}.</div>`;
+    const where = (n, list) => list.map((a) => `${a.placement > 1 && !/Winner|Finalist/.test(a.type) ? `${ordinal(a.placement)} · ` : ""}${a.evName ?? a.ev}${view === "career" ? ` (${a.s}–${String(a.s + 1).slice(2)})` : ""}`).join("; ");
+    return `<div class="card card-pad"><div class="tape">${types.map((k) => {
+      const xa = la.filter((a) => a.type === k), xb = lb.filter((a) => a.type === k);
+      const label = (AWARD_NAMES[k] ?? k).replace(/ Award$/, "");
+      return tape(label, xa.length, xb.length, (v) => fmtInt(v), { tip: [xa.length ? `${A}: ${where(A, xa)}` : "", xb.length ? `${B}: ${where(B, xb)}` : ""].filter(Boolean).join("\n") });
+    }).join("")}</div></div>`;
+  };
+  const awardsTitle = `<div class="section-title"><h2>Awards</h2><p class="muted" style="margin:6px 0 0">How many times each team has won each award${view === "career" ? " across every season" : " this season"}, counting 2nd and 3rd places. Hover a row for where.</p></div>`;
+
   if (view === "season") {
     const a = cur(ta), b = cur(tb);
     const g = shared(a.matches, season);
@@ -1846,6 +1863,7 @@ async function h2h(r) {
         ${tape("World rank", a.rank / a.of, b.rank / b.of, () => "", { low: true, text: [`#${fmtInt(a.rank)}`, `#${fmtInt(b.rank)}`], tip: `Bars: share of the season's ${fmtInt(a.of)} teams ranked below` })}
         ${tape("Awards", (a.awards ?? []).length, (b.awards ?? []).length, (v) => fmtInt(v))}
       </div></div>
+      ${awardsTitle}${awardsCard()}
       <div class="section-title"><h2>EPA through the season</h2><p class="muted" style="margin:6px 0 0">By match number (1st match, 2nd, …) so seasons of different lengths line up.</p></div>
       <div class="card card-pad"><div id="chart"></div></div>
       <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(g.vs)}</b> for ${A} · Together: <b>${recordOf(g.withB)}</b> · scores show ${A}'s alliance first</p></div>
@@ -1854,8 +1872,8 @@ async function h2h(r) {
     const pad = (arr) => Array.from({ length: len }, (_, i) => arr[i] ?? null);
     mountLineChart($("#chart"), {
       series: [
-        { name: `${A} ${a.name}`, color: "var(--red)", values: pad(a.matches.map((m) => m.epa[0])), width: 2.5 },
-        { name: `${B} ${b.name}`, color: "var(--blue)", values: pad(b.matches.map((m) => m.epa[0])), width: 2.5 },
+        { name: `${A} ${a.name}`, color: "var(--red)", values: pad(a.matches.map((m) => m.epa[0])), width: 2.5, smooth: true },
+        { name: `${B} ${b.name}`, color: "var(--blue)", values: pad(b.matches.map((m) => m.epa[0])), width: 2.5, smooth: true },
       ],
       tooltip: (i) => [[A, a.matches[i]], [B, b.matches[i]]].filter(([, m]) => m).map(([n, m]) => `<b>${n}</b> · ${esc(shortEvent(evNames.get(`${season}:${m.ev}`) ?? m.ev))} ${esc(m.m)} · EPA ${fmt(m.epa[0])}`).join("<br>") + `<br><span class="faint">match ${i + 1}</span>`,
     });
@@ -1889,6 +1907,7 @@ async function h2h(r) {
     </div></div>
     <div class="section-title"><h2>Season by season</h2><p class="muted" style="margin:6px 0 0">World rank each season; bars compare it as a share of that season's teams, since each game scores differently and EPAs don't compare across seasons. Hover for EPAs.</p></div>
     <div class="card card-pad"><div class="tape">${seasonRows}</div></div>
+    ${awardsTitle}${awardsCard()}
     <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(allVs)}</b> for ${A} · Together: <b>${recordOf(allWith)}</b> · scores show ${A}'s alliance first</p></div>
     ${meetTable(groups, evNames)}`;
 }

@@ -234,7 +234,7 @@ export function mountLineChart(el, { series, bands = [], tooltip, zero = true, m
       }
     });
     const paths = vis.map((s) => {
-      const d = s.values.map((v, i) => (v == null ? "" : `${i && s.values[i - 1] != null ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`)).join("");
+      const d = smoothPath((s.smooth ? soften(s.values) : s.values).map((v, i) => (v == null ? null : [x(i), y(v)])));
       return `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.width ?? 2}" stroke-linejoin="round" stroke-linecap="round"${s.dash ? ' stroke-dasharray="5 4"' : ""}/>`;
     }).join("");
     box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}">${g}${paths}<line class="cursor" y1="${P.t}" y2="${H - P.b}" stroke="var(--faint)" stroke-dasharray="3 3" style="display:none"/></svg><div class="tip"></div>`;
@@ -263,6 +263,50 @@ export function mountLineChart(el, { series, bands = [], tooltip, zero = true, m
   draw();
   const ro = new ResizeObserver(() => draw());
   ro.observe(box);
+}
+
+// For trend lines (series with smooth: true): a Gaussian-weighted average of nearby
+// points, wider on long series, so the line shows the trend rather than every
+// match-to-match wobble. Gaps (null) stay gaps; tooltips still read the raw values.
+function soften(vals) {
+  const n = vals.length, w = Math.min(6, Math.round(n / 30));
+  if (w < 1) return vals;
+  const sd = w / 2;
+  return vals.map((v, i) => {
+    if (v == null) return null;
+    let sum = 0, wt = 0;
+    for (let k = Math.max(0, i - w); k <= Math.min(n - 1, i + w); k++) {
+      if (vals[k] == null) continue;
+      const g = Math.exp(-((k - i) ** 2) / (2 * sd * sd));
+      sum += g * vals[k]; wt += g;
+    }
+    return sum / wt;
+  });
+}
+
+// SVG path through points ([x, y] or null for gaps) as a monotone cubic curve
+// (Fritsch–Carlson): smooth, but never bulges past a real data point.
+function smoothPath(pts) {
+  let d = "";
+  const f = (n) => n.toFixed(1);
+  for (let i = 0; i < pts.length; ) {
+    if (!pts[i]) { i++; continue; }
+    const run = [];
+    while (i < pts.length && pts[i]) run.push(pts[i++]);
+    const n = run.length;
+    d += `M${f(run[0][0])},${f(run[0][1])}`;
+    if (n < 3) { for (let k = 1; k < n; k++) d += `L${f(run[k][0])},${f(run[k][1])}`; continue; }
+    const dx = [], m = [];
+    for (let k = 0; k < n - 1; k++) { dx[k] = run[k + 1][0] - run[k][0]; m[k] = (run[k + 1][1] - run[k][1]) / (dx[k] || 1); }
+    const t = [m[0]];
+    for (let k = 1; k < n - 1; k++) t[k] = m[k - 1] * m[k] <= 0 ? 0 : (3 * (dx[k - 1] + dx[k])) / ((2 * dx[k] + dx[k - 1]) / m[k - 1] + (dx[k] + 2 * dx[k - 1]) / m[k]);
+    t[n - 1] = m[n - 2];
+    for (let k = 0; k < n - 1; k++) {
+      const [x0, y0] = run[k], [x1, y1] = run[k + 1], h = dx[k] / 3;
+      d += `C${f(x0 + h)},${f(y0 + t[k] * h)} ${f(x1 - h)},${f(y1 - t[k + 1] * h)} ${f(x1)},${f(y1)}`;
+    }
+  }
+  return d;
 }
 
 function niceStep(raw) {
