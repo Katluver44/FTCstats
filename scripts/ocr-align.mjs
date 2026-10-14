@@ -27,8 +27,11 @@ export async function ocrReads(id, { every = 3 } = {}) {
   const cached = await fs.readFile(cacheFile, "utf8").then(JSON.parse).catch(() => null);
   if (cached) return cached;
   const spec = await storyboardSpec(id);
-  const lv = spec?.find((l) => l.interval > 0 && l.w >= 300);
+  // the largest frames YouTube has: 320x180 for some videos, only 160x90 for many
+  // (small text then needs a bigger upscale before OCR)
+  const lv = spec?.filter((l) => l.interval > 0 && l.w >= 160).sort((a, b) => b.w - a.w)[0];
   if (!lv) return null;
+  const scale = lv.w >= 300 ? 2 : 4;
   const per = lv.cols * lv.rows, sheets = Math.ceil(lv.count / per), step = lv.interval / 1000;
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "ocr-"));
   const files = [];
@@ -37,7 +40,7 @@ export async function ocrReads(id, { every = 3 } = {}) {
     if (!r?.ok) continue;
     const jpg = path.join(dir, `${n}.jpg`), png = path.join(dir, `${n}.png`);
     await fs.writeFile(jpg, Buffer.from(await r.arrayBuffer()));
-    await run("sips", ["-s", "format", "png", "-Z", String(lv.w * lv.cols * 2), jpg, "--out", png]);
+    await run("sips", ["-s", "format", "png", "-Z", String(lv.w * lv.cols * scale), jpg, "--out", png]);
     files.push({ n, png });
   }
   const reads = [];
