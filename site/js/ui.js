@@ -143,7 +143,7 @@ export function winBar(pRed) {
 // Video for a match: a per-match upload (FIRST's own, or a timestamped spot in an
 // uploaded event video) if there is one, otherwise the event's livestream
 // recording at the moment the match started.
-const LEAD_SECONDS = 20; // start a little early: field visible before "go", and most streams are within ±20s of official times
+const LEAD_SECONDS = 5; // Arjun: a long lead is worse than occasionally landing a few seconds in; FIRST stamps the match at the scorekeeper's "start"
 export function videoFor(videos, evCode, time) {
   const v = videos?.[evCode];
   if (!v || !time) return null;
