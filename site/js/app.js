@@ -26,7 +26,7 @@ function parseHash() {
 }
 
 // tab title for pages with no heading (the lists, "not found" messages) and while loading
-const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", sim: "Make-up event", about: "Our methodology", api: "Data API" };
+const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", sim: "SIM event", about: "Our methodology", api: "Data API" };
 const setTitle = (name) => (document.title = name ? `${name} · FTCstats` : "FTCstats · FTC ratings & match predictions");
 
 async function route() {
@@ -1938,7 +1938,7 @@ async function compete(r) {
 }
 
 // Predict a match | Head to head: the two Compete modes
-// ---------------- make-up event ----------------
+// ---------------- SIM event ----------------
 
 // Any list of teams as a pretend event: random qualification schedules, played out
 // from each team's current rating (scrimmages, off-season planning, "what if").
@@ -1954,7 +1954,7 @@ async function sim(r) {
   app.innerHTML = `
     <div class="card card-pad"><div class="page-head"><div>
       <div class="kicker">${seasonLabel(season, meta.game)}</div>
-      <h1>Make-up event</h1>
+      <h1>SIM event</h1>
       <p class="muted" style="margin:4px 0 0">Pick any teams and see how a qualification tournament between them would likely rank: thousands of random schedules, each played out from every team's current EPA.</p>
     </div>${competeModes(season, "sim")}</div></div>
     <div class="card card-pad section sim-form">
@@ -2007,7 +2007,7 @@ async function sim(r) {
 }
 
 const competeModes = (season, cur) => `<nav class="chart-pick mode-pick" aria-label="Compete mode">
-  ${[["compete", "Predict a match"], ["h2h", "Head to head"], ["sim", "Make-up event"]].map(([k, l]) => `<a href="#/${season}/${k}" class="${k === cur ? "active" : ""}">${l}</a>`).join("")}</nav>`;
+  ${[["compete", "Predict a match"], ["h2h", "Head to head"], ["sim", "SIM event"]].map(([k, l]) => `<a href="#/${season}/${k}" class="${k === cur ? "active" : ""}">${l}</a>`).join("")}</nav>`;
 
 // Type-ahead for one team input (number or name), strongest first; same look as Compete's.
 function teamTypeahead(el, list, meta, onPick) {
