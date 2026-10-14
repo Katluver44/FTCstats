@@ -123,15 +123,31 @@ export async function buildVideos(season) {
         if (id) add(e.code).streams.add(id);
       }
     }
-    // per-match uploads: FIRST only fills these in for the Championship
+    // per-match uploads: FIRST links a clip per match for some events (the Championship,
+    // premier events, …) — ask every event; finished events are cached, they don't change
     // (matched to our matches by start time, since playoff numbering differs between sources)
-    for (const e of listing?.events ?? []) {
-      if (!/^FTCCMP/.test(e.code) && !/FIRST Championship/i.test(e.typeName ?? "")) continue;
-      const r = await first(`${season}/matches/${e.code}`).catch(() => null);
-      for (const m of r?.matches ?? []) {
-        const id = youtubeId(m.videoURL);
-        if (id && m.actualStartTime) add(e.code).uploads.push({ t: localToUtc(m.actualStartTime, e.timezone), id });
+    const cacheDir = path.join(".cache", "first-matches", String(season));
+    await fs.mkdir(cacheDir, { recursive: true });
+    const evs = (listing?.events ?? []).filter((e) => Date.parse(e.dateStart) < Date.now());
+    const fetchOne = async (e) => {
+      const file = path.join(cacheDir, `${e.code}.json`);
+      const done = Date.parse(e.dateEnd) < Date.now() - 3 * 864e5;
+      let r = done ? await readJson(file, null) : null;
+      if (!r) {
+        r = await first(`${season}/matches/${e.code}`).catch(() => null);
+        if (r && done) await fs.writeFile(file, JSON.stringify({ matches: (r.matches ?? []).map((m) => ({ videoURL: m.videoURL, actualStartTime: m.actualStartTime })) }));
       }
+      return r;
+    };
+    for (let i = 0; i < evs.length; i += 8) {
+      const batch = evs.slice(i, i + 8);
+      const rs = await Promise.all(batch.map(fetchOne));
+      batch.forEach((e, j) => {
+        for (const m of rs[j]?.matches ?? []) {
+          const id = youtubeId(m.videoURL);
+          if (id && m.actualStartTime) add(e.code).uploads.push({ t: localToUtc(m.actualStartTime, e.timezone), id });
+        }
+      });
     }
   }
   for (const [code, o] of Object.entries(overrides)) {
