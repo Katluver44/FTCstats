@@ -3,6 +3,7 @@ import {
   trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, PLAY_ICON, downloadCsv, CSV_ICON } from "./ui.js";
 import { SEASONS } from "./seasons.js";
 import { scatter, histogram, breakdown } from "./charts.js";
+import { addEventSos, sosValue, sosPlaces } from "./sos.js";
 import { playoffs } from "./playoffs.js";
 import { initAnalytics, trackPage } from "./analytics.js";
 import { CONFIG } from "./config.js";
@@ -433,12 +434,14 @@ async function teams(r) {
     </div>`;
   const cols = [
     { key: "rank", label: "#", cls: "faint num", render: (r) => r.rank },
-    { key: "team", label: "Team", render: (r) => teamCell(season, r.team, r.name), sort: false },
+    { key: "team", label: "Team", sort: false,
+      // predicted teams (haven't played yet): an asterisk straight after the name
+      render: (r) => (r.pre ? teamCell(season, r.team, r.name).replace(/<\/span><\/a>$/, `<span class="pred-star" title="Hasn't played yet this season: its EPA is the one it starts on">*</span></span></a>`) : teamCell(season, r.team, r.name)) },
     { key: "loc", label: "Location", cls: "small muted hide-sm", sort: false, render: (r) => esc(r.loc) },
     { key: "country", label: "Country", cls: "small muted", render: (r) => esc(r.country ?? "") },
     { key: "region", label: "State / region", cls: "small muted", render: (r) => esc(r.region || "–") },
     { key: "np", label: `<span title="${EPA_TIP}">EPA</span>`, cls: "c",
-      render: (r) => (r.pre ? `<span class="pred-epa" title="* Predicted: hasn't played yet this season, so this is the EPA it starts on">${epa(r.np, meta)}<span class="pred-star">*</span></span>` : epa(r.np, meta)) },
+      render: (r) => epa(r.np, meta) },
     { key: "auto", label: "Auto", cls: "r", render: (r) => fmt(r.auto) },
     { key: "teleop", label: "Teleop", cls: "r", render: (r) => fmt(r.teleop) },
     { key: "endgame", label: "Endgame", cls: "r", render: (r) => fmt(r.endgame) },
@@ -452,8 +455,7 @@ async function teams(r) {
     { key: "cons", label: `<span title="How far its alliance's score typically lands from the prediction (lower = steadier)">Consistency</span>`, cls: "r small",
       render: (r) => (r.cons == null ? "–" : `±${pct(r.cons)}`) },
     { key: "trend", label: "Trend", cls: "r small", render: (r) => (r.trend == null ? "–" : `<span title="EPA change over the last 10 matches">${trend(r.trend)}</span>`) },
-    { key: "sos", label: `<span title="Strength of schedule: how much the partners and opponents it drew in quals changed its win chance per match, compared with random draws at the same events (EPAs as teams arrived). + = harder schedule, − = easier">SOS</span>`, cls: "r small",
-      render: (r) => (r.sos == null ? "–" : `<span class="${r.sos >= 0.05 ? "bad-text" : r.sos <= -0.05 ? "good-text" : "muted"}" title="Its draw ${r.sos > 0 ? "cost" : "gave"} it about ${Math.round(Math.abs(r.sos) * 100)} percentage points of win chance a match">${Math.round(r.sos * 100) > 0 ? "+" : Math.round(r.sos * 100) < 0 ? "−" : ""}${Math.round(Math.abs(r.sos) * 100)}%</span>`) },
+    { key: "sos", label: `<span title="Strength of schedule, 0 to 1: how hard its qualification draws (partners and opponents) were for its ranking, as the share of random schedules at the same events that would have been easier. 0.5 = typical, 1 = hardest">SOS</span>`, cls: "r small", render: (r) => sosCell(r.sos, r.sosPlaces) },
   ];
   // CSV: plain values for each shown column (team splits into number + name)
   const CSV_VAL = {
@@ -504,7 +506,7 @@ async function teams(r) {
     { key: "matches", label: "Matches played", get: (r) => r.matches, d: 0 },
     { key: "trend", label: "Trend (last 10 matches)", get: (r) => r.trend },
     { key: "cons", label: "Consistency (± miss)", get: (r) => r.cons, pct: true },
-    { key: "sos", label: "Strength of schedule (win chance)", get: (r) => r.sos, pct: true },
+    { key: "sos", label: "Strength of schedule (0-1)", get: (r) => r.sos, d: 2 },
   ].map((m) => ({ ...m, show: (v, tick) => (m.pct ? pct(v) : tick ? fmt(v, Number.isInteger(v) ? 0 : 1) : fmt(v, m.d ?? 1)) }));
   const metric = (k, d) => metrics.find((m) => m.key === k) ?? metrics.find((m) => m.key === d);
   const opts = (sel) => metrics.map((m) => `<option value="${m.key}" ${m.key === sel ? "selected" : ""}>${esc(m.label)}</option>`).join("");
@@ -1261,49 +1263,36 @@ function drawBracketLines(grid, feeds) {
   new ResizeObserver(draw).observe(grid);
 }
 
-// Strength of schedule at one event (same measure as the Teams list column, built in
-// scripts/build.mjs): how much the partner and opponents a team drew in each qual
-// changed its win chance, against random draws from this event; + = harder.
-function eventSos(ev, matches) {
-  const pre = new Map(ev.teamList.map((t) => [t.team, t.epaStart]));
-  const pool = [...pre.values()].filter((v) => v != null);
+// SOS cell: how hard a schedule was, 0-1 (the share of random schedules that would have
+// been easier; 0.5 = typical), with the ranking places it cost on hover
+const sosCell = (v, places) => {
+  if (v == null) return "–";
+  const pl = places == null ? "" : Math.abs(places) < 0.5 ? " About even on ranking." : ` It ${places > 0 ? "cost" : "gained"} about ${fmt(Math.abs(places), 1)} ranking places per event.`;
+  return `<span class="${v >= 0.8 ? "bad-text" : v <= 0.2 ? "good-text" : ""}" title="Harder than ${Math.round(v * 100)}% of random schedules.${pl}">${v.toFixed(2)}</span>`;
+};
+
+// Strength of schedule at one event: same measure as the Teams list column (site/js/sos.js)
+function eventSos(season, ev, matches) {
+  const ratings = new Map(ev.teamList.filter((t) => t.epaStart != null).map((t) => [t.team, { epa: t.epaStart, rp: t.state?.rp ?? [] }]));
   const quals = matches.filter((m) => m.level === "Quals" && m.red?.length === 2 && m.blue?.length === 2);
   const np = quals.flatMap((m) => (m.played && m.redScore ? [m.redScore.np, m.blueScore.np] : m.pred ? [m.pred.red.np, m.pred.blue.np] : [])).filter(Number.isFinite);
-  if (pool.length < 4 || !np.length) return new Map();
-  const scale = 0.28 * (np.reduce((a, b) => a + b, 0) / np.length);
-  const sig = (z) => 1 / (1 + Math.exp(-z));
-  const rand = (me) => {
-    let seed = 12345, sum = 0;
-    const pick = () => pool[(seed = (seed * 16807) % 2147483647) % pool.length];
-    for (let k = 0; k < 400; k++) sum += sig((me + pick() - pick() - pick()) / scale);
-    return sum / 400;
-  };
-  const acc = new Map();
-  for (const m of quals) for (const [side, opp] of [["red", "blue"], ["blue", "red"]]) for (const t of m[side]) {
-    const me = pre.get(t), p = pre.get(m[side].find((x) => x !== t)), o = m[opp].map((x) => pre.get(x));
-    if (me == null || p == null || o.some((v) => v == null)) continue;
-    const a = acc.get(t) ?? { me, sum: 0, n: 0 };
-    a.sum += sig((me + p - o[0] - o[1]) / scale); a.n++;
-    acc.set(t, a);
-  }
-  return new Map([...acc].map(([t, a]) => [t, rand(a.me) - a.sum / a.n]));
+  if (!np.length) return new Map();
+  const acc = addEventSos(new Map(), ratings, quals, { winRp: SEASONS[season]?.winRp ?? 2, rankBy: SEASONS[season]?.rankBy, scale: 0.28 * (np.reduce((a, b) => a + b, 0) / np.length) });
+  return new Map([...acc].map(([t, a]) => [t, { v: sosValue(a), places: sosPlaces(a) }]));
 }
 
 function eventTeams(season, meta, ev, matches = ev.matchList) {
-  const sos = eventSos(ev, matches);
-  const rows = ev.teamList.map((t) => ({ ...t, epa: t.epaNow?.np ?? null, delta: t.epaEnd != null && t.epaStart != null ? t.epaEnd - t.epaStart : null, sos: sos.get(t.team) ?? null }));
+  const sos = eventSos(season, ev, matches);
+  const rows = ev.teamList.map((t) => ({ ...t, epa: t.epaNow?.np ?? null, delta: t.epaEnd != null && t.epaStart != null ? t.epaEnd - t.epaStart : null, epaHere: t.epaEnd ?? t.epaStart ?? null, sos: sos.get(t.team)?.v ?? null, sosPlaces: sos.get(t.team)?.places ?? null }));
   $("#tab").innerHTML = `<div class="card" id="tt"></div>`;
   sortableTable($("#tt"), rows, [
     { key: "rank", label: "Rank", cls: "num", render: (r) => r.rank ?? "–" },
     { key: "team", label: "Team", sort: false, render: (r) => teamCell(season, r.team, r.name) },
     { key: "wins", label: "Record", cls: "r small", render: (r) => (r.wins != null ? `${r.wins}-${r.losses}${r.ties ? `-${r.ties}` : ""}` : "–") },
-    { key: "epaStart", label: "EPA in", cls: "r", render: (r) => fmt(r.epaStart) },
-    { key: "epaEnd", label: "EPA out", cls: "r", render: (r) => epa(r.epaEnd, meta) },
+    { key: "epaHere", label: `<span title="${EPA_TIP} After its last match here; coming in, before it has played.">EPA</span>`, cls: "c", render: (r) => epa(r.epaHere, meta) },
     { key: "delta", label: "Change", cls: "r small", render: (r) => trend(r.delta) },
-    { key: "epa", label: "EPA now", cls: "r hide-sm", render: (r) => epa(r.epa, meta) },
-    { key: "sos", label: `<span title="Strength of schedule here: how much the partners and opponents it drew in quals changed its win chance per match, compared with random draws from this event (EPAs as teams arrived). + = harder, − = easier">SOS</span>`, cls: "r small",
-      render: (r) => { if (r.sos == null) return "–"; const v = Math.round(r.sos * 100); return `<span class="${v >= 5 ? "bad-text" : v <= -5 ? "good-text" : "muted"}">${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)}%</span>`; } },
-  ], { sortKey: "epaEnd" });
+    { key: "sos", label: `<span title="Strength of schedule, 0 to 1: how hard its qualification draws (partners and opponents) were for its ranking, as the share of random schedules at the same events that would have been easier. 0.5 = typical, 1 = hardest">SOS</span>`, cls: "r small", render: (r) => sosCell(r.sos, r.sosPlaces) },
+  ], { sortKey: "epaHere" });
 }
 
 // Pick list: every team at the event, strongest first, as auto / teleop / endgame
