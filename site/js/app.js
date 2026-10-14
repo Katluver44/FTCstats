@@ -407,6 +407,10 @@ async function team(r) {
             ${addPhotoLink(n)}
           </div>
         </div>
+        ${awards.length ? `<div class="th-awards">
+          <span class="th-h">Awards</span>
+          <div class="plaques">${plaques.map((a) => plaque(a, season)).join("")}</div><div class="banners">${banners.map((a) => banner(a, season)).join("")}</div>
+        </div>` : ""}
         <div class="th-epa">
           <div class="label">EPA · points added per match</div>
           <b>${fmt(e.np)}</b>
@@ -421,10 +425,6 @@ async function team(r) {
         </div>
         <div class="th-photo" id="photo-slot" hidden></div>
       </div>
-      ${awards.length ? `<div class="th-awards">
-        <span class="th-h">Awards</span>
-        <div class="plaques">${plaques.map((a) => plaque(a, season)).join("")}</div><div class="banners">${banners.map((a) => banner(a, season)).join("")}</div>
-      </div>` : ""}
     </div>
     <div class="row section" style="justify-content:space-between">
       <nav class="seg glass">
@@ -478,14 +478,19 @@ async function team(r) {
     return;
   }
 
-  // one card per event, newest first
+  // one card per event, newest first; what the team won there sits beside the event name
+  const awardPill = (a) => {
+    const place = a.placement > 1 && !["Winner", "Finalist", "DivisionWinner", "DivisionFinalist"].includes(a.type) ? ` · ${ordinal(a.placement)}` : "";
+    return `<span class="ev-award ${isBanner(a) ? "win" : ""}">${isBanner(a) ? "🏆 " : ""}${esc((AWARD_NAMES[a.type] ?? a.type).replace(/ Award$/, ""))}${place}</span>`;
+  };
   $("#view").innerHTML = [...t.events].reverse().map((ev) => {
+    const won = (t.awards ?? []).filter((a) => a.ev === ev.code).sort((a, b) => isBanner(b) - isBanner(a));
     const ms = t.matches.filter((m) => m.ev === ev.code).map((m) => toMatch(m, n));
     const video = (m) => videoFor(videos, ev.code, m.time);
     return `<div class="card section">
       <div class="ev-head">
         <div>
-          <h2><a href="#/${season}/event/${ev.code}">${esc(ev.name)}</a></h2>
+          <div class="ev-title"><h2><a href="#/${season}/event/${ev.code}">${esc(ev.name)}</a></h2>${won.map(awardPill).join("")}</div>
           <div class="small muted">${typeName(ev.type)} · ${fmtDate(ev.start, { month: "short", day: "numeric", year: "numeric" })}</div>
         </div>
         <div class="ev-box">
