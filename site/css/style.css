@@ -841,12 +841,14 @@ a.th-add:hover { color: var(--accent); border-color: var(--accent); }
 :root[data-theme="dark"] .gold-rank b { color: #f2c94c; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gold-rank b { color: #f2c94c; } }
 .th-photo .team-photo { width: 100%; }
-.th-awards { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; flex: 1 1 280px; justify-content: center; align-self: center; }
+/* one trophy shelf: banners first, then plaques, wrapping as a single row, bottoms aligned */
+.th-awards { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; flex: 1 1 280px; justify-content: flex-start; align-self: center; }
+.th-awards .plaques, .th-awards .banners { display: contents; }
 @media (max-width: 700px) { .th-awards { order: 3; justify-content: flex-start; } }
 .th-awards .th-h { margin: 0 6px 0 0; }
 .th-awards .plaques, .th-awards .banners { justify-content: flex-start; }
-.th-awards .plaque-icon svg { width: 58px; height: 74px; }
-.th-awards .banner-icon svg { width: 42px; height: 59px; }
+.th-awards .plaque-icon svg { width: 48px; height: 61px; }
+.th-awards .banner-icon svg { width: 44px; height: 61px; }
 @media (max-width: 1000px) {
   .th-body, .th-body.has-photo { grid-template-columns: 1fr; }
   .th-body .radar-box { justify-self: center; }

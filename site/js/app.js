@@ -604,7 +604,7 @@ async function team(r) {
           </div>
         </div>
         ${awards.length ? `<div class="th-awards">
-          <div class="plaques">${plaques.map((a) => plaque(a, season)).join("")}</div><div class="banners">${banners.map((a) => banner(a, season)).join("")}</div>
+          <div class="banners">${banners.map((a) => banner(a, season)).join("")}</div><div class="plaques">${plaques.map((a) => plaque(a, season)).join("")}</div>
         </div>` : ""}
         <div class="th-epa">
           <div class="label">EPA · points added per match</div>
