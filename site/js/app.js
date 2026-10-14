@@ -226,7 +226,7 @@ async function home(r) {
   const banner = season !== newest
     ? `<div class="banner">The ${newest}–${String(newest + 1).slice(2)} season has started, with ${fmtInt((await data.meta(newest)).matches)} matches so far. <a href="#/${newest}/">Switch to ${newest} →</a></div>`
     : "";
-  const { live, recent, strongest } = sum;
+  const { live, recent } = sum;
 
   // featured card: the season's top four teams, #1 + #4 vs #2 + #3
   const [t1, t2, t3, t4] = teams;
@@ -279,8 +279,6 @@ async function home(r) {
           <div class="card">${eventList(season, meta, (live.length ? live : recent).slice(0, 8), "home-list")}<a class="more" href="#/${season}/events">All events →</a></div>
         </div>
       </div>
-      <div class="section-title"><div class="eyebrow">Competition</div><h2>Strongest events</h2><p class="muted" style="margin:6px 0 0">Ranked by the average EPA of each event's top 8 teams.</p></div>
-      <div class="card">${eventList(season, meta, strongest)}</div>
     </div>`;
   wireSearch($("#hero-search"));
   // two-line rows (team, then location) so they line up with the events list beside it
