@@ -781,10 +781,14 @@ a.th-add:hover { color: var(--accent); border-color: var(--accent); }
 .stat-pct.warm { background: var(--accent-soft); color: var(--accent); }
 .stat-pct.hot { background: var(--accent); color: #fff; }
 /* gold: kept for the very best only (Top 1%, #1 ranks, event wins, win banners) */
-.stat-pct.gold, .ev-award.win { color: #3d2a00; background: linear-gradient(110deg, #c8961a 0%, #f7d774 30%, #fff3c4 45%, #f2c94c 60%, #b8860b 100%);
-  background-size: 220% 100%; box-shadow: 0 0 0 1px rgba(184, 134, 11, .35), 0 1px 6px rgba(242, 201, 76, .25); animation: gold-shine 5s ease-in-out infinite; }
-@keyframes gold-shine { 0%, 70% { background-position: 100% 0; } 100% { background-position: -20% 0; } }
-@media (prefers-reduced-motion: reduce) { .stat-pct.gold, .ev-award.win { animation: none; } }
+.stat-pct.gold, .ev-award.win { color: #3d2a00; background: linear-gradient(110deg, #c8961a 0%, #f2c94c 40%, #f7d774 60%, #d4a72c 100%);
+  box-shadow: 0 0 0 1px rgba(184, 134, 11, .35), 0 1px 6px rgba(242, 201, 76, .25); position: relative; overflow: hidden; isolation: isolate; }
+/* the shine is a light band that starts and ends off the pill, so the loop restarting is invisible */
+.stat-pct.gold::after, .ev-award.win::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 249, 220, .85) 50%, transparent 65%);
+  transform: translateX(-120%); animation: gold-shine 5s ease-in-out infinite; }
+@keyframes gold-shine { 0%, 60% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@media (prefers-reduced-motion: reduce) { .stat-pct.gold::after, .ev-award.win::after { animation: none; display: none; } }
 .gold-rank b { color: #b8860b; }
 :root[data-theme="dark"] .gold-rank b { color: #f2c94c; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gold-rank b { color: #f2c94c; } }

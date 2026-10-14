@@ -480,10 +480,12 @@ async function team(r) {
   // one card per event, newest first; what the team won there sits beside the event name
   const awardPill = (a) => {
     const place = a.placement > 1 && !["Winner", "Finalist", "DivisionWinner", "DivisionFinalist"].includes(a.type) ? ` · ${ordinal(a.placement)}` : "";
-    return `<span class="ev-award ${isBanner(a) ? "win" : ""}">${isBanner(a) ? "🏆 " : ""}${esc((AWARD_NAMES[a.type] ?? a.type).replace(/ Award$/, ""))}${place}</span>`;
+    // gold: banners plus making the final (finalist alliances); banners alone still decide the trophy case
+    const gold = isBanner(a) || ["Finalist", "DivisionFinalist"].includes(a.type);
+    return `<span class="ev-award ${gold ? "win" : ""}">${gold ? "🏆 " : ""}${esc((AWARD_NAMES[a.type] ?? a.type).replace(/ Award$/, ""))}${place}</span>`;
   };
   $("#view").innerHTML = [...t.events].reverse().map((ev) => {
-    const won = (t.awards ?? []).filter((a) => a.ev === ev.code).sort((a, b) => isBanner(b) - isBanner(a));
+    const won = (t.awards ?? []).filter((a) => a.ev === ev.code).sort((a, b) => isBanner(b) - isBanner(a) || ["Finalist", "DivisionFinalist"].includes(b.type) - ["Finalist", "DivisionFinalist"].includes(a.type));
     const ms = t.matches.filter((m) => m.ev === ev.code).map((m) => toMatch(m, n));
     const video = (m) => videoFor(videos, ev.code, m.time);
     return `<div class="card section">
