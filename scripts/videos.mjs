@@ -143,7 +143,9 @@ export async function buildVideos(season) {
       let r = done ? await readJson(file, null) : null;
       if (!r) {
         r = await first(`${season}/matches/${e.code}`).catch(() => null);
-        if (r && done) await fs.writeFile(file, JSON.stringify({ matches: (r.matches ?? []).map((m) => ({ videoURL: m.videoURL, actualStartTime: m.actualStartTime })) }));
+        // a finished event FIRST has no matches for (or errors on) stays that way: cache the
+        // empty answer too, or every rebuild waits out the retries again
+        if (done) await fs.writeFile(file, JSON.stringify({ matches: (r?.matches ?? []).map((m) => ({ videoURL: m.videoURL, actualStartTime: m.actualStartTime })) }));
       }
       return r;
     };
