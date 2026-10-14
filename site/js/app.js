@@ -527,7 +527,8 @@ async function team(r) {
     </div>
     <div id="view"></div>`;
 
-  data.teams(season).then((rows) => {
+  // meta.radarDist: each axis's spread over the season's teams (older data: from teams.json)
+  (meta.radarDist ? Promise.resolve(null) : data.teams(season)).then((rows) => {
     if (stale(r) || !$("#radar")) return;
     const axes = teamAxes(meta, t, rows);
     $("#radar").innerHTML = radar(axes, { values: false });
@@ -683,7 +684,8 @@ async function team(r) {
 // points as one axis (seasons that have them; consistency otherwise), then win rate.
 function teamAxes(meta, t, rows) {
   const e = t.epa;
-  const pool = rows.filter((x) => x.matches >= 5);
+  const dist = meta.radarDist;
+  const pool = rows?.filter((x) => x.matches >= 5) ?? [];
   const pctile = (v, all) => {
     const xs = all.filter((x) => x != null && !Number.isNaN(x));
     if (v == null || !xs.length) return null;
@@ -691,7 +693,7 @@ function teamAxes(meta, t, rows) {
     for (const x of xs) { if (x < v) below++; else if (x === v) same++; }
     return (below + same / 2) / xs.length;
   };
-  const col = (k) => pool.map((x) => x[k]);
+  const col = (k) => dist?.[k] ?? pool.map((x) => x[k]);
   const period = (k, label) => ({ label, value: pctile(e[k], col(k)), display: fmt(e[k]), tip: `${label}: ${fmt(e[k])} points a match` });
   // bonus RPs: how many of the season's bonus RPs it earns in an average match
   const nRp = meta.rpNames.length;
@@ -699,17 +701,17 @@ function teamAxes(meta, t, rows) {
   const rate = (x) => (x.matches ? (x.wins + x.ties / 2) / x.matches : null);
   const w = t.matches.filter((m) => m.score > m.oppScore).length, ti = t.matches.filter((m) => m.score === m.oppScore).length;
   const myRate = t.matches.length ? (w + ti / 2) / t.matches.length : null;
-  const cons = rows.find((x) => x.team === t.team)?.cons ?? null;
+  const cons = t.cons !== undefined ? t.cons : rows?.find((x) => x.team === t.team)?.cons ?? null;
   const myRp = rpSum((i) => e.rp[i]);
   return [
     period("auto", "Auto"), period("teleop", "Teleop"), period("endgame", "Endgame"),
     nRp
-      ? { label: "Bonus RPs", value: pctile(myRp, pool.map((x) => rpSum((i) => x[`rp${i}`]))), display: `${fmt(myRp)} / ${nRp}`,
+      ? { label: "Bonus RPs", value: pctile(myRp, dist?.rp ?? pool.map((x) => rpSum((i) => x[`rp${i}`]))), display: `${fmt(myRp)} / ${nRp}`,
         tip: `Bonus RPs a match: ${fmt(myRp)} of ${nRp} (${meta.rpNames.map((nm, i) => `${nm} ${pct(Math.min(1, Math.max(0, e.rp[i])))}`).join(", ")})` }
       // steadier is better, so rank by the negative of the typical miss
-      : { label: "Consistency", value: cons == null ? null : pctile(-cons, pool.filter((x) => x.cons != null).map((x) => -x.cons)),
+      : { label: "Consistency", value: cons == null ? null : pctile(-cons, dist?.cons ?? pool.filter((x) => x.cons != null).map((x) => -x.cons)),
         display: cons == null ? "–" : `±${pct(cons)}`, tip: cons == null ? "Consistency: needs 5+ matches" : `Consistency: its alliance's score typically lands within ±${pct(cons)} of the prediction` },
-    { label: "Win rate", value: pctile(myRate, pool.map(rate)), display: pct(myRate), tip: `Won ${pct(myRate)} of its matches (partners count too)` },
+    { label: "Win rate", value: pctile(myRate, dist?.win ?? pool.map(rate)), display: pct(myRate), tip: `Won ${pct(myRate)} of its matches (partners count too)` },
   ];
 }
 

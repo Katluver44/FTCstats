@@ -23,7 +23,11 @@ export const data = {
   events: (s) => getJSON(`data/${s}/events.json`),
   event: (s, code) => getJSON(`data/${s}/event/${code}.json`),
   summary: (s) => getJSON(`data/${s}/summary.json`),
-  videos: (s) => getJSON(`data/${s}/videos.json`).catch(() => ({})),
+  // videos for just these events ({code: {streams, uploads}}); events without video have no file
+  async videos(s, codes) {
+    const got = await Promise.all(codes.map((c) => getJSON(`data/${s}/videos/${c}.json`).catch(() => null)));
+    return Object.fromEntries(codes.map((c, i) => [c, got[i]]).filter(([, v]) => v));
+  },
   alliances: (s) => getJSON(`data/${s}/alliances.json`).catch(() => ({})),
   // approved photos: from the upload service when configured, plus any stored in the repo
   async photos(api) {
@@ -39,7 +43,7 @@ export const data = {
   },
   ranking: (s) => getJSON(`data/${s}/ranking.json`).catch(() => null),
   async team(s, n) {
-    const bucket = await getJSON(`data/${s}/team/${Math.floor(n / 100)}.json`).catch(() => ({}));
+    const bucket = await getJSON(`data/${s}/team/${Math.floor(n / 10)}x.json`).catch(() => ({}));
     if (!bucket[n]) throw new Error(`no team ${n}`);
     return bucket[n];
   },

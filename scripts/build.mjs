@@ -10,7 +10,7 @@ import { SEASONS, soloPoints } from "../site/js/seasons.js";
 import { fitSoloValues } from "./solo-values.mjs";
 import { Model, COMPONENTS, onField, allianceTeams, isElim, epaParams, epaComponent } from "../site/js/model.js";
 import { oprPredictions } from "./opr.mjs";
-import { localToUtc } from "./videos.mjs";
+import { localToUtc, splitVideos } from "./videos.mjs";
 import { elo, avgScore } from "./baselines.mjs";
 
 const r1 = (x) => Math.round(x * 10) / 10;
@@ -514,6 +514,7 @@ export async function build(season, params = {}, epaOver = {}) {
   await fs.rm(out, { recursive: true, force: true });
   await fs.mkdir(out, { recursive: true });
   for (const [f, buf] of Object.entries(keep)) if (buf) await fs.writeFile(path.join(out, f), buf);
+  if (keep["videos.json"]) await splitVideos(out, JSON.parse(keep["videos.json"]));
 
   // ---- team info gathered from event rosters ----
   const info = new Map();
@@ -567,6 +568,21 @@ export async function build(season, params = {}, epaOver = {}) {
   });
   const rows = tableRows(ranked, true, predRank(ranked, true));
   await writeJson(path.join(out, "teams.json"), { cols, rows });
+  // the team page radar ranks a team among teams with 5+ matches; ship 101 quantiles
+  // of each axis (meta.radarDist) instead of making the page load teams.json
+  const quant = (xs) => {
+    const v = xs.filter((x) => x != null && !Number.isNaN(x)).sort((a, b) => a - b);
+    return v.length ? Array.from({ length: 101 }, (_, q) => r3(v[Math.round((q / 100) * (v.length - 1))])) : [];
+  };
+  const radarPool = rows.filter((r) => r[11] >= 5);
+  const clamp01 = (x) => Math.min(1, Math.max(0, x ?? 0));
+  const radarDist = {
+    auto: quant(radarPool.map((r) => r[5])), teleop: quant(radarPool.map((r) => r[6])), endgame: quant(radarPool.map((r) => r[7])),
+    rp: quant(radarPool.map((r) => cfg.rpNames.reduce((sum, _, i) => sum + clamp01(r[8 + i]), 0))),
+    cons: quant(radarPool.map((r) => (r[22] == null ? null : -r[22]))),
+    win: quant(radarPool.map((r) => (r[11] ? (r[12] + r[14] / 2) / r[11] : null))),
+  };
+  const consOf = new Map(rows.map((r) => [r[0], r[22]]));
 
   // Teams from last season that haven't played this season yet, with the EPA the
   // model starts them on (carried over from past seasons), so Compete can use them
@@ -621,7 +637,7 @@ export async function build(season, params = {}, epaOver = {}) {
     }
   }
 
-  // ---- per-team files, bundled 100 teams to a file (team/<number / 100>.json) ----
+  // ---- per-team files, bundled 10 teams to a file (team/<number / 10>x.json: 1919x = 19190-19199) ----
   const rankOf = new Map(ranked.map((x, i) => [x.t, i + 1]));
   // world / country / state ranks for the team page tiles (so it needn't load teams.json)
   const stateOf = (t) => { const p = (info.get(t)?.loc ?? "").split(", "); return p.length >= 3 ? p[p.length - 2] : null; };
@@ -656,10 +672,10 @@ export async function build(season, params = {}, epaOver = {}) {
         high: evHigh.get(ev.code) ?? null,
       };
     });
-    const bucket = Math.floor(t / 100);
+    const bucket = Math.floor(t / 10);
     if (!buckets.has(bucket)) buckets.set(bucket, {});
     buckets.get(bucket)[t] = {
-      team: t, ...(info.get(t) ?? {}), rank: rankOf.get(t), of: ranked.length, places: placeRanks.get(t) ?? {},
+      team: t, ...(info.get(t) ?? {}), rank: rankOf.get(t), of: ranked.length, places: placeRanks.get(t) ?? {}, cons: consOf.get(t) ?? null,
       // epa: EPA track (bonus-RP chances from the prediction track); pred: prediction track
       epa: { ...epaRow({ ...e, rp: p.rp }) }, pred: epaRow(p), matches: h, events: evs,
     };
@@ -667,7 +683,7 @@ export async function build(season, params = {}, epaOver = {}) {
   // season awards per team (from scripts/fetch-awards.mjs), newest event first
   const awardsBy = await loadAwards(season, events);
   for (const teams of buckets.values()) for (const t of Object.values(teams)) if (awardsBy.has(t.team)) t.awards = awardsBy.get(t.team);
-  for (const [bucket, teams] of buckets) await writeJson(path.join(out, "team", `${bucket}.json`), teams);
+  for (const [bucket, teams] of buckets) await writeJson(path.join(out, "team", `${bucket}x.json`), teams);
 
   // ---- events ----
   const evList = [];
@@ -777,7 +793,7 @@ export async function build(season, params = {}, epaOver = {}) {
   const top50 = ranked.slice(0, 50).map((x) => x.e);
   const meterMax = Object.fromEntries(["np", "auto", "teleop", "endgame"].map((k) => [k, r1(Math.max(...top50.map((e) => e[k]), 1))]));
   const meta = {
-    meterMax,
+    meterMax, radarDist,
     season, game: cfg.game, rpNames: cfg.rpNames, generated: new Date().toISOString(),
     teams: rows.length, events: events.length, matches: matches.length,
     accuracy: Object.fromEntries(Object.entries(summarize(acc)).map(([k, v]) => [k, hasRp || k === "calib" ? v : { ...v, rpBrier: null }])),

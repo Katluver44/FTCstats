@@ -203,7 +203,15 @@ export async function buildVideos(season) {
   }
   await fs.mkdir(path.dirname(out), { recursive: true });
   await fs.writeFile(out, JSON.stringify(result));
+  await splitVideos(path.dirname(out), result);
   return result;
+}
+
+// one small file per event (videos/<code>.json), so a page loads only the events it shows
+export async function splitVideos(dir, result) {
+  await fs.rm(path.join(dir, "videos"), { recursive: true, force: true });
+  await fs.mkdir(path.join(dir, "videos"), { recursive: true });
+  for (const [code, e] of Object.entries(result)) await fs.writeFile(path.join(dir, "videos", `${code}.json`), JSON.stringify(e));
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
