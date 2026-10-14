@@ -748,7 +748,7 @@ table.alliances tr.champ td { background: var(--accent-soft); }
 .bk-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; max-width: 100%; }
 .bk-bar i.red { background: var(--red); }
 .bk-bar i.blue { background: var(--blue); }
-.bk-bar em { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--text); }
+.bk-bar em { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--text); }
 .match-teams tr.side-red td:first-child { box-shadow: inset 4px 0 0 var(--red); }
 .match-teams tr.side-blue td:first-child { box-shadow: inset 4px 0 0 var(--blue); }
 .match-teams tr.side-red + tr.side-blue td { border-top: 2px solid var(--line); }

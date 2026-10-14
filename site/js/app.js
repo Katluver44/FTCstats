@@ -1532,10 +1532,13 @@ async function match(r) {
     : winner === "tie" ? `<div class="big-epa"><div class="label">Result</div><b>Tie</b><div class="label">${Side(fav)} was favoured ${pct(favP)}</div></div>`
     : `<div class="big-epa"><div class="label">Prediction</div><b class="${winner === fav ? "good-text" : "bad-text"}">${winner === fav ? "Correct" : "Upset"}</b><div class="label">${Side(fav)} was favoured ${pct(favP)}</div></div>`;
 
-  const verdictLine = !p ? "No prediction for this match."
-    : !played ? `${Side(fav)} favoured to win, ${pct(favP)}.`
-    : winner === "tie" ? `<b>Tie</b> · ${Side(fav)} was favoured ${pct(favP)}`
-    : `<b class="${winner === fav ? "good-text" : "bad-text"}">${winner === fav ? "Prediction correct" : "Upset"}</b> · ${Side(fav)} was favoured ${pct(favP)}`;
+  // one sentence under the score: what we expected and whether it happened
+  const lose = fav === "red" ? "blue" : "red";
+  const footLine = !p ? "No prediction for this match."
+    : !played ? `${Side(fav)} is favoured to win, ${pct(favP)}.`
+    : winner === "tie" ? `Tie. ${Side(fav)} was favoured ${pct(favP)}.`
+    : winner === fav ? `${Side(fav)} was favoured ${pct(favP)} and won.`
+    : `<b class="bad-text">Upset:</b> ${lose} won with a ${pct(1 - favP)} chance.`;
   // scoreboard: teams either side, the final (or predicted) score in the middle
   const onField = (side) => m[`${side}On`] ?? m[side];
   const side = (s) => `<div class="feature-side ${s}">${m[s].map((t) => `<a href="#/${season}/team/${t}" class="${onField(s).includes(t) ? "" : "sat-out"}">${t}</a><small>${esc(team.get(t)?.name ?? "")}${onField(s).includes(t) ? "" : " · didn't play"}</small>`).join("")}</div>`;
@@ -1548,7 +1551,7 @@ async function match(r) {
         ${played && p ? `<div class="small muted pred-line">Predicted ${fmt(p.red.total, 0)}–${fmt(p.blue.total, 0)}</div>` : ""}</div>
       ${side("blue")}
     </div>
-    <div class="feature-foot">${winBar(p?.pRed)}<p>${p ? `Before the match: red ${pct(p.pRed)}, blue ${pct(1 - p.pRed)} to win.` : "No prediction for this match."}${v && played && p ? ` <span class="stage-verdict">${verdictLine}</span>` : ""}</p></div>
+    <div class="feature-foot">${winBar(p?.pRed)}<p>${footLine}</p></div>
   </div>`;
 
   // with a video the page is built around it: player on the left, a compact
@@ -1581,7 +1584,7 @@ async function match(r) {
   const cell = (pr, ac, k, s) => {
     const diff = pr != null && ac != null ? ac - pr : null;
     const bar = ["auto", "teleop", "endgame"].includes(k)
-      ? `<span class="bk-bar"><i class="${s}" style="width:${Math.round(((ac ?? pr ?? 0) / maxOf) * 100)}%"></i>${pr != null ? `<em style="left:${Math.min(100, Math.round((pr / maxOf) * 100))}%" title="Predicted ${fmt(pr)}"></em>` : ""}</span>` : "";
+      ? `<span class="bk-bar"><i class="${s}" style="width:${Math.round(((ac ?? pr ?? 0) / maxOf) * 100)}%"></i>${pr != null ? `<em style="left:calc(${Math.min(100, Math.round((pr / maxOf) * 100))}% - ${(Math.min(1, pr / maxOf) * 2).toFixed(1)}px)" title="Predicted ${fmt(pr)}"></em>` : ""}</span>` : "";
     return `<td class="r faint">${pr != null ? fmt(pr, 0) : "–"}</td>
       <td class="r"><b>${ac ?? "–"}</b>${diff != null && Math.abs(diff) >= 1 ? ` <span class="small ${diff > 0 ? "trend-up" : "trend-down"}">${diff > 0 ? "+" : "−"}${fmt(Math.abs(diff), 0)}</span>` : ""}</td>
       <td class="bk-cell hide-sm">${bar}</td>`;
@@ -1589,8 +1592,7 @@ async function match(r) {
   const breakdown = `<div class="table-wrap"><table class="breakdown">
     <thead><tr><th></th><th class="r red-text">Pred</th><th class="r red-text">Red</th><th class="hide-sm"></th><th class="r blue-text">Pred</th><th class="r blue-text">Blue</th><th class="hide-sm"></th></tr></thead>
     <tbody>${rows.map(([k, label]) => `<tr class="${k === "total" ? "tot" : ""}"><td class="muted">${label}</td>${cell(val(p?.red, k), played ? val(rs, k) : null, k, "red")}${cell(val(p?.blue, k), played ? val(bs, k) : null, k, "blue")}</tr>`).join("")}</tbody>
-  </table></div>
-  <p class="small muted hide-sm" style="margin:10px 4px 0">Bars show actual points; the tick is the prediction. Penalty points are the fouls the other alliance gave away.</p>`;
+  </table></div>`;
 
   // bonus ranking points: chance before the match, and whether it was earned
   const rpCell = (s, k) => {
