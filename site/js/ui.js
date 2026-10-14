@@ -42,6 +42,13 @@ export const data = {
     return out;
   },
   ranking: (s) => getJSON(`data/${s}/ranking.json`).catch(() => null),
+  // last season's teams that haven't played yet this season, on the EPA they start with
+  async pre(s) {
+    const t = await getJSON(`data/${s}/teams-pre.json`).catch(() => null);
+    if (!t) return [];
+    if (!t._objs) t._objs = t.rows.map((row) => { const o = { matches: 0, pre: true }; t.cols.forEach((c, j) => (o[c] = row[j])); return o; });
+    return t._objs;
+  },
   async team(s, n) {
     const bucket = await getJSON(`data/${s}/team/${Math.floor(n / 10)}x.json`).catch(() => ({}));
     if (!bucket[n]) throw new Error(`no team ${n}`);

@@ -184,7 +184,8 @@ const notFound = () => (app.innerHTML = `<div class="empty">Page not found.</div
 async function searchItems(season, q) {
   q = q.trim().toLowerCase();
   if (!q) return [];
-  const [teams, events] = await Promise.all([data.teams(season), data.events(season)]);
+  const [played, pre, events] = await Promise.all([data.teams(season), data.pre(season), data.events(season)]);
+  const teams = [...played, ...pre]; // teams that haven't played yet this season are findable too
   const out = [];
   if (/^\d+$/.test(q)) {
     for (const t of teams) if (String(t.team).startsWith(q)) out.push(t);
@@ -607,7 +608,33 @@ async function team(r) {
   const videos = t ? await data.videos(season, (t.events ?? []).map((e) => e.code)) : {};
   if (stale(r)) return;
   if (!t) {
-    app.innerHTML = `<div class="card empty">Team ${n} has no matches in ${season}. ${state.seasons.filter((s) => s !== season).map((s) => `<a class="link" href="#/${s}/team/${n}">Try ${s}</a>`).join(" ")}</div>`;
+    // not played this season: if it played last season, show who it is and the EPA it starts on
+    // who it is (if it played last season) and the seasons it did play, checked file by file
+    const [p, playedIn] = await Promise.all([
+      data.pre(season).then((list) => list.find((x) => x.team === n)),
+      Promise.all(state.seasons.filter((s) => s !== season).map((s) => data.team(s, n).then((x) => (x?.matches?.length ? [s, x] : null)).catch(() => null))),
+    ]);
+    if (stale(r)) return;
+    const seasons = playedIn.filter(Boolean);
+    const others = seasons.length
+      ? `<div class="row" style="gap:6px;margin-top:10px">${seasons.map(([s, x]) => `<a class="pill" href="#/${s}/team/${n}">${seasonLabel(s, "")} <span class="faint">#${fmtInt(x.rank)}</span></a>`).join("")}</div>`
+      : "";
+    app.innerHTML = p ? `<div class="card card-pad team-hero"><div class="th-top">
+        <div class="th-id">
+          <h1><span class="team-num">${n}</span> ${esc(p.name)}</h1>
+          <div class="muted">${esc(p.loc ?? "")}</div>
+          <div class="th-facts"><span class="th-fact">No matches in ${seasonLabel(season, "")} yet</span>
+            <a class="th-fact" href="#/${season - 1}/team/${n}">Last season →</a></div>
+        </div>
+        <div class="th-epa">
+          <div class="label" title="Carried over from its past seasons; it moves once the team plays">Predicted EPA · before its first match</div>
+          <b>${fmt(p.np)}</b>
+          <div class="th-ranks"><span>Auto <b>${fmt(p.auto)}</b></span><span>Teleop <b>${fmt(p.teleop)}</b></span><span>Endgame <b>${fmt(p.endgame)}</b></span></div>
+        </div>
+      </div></div>
+      ${others ? `<div class="card-pad"><div class="small muted">Seasons it played (world rank)</div>${others}</div>` : ""}`
+      : `<div class="card card-pad"><h2 style="margin:0">Team ${n}${seasons[0] ? ` · ${esc(seasons[0][1].name)}` : ""}</h2>
+        <p class="muted" style="margin:6px 0 0">No matches in ${seasonLabel(season, "")}.${seasons.length ? " Seasons it played (world rank):" : " No FTC matches on record."}</p>${others}</div>`;
     return;
   }
   const evName = new Map((t.events ?? []).map((e) => [e.code, e.name]));
@@ -1697,7 +1724,7 @@ async function compete(r) {
       items = byEpa.filter((t) => !taken.has(t.team) && match(t)).slice(0, 8);
       sel = Math.min(sel, Math.max(0, items.length - 1));
       box.innerHTML = items.length
-        ? items.map((t, k) => `<button type="button" class="pick-item ${k === sel ? "sel" : ""}" data-k="${k}"><b>${t.team}</b><span>${esc(t.name)}</span><small class="faint">${t.matches} match${t.matches === 1 ? "" : "es"}</small>${epa(t.np, meta)}</button>`).join("")
+        ? items.map((t, k) => `<button type="button" class="pick-item ${k === sel ? "sel" : ""}" data-k="${k}"><b>${t.team}</b><span>${esc(t.name)}</span><small class="faint">${t.remote ? "no rating yet" : t.pre ? "not played yet" : `${t.matches} match${t.matches === 1 ? "" : "es"}`}</small>${epa(t.np, meta)}</button>`).join("")
         : `<div class="pick-empty">No ${seasonLabel(season, "")} team matches “${esc(el.value.trim())}”</div>`;
       box.classList.add("open");
     };
@@ -1949,7 +1976,7 @@ async function sim(r) {
         <thead><tr><th>Proj.</th><th>Team</th><th class="c"><span title="${EPA_TIP}">EPA</span></th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th></tr></thead>
         <tbody>${rows.map((x, i) => `<tr>
           <td class="faint num">${i + 1}</td>
-          <td>${byNum.has(x.team) ? teamCell(season, x.team, byNum.get(x.team).name) : `<span class="team-cell"><span class="n">${x.team}</span><span class="nm faint">new team</span></span>`}</td>
+          <td>${byNum.has(x.team) ? teamCell(season, x.team, byNum.get(x.team).name) : `<span class="team-cell"><span class="n">${x.team}</span><span class="nm">${esc(remoteTeams.get(x.team) ?? "")} <span class="faint small">no rating yet</span></span></span>`}</td>
           <td class="c">${byNum.has(x.team) ? epa(byNum.get(x.team).np, meta) : "–"}</td>
           <td class="r">${fmt(x.meanRank, 1)}</td><td class="r">${probCell(x.p1)}</td><td class="r">${probCell(x.p4)}</td><td class="r hide-sm">${probCell(x.p8)}</td>
         </tr>`).join("")}</tbody></table></div>`;
@@ -1959,10 +1986,10 @@ async function sim(r) {
     $("#sim-count").textContent = `${st.teams.length} team${st.teams.length === 1 ? "" : "s"}`;
     $("#sim-chips").innerHTML = st.teams.map((n) => {
       const t = byNum.get(n);
-      return `<span class="sim-chip"><a href="#/${season}/team/${n}"><b>${n}</b> <span>${esc(t?.name ?? "new team")}</span></a>${t ? epa(t.np, meta) : ""}<button type="button" data-drop="${n}" aria-label="Remove ${n}">×</button></span>`;
+      return `<span class="sim-chip"><a href="#/${season}/team/${n}"><b>${n}</b> <span>${esc(t?.name ?? remoteTeams.get(n) ?? "new team")}</span></a>${t ? epa(t.np, meta) : ""}<button type="button" data-drop="${n}" aria-label="Remove ${n}">×</button></span>`;
     }).join("");
     const taken = new Set(st.teams);
-    teamTypeahead($("#sim-add"), byEpa.filter((t) => !taken.has(t.team)), meta, add);
+    teamTypeahead($("#sim-add"), byEpa.filter((t) => !taken.has(t.team)), meta, add, { remote: true });
   };
   const changed = () => { drawTeams(); run(); };
   function add(n) {
@@ -2037,15 +2064,36 @@ const competeModes = (season, cur) => `<nav class="chart-pick mode-pick" aria-la
   ${[["compete", "Predict a match"], ["h2h", "Head to head"], ["sim", "SIM event"]].map(([k, l]) => `<a href="#/${season}/${k}" class="${k === cur ? "active" : ""}">${l}</a>`).join("")}</nav>`;
 
 // Type-ahead for one team input (number or name), strongest first; same look as Compete's.
-function teamTypeahead(el, list, meta, onPick) {
+// remote: also search every FTC team on FTCScout (teams with no rating this season),
+// filling in when the season's own list has fewer than 8 matches
+const remoteTeams = new Map(); // number -> name, for teams found that way
+function teamTypeahead(el, list, meta, onPick, { remote = false } = {}) {
   const box = el.parentElement.querySelector(".pick");
-  let items = [], sel = 0;
-  const draw = () => {
+  let items = [], sel = 0, extra = [], remoteTimer, asked = "";
+  const lookup = (q) => {
+    clearTimeout(remoteTimer);
+    if (!remote || q.length < 2 || q === asked) return;
+    remoteTimer = setTimeout(async () => {
+      asked = q;
+      try {
+        const res = await fetch("https://api.ftcscout.org/graphql", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: `query($q:String!){teamsSearch(searchText:$q,limit:8){number name}}`, variables: { q } }) });
+        const found = (await res.json())?.data?.teamsSearch ?? [];
+        for (const f of found) remoteTeams.set(f.number, f.name);
+        const known = new Set(list.map((t) => t.team));
+        extra = found.filter((f) => !known.has(f.number)).map((f) => ({ team: f.number, name: f.name, matches: 0, np: null, remote: true }));
+        if (el.value.trim().toLowerCase() === q && document.activeElement === el) draw(true);
+      } catch {}
+    }, 250);
+  };
+  const draw = (fromRemote = false) => {
     const q = el.value.trim().toLowerCase();
-    items = list.filter((t) => !q || String(t.team).startsWith(q) || t.name.toLowerCase().includes(q)).slice(0, 8);
+    if (!fromRemote) { extra = []; lookup(q); }
+    const local = list.filter((t) => !q || String(t.team).startsWith(q) || t.name.toLowerCase().includes(q)).slice(0, 8);
+    items = [...local, ...extra.filter((x) => !local.some((l) => l.team === x.team))].slice(0, 8);
     sel = Math.min(sel, Math.max(0, items.length - 1));
     box.innerHTML = items.length
-      ? items.map((t, k) => `<button type="button" class="pick-item ${k === sel ? "sel" : ""}" data-k="${k}"><b>${t.team}</b><span>${esc(t.name)}</span><small class="faint">${t.matches} match${t.matches === 1 ? "" : "es"}</small>${epa(t.np, meta)}</button>`).join("")
+      ? items.map((t, k) => `<button type="button" class="pick-item ${k === sel ? "sel" : ""}" data-k="${k}"><b>${t.team}</b><span>${esc(t.name)}</span><small class="faint">${t.remote ? "no rating yet" : t.pre ? "not played yet" : `${t.matches} match${t.matches === 1 ? "" : "es"}`}</small>${epa(t.np, meta)}</button>`).join("")
       : `<div class="pick-empty">No team matches “${esc(el.value.trim())}”</div>`;
     box.classList.add("open");
   };
