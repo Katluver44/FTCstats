@@ -25,7 +25,7 @@ function parseHash() {
 }
 
 // tab title for pages with no heading (the lists, "not found" messages) and while loading
-const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", about: "Our methodology" };
+const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", about: "Our methodology" };
 const setTitle = (name) => (document.title = name ? `${name} · FTCstats` : "FTCstats · FTC ratings & match predictions");
 
 async function route() {
@@ -36,7 +36,7 @@ async function route() {
   renderNav(r);
   window.scrollTo(0, 0);
   app.innerHTML = `<div class="loading">Loading…</div>`;
-  const pages = { "": home, teams, team, events, event, match, about };
+  const pages = { "": home, teams, team, events, event, match, compete, about };
   const fn = pages[r.page] ?? notFound;
   setTitle(r.page && (PAGE_TITLES[r.page] ?? "Page not found"));
   try {
@@ -54,7 +54,7 @@ async function route() {
 // the same kind of page in another season; event codes differ by season, so events go to the list
 function seasonHref(s, { page, args }) {
   const keep = {
-    teams: "teams", events: "events", about: "about", event: "events", match: "events",
+    teams: "teams", events: "events", compete: "compete", about: "about", event: "events", match: "events",
     team: `team/${args.join("/")}`,
   }[page] ?? "";
   return `#/${s}/${keep}`;
@@ -244,7 +244,7 @@ async function home(r) {
         <div class="feature-score"><span class="score red">${fmt(p.red.total, 0)}</span><span class="faint">–</span><span class="score blue">${fmt(p.blue.total, 0)}</span></div>
         ${side("blue", [t2, t3])}
       </div>
-      <div class="feature-foot">${winBar(p.pRed)}<p>Red wins ${pct(p.pRed)} of the time.</p></div>
+      <div class="feature-foot">${winBar(p.pRed)}<p>Red wins ${pct(p.pRed)} of the time. <a class="link" href="#/${season}/compete?r=${t1.team},${t4.team}&b=${t2.team},${t3.team}">Try your own matchup →</a></p></div>
     </div>`;
   }
 
@@ -1273,6 +1273,141 @@ async function match(r) {
     <div class="card"><div class="table-wrap"><table class="match-teams">
       <thead><tr><th>Team</th><th class="c">EPA before</th><th class="r hide-sm">Auto</th><th class="r hide-sm">Teleop</th><th class="r hide-sm">Endgame</th><th class="r">EPA after</th><th class="r"><span class="hide-sm">${isQual ? "Event" : "Qual"} </span>rank</th><th class="r hide-sm">Record</th></tr></thead>
       <tbody>${teamRows}</tbody></table></div></div>`;
+}
+
+// ---------------- compete: build any matchup ----------------
+
+// Any teams on either side (1-4 robots each), predicted with the season's model.
+// Real FTC matches are 2 v 2; other sizes just add up each robot's ratings.
+const PRESETS = [[2, 2], [1, 1], [1, 2], [1, 3], [2, 3], [3, 3]];
+async function compete(r) {
+  const { season, query } = r;
+  const [meta, teams] = await Promise.all([data.meta(season), data.teams(season)]);
+  if (stale(r)) return;
+  const byNum = new Map(teams.map((t) => [t.team, t]));
+  const list = (k) => (query.get(k) ?? "").split(",").map((s) => s.trim());
+  const size = (k, d = 2) => Math.min(4, Math.max(1, +query.get(`${k}n`) || Math.max(d, list(k).filter(Boolean).length)));
+  const st = { r: list("r"), b: list("b"), rn: size("r"), bn: size("b") };
+  const rpNames = meta.rpNames ?? [];
+
+  const shell = () => {
+    const input = (side, i) => `<div class="slot"><input inputmode="numeric" list="team-list" placeholder="Team #" data-side="${side}" data-i="${i}" value="${esc(st[side][i] ?? "")}" aria-label="${side === "r" ? "Red" : "Blue"} robot ${i + 1}">
+      ${st[`${side}n`] > 1 ? `<button type="button" class="slot-x" data-drop="${side}${i}" aria-label="Remove this robot">×</button>` : ""}<div class="who" id="who-${side}${i}"></div></div>`;
+    const sideBox = (side) => `<div class="side card ${side === "r" ? "red" : "blue"}">
+      <div class="side-head"><b class="${side === "r" ? "red" : "blue"}-text">${side === "r" ? "Red" : "Blue"} alliance</b><span class="faint small">${st[`${side}n`]} robot${st[`${side}n`] > 1 ? "s" : ""}</span></div>
+      ${Array.from({ length: st[`${side}n`] }, (_, i) => input(side, i)).join("")}
+      ${st[`${side}n`] < 4 ? `<button type="button" class="pill add-slot" data-add="${side}">+ Add robot</button>` : ""}</div>`;
+    app.innerHTML = `
+      <div class="card card-pad"><div class="page-head"><div>
+        <div class="kicker">${seasonLabel(season, meta.game)}</div>
+        <h1>Compete</h1>
+        <p class="muted" style="margin:4px 0 0">Put any teams against each other and see the predicted score, who wins and how often. Uses each team's current EPA.</p>
+      </div></div></div>
+      <div class="compete-bar section">
+        <nav class="chart-pick" aria-label="Alliance sizes">${PRESETS.map(([a, b]) => `<a href="#" data-size="${a},${b}" class="${st.rn === a && st.bn === b ? "active" : ""}">${a} v ${b}</a>`).join("")}</nav>
+        <div class="row"><button type="button" class="pill" id="swap">⇄ Swap sides</button><button type="button" class="pill" id="top4">Top 4</button><button type="button" class="pill" id="clear">Clear</button></div>
+      </div>
+      <div class="predictor section">${sideBox("r")}<div class="vs">VS</div>${sideBox("b")}</div>
+      <div id="out"></div>
+      <datalist id="team-list">${teams.map((t) => `<option value="${t.team}">${esc(t.name)}</option>`).join("")}</datalist>`;
+    $$(".predictor input").forEach((el) => (el.oninput = () => { st[el.dataset.side][+el.dataset.i] = el.value.trim(); run(); }));
+    $$("[data-size]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); [st.rn, st.bn] = a.dataset.size.split(",").map(Number); shell(); }));
+    $$("[data-add]").forEach((b) => (b.onclick = () => { st[`${b.dataset.add}n`]++; shell(); $(`.predictor input[data-side="${b.dataset.add}"][data-i="${st[`${b.dataset.add}n`] - 1}"]`)?.focus(); }));
+    $$("[data-drop]").forEach((b) => (b.onclick = () => { const s = b.dataset.drop[0], i = +b.dataset.drop.slice(1); st[s].splice(i, 1); st[`${s}n`]--; shell(); }));
+    $("#swap").onclick = () => { [st.r, st.b, st.rn, st.bn] = [st.b, st.r, st.bn, st.rn]; shell(); };
+    $("#clear").onclick = () => { st.r = []; st.b = []; shell(); $(".predictor input")?.focus(); };
+    // the season's best four, split #1 + #4 vs #2 + #3
+    $("#top4").onclick = () => { const t = [...teams].sort((a, b) => b.np - a.np).slice(0, 4).map((x) => `${x.team}`); [st.r, st.b, st.rn, st.bn] = [[t[0], t[3]], [t[1], t[2]], 2, 2]; shell(); };
+    run();
+  };
+
+  const run = () => {
+    const nums = { r: [], b: [] }, seen = new Set();
+    for (const side of ["r", "b"]) for (let i = 0; i < st[`${side}n`]; i++) {
+      const v = st[side][i] ?? "", t = /^\d{1,6}$/.test(v) ? byNum.get(+v) : null;
+      let msg = "";
+      if (!v) msg = "";
+      else if (!/^\d{1,6}$/.test(v)) msg = `<span class="faint">Not a team number</span>`;
+      else if (!t) msg = `<span class="faint">No ${season} matches for team ${esc(v)}</span>`;
+      else if (seen.has(+v)) msg = `<span class="faint">Already picked</span>`;
+      else { msg = `<a href="#/${season}/team/${t.team}">${esc(t.name)}</a> · EPA ${fmt(t.np)}`; nums[side].push(+v); seen.add(+v); }
+      const who = $(`#who-${side}${i}`);
+      if (who) who.innerHTML = msg;
+    }
+    const keep = (side) => st[side].slice(0, st[`${side}n`]).filter(Boolean).join(",");
+    syncQuery({ r: keep("r"), b: keep("b"), rn: st.rn !== 2 || st.bn !== 2 ? st.rn : "", bn: st.rn !== 2 || st.bn !== 2 ? st.bn : "" });
+    $$("[data-size]").forEach((a) => a.classList.toggle("active", a.dataset.size === `${st.rn},${st.bn}`));
+    if (!nums.r.length || !nums.b.length) {
+      $("#out").innerHTML = `<div class="section"><div class="card empty">Enter at least one team on each side.</div></div>`;
+      return;
+    }
+
+    const model = modelFromMeta(meta);
+    for (const n of [...nums.r, ...nums.b]) {
+      const t = byNum.get(n);
+      model.setTeam(n, { auto: t.pauto ?? t.auto, teleop: t.pteleop ?? t.teleop, endgame: t.pendgame ?? t.endgame, n: t.matches, rp: [t.rp0, t.rp1, t.rp2] });
+    }
+    const p = model.predict(nums.r, nums.b);
+    const fav = p.pRed >= 0.5 ? "red" : "blue", favP = Math.max(p.pRed, 1 - p.pRed);
+    const Side = (s) => (s === "red" ? "Red" : "Blue");
+    const margin = Math.abs(p.red.total - p.blue.total);
+    // best of 3 (playoff series), ties ignored
+    const bo3 = (q) => q * q * (3 - 2 * q);
+    const sure = (q) => (q > 0.995 ? "over 99%" : pct(q));
+    const uneven = nums.r.length !== 2 || nums.b.length !== 2;
+
+    const side = (s) => `<div class="feature-side ${s}">${nums[s[0]].map((n) => `<a href="#/${season}/team/${n}">${n}</a><small>${esc(byNum.get(n).name)}</small>`).join("")}</div>`;
+    const board = `<div class="feature match-board">
+      <div class="feature-head"><b>Predicted score</b><span>${nums.r.length} v ${nums.b.length}</span></div>
+      <div class="feature-body">
+        ${side("red")}
+        <div class="feature-score"><span class="score red">${fmt(p.red.total, 0)}</span><span class="faint">–</span><span class="score blue">${fmt(p.blue.total, 0)}</span></div>
+        ${side("blue")}
+      </div>
+      <div class="feature-foot">${winBar(p.pRed)}<p>${Side(fav)} wins ${sure(favP)} of the time, by about ${fmt(margin, 0)} points. In a best of 3, ${Side(fav).toLowerCase()} takes the series ${sure(bo3(favP))} of the time.</p></div>
+    </div>`;
+
+    const rows = [["auto", "Auto"], ["teleop", "Teleop"], ["endgame", "Endgame"], ["np", "No-penalty total"], ["pen", "Penalty points"], ["total", "Final"]];
+    const val = (o, k) => (k === "pen" ? o.total - o.np : o[k]);
+    const maxOf = Math.max(1, ...["auto", "teleop", "endgame"].flatMap((k) => [p.red[k], p.blue[k]]));
+    const cell = (o, k, s) => `<td class="r"><b>${fmt(val(o, k), 0)}</b></td>
+      <td class="bk-cell hide-sm">${["auto", "teleop", "endgame"].includes(k) ? `<span class="bk-bar"><i class="${s}" style="width:${Math.max(0, Math.round((o[k] / maxOf) * 100))}%"></i></span>` : ""}</td>`;
+    const breakdown = `<div class="table-wrap"><table class="breakdown">
+      <thead><tr><th></th><th class="r red-text">Red</th><th class="hide-sm"></th><th class="r blue-text">Blue</th><th class="hide-sm"></th></tr></thead>
+      <tbody>${rows.map(([k, label]) => `<tr class="${k === "total" ? "tot" : ""}"><td class="muted">${label}</td>${cell(p.red, k, "red")}${cell(p.blue, k, "blue")}</tr>`).join("")}</tbody>
+    </table></div>
+    <p class="small muted" style="margin:10px 4px 0">Penalty points are the fouls the other alliance is expected to give away (the league average).</p>`;
+
+    const rpCard = rpNames.length ? `<div class="card card-pad"><h3>Bonus ranking points</h3><div class="table-wrap"><table class="breakdown">
+      <thead><tr><th></th><th class="r red-text">Red</th><th class="r blue-text">Blue</th></tr></thead>
+      <tbody>${rpNames.map((nm, k) => `<tr><td class="muted">${esc(nm)}</td><td class="r">${pct(p.red.rp[k])}</td><td class="r">${pct(p.blue.rp[k])}</td></tr>`).join("")}
+        <tr class="tot"><td class="muted">Win</td><td class="r">${pct(p.pRed)}</td><td class="r">${pct(1 - p.pRed)}</td></tr></tbody>
+    </table></div></div>` : "";
+
+    // who carries each alliance: every robot's EPA and its share of the alliance's points
+    const robotRows = ["red", "blue"].flatMap((s) => {
+      const ns = nums[s[0]], tot = ns.reduce((a, n) => a + byNum.get(n).np, 0) || 1;
+      return ns.map((n) => {
+        const t = byNum.get(n);
+        return `<tr class="side-${s}"><td>${teamCell(season, n, t.name)}</td><td class="c">${epa(t.np, meta)}</td>
+          <td class="r small hide-sm">${fmt(t.auto)}</td><td class="r small hide-sm">${fmt(t.teleop)}</td><td class="r small hide-sm">${fmt(t.endgame)}</td>
+          <td class="r">${pct(t.np / tot)}</td><td class="r small hide-sm">${t.wins}-${t.losses}${t.ties ? `-${t.ties}` : ""}</td></tr>`;
+      });
+    }).join("");
+
+    $("#out").innerHTML = `
+      <div class="section">${board}</div>
+      ${uneven ? `<p class="small muted section compete-note">Real FTC matches are 2 v 2. With other sizes each side's score is the sum of its robots' ratings, so read it as a what-if (field space and shared goals aren't modelled).</p>` : ""}
+      <div class="grid ${rpCard ? "cols-2" : ""} section">
+        <div class="card card-pad"><h3>Score breakdown</h3>${breakdown}</div>
+        ${rpCard}
+      </div>
+      <div class="section-title"><h2>Robots</h2><p class="muted" style="margin:6px 0 0">Each robot's EPA and how much of its alliance's points it brings.</p></div>
+      <div class="card"><div class="table-wrap"><table class="match-teams">
+        <thead><tr><th>Team</th><th class="c">EPA</th><th class="r hide-sm">Auto</th><th class="r hide-sm">Teleop</th><th class="r hide-sm">Endgame</th><th class="r">Share</th><th class="r hide-sm">Record</th></tr></thead>
+        <tbody>${robotRows}</tbody></table></div></div>`;
+  };
+  shell();
 }
 
 // ---------------- about / accuracy ----------------
