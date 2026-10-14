@@ -163,9 +163,11 @@ export async function buildVideos(season) {
   for (const [code, o] of Object.entries(overrides)) {
     for (const url of o.streams ?? []) { const id = youtubeId(url); if (id) add(code).streams.add(id); }
   }
-  // uploads whose description times every match (scripts/find-timestamped.mjs): exact spots
+  // uploads whose description times every match (scripts/find-timestamped.mjs): exact spots;
+  // plus livestream matches whose start was read off the overlay (scripts/ocr-calibrate-streams.mjs)
   const stamped = (await readJson(path.join("site", "videos", "timestamped.json"), {}))[season] ?? {};
-  for (const [code, vids] of Object.entries(stamped)) {
+  const ocrSpots = (await readJson(path.join("site", "videos", "ocr-spots.json"), {}))[season] ?? {};
+  for (const [code, vids] of [...Object.entries(stamped), ...Object.entries(ocrSpots)]) {
     const ev = await readJson(path.join("site", "data", String(season), "event", `${code}.json`), null);
     const time = new Map((ev?.matchList ?? []).filter((m) => m.time).map((m) => [m.d, m.time]));
     for (const [id, stamps] of Object.entries(vids)) {
@@ -181,9 +183,12 @@ export async function buildVideos(season) {
   // per-stream clock corrections, seconds: how much EARLIER matches appear in the
   // recording than their official start times say (scoring-PC clock wrong, encoder
   // delay); negative = later. Measured by reading the overlay's match clock.
-  // calibrated.json is written by scripts/calibrate-streams.mjs; offsets.json (hand-measured) wins
+  // calibrated.json is written by scripts/calibrate-streams.mjs (match rhythm), ocr-calibrated.json
+  // by scripts/ocr-calibrate-streams.mjs (reads the overlay: more exact, so it wins over rhythm);
+  // offsets.json (hand-measured) wins over both
   const offsets = {
     ...(await readJson(path.join("site", "videos", "calibrated.json"), {}))[season],
+    ...(await readJson(path.join("site", "videos", "ocr-calibrated.json"), {}))[season],
     ...(await readJson(path.join("site", "videos", "offsets.json"), {}))[season],
   };
 
@@ -201,7 +206,9 @@ export async function buildVideos(season) {
       .map((id) => ({ id, ...yt[id] }))
       .filter((v) => v.start && !v.missing && !v.usBlocked)
       .map((v) => ({ ...v, start: v.start + (offsets[v.id] ?? 0) * 1000 }))
-      .map((v) => ({ id: v.id, start: v.start, end: Math.min(v.end ?? Infinity, v.start + Math.min(v.seconds ?? 43200, 43200) * 1000), title: v.title, ...(v.embeddable ? {} : { ext: 1 }) }));
+      .map((v) => ({ id: v.id, start: v.start, end: Math.min(v.end ?? Infinity, v.start + Math.min(v.seconds ?? 43200, 43200) * 1000), title: v.title, ...(v.embeddable ? {} : { ext: 1 }),
+        // cal: its clock offset was measured, so links can start right before the match
+        ...(offsets[v.id] != null ? { cal: 1 } : {}) }));
     const uploads = e.uploads.filter((u) => isBili(u.id) || (yt[u.id] && !yt[u.id].missing && !yt[u.id].usBlocked))
       .map((u) => (isBili(u.id) ? { ...u, platform: "bilibili" } : yt[u.id].embeddable ? u : { ...u, ext: 1 }));
     if (streams.length || uploads.length) result[code] = { streams, uploads };

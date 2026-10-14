@@ -41,6 +41,9 @@ export async function storyboardSpec(id) {
   const html = await (await fetch(`https://www.youtube.com/watch?v=${id}`, { headers: UA })).text();
   // YouTube's "unusual traffic" page isn't a video without previews: stop, don't cache a miss
   if (!html.includes("ytInitialPlayerResponse")) throw new Error("YouTube is rate-limiting watch pages; run again later");
+  // the "Sign in to confirm you're not a bot" page also has a player response, minus the
+  // previews; without this check every blocked video would be cached as "no storyboard"
+  if (/"status":"LOGIN_REQUIRED"/.test(html) && /confirm you.{0,3}re not a bot/i.test(html)) throw new Error("YouTube is asking to confirm we're not a bot (rate-limited); run again later");
   const m = html.match(/"playerStoryboardSpecRenderer":\{"spec":"([^"]+)"/);
   if (!m) return null;
   const [base, ...levels] = JSON.parse(`"${m[1]}"`).split("|");

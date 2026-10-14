@@ -155,13 +155,18 @@ export function winBar(pRed) {
 // uploaded event video) if there is one, otherwise the event's livestream
 // recording at the moment the match started.
 const LEAD_SECONDS = 5; // Arjun: a long lead is worse than occasionally landing a few seconds in; FIRST stamps the match at the scorekeeper's "start"
+// Streams whose clock offset was never measured (most of them) run late by about 23 s
+// on the typical stream (median of the 136 measured ones, 2024-25): with a 5 s lead,
+// 58% of links landed more than 10 s into the match. 30 s cuts that to 36% while
+// still leaving only 7% of links over a minute early.
+const LEAD_UNCALIBRATED = 30;
 export function videoFor(videos, evCode, time) {
   const v = videos?.[evCode];
   if (!v || !time) return null;
   const up = v.uploads.find((u) => Math.abs(u.t - time) < 90e3);
   if (up) return { id: up.id, t: up.at ?? 0, ext: up.ext, platform: up.platform }; // at: the match's listed spot in a longer video (these lists run ~40 s early already)
   const s = v.streams.find((s) => time >= s.start && time <= s.end);
-  return s ? { id: s.id, t: Math.max(0, Math.round((time - s.start) / 1000) - LEAD_SECONDS), ext: s.ext } : null;
+  return s ? { id: s.id, t: Math.max(0, Math.round((time - s.start) / 1000) - (s.cal ? LEAD_SECONDS : LEAD_UNCALIBRATED)), ext: s.ext } : null;
 }
 
 // Player and "open on the site" links for a video id. YouTube ids are bare; Bilibili ones are
