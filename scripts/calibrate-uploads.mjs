@@ -27,7 +27,14 @@ for (const f of await fs.readdir(path.join(".cache", "videos")).catch(() => []))
 }
 const tsFile = path.join("site", "videos", "timestamped.json");
 const ts = {}; // only what this run places; merged into the file at the end
-const approxFit = (x) => !x.error && x.halves?.[0] != null && x.halves?.[1] != null && Math.abs(x.halves[0] - x.halves[1]) < 300 && x.lift > 3 && x.rival > 0.9 && x.o != null;
+// near-certain rhythm fits: both halves of the day agree, or (short "Part N" videos, too few
+// matches for halves) one strong fit
+const approxFit = (x) => !x.error && x.o != null && (
+  (x.halves?.[0] != null && x.halves?.[1] != null && Math.abs(x.halves[0] - x.halves[1]) < 300 && x.lift > 3) ||
+  (x.matches >= 6 && x.lift >= 8));
+// estimates only for videos that look like FTC event recordings (uploads.json also holds
+// board meetings, sports replays… filed by loose searches)
+const FTCISH = /\b(ftc|first tech|tech challenge|robotics?|skystone|ultimate goal|freight frenzy|power ?play|center ?stage|into the deep|decode|qualifier|league|meet|scrimmage|championship|tournament)\b/i;
 for (const season of seasons) {
   const cacheFile = path.join(".cache", "calibration", `uploads-${season}.json`);
   const cache = await readJson(cacheFile, {});
@@ -75,8 +82,11 @@ for (const season of seasons) {
       else if (approxFit(cache[k])) fits.push({ code, id, r: { ...cache[k], ok: true, score: cache[k].score * 0.5 }, ms, pos, via: "rhythm-approx" });
       // nothing placed it, but it's this event's full recording (add-videos checked the event):
       // assume it starts ~10 min before the first match. Rough, but some video beats none.
-      else if (!cache[k].error && cache[k].len >= Math.min(pos.at(-1) * 0.6, 4 * 3600) && !/part\s*[2-9]|day\s*[2-4]|afternoon|session\s*2|playoff|final/i.test(titles[id] ?? ""))
-        fits.push({ code, id, r: { o: -600, len: cache[k].len, ok: true, score: 0.01 }, ms, pos, via: "estimate" });
+      else if (!cache[k].error && cache[k].len >= Math.min(pos.at(-1) * 0.6, 4 * 3600) && FTCISH.test(titles[id] ?? "") && !/part\s*[2-9]|day\s*[2-4]|afternoon|session\s*2|playoff|final/i.test(titles[id] ?? "")) {
+        // the measured offset when both halves roughly agree, else "starts ~10 min before the first match"
+        const h = cache[k].halves, measured = h?.[0] != null && h?.[1] != null && Math.abs(h[0] - h[1]) < 600 ? cache[k].o : null;
+        fits.push({ code, id, r: { o: measured ?? -600, len: cache[k].len, ok: true, score: 0.001 + 0.01 * (cache[k].score ?? 0) }, ms, pos, via: "estimate" });
+      }
     }
   }
   // a video that fits several events (same venue, morning and afternoon sessions) goes to
@@ -85,7 +95,7 @@ for (const season of seasons) {
     // overlay readings beat rhythm; within a kind, the clearly better fit wins
     fs_.sort((a, b) => b.via.startsWith("overlay") - a.via.startsWith("overlay") || (a.via === "estimate") - (b.via === "estimate") || (a.via === "rhythm-approx") - (b.via === "rhythm-approx") || b.r.score - a.r.score);
     if (fs_[1] && fs_[1].via !== fs_[0].via) fs_.length = 1;
-    if (fs_[1] && fs_[1].r.score > fs_[0].r.score * 0.8) { if (verbose) console.log(`  ${id}: fits ${fs_.map((f) => f.code).join(" and ")} about equally, skipped`); continue; }
+    if (fs_[1] && fs_[1].r.score > fs_[0].r.score * 0.8 && !["estimate", "rhythm-approx"].includes(fs_[0].via)) { if (verbose) console.log(`  ${id}: fits ${fs_.map((f) => f.code).join(" and ")} about equally, skipped`); continue; }
     const { code, r, ms, pos } = fs_[0];
     let spots = fs_[0].spots;
     if (!spots) { spots = {}; ms.forEach((m, j) => { const at = Math.round(pos[j] - r.o) - LEAD; if (at >= 0 && at < r.len) spots[m.d] = at; }); }
