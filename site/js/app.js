@@ -436,8 +436,12 @@ async function teams(r) {
     { key: "rank", label: "#", cls: "faint num", render: (r) => r.rank },
     { key: "team", label: "Team", sort: false,
       // predicted teams (haven't played yet): an asterisk straight after the name
-      render: (r) => (r.pre ? teamCell(season, r.team, r.name).replace(/<\/span><\/a>$/, `<span class="pred-star" title="Hasn't played yet this season: its EPA is the one it starts on">*</span></span></a>`) : teamCell(season, r.team, r.name)) },
-    { key: "loc", label: "Location", cls: "small muted hide-sm", sort: false, render: (r) => esc(r.loc) },
+      render: (r) => {
+        const cell = teamCell(season, r.team, r.name);
+        // predicted teams (haven't played yet): an asterisk straight after the name; location underneath
+        const named = r.pre ? cell.replace(/<\/span><\/a>$/, `<span class="pred-star" title="Hasn't played yet this season: its EPA is the one it starts on">*</span></span></a>`) : cell;
+        return r.loc ? `${named}<div class="team-loc">${esc(r.loc)}</div>` : named;
+      } },
     { key: "country", label: "Country", cls: "small muted", render: (r) => esc(r.country ?? "") },
     { key: "region", label: "State / region", cls: "small muted", render: (r) => esc(r.region || "–") },
     { key: "np", label: `<span title="${EPA_TIP}">EPA</span>`, cls: "c",
@@ -469,7 +473,7 @@ async function teams(r) {
     const shownCols = cols.filter((c) => !hiddenCols.has(c.key));
     const out = [];
     for (const c of shownCols) {
-      if (c.key === "team") out.push({ label: "Team", get: (r) => r.team }, { label: "Name", get: (r) => r.name });
+      if (c.key === "team") out.push({ label: "Team", get: (r) => r.team }, { label: "Name", get: (r) => r.name }, { label: "Location", get: (r) => r.loc });
       else if (CSV_VAL[c.key]) out.push({ label: c.key === "np" ? "EPA" : c.key === "wins" ? "Record (W-L-T)" : plain(c), get: CSV_VAL[c.key] });
     }
     if (+$("#minm").value === 0) out.push({ label: "Predicted (no matches yet)", get: (r) => (r.pre ? "yes" : "") });
@@ -478,9 +482,10 @@ async function teams(r) {
   // Columns menu: everything but rank, team and EPA can be hidden (remembered per device).
   // Off by default: location, win rate and the extra columns added later.
   const FIXED = new Set(["rank", "team", "np"]);
-  const EXTRA = ["country", "region", "matches", "events", "cons", ...rpNames.map((_, i) => `rpr${i}`)];
+  const EXTRA = ["country", "region", "matches", "events", "cons", "sos", ...rpNames.map((_, i) => `rpr${i}`)];
   const plain = (c) => c.label.replace(/<[^>]+>/g, "");
-  let hiddenCols = new Set(pref.get("teamCols3", null) ?? [...pref.get("teamCols2", ["loc", "wr"]), ...EXTRA]);
+  // teamCols4: SOS and the per-RP columns start hidden (an earlier list showed them)
+  let hiddenCols = new Set(pref.get("teamCols4", null) ?? ["wr", ...EXTRA]);
   $("#col-list").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) =>
     `<button type="button" class="col-btn" data-k="${c.key}" aria-pressed="${!hiddenCols.has(c.key)}">${esc(plain(c))}</button>`).join("");
   let table, shown = rows;
@@ -491,7 +496,7 @@ async function teams(r) {
     const k = b.dataset.k, on = hiddenCols.has(k);
     on ? hiddenCols.delete(k) : hiddenCols.add(k);
     b.setAttribute("aria-pressed", String(on));
-    pref.set("teamCols3", [...hiddenCols]);
+    pref.set("teamCols4", [...hiddenCols]);
     mount();
   };
 
@@ -1895,8 +1900,12 @@ async function sim(r) {
   if (stale(r)) return;
   const pre = (preTable?.rows ?? []).map((row) => { const o = { matches: 0, pre: true }; preTable.cols.forEach((c, j) => (o[c] = row[j])); return o; });
   const byNum = new Map([...pre, ...played].map((t) => [t.team, t]));
-  let perTeam = Math.min(10, Math.max(3, +query.get("per") || 5));
-  const parse = (text) => [...new Set((text.match(/\d{1,6}/g) ?? []).map(Number))].slice(0, 80);
+  const byEpa = [...byNum.values()].sort((a, b) => b.np - a.np);
+  const st = {
+    teams: [...new Set((query.get("teams") ?? "").split(",").map(Number).filter((n) => n > 0))].slice(0, 80),
+    per: Math.min(10, Math.max(3, +query.get("per") || 5)),
+    from: query.get("from") ?? "",
+  };
   const evOpts = [...events].filter((e) => e.teams >= 4).sort((a, b) => b.start.localeCompare(a.start));
   app.innerHTML = `
     <div class="card card-pad"><div class="page-head"><div>
@@ -1904,53 +1913,124 @@ async function sim(r) {
       <h1>SIM event</h1>
       <p class="muted" style="margin:4px 0 0">Pick any teams and see how a qualification tournament between them would likely rank: thousands of random schedules, each played out from every team's current EPA.</p>
     </div>${competeModes(season, "sim")}</div></div>
-    <div class="card card-pad section sim-form">
-      <label for="sim-teams"><b>Teams</b> <span class="small muted">numbers, separated by spaces, commas or new lines</span></label>
-      <textarea id="sim-teams" rows="3" placeholder="e.g. 14270 20265 11329 30030 19066 …">${esc((query.get("teams") ?? "").split(",").filter(Boolean).join(" "))}</textarea>
-      <div class="row sim-row">
-        <label class="sel-label"><span>Start from</span><input id="sim-ev" list="sim-evs" placeholder="an event's team list" autocomplete="off"></label>
-        <datalist id="sim-evs">${evOpts.map((e) => `<option value="${esc(e.name)} (${esc(e.code)})"></option>`).join("")}</datalist>
-        <label class="sel-label"><span>Matches per team</span><select id="sim-per">${[3, 4, 5, 6, 7, 8, 9, 10].map((n) => `<option ${n === perTeam ? "selected" : ""}>${n}</option>`).join("")}</select></label>
-        <button type="button" class="btn btn-solid" id="sim-go">Simulate</button>
-        <span class="small muted" id="sim-note"></span>
+    <div class="compete-bar section">
+      <div class="row">
+        <div class="slot sim-ev"><input id="sim-ev" autocomplete="off" placeholder="Load an event's teams…" aria-label="Load an event's teams"><div class="pick" role="listbox"></div></div>
+        <button type="button" class="pill" id="sim-random">Random 16</button>
+        <button type="button" class="pill" id="sim-clear">Clear</button>
+      </div>
+      <div class="row sim-per"><span class="small muted">Matches per team</span>
+        <nav class="chart-pick" id="sim-per">${[4, 5, 6, 7, 8, 9, 10].map((n) => `<a href="#" data-n="${n}" class="${n === st.per ? "active" : ""}">${n}</a>`).join("")}</nav></div>
+    </div>
+    <div class="sim-board section">
+      <div class="side sim-teams">
+        <div class="side-head"><b>Teams</b><span class="faint small" id="sim-count"></span></div>
+        <div class="sim-chips" id="sim-chips"></div>
+        <div class="slot"><input id="sim-add" autocomplete="off" placeholder="Add a team: number or name" aria-label="Add a team"><div class="pick" role="listbox"></div></div>
       </div>
     </div>
     <div class="card section" id="sim-out"></div>`;
-  const ta = $("#sim-teams");
+
+  const sync = () => syncQuery({ teams: st.teams.join(","), per: st.per === 5 ? "" : st.per, from: st.from });
+  let timer;
   const run = () => {
-    const nums = parse(ta.value);
-    syncQuery({ teams: nums.join(","), per: perTeam === 5 ? "" : perTeam });
-    const unknown = nums.filter((n) => !byNum.has(n));
-    $("#sim-note").textContent = `${nums.length} team${nums.length === 1 ? "" : "s"}${unknown.length ? ` · ${unknown.length} not rated yet, treated as new teams (${unknown.slice(0, 5).join(", ")}${unknown.length > 5 ? "…" : ""})` : ""}`;
-    if (nums.length < 4) { $("#sim-out").innerHTML = `<div class="empty">Add at least 4 teams.</div>`; return; }
-    const teamList = nums.map((n) => {
-      const t = byNum.get(n);
-      return { team: n, name: t?.name ?? "", state: t ? { auto: t.pauto ?? t.auto, teleop: t.pteleop ?? t.teleop, endgame: t.pendgame ?? t.endgame, n: t.matches, rp: [t.rp0 ?? 0, t.rp1 ?? 0, t.rp2 ?? 0] } : null };
-    });
-    const rows = forecastFromRoster(season, meta, { teamList, type: null }, { perTeam });
-    const names = new Map(teamList.map((t) => [t.team, t.name]));
-    $("#sim-out").innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Proj.</th><th>Team</th><th class="r"><span title="${EPA_TIP}">EPA</span></th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th></tr></thead>
-      <tbody>${rows.map((x, i) => `<tr>
-        <td class="faint num">${i + 1}</td>
-        <td>${byNum.has(x.team) ? teamCell(season, x.team, names.get(x.team)) : `<b>${x.team}</b> <span class="faint small">new</span>`}</td>
-        <td class="r">${byNum.has(x.team) ? epa(byNum.get(x.team).np, meta) : "–"}</td>
-        <td class="r">${fmt(x.meanRank, 1)}</td><td class="r">${probCell(x.p1)}</td><td class="r">${probCell(x.p4)}</td><td class="r hide-sm">${probCell(x.p8)}</td>
-      </tr>`).join("")}</tbody></table></div>
-      <p class="small muted card-pad" style="margin:0">2,000 random schedules with ${perTeam} matches per team. Teams that haven't played this season use the rating they start on.</p>`;
+    sync();
+    const nums = st.teams;
+    if (nums.length < 4) { $("#sim-out").innerHTML = `<div class="empty">Add at least 4 teams, or load an event's teams.</div>`; return; }
+    $("#sim-out").innerHTML = `<div class="loading">Simulating…</div>`;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const teamList = nums.map((n) => {
+        const t = byNum.get(n);
+        return { team: n, name: t?.name ?? "", state: t ? { auto: t.pauto ?? t.auto, teleop: t.pteleop ?? t.teleop, endgame: t.pendgame ?? t.endgame, n: t.matches, rp: [t.rp0 ?? 0, t.rp1 ?? 0, t.rp2 ?? 0] } : null };
+      });
+      const rows = forecastFromRoster(season, meta, { teamList, type: null }, { perTeam: st.per });
+      $("#sim-out").innerHTML = `<div class="table-wrap"><table>
+        <thead><tr><th>Proj.</th><th>Team</th><th class="c"><span title="${EPA_TIP}">EPA</span></th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th></tr></thead>
+        <tbody>${rows.map((x, i) => `<tr>
+          <td class="faint num">${i + 1}</td>
+          <td>${byNum.has(x.team) ? teamCell(season, x.team, byNum.get(x.team).name) : `<span class="team-cell"><span class="n">${x.team}</span><span class="nm faint">new team</span></span>`}</td>
+          <td class="c">${byNum.has(x.team) ? epa(byNum.get(x.team).np, meta) : "–"}</td>
+          <td class="r">${fmt(x.meanRank, 1)}</td><td class="r">${probCell(x.p1)}</td><td class="r">${probCell(x.p4)}</td><td class="r hide-sm">${probCell(x.p8)}</td>
+        </tr>`).join("")}</tbody></table></div>`;
+    }, 30);
   };
-  $("#sim-go").onclick = run;
-  $("#sim-per").onchange = (e) => { perTeam = +e.target.value; run(); };
-  $("#sim-ev").onchange = async (e) => {
-    const code = e.target.value.match(/\(([^)]+)\)\s*$/)?.[1];
-    if (!code) return;
-    const ev = await data.event(season, code).catch(() => null);
-    if (!ev) return;
-    ta.value = ev.teamList.map((t) => t.team).join(" ");
-    e.target.value = "";
+  const drawTeams = () => {
+    $("#sim-count").textContent = `${st.teams.length} team${st.teams.length === 1 ? "" : "s"}`;
+    $("#sim-chips").innerHTML = st.teams.map((n) => {
+      const t = byNum.get(n);
+      return `<span class="sim-chip"><a href="#/${season}/team/${n}"><b>${n}</b> <span>${esc(t?.name ?? "new team")}</span></a>${t ? epa(t.np, meta) : ""}<button type="button" data-drop="${n}" aria-label="Remove ${n}">×</button></span>`;
+    }).join("");
+    const taken = new Set(st.teams);
+    teamTypeahead($("#sim-add"), byEpa.filter((t) => !taken.has(t.team)), meta, add);
+  };
+  const changed = () => { drawTeams(); run(); };
+  function add(n) {
+    if (!st.teams.includes(n) && st.teams.length < 80) st.teams.push(n);
+    $("#sim-add").value = "";
+    changed();
+    $("#sim-add").focus();
+  }
+  $("#sim-chips").onclick = (e) => {
+    const b = e.target.closest("[data-drop]");
+    if (!b) return;
+    e.preventDefault();
+    st.teams = st.teams.filter((n) => n !== +b.dataset.drop);
+    st.from = "";
+    changed();
+  };
+  $("#sim-per").onclick = (e) => {
+    const a = e.target.closest("[data-n]");
+    if (!a) return;
+    e.preventDefault();
+    st.per = +a.dataset.n;
+    $$("#sim-per a").forEach((x) => x.classList.toggle("active", x === a));
     run();
   };
-  if (parse(ta.value).length >= 4) run(); else $("#sim-out").innerHTML = `<div class="empty">Add at least 4 teams, or start from an event's team list.</div>`;
+  $("#sim-clear").onclick = () => { st.teams = []; st.from = ""; $("#sim-ev").value = ""; changed(); };
+  $("#sim-random").onclick = () => {
+    const pool = played.filter((x) => x.matches >= 5), pickd = new Set();
+    while (pickd.size < Math.min(16, pool.length)) pickd.add(pool[Math.floor(Math.random() * pool.length)].team);
+    st.teams = [...pickd]; st.from = ""; $("#sim-ev").value = "";
+    changed();
+  };
+
+  // event search: same picker as the team boxes; picking one loads its team list
+  const evInput = $("#sim-ev"), evBox = evInput.parentElement.querySelector(".pick");
+  let evItems = [], evSel = 0;
+  const drawEv = () => {
+    const q = evInput.value.trim().toLowerCase();
+    evItems = evOpts.filter((e) => !q || e.name.toLowerCase().includes(q) || e.code.toLowerCase().startsWith(q) || (e.loc ?? "").toLowerCase().includes(q)).slice(0, 8);
+    evSel = Math.min(evSel, Math.max(0, evItems.length - 1));
+    evBox.innerHTML = evItems.length
+      ? evItems.map((e, k) => `<button type="button" class="pick-item ev-pick ${k === evSel ? "sel" : ""}" data-k="${k}"><b>${esc(e.name)}</b><span>${fmtRange(e.start, e.end)} · ${esc(e.loc ?? "")}</span><small class="faint">${e.teams} teams</small></button>`).join("")
+      : `<div class="pick-empty">No event matches “${esc(evInput.value.trim())}”</div>`;
+    evBox.classList.add("open");
+  };
+  const chooseEv = async (k) => {
+    const e = evItems[k];
+    if (!e) return;
+    evBox.classList.remove("open");
+    evInput.value = e.name;
+    const ev = await data.event(season, e.code).catch(() => null);
+    if (!ev || stale(r)) return;
+    st.teams = ev.teamList.map((t) => t.team);
+    st.from = e.code;
+    changed();
+  };
+  evInput.onfocus = () => { evSel = 0; evInput.select(); drawEv(); };
+  evInput.oninput = () => { evSel = 0; drawEv(); };
+  evInput.onblur = () => setTimeout(() => evBox.classList.remove("open"), 120);
+  evInput.onkeydown = (e) => {
+    if (e.key === "ArrowDown") { evSel = Math.min(evItems.length - 1, evSel + 1); drawEv(); e.preventDefault(); }
+    else if (e.key === "ArrowUp") { evSel = Math.max(0, evSel - 1); drawEv(); e.preventDefault(); }
+    else if (e.key === "Enter") { chooseEv(evSel); e.preventDefault(); }
+    else if (e.key === "Escape") { evBox.classList.remove("open"); evInput.blur(); }
+  };
+  evBox.onmousedown = (e) => { const b = e.target.closest("[data-k]"); if (b) { e.preventDefault(); chooseEv(+b.dataset.k); } };
+  if (st.from) evInput.value = events.find((e) => e.code === st.from)?.name ?? "";
+
+  changed();
 }
 
 const competeModes = (season, cur) => `<nav class="chart-pick mode-pick" aria-label="Compete mode">

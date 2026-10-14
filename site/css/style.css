@@ -1080,7 +1080,26 @@ pre.code { background: var(--surface-2); border: 1px solid var(--line); border-r
 .th-facts .share-btn { font-size: 13px; padding: 5px 11px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); }
 .fc-from { display: grid; gap: 8px; }
 .fc-from input[type="range"] { width: 100%; accent-color: var(--accent); }
-.sim-form { display: grid; gap: 10px; }
-.sim-form textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); resize: vertical; box-sizing: border-box; }
-.sim-row { gap: 10px; flex-wrap: wrap; align-items: center; }
-.sim-row .sel-label input { border: 0; background: transparent; color: var(--text); font: inherit; font-size: 13.5px; padding: 7px 10px 7px 6px; width: 240px; outline: none; }
+
+/* SIM event: Compete's look - a bar of actions, then the team list as removable chips */
+.sim-ev { width: 300px; }
+.sim-ev input { font-size: 14px; padding: 7px 12px; border-radius: 999px; }
+.sim-ev .pick { top: calc(100% + 4px); min-width: 420px; }
+.ev-pick { grid-template-columns: minmax(0, 1fr) auto; }
+.ev-pick b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev-pick span { grid-column: 1; font-size: 12px; }
+.ev-pick small { grid-column: 2; grid-row: 1 / span 2; }
+.sim-per { gap: 10px; align-items: center; }
+.sim-board { padding: 14px var(--gutter) 0; }
+.sim-teams { padding: 16px 18px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
+.sim-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px; margin-bottom: 10px; }
+.sim-chips:empty { display: none; }
+.sim-chip { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 3px 4px 3px 12px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); font-size: 13px; }
+.sim-chip a { color: inherit; display: flex; gap: 6px; flex: 1; min-width: 0; }
+.sim-chip a span { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sim-chip .epa { font-size: 11.5px; padding: 1px 7px; }
+.sim-chip button { width: 22px; height: 22px; border: 0; border-radius: 50%; background: transparent; color: var(--faint); font-size: 16px; line-height: 1; cursor: pointer; }
+.sim-chip button:hover { background: var(--hover); color: var(--text); }
+.sim-teams .slot .pick { top: calc(100% + 4px); }
+@media (max-width: 900px) { .sim-board { padding: 14px 16px 0; } .sim-ev { width: 100%; } .sim-ev .pick { min-width: 0; } }
+.team-loc { font-size: 12px; color: var(--muted); margin: 1px 0 0 56px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
