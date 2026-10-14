@@ -617,24 +617,34 @@ async function team(r) {
     if (stale(r)) return;
     const seasons = playedIn.filter(Boolean);
     const others = seasons.length
-      ? `<div class="row" style="gap:6px;margin-top:10px">${seasons.map(([s, x]) => `<a class="pill" href="#/${s}/team/${n}">${seasonLabel(s, "")} <span class="faint">#${fmtInt(x.rank)}</span></a>`).join("")}</div>`
+      ? `<div class="row nm-seasons">${seasons.map(([s, x]) => `<a class="pill" href="#/${s}/team/${n}">${seasonLabel(s, "")} <span class="faint">#${fmtInt(x.rank)}</span></a>`).join("")}</div>`
       : "";
-    app.innerHTML = p ? `<div class="card card-pad team-hero"><div class="th-top">
+    // a little robot crossing an empty field: nothing to show yet, but alive
+    const waiting = `<svg class="wait-field" viewBox="0 0 600 150" aria-hidden="true">
+      <rect x="1" y="1" width="598" height="148" rx="14" class="wf-mat"/>
+      ${[100, 200, 300, 400, 500].map((x) => `<line x1="${x}" y1="1" x2="${x}" y2="149" class="wf-line"/>`).join("")}
+      <line x1="1" y1="75" x2="599" y2="75" class="wf-line"/>
+      <path d="M40 112 C 160 112, 200 38, 300 38 S 440 112, 560 112" class="wf-path"/>
+      <g class="wf-bot"><rect x="-17" y="-17" width="34" height="34" rx="7" class="wf-body"/><rect x="-21" y="-14" width="5" height="11" rx="2" class="wf-wheel"/><rect x="16" y="-14" width="5" height="11" rx="2" class="wf-wheel"/><rect x="-21" y="3" width="5" height="11" rx="2" class="wf-wheel"/><rect x="16" y="3" width="5" height="11" rx="2" class="wf-wheel"/><circle cx="0" cy="-5" r="4" class="wf-eye"/></g>
+    </svg>`;
+    const header = p ? `<div class="card card-pad team-hero"><div class="th-top">
         <div class="th-id">
           <h1><span class="team-num">${n}</span> ${esc(p.name)}</h1>
           <div class="muted">${esc(p.loc ?? "")}</div>
-          <div class="th-facts"><span class="th-fact">No matches in ${seasonLabel(season, "")} yet</span>
-            <a class="th-fact" href="#/${season - 1}/team/${n}">Last season →</a></div>
         </div>
         <div class="th-epa">
           <div class="label" title="Carried over from its past seasons; it moves once the team plays">Predicted EPA · before its first match</div>
           <b>${fmt(p.np)}</b>
           <div class="th-ranks"><span>Auto <b>${fmt(p.auto)}</b></span><span>Teleop <b>${fmt(p.teleop)}</b></span><span>Endgame <b>${fmt(p.endgame)}</b></span></div>
         </div>
-      </div></div>
-      ${others ? `<div class="card-pad"><div class="small muted">Seasons it played (world rank)</div>${others}</div>` : ""}`
-      : `<div class="card card-pad"><h2 style="margin:0">Team ${n}${seasons[0] ? ` · ${esc(seasons[0][1].name)}` : ""}</h2>
-        <p class="muted" style="margin:6px 0 0">No matches in ${seasonLabel(season, "")}.${seasons.length ? " Seasons it played (world rank):" : " No FTC matches on record."}</p>${others}</div>`;
+      </div></div>` : "";
+    app.innerHTML = `${header}
+      <div class="card card-pad section no-matches">
+        ${waiting}
+        <h2>${p ? `No matches in ${seasonLabel(season, "")} yet` : `Team ${n}${seasons[0] ? ` · ${esc(seasons[0][1].name)}` : ""} has no matches in ${seasonLabel(season, "")}`}</h2>
+        <p class="muted">${p ? "Its EPA starts from last season and updates after its first match." : seasons.length ? "It played these seasons:" : "No FTC matches on record."}</p>
+        ${seasons.length ? `<div class="small muted nm-label">${p ? "Seasons it played (world rank)" : "World rank each season"}</div>${others}` : ""}
+      </div>`;
     return;
   }
   const evName = new Map((t.events ?? []).map((e) => [e.code, e.name]));
