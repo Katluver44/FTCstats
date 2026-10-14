@@ -547,6 +547,21 @@ export async function build(season, params = {}, epaOver = {}) {
   const rows = tableRows(ranked, true, predRank(ranked, true));
   await writeJson(path.join(out, "teams.json"), { cols, rows });
 
+  // Teams from last season that haven't played this season yet, with the EPA the
+  // model starts them on (carried over from past seasons), so Compete can use them
+  const last = await fs.readFile(path.join("site", "data", String(season - 1), "teams.json"), "utf8").then(JSON.parse).catch(() => null);
+  if (last) {
+    const c = (k) => last.cols.indexOf(k);
+    const pre = last.rows.filter((r) => !history.has(r[0]) && !isPlaceholder(r[0])).map((r) => {
+      const t = r[0], e = epaTrack.rate(t), p = model.epa(t), i = info.get(t);
+      return [t, i?.name || r[c("name")], i?.loc || r[c("loc")], r1(e.np), r1(e.auto), r1(e.teleop), r1(e.endgame),
+        r1(p.np), r1(p.auto), r1(p.teleop), r1(p.endgame), ...p.rp.map(r3)];
+    }).sort((a, b) => b[3] - a[3]);
+    await writeJson(path.join(out, "teams-pre.json"), {
+      cols: ["team", "name", "loc", "np", "auto", "teleop", "endgame", "pnp", "pauto", "pteleop", "pendgame", "rp0", "rp1", "rp2"], rows: pre,
+    });
+  }
+
   // Off-season tables (OFF_TABLES): the same table with off-season events counted
   // at OFF_WEIGHT, through MTI or all of them, minus excluded events. Only written
   // when the season has off-season matches; meta.offTables names each table's file.

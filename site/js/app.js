@@ -1426,8 +1426,15 @@ async function match(r) {
 // Real FTC matches are 2 v 2; other sizes just add up each robot's ratings.
 async function compete(r) {
   const { season, query } = r;
-  const [meta, teams] = await Promise.all([data.meta(season), data.teams(season)]);
+  const [meta, played, preTable] = await Promise.all([data.meta(season), data.teams(season), getJSON(`data/${season}/teams-pre.json`).catch(() => null)]);
   if (stale(r)) return;
+  // plus last season's teams that haven't played yet, on the rating the model starts them on
+  const pre = (preTable?.rows ?? []).map((row) => {
+    const o = { matches: 0, wins: 0, losses: 0, ties: 0, pre: true };
+    preTable.cols.forEach((c, j) => (o[c] = row[j]));
+    return o;
+  });
+  const teams = [...played, ...pre];
   const byNum = new Map(teams.map((t) => [t.team, t]));
   const list = (k) => (query.get(k) ?? "").split(",").map((s) => s.trim());
   const size = (k, d = 2) => Math.min(4, Math.max(1, +query.get(`${k}n`) || Math.max(d, list(k).filter(Boolean).length)));
@@ -1459,12 +1466,12 @@ async function compete(r) {
     $$("[data-drop]").forEach((b) => (b.onclick = () => { const s = b.dataset.drop[0], i = +b.dataset.drop.slice(1); st[s].splice(i, 1); st[`${s}n`]--; const prev = st.shown && $("#out").innerHTML; st.shown = false; shell(); keepDimmed(prev); }));
     $("#swap").onclick = () => { [st.r, st.b, st.rn, st.bn] = [st.b, st.r, st.bn, st.rn]; shell(); };
     $("#clear").onclick = () => { st.r = []; st.b = []; st.shown = false; shell(); $(".predictor input")?.focus(); };
-    $("#go").onclick = () => { st.shown = true; run(); };
+    $("#go").onclick = () => { st.shown = true; st.animate = true; run(); };
     // four random teams with 5+ matches this season, 2 v 2
     $("#random").onclick = () => {
-      const pool = teams.filter((x) => x.matches >= 5), t = [];
+      const pool = played.filter((x) => x.matches >= 5), t = [];
       while (t.length < 4 && t.length < pool.length) { const n = `${pool[Math.floor(Math.random() * pool.length)].team}`; if (!t.includes(n)) t.push(n); }
-      [st.r, st.b, st.rn, st.bn, st.shown] = [t.slice(0, 2), t.slice(2), 2, 2, true];
+      [st.r, st.b, st.rn, st.bn, st.shown, st.animate] = [t.slice(0, 2), t.slice(2), 2, 2, true, true];
       shell();
     };
     run();
@@ -1484,7 +1491,7 @@ async function compete(r) {
       items = byEpa.filter((t) => !taken.has(t.team) && match(t)).slice(0, 8);
       sel = Math.min(sel, Math.max(0, items.length - 1));
       box.innerHTML = items.length
-        ? items.map((t, k) => `<button type="button" class="pick-item ${k === sel ? "sel" : ""}" data-k="${k}"><b>${t.team}</b><span>${esc(t.name)}</span>${epa(t.np, meta)}</button>`).join("")
+        ? items.map((t, k) => `<button type="button" class="pick-item ${k === sel ? "sel" : ""}" data-k="${k}"><b>${t.team}</b><span>${esc(t.name)}</span><small class="faint">${t.matches} match${t.matches === 1 ? "" : "es"}</small>${epa(t.np, meta)}</button>`).join("")
         : `<div class="pick-empty">No ${seasonLabel(season, "")} team matches “${esc(el.value.trim())}”</div>`;
       box.classList.add("open");
     };
@@ -1519,9 +1526,9 @@ async function compete(r) {
       let msg = "";
       if (!v) msg = "";
       else if (!/^\d{1,6}$/.test(v)) msg = `<span class="faint">Not a team number</span>`;
-      else if (!t) msg = `<span class="faint">No ${season} matches for team ${esc(v)}</span>`;
+      else if (!t) msg = `<span class="faint">No team ${esc(v)} this season or last</span>`;
       else if (seen.has(+v)) msg = `<span class="faint">Already picked</span>`;
-      else { msg = `<a href="#/${season}/team/${t.team}">${esc(t.name)}</a> · EPA ${fmt(t.np)}`; nums[side].push(+v); seen.add(+v); }
+      else { msg = `<a href="#/${season}/team/${t.team}">${esc(t.name)}</a> · EPA ${fmt(t.np)} · ${t.matches} match${t.matches === 1 ? "" : "es"}`; nums[side].push(+v); seen.add(+v); }
       const who = $(`#who-${side}${i}`);
       if (who) who.innerHTML = msg;
     }
@@ -1549,7 +1556,7 @@ async function compete(r) {
 
     const side = (s) => `<div class="feature-side ${s}">${nums[s[0]].map((n) => `<a href="#/${season}/team/${n}">${n}</a><small>${esc(byNum.get(n).name)}</small>`).join("")}</div>`;
     const board = `<div class="feature match-board">
-      <div class="feature-head"><b>Predicted score</b><span>${nums.r.length} v ${nums.b.length}</span></div>
+      <div class="feature-head"><b>Predicted score</b><span class="phase">${nums.r.length} v ${nums.b.length}</span></div>
       <div class="feature-body">
         ${side("red")}
         <div class="feature-score"><span class="score red">${fmt(p.red.total, 0)}</span><span class="faint">–</span><span class="score blue">${fmt(p.blue.total, 0)}</span></div>
@@ -1586,9 +1593,10 @@ async function compete(r) {
       });
     }).join("");
 
-    $("#out").classList.remove("stale");
+    $("#out").classList.remove("stale", "playing");
+    st.anim = (st.anim ?? 0) + 1; // stop any match still playing
     $("#out").innerHTML = `
-      <div class="section">${board}</div>
+      <div class="section">${board}</div><div class="out-rest">
       ${uneven ? `<p class="small muted section compete-note">Real FTC matches are 2 v 2. With other sizes each side's score is the sum of its robots' ratings, so read it as a what-if (field space and shared goals aren't modelled).</p>` : ""}
       <div class="grid ${rpCard ? "cols-2" : ""} section">
         <div class="card card-pad"><h3>Score breakdown</h3>${breakdown}</div>
@@ -1597,10 +1605,39 @@ async function compete(r) {
       <div class="section-title"><h2>Robots</h2><p class="muted" style="margin:6px 0 0">Each robot's EPA and how much of its alliance's points it brings.</p></div>
       <div class="card"><div class="table-wrap"><table class="match-teams">
         <thead><tr><th>Team</th><th class="c">EPA</th><th class="r hide-sm">Auto</th><th class="r hide-sm">Teleop</th><th class="r hide-sm">Endgame</th><th class="r">Share</th><th class="r hide-sm">Record</th></tr></thead>
-        <tbody>${robotRows}</tbody></table></div></div>`;
+        <tbody>${robotRows}</tbody></table></div></div></div>`;
+    if (st.animate) { st.animate = false; playMatch(p, `${nums.r.length} v ${nums.b.length}`); }
+  };
+
+  // Play the predicted match out over ~5 s: a 2:30 match clock with auto points
+  // coming in during the first 30 s, teleop across the rest, endgame (park/base)
+  // in the last 15 s, then penalties. Click the board to skip.
+  const playMatch = (p, label) => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const out = $("#out"), board = $(".match-board", out);
+    const red = $(".feature-score .score.red", out), blue = $(".feature-score .score.blue", out), phase = $(".phase", out);
+    out.classList.add("playing");
+    const token = (st.anim = (st.anim ?? 0) + 1), T = 4600, END = 5000, t0 = performance.now();
+    const ramp = (t, a, b) => Math.min(1, Math.max(0, (t - a) / (b - a)));
+    const at = (o, sec, done) => o.auto * ramp(sec, 0, 30) + o.teleop * ramp(sec, 30, 150) + o.endgame * ramp(sec, 135, 150) + (done ? o.total - o.np : 0);
+    const finish = () => { out.classList.remove("playing"); phase.textContent = label; red.textContent = fmt(p.red.total, 0); blue.textContent = fmt(p.blue.total, 0); };
+    board.onclick = () => { st.anim++; finish(); };
+    // a timer rather than requestAnimationFrame, so a background tab still finishes
+    const timer = setInterval(() => frame(performance.now()), 33);
+    const frame = (now) => {
+      if (token !== st.anim || !red.isConnected) return clearInterval(timer);
+      const el = now - t0, sec = Math.min(150, (el / T) * 150), done = el >= T;
+      const left = Math.ceil(150 - sec);
+      phase.textContent = done ? "Penalties" : `${sec < 30 ? "Auto" : sec < 120 ? "Teleop" : "Endgame"} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+      red.textContent = fmt(at(p.red, sec, done), 0);
+      blue.textContent = fmt(at(p.blue, sec, done), 0);
+      if (el >= END) { clearInterval(timer); finish(); }
+    };
   };
   // a team changed: keep the old prediction on screen, dimmed, until Predict is pressed
   const keepDimmed = (prev) => {
+    st.anim = (st.anim ?? 0) + 1;
+    $("#out").classList.remove("playing");
     if (prev && !$("#go").disabled) { $("#out").innerHTML = prev; $("#out").classList.add("stale"); }
   };
   const edited = () => {

@@ -876,6 +876,11 @@ a.th-add:hover { color: var(--accent); border-color: var(--accent); }
 .vs #go { padding: 10px 22px; font-size: 15px; }
 .vs #go:disabled { opacity: 0.45; cursor: not-allowed; }
 #out.stale { opacity: 0.4; transition: opacity 0.15s; }
+/* compete: while the predicted match plays out, hold back everything but the score */
+#out .out-rest, #out .feature-foot { transition: opacity 0.4s; }
+#out.playing .out-rest, #out.playing .feature-foot { opacity: 0; pointer-events: none; }
+#out.playing .match-board { cursor: pointer; }
+#out .feature-score .score { font-variant-numeric: tabular-nums; }
 .compete-note { padding: 10px var(--gutter) 0; margin: 0; }
 #out .match-board { margin-right: 0; }
 @media (max-width: 700px) {
@@ -951,7 +956,7 @@ a.th-add:hover { color: var(--accent); border-color: var(--accent); }
 .pick { position: absolute; top: calc(100% - 22px); left: 0; right: 0; z-index: 40; display: none; max-height: 340px; overflow-y: auto;
   background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.28); padding: 4px; }
 .pick.open { display: block; }
-.pick-item { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 7px;
+.pick-item { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 7px;
   background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .pick-item b { font-variant-numeric: tabular-nums; }
 .pick-item span { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
