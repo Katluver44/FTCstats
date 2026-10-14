@@ -1248,7 +1248,7 @@ function eventPlayoffs(season, meta, ev, matches, official, video) {
       return `<a class="bgame ${w}" href="${matchHref(season, ev.code, g.d)}" title="${esc(g.d)}">${g.redScore.total}–${g.blueScore.total}</a>`;
     }).join("") : "";
     const noShow = last && ((last.redOn && !last.redOn.length) || (last.blueOn && !last.blueOn.length));
-    const pred = noShow ? `<span class="faint" title="One alliance had no robots on the field">forfeit</span>` : pRed != null ? `<span class="faint" title="Our pre-match win probability">Pred A${pRed >= 0.5 ? s.red.seed : s.blue.seed} ${Math.round(Math.max(pRed, 1 - pRed) * 100)}%</span>` : "";
+    const pred = noShow ? `<span class="faint" title="One alliance had no robots on the field">forfeit</span>` : pRed != null ? `<span class="faint" title="Our pre-match win probability for the favourite">A${pRed >= 0.5 ? s.red.seed : s.blue.seed} ${Math.round(Math.max(pRed, 1 - pRed) * 100)}%</span>` : "";
     return `<div class="bbox">
       ${line(s.red, "red")}${line(s.blue, "blue")}
       ${games ? `<div class="bgames">${games}</div>` : ""}

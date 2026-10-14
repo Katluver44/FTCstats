@@ -664,10 +664,10 @@ table.alliances tr.champ td { background: var(--accent-soft); }
 .al-name { font-size: 11.5px; color: var(--muted); max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .po-note { padding: 10px 20px 0; font-size: 11.5px; color: var(--faint); }
 .po-bracket { display: flex; gap: 24px; align-items: flex-start; justify-content: safe center; padding: 24px 24px 28px; overflow-x: auto; min-width: 0; }
-.po-stack { display: flex; flex-direction: column; gap: 18px; }
+.po-stack { display: flex; flex-direction: column; gap: 18px; flex: 1 1 auto; min-width: 0; }
 .bsec-h { padding: 0 0 6px; }
-.po-final { display: flex; flex-direction: column; min-width: 232px; max-width: 270px; flex: 1; align-self: center; }
-.bracket { display: grid; grid-template-columns: repeat(var(--cols), minmax(232px, 260px)); gap: 12px 24px; }
+.po-final { display: flex; flex-direction: column; min-width: 232px; flex: 1; align-self: center; }
+.bracket { display: grid; grid-template-columns: repeat(var(--cols), minmax(max-content, 1fr)); gap: 12px 24px; }
 .bcol { display: flex; flex-direction: column; }
 .bcol-h { font-size: 11px; font-weight: 700; color: var(--faint); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
 .bcol-b { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 12px; }
@@ -699,7 +699,7 @@ table.alliances tr.champ td { background: var(--accent-soft); }
 .bk { font-weight: 650; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bf-r { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 /* FTC double elimination: round columns, upper bracket over lower, finals across both (manual fig. 13-6) */
-.dgrid { position: relative; display: grid; grid-template-columns: repeat(var(--cols), minmax(200px, 250px)); column-gap: 36px; row-gap: 6px; }
+.dgrid { position: relative; display: grid; grid-template-columns: repeat(var(--cols), minmax(max-content, 1fr)); column-gap: 36px; row-gap: 6px; }
 .dgrid .bcol-h { margin-bottom: 2px; }
 .dgrid .bsec-h { padding: 0; }
 .dgrid .lower-h { margin-top: 22px; padding-top: 14px; border-top: 1px dashed var(--line); }
@@ -1144,5 +1144,10 @@ tbody tr:hover .team-cell2 .tc-loc { text-decoration: none; }
 .gear-pick summary:hover, .gear-pick[open] summary { color: var(--text); background: var(--surface-2); }
 .gear-pick summary svg { width: 18px; height: 18px; margin: 0; vertical-align: middle; }
 .tt-card { position: relative; }
-.tt-gear { position: absolute; top: 7px; right: max(4px, calc(var(--gutter) / 2 - 16px)); z-index: 5; }
+.tt-gear { position: absolute; top: 4px; right: max(4px, calc(var(--gutter) / 2 - 16px)); z-index: 5; }
 .tt-gear > div { right: 0; }
+/* event pages: the open tab's card runs down to the footer instead of stopping short */
+main:has(> #tab) { display: flex; flex-direction: column; padding-bottom: 0; }
+main > #tab { flex: 1; display: flex; flex-direction: column; }
+main > #tab > .card:last-child { flex: 1; }
+.bt .tn { flex: none; }
