@@ -32,11 +32,10 @@ function responsive(el, draw) {
 // metric: { key, label, get(row), show(value) }
 export function scatter(el, rows, { x, y, href, labelTop = 8 }) {
   let pts = rows.map((r) => ({ r, vx: x.get(r), vy: y.get(r) })).filter((p) => Number.isFinite(p.vx) && Number.isFinite(p.vy));
-  // a few far-low outliers (slightly negative EPAs) stretch the axes and push the
-  // crowd into the bottom-left corner: cut the lowest 1%, and start at 0 when
-  // nearly everything is positive
+  // a few far-low outliers stretch the axes and push the crowd into the
+  // bottom-left corner: leave off the lowest 0.5% on each axis
   if (pts.length > 200) {
-    const cut = (vals) => { vals.sort((a, b) => a - b); const q = quantile(vals, 0.01); return quantile(vals, 0.05) >= 0 ? Math.max(0, q) : q; };
+    const cut = (vals) => quantile(vals.sort((a, b) => a - b), 0.005);
     const loX = cut(pts.map((p) => p.vx)), loY = cut(pts.map((p) => p.vy));
     pts = pts.filter((p) => p.vx >= loX && p.vy >= loY);
   }
@@ -46,7 +45,7 @@ export function scatter(el, rows, { x, y, href, labelTop = 8 }) {
   const top = new Set(pts.slice(-labelTop).map((p) => p.r.team));
   // a little room around the data (top teams' labels, dots off the axis lines);
   // ticks stay on round numbers inside it
-  const padded = (vals, lo0 = 0.04, hi0 = 0.07) => {
+  const padded = (vals, lo0 = 0.12, hi0 = 0.12) => {
     const mn = Math.min(...vals), mx = Math.max(...vals), span = mx - mn || 1;
     const lo = mn - span * lo0, hi = mx + span * hi0;
     return { lo, hi, ticks: scale([lo, hi], 6).ticks.filter((t) => t >= lo && t <= hi) };
