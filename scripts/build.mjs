@@ -568,7 +568,7 @@ export async function build(season, params = {}, epaOver = {}) {
     if (randBase.has(key)) return randBase.get(key);
     const pool = evStat.get(ev)[4];
     let seed = 12345, sum = 0;
-    const pick = () => pool[(seed = (seed * 1103515245 + 12345) % 2147483648) % pool.length];
+    const pick = () => pool[(seed = (seed * 16807) % 2147483647) % pool.length];
     for (let k = 0; k < 400; k++) sum += sig((me + pick() - pick() - pick()) / scale);
     randBase.set(key, sum / 400);
     return sum / 400;

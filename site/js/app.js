@@ -1121,7 +1121,7 @@ async function event(r) {
       </div></div>
       <nav class="tabs seg glass">${tabs.map(([k, label]) => `<a href="#/${season}/event/${code}/${k}" class="${k === (tabs.some(([t]) => t === tab) ? tab : "matches") ? "active" : ""}">${label}</a>`).join("")}</nav>
       <div id="tab"></div>`;
-    if (tab === "teams") eventTeams(season, meta, ev);
+    if (tab === "teams") eventTeams(season, meta, ev, matches);
     else if (tab === "pickmap" && ev.teamList.length >= 4) eventPickMap(season, ev);
     else if (tab === "playoffs" && hasPlayoffs) eventPlayoffs(season, meta, ev, matches, official[code], (m) => videoFor(videos, code, m.time));
     else if (tab === "forecast" && canForecast) eventForecast(season, meta, ev, matches);
@@ -1261,8 +1261,37 @@ function drawBracketLines(grid, feeds) {
   new ResizeObserver(draw).observe(grid);
 }
 
-function eventTeams(season, meta, ev) {
-  const rows = ev.teamList.map((t) => ({ ...t, epa: t.epaNow?.np ?? null, delta: t.epaEnd != null && t.epaStart != null ? t.epaEnd - t.epaStart : null }));
+// Strength of schedule at one event (same measure as the Teams list column, built in
+// scripts/build.mjs): how much the partner and opponents a team drew in each qual
+// changed its win chance, against random draws from this event; + = harder.
+function eventSos(ev, matches) {
+  const pre = new Map(ev.teamList.map((t) => [t.team, t.epaStart]));
+  const pool = [...pre.values()].filter((v) => v != null);
+  const quals = matches.filter((m) => m.level === "Quals" && m.red?.length === 2 && m.blue?.length === 2);
+  const np = quals.flatMap((m) => (m.played && m.redScore ? [m.redScore.np, m.blueScore.np] : m.pred ? [m.pred.red.np, m.pred.blue.np] : [])).filter(Number.isFinite);
+  if (pool.length < 4 || !np.length) return new Map();
+  const scale = 0.28 * (np.reduce((a, b) => a + b, 0) / np.length);
+  const sig = (z) => 1 / (1 + Math.exp(-z));
+  const rand = (me) => {
+    let seed = 12345, sum = 0;
+    const pick = () => pool[(seed = (seed * 16807) % 2147483647) % pool.length];
+    for (let k = 0; k < 400; k++) sum += sig((me + pick() - pick() - pick()) / scale);
+    return sum / 400;
+  };
+  const acc = new Map();
+  for (const m of quals) for (const [side, opp] of [["red", "blue"], ["blue", "red"]]) for (const t of m[side]) {
+    const me = pre.get(t), p = pre.get(m[side].find((x) => x !== t)), o = m[opp].map((x) => pre.get(x));
+    if (me == null || p == null || o.some((v) => v == null)) continue;
+    const a = acc.get(t) ?? { me, sum: 0, n: 0 };
+    a.sum += sig((me + p - o[0] - o[1]) / scale); a.n++;
+    acc.set(t, a);
+  }
+  return new Map([...acc].map(([t, a]) => [t, rand(a.me) - a.sum / a.n]));
+}
+
+function eventTeams(season, meta, ev, matches = ev.matchList) {
+  const sos = eventSos(ev, matches);
+  const rows = ev.teamList.map((t) => ({ ...t, epa: t.epaNow?.np ?? null, delta: t.epaEnd != null && t.epaStart != null ? t.epaEnd - t.epaStart : null, sos: sos.get(t.team) ?? null }));
   $("#tab").innerHTML = `<div class="card" id="tt"></div>`;
   sortableTable($("#tt"), rows, [
     { key: "rank", label: "Rank", cls: "num", render: (r) => r.rank ?? "–" },
@@ -1272,6 +1301,8 @@ function eventTeams(season, meta, ev) {
     { key: "epaEnd", label: "EPA out", cls: "r", render: (r) => epa(r.epaEnd, meta) },
     { key: "delta", label: "Change", cls: "r small", render: (r) => trend(r.delta) },
     { key: "epa", label: "EPA now", cls: "r hide-sm", render: (r) => epa(r.epa, meta) },
+    { key: "sos", label: `<span title="Strength of schedule here: how much the partners and opponents it drew in quals changed its win chance per match, compared with random draws from this event (EPAs as teams arrived). + = harder, − = easier">SOS</span>`, cls: "r small",
+      render: (r) => { if (r.sos == null) return "–"; const v = Math.round(r.sos * 100); return `<span class="${v >= 5 ? "bad-text" : v <= -5 ? "good-text" : "muted"}">${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)}%</span>`; } },
   ], { sortKey: "epaEnd" });
 }
 
