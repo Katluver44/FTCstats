@@ -438,7 +438,7 @@ async function teams(r) {
     { key: "country", label: "Country", cls: "small muted", render: (r) => esc(r.country ?? "") },
     { key: "region", label: "State / region", cls: "small muted", render: (r) => esc(r.region || "–") },
     { key: "np", label: `<span title="${EPA_TIP}">EPA</span>`, cls: "c",
-      render: (r) => (r.pre ? `<span class="pred-epa" title="Predicted: hasn't played yet this season">${epa(r.np, meta)}</span>` : epa(r.np, meta)) },
+      render: (r) => (r.pre ? `<span class="pred-epa" title="* Predicted: hasn't played yet this season, so this is the EPA it starts on">${epa(r.np, meta)}<span class="pred-star">*</span></span>` : epa(r.np, meta)) },
     { key: "auto", label: "Auto", cls: "r", render: (r) => fmt(r.auto) },
     { key: "teleop", label: "Teleop", cls: "r", render: (r) => fmt(r.teleop) },
     { key: "endgame", label: "Endgame", cls: "r", render: (r) => fmt(r.endgame) },

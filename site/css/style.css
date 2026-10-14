@@ -1043,7 +1043,10 @@ body.home-fit .hero { flex-shrink: 0; }
 .toolbar .sel-label select, .sel-label select { border: 0; background-color: transparent; padding-left: 6px; font-weight: 600; }
 .sel-label:focus-within { outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 1px; }
 .sel-label select:focus { outline: none; }
-.pred-epa { opacity: .62; font-style: italic; }
+/* predicted (hasn't played yet): a red-tinted EPA with an asterisk */
+.pred-epa { position: relative; display: inline-block; }
+.pred-epa .epa { background: color-mix(in srgb, var(--red) 10%, var(--surface-2)) !important; color: var(--muted) !important; outline: 1px dashed color-mix(in srgb, var(--red) 55%, transparent); outline-offset: -1px; }
+.pred-star { position: absolute; top: -4px; right: -9px; font-size: 14px; font-weight: 800; color: var(--red); }
 .team-charts { padding-top: 18px !important; padding-bottom: 24px !important; }
 .team-charts .chart-head { justify-content: flex-start; }
 .chart-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto; }
