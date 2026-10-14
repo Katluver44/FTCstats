@@ -173,7 +173,7 @@ for (const c of cands) {
   const seconds = v.contentDetails?.duration?.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   const len = seconds ? (+(seconds[1] ?? 0)) * 3600 + (+(seconds[2] ?? 0)) * 60 + +(seconds[3] ?? 0) : 0;
   if (d && len && len < 20 * 60 && ev) {
-    const pub = Date.parse(v.snippet.publishedAt), from = Date.parse(ev.start) - 864e5, to = Date.parse(ev.end) + 60 * 864e5;
+    const pub = Date.parse(v.snippet.publishedAt), from = Date.parse(ev.start) - 864e5, to = Date.parse(ev.end) + 240 * 864e5; // teams often upload a season's matches months later
     if (!ev.matchList.some((m) => m.d === d)) { why(c, `${ev.code} has no match ${d}`); reroute.push({ c, v, d }); continue; }
     if (pub < from || pub > to) { why(c, `published ${v.snippet.publishedAt.slice(0, 10)}, not near ${ev.code} (${ev.start})`); reroute.push({ c, v, d }); continue; }
     const owner = Object.entries(ts[season]).find(([code, vids]) => code !== ev.code && vids[c.id]);
@@ -194,7 +194,7 @@ for (const c of cands) {
   // the event's match rhythm sits in it
   if (ev && len > 45 * 60) {
     const pub = Date.parse(v.snippet.publishedAt);
-    if (pub < Date.parse(ev.start) - 864e5 || pub > Date.parse(ev.end) + 120 * 864e5) { why(c, `published ${v.snippet.publishedAt.slice(0, 10)}, not near ${ev.code} (${ev.start})`); reroute.push({ c, v, long: true }); continue; }
+    if (pub < Date.parse(ev.start) - 864e5 || pub > Date.parse(ev.end) + 240 * 864e5) { why(c, `published ${v.snippet.publishedAt.slice(0, 10)}, not near ${ev.code} (${ev.start})`); reroute.push({ c, v, long: true }); continue; }
     const u = (up[season][ev.code] ??= []);
     if (!u.includes(c.id)) u.push(c.id);
     tally.upload++; console.log(`  … ${ev.code} long upload, needs calibrate-uploads: ${title}`); continue;
