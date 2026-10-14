@@ -1084,3 +1084,44 @@ pre.code { background: var(--surface-2); border: 1px solid var(--line); border-r
 .sim-form textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); resize: vertical; box-sizing: border-box; }
 .sim-row { gap: 10px; flex-wrap: wrap; align-items: center; }
 .sim-row .sel-label input { border: 0; background: transparent; color: var(--text); font: inherit; font-size: 13.5px; padding: 7px 10px 7px 6px; width: 240px; outline: none; }
+
+/* team header: ranks are the headline */
+.th-top { align-items: center; }
+.th-hero { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.rank-tiles { display: flex; gap: 10px; }
+.rank-tile { display: flex; flex-direction: column; align-items: center; min-width: 118px; padding: 12px 18px 10px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); }
+.rank-tile .rt-label { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.rank-tile b { font-size: 52px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.rank-tile .rt-of { font-size: 12px; color: var(--faint); }
+.rank-tile.gold { border-color: color-mix(in srgb, #f2c94c 60%, transparent); background: linear-gradient(160deg, color-mix(in srgb, #f2c94c 16%, var(--surface-2)), var(--surface-2) 70%); }
+.rank-tile.gold b { color: #b8860b; }
+:root[data-theme="dark"] .rank-tile.gold b { color: #f2c94c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .rank-tile.gold b { color: #f2c94c; } }
+.th-epa-line { font-size: 13px; color: var(--muted); }
+.th-epa-line b { font-size: 22px; font-weight: 850; color: var(--text); letter-spacing: -0.01em; }
+.th-top > .th-photo { width: 200px; flex: none; }
+.th-top > .th-photo[hidden] { display: none; }
+.th-body { margin-top: 0; padding-top: 0; border-top: 0; }
+.tab-count { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: var(--surface-2); color: var(--muted); margin-left: 4px; }
+/* awards tab: one shelf of banners, one of plaques, each named */
+.awards-view { display: grid; gap: 28px; }
+.award-shelf { display: flex; flex-wrap: wrap; gap: 22px 26px; align-items: flex-start; }
+.award-item { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 120px; text-align: center; }
+.award-item > a { height: 110px; display: flex; align-items: flex-end; }
+.award-item .banner-icon svg { width: 76px; height: 106px; }
+.award-item .plaque-icon svg { width: 84px; height: 106px; }
+.award-item figcaption { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); line-height: 1.3; }
+.award-item figcaption b { color: var(--text); font-size: 12.5px; }
+@media (max-width: 900px) {
+  .th-hero { align-items: flex-start; width: 100%; }
+  .rank-tile { min-width: 0; flex: 1; padding: 10px 8px 8px; }
+  .rank-tile b { font-size: 36px; }
+  .th-top > .th-photo { width: 100%; max-width: 360px; }
+}
+.gold-text { color: #b8860b; }
+:root[data-theme="dark"] .gold-text { color: #f2c94c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gold-text { color: #f2c94c; } }
+.alltime-sum { display: flex; flex-wrap: wrap; gap: 12px 40px; border-bottom: 1px solid var(--line); }
+.alltime-sum > div { display: flex; flex-direction: column; }
+.alltime-sum b { font-size: 28px; font-weight: 850; letter-spacing: -0.02em; }
+.alltime-sum span { font-size: 12.5px; color: var(--muted); }
