@@ -32,7 +32,7 @@ if (fileAt >= 0) {
   // `match`: the official match id when a search worked it out from the schedule (a team's
   // "our 3rd match" upload); still checked against the event's matches and dates below
   cands = (f.videos ?? []).map((v) => ({ id: youtubeId(v.videoId) ?? v.videoId, code: v.code, note: v.title ?? "",
-    match: /^(Q-\d+|SF\d-\d|F-\d|M-\d+)$/.test(v.match ?? "") ? v.match : null }));
+    match: /^(Q-\d+|SF\d-\d|F-\d|M-\d+(?:\.\d)?)$/.test(v.match ?? "") ? v.match : null }));
   channels = (f.channels ?? []).map((c) => c.channelId).filter((c) => /^UC[\w-]{22}$/.test(c));
 } else if (!args.includes("--per-match-channel")) {
   cands = args.map((a) => { const [u, code] = a.split("@"); return { id: youtubeId(u) ?? u, code }; });
