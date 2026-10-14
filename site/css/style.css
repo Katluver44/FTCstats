@@ -1143,5 +1143,6 @@ tbody tr:hover .team-cell2 .tc-loc { text-decoration: none; }
 .gear-pick summary::after { content: none; }
 .gear-pick summary:hover, .gear-pick[open] summary { color: var(--text); background: var(--surface-2); }
 .gear-pick summary svg { width: 18px; height: 18px; margin: 0; vertical-align: middle; }
-.tabs .tabs-gear { margin-left: auto; align-self: center; }
-.tabs .tabs-gear > div { right: 0; }
+.tt-card { position: relative; }
+.tt-gear { position: absolute; top: 7px; right: max(4px, calc(var(--gutter) / 2 - 16px)); z-index: 5; }
+.tt-gear > div { right: 0; }

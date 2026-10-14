@@ -1385,9 +1385,8 @@ function eventTeams(season, meta, ev, matches = ev.matchList) {
   const plain = (c) => c.label.replace(/<[^>]+>/g, "");
   // default: the original columns (record, EPA, change, SOS); the gear adds the rest
   let hidden = new Set(pref.get("eventCols2", ["rp", "auto", "teleop", "endgame", "epaStart", "wr"]));
-  $("#tab").innerHTML = `<div class="card"><div id="tt"></div></div>`;
-  // the gear sits at the right end of the event's tab bar
-  $("nav.tabs")?.insertAdjacentHTML("beforeend", `<details class="col-pick gear-pick tabs-gear"><summary title="Columns" aria-label="Choose columns">${GEAR_ICON}</summary><div id="tt-cols"></div></details>`);
+  // the gear sits in the header row, in the margin right of the last column
+  $("#tab").innerHTML = `<div class="card tt-card"><details class="col-pick gear-pick tt-gear"><summary title="Columns" aria-label="Choose columns">${GEAR_ICON}</summary><div id="tt-cols"></div></details><div id="tt"></div></div>`;
   $("#tt-cols").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) => `<button type="button" class="col-btn" data-k="${c.key}" aria-pressed="${!hidden.has(c.key)}">${esc(plain(c))}</button>`).join("");
   const mount = () => sortableTable($("#tt"), rows, cols.filter((c) => !hidden.has(c.key)), { sortKey: "epaHere" });
   mount();
