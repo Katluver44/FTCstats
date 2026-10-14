@@ -1,13 +1,12 @@
 // Shared helpers for the FTCstats photo service (Vercel Functions + Vercel Blob).
-// Uploads land in pending/ and are never listed publicly; the owner approves
-// them on /admin.html, which copies them to approved/ and updates the index
-// the site reads.
+// Uploads go straight to approved/ and the index the site reads; the owner can
+// remove any photo on /admin.html.
 
 import { put, list, del, copy } from "@vercel/blob";
 
-export const ALLOWED_ORIGINS = ["https://katluver44.github.io", "http://localhost:5173"];
+export const ALLOWED_ORIGINS = ["https://ftcstats-photos.vercel.app", "https://katluver44.github.io", "http://localhost:5173"];
 export const MAX_BYTES = 4 * 1024 * 1024; // the site shrinks photos before upload
-export const MAX_PENDING = 200; // stop accepting uploads if the queue is this long
+export const MAX_PER_TEAM = 20; // a cap per team, so one bad actor can't flood a page
 
 export function cors(req, res) {
   const origin = req.headers.origin;
@@ -50,15 +49,6 @@ export async function writeIndex(index) {
   await put("approved/index.json", JSON.stringify(index), {
     access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60,
   });
-}
-
-export async function pendingList() {
-  const { blobs } = await list({ prefix: "pending/meta/", limit: 1000 });
-  const items = await Promise.all(blobs.map(async (b) => {
-    const r = await fetch(b.url, { cache: "no-store" });
-    return r.ok ? { ...(await r.json()), metaUrl: b.url } : null;
-  }));
-  return items.filter(Boolean).sort((a, b) => a.uploaded.localeCompare(b.uploaded));
 }
 
 export function isAdmin(req) {

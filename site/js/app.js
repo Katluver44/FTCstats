@@ -642,13 +642,7 @@ async function team(r) {
   }).catch(() => {});
 
   // photos come from a separate service; show the page now and add them when they arrive
-  data.photos(CONFIG.photoApi).then((p) => {
-    const slot = $("#photo-slot");
-    if (stale(r) || !slot || !p[n]?.length) return;
-    slot.innerHTML = teamPhotos(n, p[n]);
-    slot.hidden = false;
-    slot.closest(".th-body").classList.add("has-photo");
-  }).catch(() => {});
+  showPhotos(n, r);
 
   if (view === "charts") {
     // ?g=epa | scores | win | compare (&vs=team for compare)
@@ -830,21 +824,35 @@ function teamPhotos(n, list) {
   if (!list.length) {
     return `<aside class="team-photo empty-photo"><a href="${add}" data-upload="${n}"${target}>
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg>
-      <b>Add a photo</b><span class="small muted">Robot photos welcome. Shown after review.</span></a></aside>`;
+      <b>Add a photo</b><span class="small muted">Robot photos welcome.</span></a></aside>`;
   }
   const items = list.map((p, i) => `<figure class="${i ? "" : "on"}"><img src="${esc(p.file)}" alt="Team ${n}${p.caption ? `: ${esc(p.caption)}` : ""}" loading="lazy"><figcaption>${[p.caption && esc(p.caption), p.credit && `photo by ${esc(p.credit)}`].filter(Boolean).join(" · ")}</figcaption></figure>`).join("");
   return `<aside class="team-photo" data-count="${list.length}">${items}
     <div class="photo-bar">${list.length > 1 ? `<button class="photo-next" aria-label="Next photo">${list.length} photos ›</button>` : ""}<a class="small link" href="${add}" data-upload="${n}"${target}>Add a photo</a></div></aside>`;
 }
 
+// photos uploaded in this visit (the service's list is cached for a minute)
+const addedPhotos = {};
+function showPhotos(n, r) {
+  data.photos(CONFIG.photoApi).catch(() => ({})).then((p) => {
+    const slot = $("#photo-slot");
+    const seen = new Set((p[n] ?? []).map((x) => x.file));
+    const list = [...(addedPhotos[n] ?? []).filter((x) => !seen.has(x.file)).reverse(), ...(p[n] ?? [])];
+    if ((r && stale(r)) || !slot || String(slot.dataset.team ?? n) !== String(n) || !list.length) return;
+    slot.innerHTML = teamPhotos(n, list);
+    slot.hidden = false;
+    slot.closest(".th-body")?.classList.add("has-photo");
+  });
+}
+
 // Upload dialog: shrink the photo in the browser (which also drops GPS and
-// other metadata), then send it to the photo service for review.
+// other metadata), then send it to the photo service; it shows up right away.
 function openUpload(team) {
   const dlg = document.createElement("dialog");
   dlg.className = "upload-dialog";
   dlg.innerHTML = `<form method="dialog">
     <h2>Add a photo for team ${esc(team)}</h2>
-    <p class="small muted">Robot photos are best. Only post people who agreed to it (a parent or guardian for anyone under 18). Photos appear after review.</p>
+    <p class="small muted">Robot photos are best. Only post people who agreed to it (a parent or guardian for anyone under 18).</p>
     <input type="file" accept="image/jpeg,image/png,image/webp" required>
     <input type="text" maxlength="140" placeholder="Caption (optional)" class="cap">
     <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -868,8 +876,13 @@ function openUpload(team) {
         headers: { "Content-Type": "image/jpeg", "X-Team": team, "X-Caption": encodeURIComponent(form.querySelector(".cap").value), "X-Website": form.querySelector(".hp").value },
       });
       const out = await res.json().catch(() => ({}));
-      msg.textContent = res.ok ? out.message ?? "Thanks! Your photo will appear after review." : out.error ?? "Upload failed.";
-      if (res.ok) setTimeout(() => dlg.close(), 2500);
+      msg.textContent = res.ok ? out.message ?? "Thanks! Your photo is up." : out.error ?? "Upload failed.";
+      if (res.ok && out.photo) {
+        // show it now (the photo list is cached for a minute)
+        addedPhotos[team] = [...(addedPhotos[team] ?? []), { file: out.photo.url, caption: out.photo.caption, credit: "" }];
+        showPhotos(team);
+      }
+      if (res.ok) setTimeout(() => dlg.close(), 1500);
     } catch {
       msg.textContent = "Couldn't read that image. Try a JPG or PNG.";
     }

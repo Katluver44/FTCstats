@@ -44,7 +44,14 @@ export function scatter(el, rows, { x, y, href, labelTop = 8 }) {
   // best teams (by EPA) get labels and draw on top
   pts.sort((a, b) => a.r.np - b.r.np);
   const top = new Set(pts.slice(-labelTop).map((p) => p.r.team));
-  const sx = scale(pts.map((p) => p.vx)), sy = scale(pts.map((p) => p.vy));
+  // a little room around the data (top teams' labels, dots off the axis lines);
+  // ticks stay on round numbers inside it
+  const padded = (vals, lo0 = 0.04, hi0 = 0.07) => {
+    const mn = Math.min(...vals), mx = Math.max(...vals), span = mx - mn || 1;
+    const lo = mn - span * lo0, hi = mx + span * hi0;
+    return { lo, hi, ticks: scale([lo, hi], 6).ticks.filter((t) => t >= lo && t <= hi) };
+  };
+  const sx = padded(pts.map((p) => p.vx)), sy = padded(pts.map((p) => p.vy));
   // correlation and least-squares line
   const n = pts.length, mx = pts.reduce((s, p) => s + p.vx, 0) / n, my = pts.reduce((s, p) => s + p.vy, 0) / n;
   let sxy = 0, sxx = 0, syy = 0;

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
-  <title>FTCstats photo review</title>
+  <title>FTCstats photos</title>
   <style>
     body { font: 15px/1.5 system-ui, sans-serif; margin: 0; padding: 24px; background: #f6f6f6; color: #222; }
     h1 { margin: 0 0 12px; font-size: 22px; }
@@ -20,9 +20,9 @@
   </style>
 </head>
 <body>
-  <h1>FTCstats photo review</h1>
-  <p class="muted">Only approved photos appear on the site. Reject anything showing identifiable people without clear permission.</p>
-  <div><input id="token" type="password" placeholder="Admin token" autocomplete="current-password"> <button id="load">Load queue</button></div>
+  <h1>FTCstats photos</h1>
+  <p class="muted">Uploads go live right away. Remove anything showing identifiable people without clear permission.</p>
+  <div><input id="token" type="password" placeholder="Admin token" autocomplete="current-password"> <button id="load">Load photos</button></div>
   <div id="out" class="grid"></div>
   <script>
     const $ = (s) => document.querySelector(s);
@@ -33,18 +33,18 @@
       sessionStorage.setItem("t", $("#token").value);
       const r = await call();
       if (!r.ok) { $("#out").innerHTML = `<p>${r.status === 401 ? "Wrong token." : "Couldn't load."}</p>`; return; }
-      const { pending } = await r.json();
-      $("#out").innerHTML = pending.length ? pending.map((p) => `<div class="card"><img src="${esc(p.url)}" alt=""><div class="body">
-        <b>Team ${esc(p.team)}</b> <span class="muted">${esc(p.uploaded.slice(0, 16).replace("T", " "))}</span><div>${esc(p.caption) || '<span class="muted">no caption</span>'}</div>
-        <div style="margin-top:8px"><button class="ok" data-id="${esc(p.id)}" data-a="approve">Approve</button><button class="no" data-id="${esc(p.id)}" data-a="reject">Reject</button></div></div></div>`).join("")
-        : "<p>No photos waiting.</p>";
+      const { photos } = await r.json();
+      $("#out").innerHTML = photos.length ? photos.map((p) => `<div class="card"><img src="${esc(p.url)}" alt=""><div class="body">
+        <b>Team ${esc(p.team)}</b> <span class="muted">${esc(p.added ?? "")}</span><div>${esc(p.caption) || '<span class="muted">no caption</span>'}</div>
+        <div style="margin-top:8px"><button class="no" data-team="${esc(p.team)}" data-id="${esc(p.id)}">Remove</button></div></div></div>`).join("")
+        : "<p>No photos yet.</p>";
     }
     $("#load").onclick = load;
     $("#out").onclick = async (e) => {
       const b = e.target.closest("button[data-id]");
-      if (!b) return;
+      if (!b || !confirm(`Remove this photo of team ${b.dataset.team}?`)) return;
       b.disabled = true;
-      await call({ method: "POST", body: JSON.stringify({ id: b.dataset.id, action: b.dataset.a }) });
+      await call({ method: "POST", body: JSON.stringify({ team: b.dataset.team, id: b.dataset.id, action: "remove" }) });
       load();
     };
     if ($("#token").value) load();
