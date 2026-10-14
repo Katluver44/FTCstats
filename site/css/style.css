@@ -26,8 +26,9 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   --pop-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
   --radius: 8px;
-  /* side margin: 48px, growing on very wide screens so content stays within ~1800px, centred */
-  --gutter: max(48px, calc((100vw - 1800px) / 2));
+  /* side margin: grows gently with the window (5%), 48px to 120px; no hard content cap,
+     which left wide empty bands beside full-width rows on big screens */
+  --gutter: clamp(48px, 5vw, 120px);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -92,7 +93,7 @@
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
-  margin: 0; min-height: 100vh; color: var(--text); background: var(--page);
+  margin: 0; min-height: 100vh; display: flex; flex-direction: column; /* footer stays at the bottom on short pages */ color: var(--text); background: var(--page);
   font: 14.5px/1.5 Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 a { color: inherit; text-decoration: none; }
@@ -203,7 +204,7 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .search-results .kind { font-size: 10.5px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.06em; margin-left: auto; }
 
 /* ---------- layout ---------- */
-main { padding: 16px 0 48px; }
+main { padding: 16px 0 48px; flex: 1 0 auto; }
 .grid { display: grid; gap: 14px; }
 .grid > * { min-width: 0; }
 .cols-2 { grid-template-columns: 1fr 1fr; }
@@ -577,7 +578,8 @@ footer a { text-decoration: underline; }
 .play { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-left: 6px; padding: 0; border-radius: 50%;
   border: 0; background: var(--accent); color: #fff; cursor: pointer; vertical-align: -4px; }
 .play:hover { filter: brightness(1.15); }
-.vid-cell { width: 1%; text-align: center; padding-right: 4px !important; }
+.vid-cell { width: 56px; text-align: center; padding-right: 8px !important; }
+.mt td.lvl, .mt th:nth-child(2) { min-width: 64px; }
 .vid { display: inline-grid; place-items: center; padding: 3px; border: 0; border-radius: 50%; background: none;
   color: var(--accent); cursor: pointer; vertical-align: middle; line-height: 0; }
 .vid:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); }
