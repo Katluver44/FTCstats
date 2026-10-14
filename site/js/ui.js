@@ -158,15 +158,30 @@ export const PLAY_ICON = '<svg width="10" height="10" viewBox="0 0 10 10" aria-h
 // outline play-circle, as in Statbotics' video column
 const VIDEO_ICON = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.3"/><path d="M7.1 5.6v6.8L12.4 9Z" fill="currentColor"/></svg>';
 
-export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
+// Rare row tints, each about 1 in 50-100 matches (checked on 2023-2025): a big upset
+// (a 90%+ favourite lost), the event's highest combined score (highScore: that
+// score), and a perfect call (both alliances within 4% of the prediction, min 2 points).
+function matchFlag(m, highScore) {
+  if (!m.played || !m.redScore || !m.blueScore) return null;
+  const rs = m.redScore.total ?? m.redScore.np, bs = m.blueScore.total ?? m.blueScore.np;
+  const p = m.pred?.pRed;
+  if (p != null && rs !== bs && Math.max(p, 1 - p) >= 0.9 && (p > 0.5) !== (rs > bs))
+    return ["upset", `Big upset: the ${p > 0.5 ? "red" : "blue"} alliance was a ${Math.round(Math.max(p, 1 - p) * 100)}% favourite and lost`];
+  if (highScore != null && rs + bs >= highScore) return ["high", `Event high score: ${rs + bs} points combined, the most of any match at this event`];
+  const pr = m.pred?.red?.total ?? m.pred?.red?.np, pb = m.pred?.blue?.total ?? m.pred?.blue?.np;
+  const near = (a, e) => e != null && Math.abs(a - e) <= Math.max(2, 0.04 * e);
+  if (near(rs, pr) && near(bs, pb)) return ["perfect", `Perfect call: predicted ${Math.round(pr)}–${Math.round(pb)}, final ${rs}–${bs}`];
+  return null;
+}
+
+export function matchTable(s, matches, { me, rpNames = [], video, href, highScore } = {}) {
   if (!matches.length) return `<div class="empty">No matches yet.</div>`;
   const slots = Math.max(2, ...matches.map((m) => Math.max(m.red.length, m.blue.length)));
   const teams = (side, nums) => Array.from({ length: slots }, (_, i) =>
     nums[i] != null ? `<td class="c"><a class="tn ${side} ${nums[i] === me ? "me" : ""}" href="#/${s}/team/${nums[i]}">${nums[i]}</a></td>` : "<td></td>").join("");
   const rows = matches.map((m) => {
     const rs = m.redScore?.total ?? m.redScore?.np, bs = m.blueScore?.total ?? m.blueScore?.np;
-    // upsets (the favourite lost) get a faint red row
-    const upset = m.played && m.pred && rs !== bs && (m.pred.pRed > 0.5) !== (rs > bs);
+    const flag = matchFlag(m, highScore);
     const pr = m.pred?.red?.rp?.map((p) => p > 0.5), pb = m.pred?.blue?.rp?.map((p) => p > 0.5);
     const pred = m.pred?.red?.np != null
       ? `${rpDots("red", pr, rpNames, "likely to earn")} <span class="pscore">${fmt(m.pred.red.total ?? m.pred.red.np, 0)}–${fmt(m.pred.blue.total ?? m.pred.blue.np, 0)}</span> ${rpDots("blue", pb, rpNames, "likely to earn")}`
@@ -174,7 +189,7 @@ export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
     const final = m.played
       ? `${rpDots("red", m.redScore.rp, rpNames)} <span class="final"><span class="${rs > bs ? "w" : "l"}">${rs}</span><span class="faint">–</span><span class="${bs > rs ? "w" : "l"}">${bs}</span></span> ${rpDots("blue", m.blueScore.rp, rpNames)}`
       : `<span class="faint small">upcoming</span>`;
-    return `<tr class="${upset ? "upset" : ""}">
+    return `<tr${flag ? ` class="flag-${flag[0]}" title="${esc(flag[1])}"` : ""}>
       ${m.evName ? `<td class="small"><a href="#/${s}/event/${m.ev}">${esc(m.evName)}</a></td>` : ""}
       ${video ? `<td class="vid-cell">${(() => {
         if (!m.played) return "";
@@ -190,7 +205,7 @@ export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
     </tr>`;
   }).join("");
   return `<div class="table-wrap"><table class="mt">
-    <thead><tr>${video ? '<th class="c vid-cell">Video</th>' : ""}${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c" colspan="${slots}">Red</th><th class="c" colspan="${slots}">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Icons: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue. A faint red row means the favourite lost.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Icons: bonus RPs earned (hover them to see which)." : ""}">Final</span></th></tr></thead>
+    <thead><tr>${video ? '<th class="c vid-cell">Video</th>' : ""}${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c" colspan="${slots}">Red</th><th class="c" colspan="${slots}">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Icons: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue. Rare tinted rows: red = big upset (a 90%+ favourite lost), gold = the event's highest-scoring match, green = perfect call. Hover a row for details.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Icons: bonus RPs earned (hover them to see which)." : ""}">Final</span></th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
 }
 
@@ -222,7 +237,7 @@ export function mountLineChart(el, { series, bands = [], tooltip, zero = true })
     }
     bands.forEach((b, i) => {
       const x0 = x(b.from) - (b.from ? (x(1) - x(0)) / 2 : 0), x1 = x(b.to) + (b.to < n - 1 ? (x(1) - x(0)) / 2 : 0);
-      if (i % 2) g += `<rect x="${x0}" y="${P.t}" width="${Math.max(0, x1 - x0)}" height="${H - P.t - P.b}" fill="var(--surface-2)" opacity=".6"/>`;
+      if (i % 2) g += `<rect x="${x0}" y="${P.t}" width="${Math.max(0, x1 - x0)}" height="${H - P.t - P.b}" fill="var(--zebra)"/>`;
       // fit the label to its band (about 6px per character), or skip it
       const fit = Math.floor((x1 - x0 - 6) / 6);
       if (fit >= 4) {

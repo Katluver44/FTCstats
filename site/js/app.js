@@ -499,7 +499,7 @@ async function team(r) {
           <div><span class="k">EPA out</span><b>${fmt(ev.epaEnd)}${ev.epaStart != null && ev.epaEnd != null && Math.abs(ev.epaEnd - ev.epaStart) >= 0.5 ? `<span class="delta ${ev.epaEnd > ev.epaStart ? "trend-up" : "trend-down"}">${ev.epaEnd > ev.epaStart ? "▲" : "▼"}</span>` : ""}</b></div>
         </div>
       </div>
-      ${matchTable(season, ms, { me: n, rpNames: meta.rpNames, video, href: (m) => matchHref(season, ev.code, m.d) })}
+      ${matchTable(season, ms, { me: n, rpNames: meta.rpNames, highScore: ev.high, video, href: (m) => matchHref(season, ev.code, m.d) })}
     </div>`;
   }).join("");
 }
@@ -703,6 +703,12 @@ function toMatch(m, me) {
   };
 }
 
+// the event's highest combined score among played matches (gold row), or null
+const eventHigh = (ms) => {
+  const t = ms.filter((m) => m.played && m.redScore && m.blueScore).map((m) => (m.redScore.total ?? m.redScore.np) + (m.blueScore.total ?? m.blueScore.np));
+  return t.length ? Math.max(...t) : null;
+};
+
 // ---------------- events ----------------
 
 async function events(r) {
@@ -799,7 +805,7 @@ async function event(r) {
     if (tab === "teams") eventTeams(season, meta, ev);
     else if (tab === "playoffs" && hasPlayoffs) eventPlayoffs(season, meta, ev, matches, official[code], (m) => videoFor(videos, code, m.time));
     else if (tab === "forecast" && canForecast) eventForecast(season, meta, ev, matches);
-    else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
+    else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames, highScore: eventHigh(matches), video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
   };
 
   draw();

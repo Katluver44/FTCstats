@@ -595,6 +595,12 @@ export async function build(season, params = {}, epaOver = {}) {
       placeRanks.get(x.t)[key] = [key === "state" ? g.split("|")[1] : g, seen.get(g), counts.get(g)];
     }
   }
+  // each event's highest combined score (both alliances, with fouls): the team page tints that match gold
+  const evHigh = new Map();
+  for (const x of matches) {
+    const s = x.actual.red.total + x.actual.blue.total;
+    if (Number.isFinite(s) && s > (evHigh.get(x.ev.code) ?? -1)) evHigh.set(x.ev.code, s);
+  }
   const buckets = new Map();
   for (const { t, e, p, h } of ranked) {
     const evs = (teamEvents.get(t) ?? []).map(({ ev, stats }) => {
@@ -605,6 +611,7 @@ export async function build(season, params = {}, epaOver = {}) {
         rank: stats?.rank ?? null, wins: stats?.wins ?? null, losses: stats?.losses ?? null, ties: stats?.ties ?? null,
         epaStart: startEpa != null ? r1(startEpa) : null,
         epaEnd: mine.length ? mine[mine.length - 1].epa[0] : null,
+        high: evHigh.get(ev.code) ?? null,
       };
     });
     const bucket = Math.floor(t / 100);

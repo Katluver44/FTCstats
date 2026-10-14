@@ -26,6 +26,7 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   --pop-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
   --radius: 8px;
+  --zebra: rgba(0, 0, 0, 0.028); /* every other table row, and alternate chart bands */
   /* side margin: grows gently with the window (5%), 48px to 120px; no hard content cap,
      which left wide empty bands beside full-width rows on big screens */
   --gutter: clamp(48px, 5vw, 120px);
@@ -58,6 +59,7 @@
     --dot: #4da3ea;
     --dot-off: #2f3a46;
     --shadow: none;
+    --zebra: rgba(255, 255, 255, 0.035);
     --pop-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
     color-scheme: dark;
   }
@@ -86,6 +88,7 @@
   --dot: #4da3ea;
   --dot-off: #2f3a46;
   --shadow: none;
+  --zebra: rgba(255, 255, 255, 0.035);
   --pop-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
   color-scheme: dark;
 }
@@ -276,6 +279,7 @@ th.sorted::after { content: " ↓"; }
 th.sorted.asc::after { content: " ↑"; }
 td { padding: 8px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 tr:last-child td { border-bottom: 0; }
+tbody tr:nth-child(even) td { background: var(--zebra); }
 tbody tr:hover td { background: var(--hover); }
 /* the hovered row's team / event name lights up, since that's the link */
 tbody tr:hover .team-cell .n, tbody tr:hover .team-cell .nm,
@@ -361,7 +365,12 @@ td.c, th.c { text-align: center; }
 .mark { font-weight: 800; }
 .mark.ok { color: var(--good); }
 .mark.no { color: var(--bad); }
-tr.upset td { background: rgba(201, 52, 43, 0.05); }
+/* rare match tints (ui.js matchFlag): big upset, top-1% score, perfect call */
+tbody tr.flag-upset td { background: rgba(237, 28, 36, 0.10); }
+tbody tr.flag-high td { background: rgba(242, 201, 76, 0.13); }
+tbody tr.flag-perfect td { background: rgba(30, 138, 62, 0.11); }
+tr[class^="flag-"] td:first-child { box-shadow: inset 3px 0 0 var(--flag); }
+tr.flag-upset { --flag: #ed1c24; } tr.flag-high { --flag: #d4a017; } tr.flag-perfect { --flag: #1e8a3e; }
 
 .pill {
   display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 650;
