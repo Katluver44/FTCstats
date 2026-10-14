@@ -1096,8 +1096,6 @@ async function event(r) {
 
   const draw = () => {
     const played = matches.filter((m) => m.played);
-    const decided = played.filter((m) => m.pred && m.redScore.total !== m.blueScore.total);
-    const correct = decided.filter((m) => (m.pred.pRed > 0.5) === (m.redScore.total > m.blueScore.total)).length;
     const hasQuals = matches.some((m) => m.level === "Quals");
     // forecast needs a quals schedule, or no matches yet (pre-event); playoff-only events get none.
     // Once quals are done it still replays: "what did the forecast say after match N?"
@@ -1118,7 +1116,6 @@ async function event(r) {
             ${videos?.[code]?.streams?.[0] ? `<button class="pill" data-video="${videos[code].streams[0].id}" data-t="0"${videos[code].streams[0].ext ? ' data-ext="1"' : ""} data-title="${esc(ev.name)}">▶ Event stream</button>` : ""}
           </div>
         </div>
-        <div class="big-epa"><div class="label">Winner predicted</div><b>${decided.length ? pct(correct / decided.length) : "–"}</b><div class="label">${correct} of ${decided.length} matches</div></div>
       </div></div>
       <nav class="tabs seg glass">${tabs.map(([k, label]) => `<a href="#/${season}/event/${code}/${k}" class="${k === (tabs.some(([t]) => t === tab) ? tab : "matches") ? "active" : ""}">${label}</a>`).join("")}</nav>
       <div id="tab"></div>`;
