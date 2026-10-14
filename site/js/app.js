@@ -409,14 +409,16 @@ async function teams(r) {
   const plain = (c) => c.label.replace(/<[^>]+>/g, "");
   let hiddenCols = new Set(pref.get("teamCols", []));
   $("#col-list").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) =>
-    `<label><input type="checkbox" data-k="${c.key}" ${hiddenCols.has(c.key) ? "" : "checked"}> ${esc(plain(c))}</label>`).join("");
+    `<button type="button" class="col-btn" data-k="${c.key}" aria-pressed="${!hiddenCols.has(c.key)}">${esc(plain(c))}</button>`).join("");
   let table;
   const mount = () => { table = sortableTable($("#tbl"), rows, cols.filter((c) => !hiddenCols.has(c.key)), { sortKey: "np" }); };
   mount();
-  $("#col-list").onchange = (e) => {
-    const k = e.target.dataset.k;
-    if (!k) return;
-    e.target.checked ? hiddenCols.delete(k) : hiddenCols.add(k);
+  $("#col-list").onclick = (e) => {
+    const b = e.target.closest("[data-k]");
+    if (!b) return;
+    const k = b.dataset.k, on = hiddenCols.has(k);
+    on ? hiddenCols.delete(k) : hiddenCols.add(k);
+    b.setAttribute("aria-pressed", String(on));
     pref.set("teamCols", [...hiddenCols]);
     mount(); apply();
   };
