@@ -1,6 +1,6 @@
 import {
   $, $$, esc, data, getJSON, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
-  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, PLAY_ICON, chance, inWords } from "./ui.js";
+  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, PLAY_ICON } from "./ui.js";
 import { SEASONS } from "./seasons.js";
 import { scatter, histogram, breakdown } from "./charts.js";
 import { playoffs } from "./playoffs.js";
@@ -247,7 +247,7 @@ async function home(r) {
         <div class="feature-score"><span class="score red">${fmt(p.red.total, 0)}</span><span class="faint">–</span><span class="score blue">${fmt(p.blue.total, 0)}</span></div>
         ${side("blue", [t2, t3])}
       </div>
-      <div class="feature-foot">${winBar(p.pRed)}<p>${p.pRed >= 0.5 ? "Red" : "Blue"} wins ${inWords(p.pRed)} (${chance(Math.max(p.pRed, 1 - p.pRed))}). <a class="link" href="#/${season}/compete?r=${t1.team},${t4.team}&b=${t2.team},${t3.team}">Try your own matchup →</a></p></div>
+      <div class="feature-foot">${winBar(p.pRed)}<p>Red wins ${pct(p.pRed)} of the time. <a class="link" href="#/${season}/compete?r=${t1.team},${t4.team}&b=${t2.team},${t3.team}">Try your own matchup →</a></p></div>
     </div>`;
   }
 
@@ -610,7 +610,6 @@ async function team(r) {
           <div class="label">EPA · points added per match</div>
           <b>${fmt(e.np)}</b>
           <div class="th-ranks">${rankLine}</div>
-          ${t.matches.length < 6 ? `<div class="th-early small muted" title="Every team starts the season on a rating carried over from its past seasons (rookies just below average); each match moves it toward what the team really scores">${t.matches.length ? `Only ${t.matches.length} match${t.matches.length === 1 ? "" : "es"} so far: still leans on` : "No matches yet: carried over from"} last season's rating</div>` : ""}
         </div>
       </div>
       <div class="th-body">
@@ -1353,7 +1352,7 @@ const probCell = (p) => {
   if (p < 0.005) return `<span class="faint">–</span>`;
   // strong odds get solid FIRST blue with white text; weaker odds a light tint with dark text
   const style = p >= 0.5 ? "background:#0066b3;color:#fff" : `background:color-mix(in srgb,#0066b3 ${Math.round(8 + p * 40)}%,transparent);color:var(--text)`;
-  return `<span class="epa" style="${style}">${chance(p)}</span>`;
+  return `<span class="epa" style="${style}">${pct(p)}</span>`;
 };
 
 // ---------------- match ----------------
@@ -1416,14 +1415,14 @@ async function match(r) {
   const Side = (s) => (s === "red" ? "Red" : "Blue");
 
   // verdict box: did we call it?
-  const verdict = !played || !p ? `<div class="big-epa"><div class="label">Favourite</div><b class="${fav ?? ""}-text">${p ? chance(favP) : "–"}</b><div class="label">${p ? `${Side(fav)} to win, ${inWords(favP)}` : "no prediction"}</div></div>`
-    : winner === "tie" ? `<div class="big-epa"><div class="label">Result</div><b>Tie</b><div class="label">${Side(fav)} was favoured ${chance(favP)}</div></div>`
-    : `<div class="big-epa"><div class="label">Prediction</div><b class="${winner === fav ? "good-text" : "bad-text"}">${winner === fav ? "Correct" : "Upset"}</b><div class="label">${Side(fav)} was favoured ${chance(favP)}</div></div>`;
+  const verdict = !played || !p ? `<div class="big-epa"><div class="label">Favourite</div><b class="${fav ?? ""}-text">${p ? pct(favP) : "–"}</b><div class="label">${p ? `${Side(fav)} to win` : "no prediction"}</div></div>`
+    : winner === "tie" ? `<div class="big-epa"><div class="label">Result</div><b>Tie</b><div class="label">${Side(fav)} was favoured ${pct(favP)}</div></div>`
+    : `<div class="big-epa"><div class="label">Prediction</div><b class="${winner === fav ? "good-text" : "bad-text"}">${winner === fav ? "Correct" : "Upset"}</b><div class="label">${Side(fav)} was favoured ${pct(favP)}</div></div>`;
 
   const verdictLine = !p ? "No prediction for this match."
-    : !played ? `${Side(fav)} favoured to win, ${chance(favP)} (${inWords(favP)}).`
-    : winner === "tie" ? `<b>Tie</b> · ${Side(fav)} was favoured ${chance(favP)}`
-    : `<b class="${winner === fav ? "good-text" : "bad-text"}">${winner === fav ? "Prediction correct" : "Upset"}</b> · ${Side(fav)} was favoured ${chance(favP)}`;
+    : !played ? `${Side(fav)} favoured to win, ${pct(favP)}.`
+    : winner === "tie" ? `<b>Tie</b> · ${Side(fav)} was favoured ${pct(favP)}`
+    : `<b class="${winner === fav ? "good-text" : "bad-text"}">${winner === fav ? "Prediction correct" : "Upset"}</b> · ${Side(fav)} was favoured ${pct(favP)}`;
   // scoreboard: teams either side, the final (or predicted) score in the middle
   const onField = (side) => m[`${side}On`] ?? m[side];
   const side = (s) => `<div class="feature-side ${s}">${m[s].map((t) => `<a href="#/${season}/team/${t}" class="${onField(s).includes(t) ? "" : "sat-out"}">${t}</a><small>${esc(team.get(t)?.name ?? "")}${onField(s).includes(t) ? "" : " · didn't play"}</small>`).join("")}</div>`;
@@ -1436,7 +1435,7 @@ async function match(r) {
         ${played && p ? `<div class="small muted pred-line">Predicted ${fmt(p.red.total, 0)}–${fmt(p.blue.total, 0)}</div>` : ""}</div>
       ${side("blue")}
     </div>
-    <div class="feature-foot">${winBar(p?.pRed)}<p>${p ? `Before the match: red ${chance(p.pRed)}, blue ${chance(1 - p.pRed)} to win.` : "No prediction for this match."}${v && played && p ? ` <span class="stage-verdict">${verdictLine}</span>` : ""}</p></div>
+    <div class="feature-foot">${winBar(p?.pRed)}<p>${p ? `Before the match: red ${pct(p.pRed)}, blue ${pct(1 - p.pRed)} to win.` : "No prediction for this match."}${v && played && p ? ` <span class="stage-verdict">${verdictLine}</span>` : ""}</p></div>
   </div>`;
 
   // with a video the page is built around it: player on the left, a compact
@@ -1690,7 +1689,7 @@ async function compete(r) {
     const margin = Math.abs(p.red.total - p.blue.total);
     // best of 3 (playoff series), ties ignored
     const bo3 = (q) => q * q * (3 - 2 * q);
-    const sure = (q) => `${inWords(q)} (${chance(q)})`;
+    const sure = (q) => (q > 0.995 ? "over 99%" : pct(q));
     const uneven = nums.r.length !== 2 || nums.b.length !== 2;
 
     const side = (s) => `<div class="feature-side ${s}">${nums[s[0]].map((n) => `<a href="#/${season}/team/${n}">${n}</a><small>${esc(byNum.get(n).name)}</small>`).join("")}</div>`;
@@ -1701,7 +1700,7 @@ async function compete(r) {
         <div class="feature-score"><span class="score red">${fmt(p.red.total, 0)}</span><span class="faint">–</span><span class="score blue">${fmt(p.blue.total, 0)}</span></div>
         ${side("blue")}
       </div>
-      <div class="feature-foot">${winBar(p.pRed)}<p>${Side(fav)} wins ${sure(favP)}, by about ${fmt(margin, 0)} points. In a best of 3, ${Side(fav).toLowerCase()} takes the series ${sure(bo3(favP))}.</p></div>
+      <div class="feature-foot">${winBar(p.pRed)}<p>${Side(fav)} wins ${sure(favP)} of the time, by about ${fmt(margin, 0)} points. In a best of 3, ${Side(fav).toLowerCase()} takes the series ${sure(bo3(favP))} of the time.</p></div>
     </div>`;
 
     const rows = [["auto", "Auto"], ["teleop", "Teleop"], ["endgame", "Endgame"], ["np", "No-penalty total"], ["pen", "Penalty points"], ["total", "Final"]];
@@ -1718,7 +1717,7 @@ async function compete(r) {
     const rpCard = rpNames.length ? `<div class="card card-pad"><h3>Bonus ranking points</h3><div class="table-wrap"><table class="breakdown">
       <thead><tr><th></th><th class="r red-text">Red</th><th class="r blue-text">Blue</th></tr></thead>
       <tbody>${rpNames.map((nm, k) => `<tr><td class="muted">${esc(nm)}</td><td class="r">${pct(p.red.rp[k])}</td><td class="r">${pct(p.blue.rp[k])}</td></tr>`).join("")}
-        <tr class="tot"><td class="muted">Win</td><td class="r">${chance(p.pRed)}</td><td class="r">${chance(1 - p.pRed)}</td></tr></tbody>
+        <tr class="tot"><td class="muted">Win</td><td class="r">${pct(p.pRed)}</td><td class="r">${pct(1 - p.pRed)}</td></tr></tbody>
     </table></div></div>` : "";
 
     // who carries each alliance: every robot's EPA and its share of the alliance's points

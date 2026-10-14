@@ -1058,4 +1058,3 @@ body.home-fit .hero { flex-shrink: 0; }
 /* sits out in the left margin, so the search box keeps lining up with the table */
 @media (min-width: 901px) { .toolbar .view-pick { margin-left: calc(var(--gutter) / -2); } }
 @media (max-width: 640px) { .chart-controls { margin-left: 0; } .view-pick button { padding: 5px 9px; } }
-.th-early { margin-top: 6px; font-style: italic; }
