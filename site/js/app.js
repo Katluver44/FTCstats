@@ -1383,9 +1383,10 @@ function eventTeams(season, meta, ev, matches = ev.matchList) {
   ];
   const FIXED = new Set(["rank", "team", "epaHere"]);
   const plain = (c) => c.label.replace(/<[^>]+>/g, "");
-  let hidden = new Set(pref.get("eventCols1", ["rp", "epaStart", "wr"]));
+  // default: the original columns (record, EPA, change, SOS); the gear adds the rest
+  let hidden = new Set(pref.get("eventCols2", ["rp", "auto", "teleop", "endgame", "epaStart", "wr"]));
   $("#tab").innerHTML = `<div class="card">
-      <div class="toolbar tt-bar"><details class="col-pick"><summary>${GEAR_ICON} Columns</summary><div id="tt-cols"></div></details></div>
+      <div class="toolbar tt-bar"><details class="col-pick gear-pick"><summary title="Columns" aria-label="Choose columns">${GEAR_ICON}</summary><div id="tt-cols"></div></details></div>
       <div id="tt"></div>
     </div>`;
   $("#tt-cols").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) => `<button type="button" class="col-btn" data-k="${c.key}" aria-pressed="${!hidden.has(c.key)}">${esc(plain(c))}</button>`).join("");
@@ -1397,7 +1398,7 @@ function eventTeams(season, meta, ev, matches = ev.matchList) {
     const k = b.dataset.k, on = hidden.has(k);
     on ? hidden.delete(k) : hidden.add(k);
     b.setAttribute("aria-pressed", String(on));
-    pref.set("eventCols1", [...hidden]);
+    pref.set("eventCols2", [...hidden]);
     mount();
   };
 }

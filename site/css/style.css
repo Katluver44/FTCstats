@@ -1139,3 +1139,9 @@ tr.pre-row:hover td { opacity: .85; }
 .team-cell2 .tc-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
 .team-cell2 .tc-loc { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 tbody tr:hover .team-cell2 .tc-loc { text-decoration: none; }
+/* gear-only column menu: no box, no label */
+.gear-pick summary { border: 0; background: transparent; padding: 6px; color: var(--muted); border-radius: 8px; }
+.gear-pick summary::after { content: none; }
+.gear-pick summary:hover, .gear-pick[open] summary { color: var(--text); background: var(--surface-2); }
+.gear-pick summary svg { width: 18px; height: 18px; margin: 0; vertical-align: middle; }
+.tt-bar { padding-top: 4px !important; padding-bottom: 4px !important; border-bottom: 0; }
