@@ -473,12 +473,8 @@ async function teams(r) {
     { key: "rank", label: "#", cls: "faint num", render: (r) => r.rank },
     { key: "team", label: "Team", sort: false,
       // predicted teams (haven't played yet): an asterisk straight after the name
-      render: (r) => {
-        const cell = teamCell(season, r.team, r.name);
-        // predicted teams (haven't played yet): an asterisk straight after the name; location underneath
-        const named = r.pre ? cell.replace(/<\/span><\/a>$/, `<span class="pred-star" title="Hasn't played yet this season: its EPA is the one it starts on">*</span></span></a>`) : cell;
-        return r.loc ? `${named}<div class="team-loc">${esc(r.loc)}</div>` : named;
-      } },
+      // number, then name over location as one block; predicted teams get an asterisk after the name
+      render: (r) => `<a class="team-cell team-cell2" href="#/${season}/team/${r.team}"><span class="n">${r.team}</span><span class="tc-text"><span class="nm">${esc(r.name)}${r.pre ? `<span class="pred-star" title="Hasn't played yet this season: its EPA is the one it starts on">*</span>` : ""}</span>${r.loc ? `<span class="tc-loc">${esc(r.loc)}</span>` : ""}</span></a>` },
     { key: "country", label: "Country", cls: "small muted", render: (r) => esc(r.country ?? "") },
     { key: "region", label: "State / region", cls: "small muted", render: (r) => esc(r.region || "–") },
     { key: "np", label: `<span title="${EPA_TIP}">EPA</span>`, cls: "c",
@@ -1360,18 +1356,50 @@ function eventSos(season, ev, matches) {
   return new Map([...acc].map(([t, a]) => [t, { v: sosValue(a), places: sosPlaces(a) }]));
 }
 
+const GEAR_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
+
+// Event Teams tab: one row per team; a gear menu shows / hides columns (remembered per device)
 function eventTeams(season, meta, ev, matches = ev.matchList) {
   const sos = eventSos(season, ev, matches);
-  const rows = ev.teamList.map((t) => ({ ...t, epa: t.epaNow?.np ?? null, delta: t.epaEnd != null && t.epaStart != null ? t.epaEnd - t.epaStart : null, epaHere: t.epaEnd ?? t.epaStart ?? null, sos: sos.get(t.team)?.v ?? null, sosPlaces: sos.get(t.team)?.places ?? null }));
-  $("#tab").innerHTML = `<div class="card" id="tt"></div>`;
-  sortableTable($("#tt"), rows, [
+  const rows = ev.teamList.map((t) => {
+    const v = t.epaOut ?? t.epaIn ?? []; // [EPA, auto, teleop, endgame] after its last match here (before, if it hasn't played)
+    return { ...t, epa: t.epaNow?.np ?? null, delta: t.epaEnd != null && t.epaStart != null ? t.epaEnd - t.epaStart : null, epaHere: t.epaEnd ?? t.epaStart ?? null,
+      auto: v[1] ?? null, teleop: v[2] ?? null, endgame: v[3] ?? null, sos: sos.get(t.team)?.v ?? null, sosPlaces: sos.get(t.team)?.places ?? null,
+      wr: t.wins != null && t.wins + t.losses + t.ties ? (t.wins + t.ties / 2) / (t.wins + t.losses + t.ties) : null };
+  });
+  const cols = [
     { key: "rank", label: "Rank", cls: "num", render: (r) => r.rank ?? "–" },
     { key: "team", label: "Team", sort: false, render: (r) => teamCell(season, r.team, r.name) },
     { key: "wins", label: "Record", cls: "r small", render: (r) => (r.wins != null ? `${r.wins}-${r.losses}${r.ties ? `-${r.ties}` : ""}` : "–") },
+    { key: "rp", label: `<span title="Ranking score: the event's official ranking points per match">RS</span>`, cls: "r small", render: (r) => (r.rp != null ? fmt(r.rp, 2) : "–") },
     { key: "epaHere", label: `<span title="${EPA_TIP} After its last match here; coming in, before it has played.">EPA</span>`, cls: "c", render: (r) => epa(r.epaHere, meta) },
+    { key: "auto", label: "Auto", cls: "r", render: (r) => fmt(r.auto) },
+    { key: "teleop", label: "Teleop", cls: "r", render: (r) => fmt(r.teleop) },
+    { key: "endgame", label: "Endgame", cls: "r", render: (r) => fmt(r.endgame) },
+    { key: "epaStart", label: `<span title="EPA coming into this event">EPA in</span>`, cls: "r small", render: (r) => fmt(r.epaStart) },
     { key: "delta", label: "Change", cls: "r small", render: (r) => trend(r.delta) },
-    { key: "sos", label: `<span title="Strength of schedule, 0 to 1: how hard its qualification draws (partners and opponents) were for its ranking, as the share of random schedules at the same events that would have been easier. 0.5 = typical, 1 = hardest">SOS</span>`, cls: "r small", render: (r) => sosCell(r.sos, r.sosPlaces) },
-  ], { sortKey: "epaHere" });
+    { key: "wr", label: "Win rate", cls: "r small", render: (r) => (r.wr == null ? "–" : pct(r.wr)) },
+    { key: "sos", label: `<span title="Strength of schedule, 0 to 1: how hard its qualification draws (partners and opponents) were for its ranking, as the share of random schedules here that would have been easier. 0.5 = typical, 1 = hardest">SOS</span>`, cls: "r small", render: (r) => sosCell(r.sos, r.sosPlaces) },
+  ];
+  const FIXED = new Set(["rank", "team", "epaHere"]);
+  const plain = (c) => c.label.replace(/<[^>]+>/g, "");
+  let hidden = new Set(pref.get("eventCols1", ["rp", "epaStart", "wr"]));
+  $("#tab").innerHTML = `<div class="card">
+      <div class="toolbar tt-bar"><details class="col-pick"><summary>${GEAR_ICON} Columns</summary><div id="tt-cols"></div></details></div>
+      <div id="tt"></div>
+    </div>`;
+  $("#tt-cols").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) => `<button type="button" class="col-btn" data-k="${c.key}" aria-pressed="${!hidden.has(c.key)}">${esc(plain(c))}</button>`).join("");
+  const mount = () => sortableTable($("#tt"), rows, cols.filter((c) => !hidden.has(c.key)), { sortKey: "epaHere" });
+  mount();
+  $("#tt-cols").onclick = (e) => {
+    const b = e.target.closest("[data-k]");
+    if (!b) return;
+    const k = b.dataset.k, on = hidden.has(k);
+    on ? hidden.delete(k) : hidden.add(k);
+    b.setAttribute("aria-pressed", String(on));
+    pref.set("eventCols1", [...hidden]);
+    mount();
+  };
 }
 
 // Pick list: every team at the event, strongest first, as auto / teleop / endgame
