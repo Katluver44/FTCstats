@@ -1133,7 +1133,6 @@ pre.code { background: var(--surface-2); border: 1px solid var(--line); border-r
 tr.pre-row td { opacity: .5; }
 tr.pre-row:hover td { opacity: .85; }
 /* event Teams tab: just the gear menu, on the right */
-.tt-bar { justify-content: flex-end; padding-top: 10px !important; padding-bottom: 10px !important; }
 .col-pick summary svg { vertical-align: -2px; margin-right: 4px; }
 .team-cell2 { align-items: center; }
 .team-cell2 .tc-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
@@ -1144,4 +1143,5 @@ tbody tr:hover .team-cell2 .tc-loc { text-decoration: none; }
 .gear-pick summary::after { content: none; }
 .gear-pick summary:hover, .gear-pick[open] summary { color: var(--text); background: var(--surface-2); }
 .gear-pick summary svg { width: 18px; height: 18px; margin: 0; vertical-align: middle; }
-.tt-bar { padding-top: 4px !important; padding-bottom: 4px !important; border-bottom: 0; }
+.tabs .tabs-gear { margin-left: auto; align-self: center; }
+.tabs .tabs-gear > div { right: 0; }
