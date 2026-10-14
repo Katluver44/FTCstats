@@ -673,10 +673,10 @@ async function team(r) {
   showPhotos(n, r);
 
   if (view === "charts") {
-    // ?g=epa | scores | win | compare (&vs=team for compare)
+    // ?g=epa | compare (&vs=team for compare)
     // ?g=reliable only where FTC's score data credits some points to each robot
     const specs = SEASONS[season]?.solo ?? [];
-    const GRAPHS = [["epa", "EPA"], ["scores", "Scores"], ["win", "Win chance"], ...(specs.length ? [["reliable", "Reliability"]] : []), ["compare", "Compare"]];
+    const GRAPHS = [["epa", "EPA"], ...(specs.length ? [["reliable", "Reliability"]] : []), ["compare", "Compare"]];
     const g = GRAPHS.some(([k]) => k === r.query.get("g")) ? r.query.get("g") : "epa";
     $("#view").innerHTML = `<div class="card card-pad section">
       <div class="chart-head"><nav class="chart-pick">${GRAPHS.map(([k, l]) => `<a href="#/${season}/team/${n}/charts${k === "epa" ? "" : `?g=${k}`}" class="${k === g ? "active" : ""}">${l}</a>`).join("")}</nav>
@@ -703,28 +703,6 @@ async function team(r) {
         ],
         bands,
         tooltip: (i) => `${head(ms[i])}<br>EPA ${fmt(ms[i].epa[0])} · ${result(ms[i])}`,
-      });
-    } else if (g === "scores") {
-      note("Each match: this team's alliance score, what was predicted before the match, and the opponents' score (all including fouls).");
-      mountLineChart($("#chart"), {
-        series: [
-          { name: "Alliance score", color: "var(--text)", values: ms.map((m) => m.score), width: 2.5 },
-          { name: "Predicted", color: "var(--accent)", values: ms.map((m) => m.pred?.[0] ?? null), dash: true },
-          { name: "Opponents", color: "var(--red)", values: ms.map((m) => m.oppScore) },
-        ],
-        bands,
-        tooltip: (i) => `${head(ms[i])}<br>${result(ms[i])}${ms[i].pred ? ` · predicted ${fmt(ms[i].pred[0], 0)}–${fmt(ms[i].pred[1], 0)}` : ""}`,
-      });
-    } else if (g === "win") {
-      note("Chance to win before each match, and the share of the last 10 matches actually won.");
-      const won = ms.map((m) => (m.score > m.oppScore ? 1 : m.score < m.oppScore ? 0 : 0.5));
-      mountLineChart($("#chart"), {
-        series: [
-          { name: "Win chance", color: "var(--accent)", values: ms.map((m) => (m.pWin != null ? Math.round(m.pWin * 100) : null)) },
-          { name: "Win rate (last 10)", color: "var(--text)", values: won.map((_, i) => { const w = won.slice(Math.max(0, i - 9), i + 1); return Math.round((w.reduce((a, b) => a + b, 0) / w.length) * 100); }), width: 2.5 },
-        ],
-        bands, max: 100,
-        tooltip: (i) => `${head(ms[i])}<br>${ms[i].pWin != null ? `${pct(ms[i].pWin)} to win · ` : ""}${result(ms[i])}`,
       });
     } else if (g === "reliable") {
       // quals where this robot's own points are known; share of the last 10 that scored each element
