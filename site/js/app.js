@@ -610,14 +610,14 @@ async function team(r) {
   const places = t.places ?? {};
 
 
-  // header: who they are on the left; their world / country / state ranks as the
-  // headline on the right, EPA under them. Stats and awards have their own tabs.
+  // header: who they are and their EPA on top; then the radar, its numbers and the
+  // rank tiles side by side (plus photos when there are any); awards along the bottom
   const awards = t.awards ?? [];
   const plaques = awards.filter((a) => !isBanner(a)), banners = awards.filter(isBanner);
   const fact = (b, k) => `<span class="th-fact"><b>${b}</b> ${k}</span>`;
-  const rankTiles = [["World", t.rank, t.of], places.country, places.state].filter(Boolean)
-    .map(([label, rank, of]) => `<div class="rank-tile${rank === 1 ? " gold" : ""}" title="#${fmtInt(rank)} of ${fmtInt(of)} teams by EPA"><span class="rt-label">${esc(label)}</span><b>#${fmtInt(rank)}</b><span class="rt-of">of ${fmtInt(of)}</span></div>`).join("");
-  const tab = (k, label) => `<a href="#/${season}/team/${n}${k === "matches" ? "" : `/${k}`}" class="${view === k ? "active" : ""}">${label}</a>`;
+  // ranks as one line under the EPA, e.g. "#26 World · #8 Romania · #1 BZ"
+  const rankLine = [["World", t.rank, t.of], places.country, places.state].filter(Boolean)
+    .map(([label, rank, of]) => `<span title="out of ${fmtInt(of)}" class="${rank === 1 ? "gold-rank" : ""}"><b>#${fmtInt(rank)}</b> ${esc(label)}</span>`).join("");
   app.innerHTML = `
     <div class="card card-pad team-hero">
       <div class="th-top">
@@ -627,67 +627,34 @@ async function team(r) {
           <div class="th-facts">
             ${fact(`${w}-${l}${ti ? `-${ti}` : ""}`, "record")}
             ${fact(t.matches.length ? pct(w / t.matches.length) : "–", "win rate")}
-            ${banners.length ? `<a class="th-fact" href="#/${season}/team/${n}/awards"><b>${banners.length}</b> ${banners.length === 1 ? "banner" : "banners"}</a>` : ""}
             ${addPhotoLink(n)}
             ${shareButton(`t/${season}/${n}`, `${n} ${t.name}`)}
           </div>
         </div>
-        <div class="th-photo" id="photo-slot" hidden></div>
-        <div class="th-hero">
-          <div class="rank-tiles">${rankTiles}</div>
-          <div class="th-epa-line" title="${EPA_TIP}"><span>EPA</span> <b>${fmt(e.np)}</b> <span>points added per match</span></div>
+        ${awards.length ? `<div class="th-awards">
+          <div class="banners">${banners.map((a) => banner(a, season)).join("")}</div><div class="plaques">${plaques.map((a) => plaque(a, season)).join("")}</div>
+        </div>` : ""}
+        <div class="th-epa">
+          <div class="label">EPA · points added per match</div>
+          <b>${fmt(e.np)}</b>
+          <div class="th-ranks">${rankLine}</div>
         </div>
+      </div>
+      <div class="th-body">
+        <div class="radar-box" id="radar"></div>
+        <div class="th-stats">
+          <div class="stat-grid" id="stat-grid"></div>
+        </div>
+        <div class="th-photo" id="photo-slot" hidden></div>
       </div>
     </div>
     <div class="row section" style="justify-content:space-between">
       <nav class="seg glass">
-        ${tab("matches", "Matches")}${tab("charts", "Charts")}${tab("advanced", "Advanced stats")}${tab("alltime", "All-time")}${awards.length ? tab("awards", `Awards <span class="tab-count">${awards.length}</span>`) : ""}
+        <a href="#/${season}/team/${n}" class="${view === "matches" ? "active" : ""}">Matches</a>
+        <a href="#/${season}/team/${n}/charts" class="${view === "charts" ? "active" : ""}">Charts</a>
       </nav>
     </div>
     <div id="view"></div>`;
-  if (view === "advanced") {
-    $("#view").innerHTML = `<div class="card card-pad section"><div class="th-body">
-      <div class="radar-box" id="radar"></div>
-      <div class="th-stats"><div class="th-h">Compared with this season's teams that played 5+ matches</div><div class="stat-grid" id="stat-grid"></div></div>
-    </div></div>`;
-  } else if (view === "alltime") {
-    $("#view").innerHTML = `<div class="card section" id="alltime"><div class="loading">Loading every season…</div></div>`;
-    Promise.all(state.seasons.map((s) => data.team(s, n).then((x) => [s, x]).catch(() => [s, null]))).then((list) => {
-      if (stale(r)) return;
-      const seasons = list.filter(([, x]) => x?.matches?.length);
-      const rec = (x) => { const w2 = x.matches.filter((m) => m.score > m.oppScore).length, l2 = x.matches.filter((m) => m.score < m.oppScore).length; return [w2, l2, x.matches.length - w2 - l2]; };
-      const tot = seasons.reduce((a, [, x]) => { const [w2, l2, t2] = rec(x); return { w: a.w + w2, l: a.l + l2, t: a.t + t2, b: a.b + (x.awards ?? []).filter(isBanner).length, aw: a.aw + (x.awards ?? []).length }; }, { w: 0, l: 0, t: 0, b: 0, aw: 0 });
-      const best = seasons.reduce((b, [s, x]) => (!b || x.rank / x.of < b[1].rank / b[1].of ? [s, x] : b), null);
-      const topPct = (x) => Math.max(0.1, (x.rank / x.of) * 100);
-      $("#alltime").innerHTML = seasons.length ? `<div class="card-pad alltime-sum">
-          <div><b>${seasons.length}</b><span>season${seasons.length === 1 ? "" : "s"}</span></div>
-          <div><b>${tot.w}-${tot.l}${tot.t ? `-${tot.t}` : ""}</b><span>record</span></div>
-          <div><b>${tot.b}</b><span>banner${tot.b === 1 ? "" : "s"}</span></div>
-          <div><b>${tot.aw}</b><span>award${tot.aw === 1 ? "" : "s"}</span></div>
-          ${best ? `<div><b>#${fmtInt(best[1].rank)}</b><span>best world rank (${seasonLabel(best[0], "")})</span></div>` : ""}
-        </div>
-        <div class="table-wrap"><table>
-          <thead><tr><th>Season</th><th class="r">World rank</th><th class="r hide-sm">Country</th><th class="r hide-sm">State</th><th class="r"><span title="${EPA_TIP}">EPA</span></th><th class="r">Record</th><th class="r hide-sm">Events</th><th class="r">Awards</th></tr></thead>
-          <tbody>${seasons.map(([s, x]) => { const [w2, l2, t2] = rec(x); const pl = x.places ?? {}; const bn = (x.awards ?? []).filter(isBanner).length; return `<tr>
-            <td><a class="link" href="#/${s}/team/${n}"><b>${seasonLabel(s, "")}</b></a> <span class="muted small">${esc(SEASONS[s]?.game ?? "")}</span></td>
-            <td class="r"><b class="${x.rank === 1 ? "gold-text" : ""}">#${fmtInt(x.rank)}</b> <span class="faint small">top ${topPct(x) < 1 ? fmt(topPct(x), 1) : Math.round(topPct(x))}%</span></td>
-            <td class="r hide-sm">${pl.country ? `#${fmtInt(pl.country[1])} <span class="faint small">${esc(pl.country[0])}</span>` : "–"}</td>
-            <td class="r hide-sm">${pl.state ? `#${fmtInt(pl.state[1])} <span class="faint small">${esc(pl.state[0])}</span>` : "–"}</td>
-            <td class="r">${fmt(x.epa.np)}</td>
-            <td class="r small">${w2}-${l2}${t2 ? `-${t2}` : ""}</td>
-            <td class="r hide-sm small">${(x.events ?? []).length}</td>
-            <td class="r small">${(x.awards ?? []).length ? `${(x.awards ?? []).length}${bn ? ` <span class="muted">(${bn} banner${bn === 1 ? "" : "s"})</span>` : ""}` : "–"}</td>
-          </tr>`; }).join("")}</tbody></table></div>
-        <p class="small muted card-pad" style="margin:0">EPA isn't comparable between seasons (each game scores differently); world rank is.</p>`
-        : `<div class="empty">No seasons found.</div>`;
-    });
-  } else if (view === "awards" && awards.length) {
-    const item = (a, html) => `<figure class="award-item">${html}<figcaption><b>${esc(AWARD_NAMES[a.type] ?? a.type)}${a.placement > 1 && !["Winner", "Finalist", "DivisionWinner", "DivisionFinalist"].includes(a.type) ? ` · ${ordinal(a.placement)}` : ""}</b><span>${esc(shortEvent(a.evName))}</span></figcaption></figure>`;
-    $("#view").innerHTML = `<div class="card card-pad section awards-view">
-      ${banners.length ? `<div class="award-shelf banners-shelf">${banners.map((a) => item(a, banner(a, season))).join("")}</div>` : ""}
-      ${plaques.length ? `<div class="award-shelf">${plaques.map((a) => item(a, plaque(a, season))).join("")}</div>` : ""}
-    </div>`;
-  }
 
   // meta.radarDist: each axis's spread over the season's teams (older data: from teams.json)
   (meta.radarDist ? Promise.resolve(null) : data.teams(season)).then((rows) => {
@@ -705,7 +672,6 @@ async function team(r) {
   // photos come from a separate service; show the page now and add them when they arrive
   showPhotos(n, r);
 
-  if (view === "advanced" || view === "alltime" || (view === "awards" && awards.length)) return; // drawn above
   if (view === "charts") {
     // ?g=epa | compare (&vs=team for compare)
     // ?g=reliable only where FTC's score data credits some points to each robot
@@ -882,7 +848,7 @@ function showPhotos(n, r) {
     if ((r && stale(r)) || !slot || String(slot.dataset.team ?? n) !== String(n) || !list.length) return;
     slot.innerHTML = teamPhotos(n, list);
     slot.hidden = false;
-    slot.closest(".th-top")?.classList.add("has-photo");
+    slot.closest(".th-body")?.classList.add("has-photo");
   });
 }
 
