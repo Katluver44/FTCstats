@@ -28,6 +28,8 @@ await fs.writeFile(path.join(out, "vercel.json"), JSON.stringify({
   // one canonical host: www.oddbot.org sends every path to oddbot.org. 308 keeps the method,
   // and the browser carries the #/... route across the redirect on its own.
   redirects: [
+    // the bare root needs its own rule: "/:path*" below does not match "/" on Vercel
+    { source: "/", has: [{ type: "host", value: "www.oddbot.org" }], destination: "https://oddbot.org/", permanent: true },
     { source: "/:path*", has: [{ type: "host", value: "www.oddbot.org" }], destination: "https://oddbot.org/:path*", permanent: true },
   ],
   // short share links with their own preview card (photo-service/api/share.js)
