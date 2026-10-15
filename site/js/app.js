@@ -1527,7 +1527,7 @@ function eventForecast(season, meta, ev, matches) {
 function eventAdvancement(season, meta, ev, matches, official) {
   const names = new Map([...ev.teamList.map((t) => [t.team, t.name]), ...Object.entries(ev.adv?.names ?? {}).map(([t, n]) => [+t, n])]);
   if (ev.adv) {
-    const adv = new Set(ev.adv.advanced), dec = new Set(ev.adv.declined);
+    const adv = new Set(ev.adv.advanced), dec = new Set(ev.adv.declined), already = new Set(ev.adv.already ?? []);
     const showAdv = adv.size > 0 || dec.size > 0;
     $("#tab").innerHTML = `<div class="card card-pad"><div class="row" style="justify-content:space-between">
         <div class="small muted">Quals, alliance selection, playoff and judged award points, worked out from FIRST's rules and results.</div>
@@ -1543,7 +1543,7 @@ function eventAdvancement(season, meta, ev, matches, official) {
           <td class="r hide-sm">${playoff || '<span class="faint">–</span>'}</td>
           <td class="r hide-sm">${selection || '<span class="faint">–</span>'}</td>
           <td class="r hide-sm">${qual}</td>
-          ${showAdv ? `<td class="r">${adv.has(team) ? '<span class="pill">Advanced</span>' : dec.has(team) ? '<span class="faint small">Declined</span>' : ""}</td>` : ""}
+          ${showAdv ? `<td class="r">${adv.has(team) ? '<span class="pill">Advanced</span>' : dec.has(team) ? '<span class="faint small">Declined</span>' : already.has(team) ? '<span class="faint small" title="Already advanced from an earlier event">Already</span>' : ""}</td>` : ""}
         </tr>`).join("")}</tbody></table></div></div>`;
     return;
   }

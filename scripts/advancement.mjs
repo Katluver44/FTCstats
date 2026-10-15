@@ -32,7 +32,7 @@ export async function fetchAdvancement(season) {
   const events = [];
   for (const f of await fs.readdir(dir).catch(() => [])) {
     const ev = await readJson(path.join(dir, f), null);
-    if (ev && !ev.remote && ADVANCING_TYPES.has(ev.type)) events.push({ code: ev.code, type: ev.type, finished: ev.finished, played: ev.matches.some((m) => m.hasBeenPlayed) });
+    if (ev && !ev.remote && ADVANCING_TYPES.has(ev.type)) events.push({ code: ev.code, type: ev.type, finished: ev.finished, end: ev.end, played: ev.matches.some((m) => m.hasBeenPlayed) });
   }
   const evFile = path.join(".cache", "first-events", `${season}.json`);
   if (!(await exists(evFile)) || events.some((e) => !e.finished)) {
@@ -55,6 +55,10 @@ export async function fetchAdvancement(season) {
       if (await exists(f)) continue;
       const r = await first(p).catch((err) => (console.warn(`  ${p}: ${err.message}`), undefined));
       if (r === undefined) continue; // error: try again next run
+      // FIRST can post the advanced list / LT rankings days after the event: don't cache an
+      // empty answer for good until the event is two weeks old
+      const empty = kind === "advancement" ? !r?.advancement?.length : !r?.rankings?.length;
+      if (empty && e.end && Date.now() - Date.parse(e.end) < 14 * 864e5) continue;
       await fs.mkdir(path.dirname(f), { recursive: true });
       await fs.writeFile(f, JSON.stringify(r ?? {}));
       fetched++;
@@ -90,7 +94,7 @@ export async function divisionsOf(season, events) {
 // ev.adv for a finished event. units: [{ code, teamList, matchList }] (the event itself, or each
 // division); finals: the parent's { teamList, matchList } for dual-division events.
 // official: the season's alliances.json (FIRST's alliance selections).
-// -> { rows: [[team, total, judging, playoff, selection, qual]], slots, advanced, declined } or null
+// -> { rows: [[team, total, judging, playoff, selection, qual]], slots, advanced, declined, already } or null
 export async function buildAdv(season, ev, units, finals, official = {}) {
   const cache = (kind, code) => readJson(path.join(".cache", kind, String(season), `${code}.json`), null);
   const awards = await readJson(path.join(".cache", "awards", String(season), `${ev.code}.json`), []);
@@ -124,7 +128,10 @@ export async function buildAdv(season, ev, units, finals, official = {}) {
   return {
     rows: rows.map((r) => [r.team, r.total, r.judging, r.playoff, r.selection, r.qual]),
     slots: advData?.slots ?? null,
-    advanced: list.filter((a) => !a.declined).map((a) => a.team),
+    // status FIRST = took a slot here; ALREADY_ADVANCING = qualified at an earlier event
+    // (FIRST's report shows "-" for them); INELIGIBLE = neither
+    advanced: list.filter((a) => !a.declined && (a.status ?? "FIRST") === "FIRST").map((a) => a.team),
     declined: list.filter((a) => a.declined).map((a) => a.team),
+    already: list.filter((a) => !a.declined && a.status === "ALREADY_ADVANCING").map((a) => a.team),
   };
 }
