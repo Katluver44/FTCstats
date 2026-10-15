@@ -25,6 +25,11 @@ const index = path.join(out, "index.html");
 await fs.writeFile(index, (await fs.readFile(index, "utf8")).replace(/((?:href|src)="(?:js\/[\w-]+\.js|css\/style\.css))"/g, `$1?v=${v}"`));
 
 await fs.writeFile(path.join(out, "vercel.json"), JSON.stringify({
+  // one canonical host: www.oddbot.org sends every path to oddbot.org. 308 keeps the method,
+  // and the browser carries the #/... route across the redirect on its own.
+  redirects: [
+    { source: "/:path*", has: [{ type: "host", value: "www.oddbot.org" }], destination: "https://oddbot.org/:path*", permanent: true },
+  ],
   // short share links with their own preview card (photo-service/api/share.js)
   rewrites: [
     { source: "/t/:season/:id", destination: "/api/share?kind=team&season=:season&id=:id" },
