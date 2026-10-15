@@ -47,13 +47,17 @@ async function route() {
   renderNav(r);
   // the home page fits one screen on desktop (fitHome); every other page scrolls normally
   document.body.classList.toggle("home-fit", !r.page);
-  window.scrollTo(0, 0);
-  app.innerHTML = `<div class="loading">Loading…</div>`;
+  // keep the current page (dimmed) until the new one is ready, instead of flashing a blank
+  // "Loading…" screen; only a slow load (over 0.6 s) shows the loading message
+  app.classList.add("routing");
+  const slow = setTimeout(() => { if (!stale(r)) { app.innerHTML = `<div class="loading">Loading…</div>`; window.scrollTo(0, 0); } }, 600);
   const pages = { "": home, teams, team, events, event, match, compete, h2h, sim, about };
   const fn = pages[r.page] ?? notFound;
   setTitle(r.page && (PAGE_TITLES[r.page] ?? "Page not found"));
   try {
     await fn(r);
+    clearTimeout(slow);
+    if (!stale(r)) { app.classList.remove("routing"); window.scrollTo(0, 0); }
     if (!stale(r)) labelFilters($("#app")); // filters set from the link already read "All …"
     // a heading names the page better, e.g. "20265 Heart of RoBots · FTCstats"
     const h1 = !stale(r) && r.page && $("#app h1");
@@ -61,6 +65,8 @@ async function route() {
     if (!stale(r)) trackPage(`/${r.season}/${[r.page, ...r.args].filter(Boolean).join("/")}`, document.title);
   } catch (e) {
     console.error(e);
+    clearTimeout(slow);
+    if (!stale(r)) app.classList.remove("routing");
     if (!stale(r)) app.innerHTML = `<div class="card empty">Couldn't load this page. Check the link, or try another season.</div>`;
   }
 }
