@@ -23,7 +23,9 @@ function parseHash() {
   const [path, query = ""] = location.hash.replace(/^#\/?/, "").split("?");
   const parts = path.split("/").filter(Boolean);
   let season = state.defaultSeason;
-  if (/^\d{4}$/.test(parts[0]) && state.seasons.includes(+parts[0])) season = +parts.shift();
+  // before data/index.json arrives (boot routes at once), any season the site knows about counts
+  const known = state.seasons.length ? state.seasons : Object.keys(SEASONS).map(Number);
+  if (/^\d{4}$/.test(parts[0]) && known.includes(+parts[0])) season = +parts.shift();
   return { season, page: parts[0] ?? "", args: parts.slice(1), query: new URLSearchParams(query) };
 }
 
@@ -42,6 +44,8 @@ const setTitle = (name) => (document.title = name ? `${name} · oddrobot` : "odd
 
 async function route() {
   clearInterval(state.liveTimer);
+  // a bare "#/" needs the index to know the default season; a link naming one doesn't wait
+  if (!state.seasons.length && !SEASONS[location.hash.match(/^#\/(\d{4})(?=\/|\?|$)/)?.[1]]) await state.indexReady;
   const r = parseHash();
   r.nav = ++state.nav;
   state.season = r.season;
@@ -294,7 +298,7 @@ function wireNavSearchToggle() {
 
 async function home(r) {
   const { season } = r;
-  const [meta, sum] = await Promise.all([data.meta(season), data.summary(season)]);
+  const [meta, sum] = await Promise.all([data.meta(season), data.summary(season), state.indexReady]);
   if (stale(r)) return;
   const teams = data.rows(sum.cols, sum.top);
   const acc = meta.accuracy.all;
@@ -653,7 +657,7 @@ async function team(r) {
     // who it is (if it played last season) and the seasons it did play, checked file by file
     const [p, playedIn] = await Promise.all([
       data.pre(season).then((list) => list.find((x) => x.team === n)),
-      Promise.all(state.seasons.filter((s) => s !== season).map((s) => data.team(s, n).then((x) => (x?.matches?.length ? [s, x] : null)).catch(() => null))),
+      state.indexReady.then(() => Promise.all(state.seasons.filter((s) => s !== season).map((s) => data.team(s, n).then((x) => (x?.matches?.length ? [s, x] : null)).catch(() => null)))),
     ]);
     if (stale(r)) return;
     const seasons = playedIn.filter(Boolean);
@@ -1284,6 +1288,7 @@ const latestStream = (videos, code) => [...(videos?.[code]?.streams ?? [])].sort
 // (a test hook) pretends it is that day.
 async function live(r) {
   const { season, query } = r;
+  await state.indexReady;
   const newest = state.seasons[0];
   const at = /^\d{4}-\d{2}-\d{2}$/.test(query.get("at") ?? "") ? query.get("at") : null;
   const years = (s) => `${s}–${String(s + 1).slice(2)}`;
@@ -2539,6 +2544,7 @@ async function h2h(r) {
   teamTypeahead($("#h2h-b"), byEpa, meta, (n) => (location.hash = href({ b: n })));
   $("#h2h-swap").onclick = () => (location.hash = href({ a: B ?? "", b: A ?? "" }));
 
+  if (view === "career") await state.indexReady;
   const seasons = view === "career" ? [...state.seasons].sort((x, y) => x - y) : [season];
   const load = (n) => (n == null ? Promise.resolve(null) : Promise.all(seasons.map((s) => data.team(s, n).catch(() => null))));
   const [ta, tb] = await Promise.all([load(A), load(B)]);
@@ -2803,15 +2809,19 @@ async function boot() {
   document.documentElement.dataset.theme = "dark";
   try { localStorage.removeItem("theme"); } catch {}
 
-  // one small file says which seasons exist and which to open by default
-  const index = await getJSON("data/index.json").catch(() => null);
-  if (index) {
-    state.seasons = index.seasons;
-    state.defaultSeason = index.default;
-  } else {
-    state.seasons = await data.seasons();
-    state.defaultSeason = state.seasons[0];
-  }
+  // one small file says which seasons exist and which to open by default. A link that names
+  // a season routes at once (below) instead of waiting a round trip for it; the season menu
+  // fills in when it lands, and pages that need the list await this same promise.
+  state.indexReady = getJSON("data/index.json").catch(() => null).then(async (index) => {
+    if (index) {
+      state.seasons = index.seasons;
+      state.defaultSeason = index.default;
+    } else {
+      state.seasons = await data.seasons();
+      state.defaultSeason = state.seasons[0];
+    }
+    if (state.season != null) renderNav(parseHash());
+  }).catch((e) => console.error(e)); // no season list: pages still open from SEASONS
 
   wireSeasonPicker();
   wireSearch($(".nav-search"));
