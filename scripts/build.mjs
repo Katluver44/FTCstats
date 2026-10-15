@@ -743,6 +743,7 @@ export async function build(season, params = {}, epaOver = {}) {
           solo: start.solo.map(r1), n: start.n, v: r3(start.v), rp: start.rp.map(r3), ev: start.ev ?? null,
           evStart: start.evStart ? Object.fromEntries(Object.entries(start.evStart).map(([k, v]) => [k, r1(v)])) : null,
           ...(start.zone ? { zone: start.zone.map(r3) } : {}),
+          ...(start.cov ? { cov: start.cov.map((x, i) => (i & 1 ? r3(x) : x)) } : {}),
         } : null,
         epaEnd: h.length ? h[h.length - 1].epa[0] : null,
         // [np, auto, teleop, endgame] entering the event and after its last match here, for the pick map
