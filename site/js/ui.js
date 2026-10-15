@@ -17,6 +17,7 @@ export function getJSON(url) {
   return cache.get(url);
 }
 
+const searchIdx = new Map(); // season -> promise of its search index
 const noVideo = new Set(); // "<season>/<code>" of events whose videos file 404'd
 export const data = {
   seasons: () => getJSON("data/seasons.json"),
@@ -49,6 +50,21 @@ export const data = {
     return out;
   },
   ranking: (s) => getJSON(`data/${s}/ranking.json`).catch(() => null),
+  // search index {played, teams: {num, name, loc}, events: [[code, name, type, start, loc, teams, st]]}
+  // (scripts/build.mjs), fetched when a search box gets focus. Seasons built before
+  // search.json: made from the full tables
+  search(s) {
+    if (!searchIdx.has(s)) searchIdx.set(s, getJSON(`data/${s}/search.json`).catch(async () => {
+      const [t, pre, ev] = await Promise.all([data.teams(s), data.pre(s), data.events(s)]);
+      const all = [...t, ...pre];
+      return {
+        played: t.length,
+        teams: { num: all.map((x) => x.team), name: all.map((x) => x.name), loc: all.map((x) => x.loc) },
+        events: ev.map((e) => [e.code, e.name, e.type, e.start, e.loc, e.teams, e.ongoing ? 1 : e.finished ? 2 : 0]),
+      };
+    }).catch((e) => { searchIdx.delete(s); throw e; }));
+    return searchIdx.get(s);
+  },
   // last season's teams that haven't played yet this season, on the EPA they start with
   async pre(s) {
     const t = await getJSON(`data/${s}/teams-pre.json`).catch(() => null);
@@ -86,10 +102,13 @@ export const fmt = (x, d = 1) => (x == null || Number.isNaN(x) ? "–" : Number(
 export const pct = (x, d = 0) => (x == null ? "–" : `${(x * 100).toFixed(d)}%`);
 export const fmtInt = (x) => (x == null ? "–" : Number(x).toLocaleString());
 
+// one formatter per options: toLocaleDateString builds a new one on every call, which is slow
+const dateFmts = new Map();
 export function fmtDate(s, opts = { month: "short", day: "numeric" }) {
   if (!s) return "";
-  const d = new Date(`${s}T12:00:00`);
-  return d.toLocaleDateString(undefined, opts);
+  const key = JSON.stringify(opts);
+  if (!dateFmts.has(key)) dateFmts.set(key, new Intl.DateTimeFormat(undefined, opts));
+  return dateFmts.get(key).format(new Date(`${s}T12:00:00`));
 }
 export function fmtRange(a, b) {
   if (!b || a === b) return fmtDate(a, { month: "short", day: "numeric", year: "numeric" });

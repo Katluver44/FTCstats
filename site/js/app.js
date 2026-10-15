@@ -199,54 +199,83 @@ const notFound = () => (app.innerHTML = `<div class="bot-empty">${robot("", 56)}
 // don't matter ("ice" finds I.C.E. Robotics). Ties go to stronger teams, teams that
 // have played, and events that are live or soon.
 const normText = (x) => String(x ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
-function textScore(text, q) {
-  const t = normText(text), tq = normText(q);
-  if (!t || !tq) return 0;
-  const tc = t.replace(/ /g, ""), qc = tq.replace(/ /g, "");
+// normalized once: the text, the same without spaces, and with a leading space (word starts)
+const prepText = (x) => { const t = normText(x); return { t, tc: t.replace(/ /g, ""), ts: " " + t }; };
+function prepScore({ t, tc, ts }, { t: tq, tc: qc, ts: qs }) {
+  // every match below has the search inside the spaceless text, so most rows stop here
+  if (!tq || !tc.includes(qc)) return 0;
   if (t === tq || tc === qc) return 100;
   if (t.startsWith(tq) || tc.startsWith(qc)) return 80;
-  if ((" " + t).includes(" " + tq)) return 60;
+  if (ts.includes(qs)) return 60;
   // inside a word ("practice" for "ice") only for longer searches, where it is rarely noise
   if (qc.length >= 4 && (t.includes(tq) || tc.includes(qc))) return 40;
   return 0;
 }
+const textScore = (text, q) => prepScore(prepText(text), prepText(q));
+// the season's search rows with their names and places normalized, built once per index
+const searchPrepped = new WeakMap();
+async function searchIndex(season) {
+  const raw = await data.search(season);
+  if (!searchPrepped.has(raw)) {
+    const { num, name, loc } = raw.teams;
+    searchPrepped.set(raw, {
+      played: raw.played || 1,
+      teams: num.map((t, i) => ({ num: String(t), name: name[i], rank: i < raw.played ? i + 1 : null, pre: i >= raw.played, nameP: prepText(name[i]), locP: prepText(loc[i]) })),
+      events: raw.events.map(([code, name, type, start, loc, teams, st]) => ({
+        code, lc: code.toLowerCase(), name, type, start, teams, ongoing: st === 1, finished: st === 2, nameP: prepText(name), locP: prepText(loc) })),
+    });
+  }
+  return searchPrepped.get(raw);
+}
+// keeps a list's best 7 by score, earlier entries first on ties (as a stable sort would)
+function keepTop(list, entry) {
+  if (list.length >= 7 && entry.sc <= list[6].sc) return;
+  let i = list.length;
+  while (i > 0 && list[i - 1].sc < entry.sc) i--;
+  list.splice(i, 0, entry);
+  if (list.length > 7) list.pop();
+}
 async function searchItems(season, q) {
   q = q.trim();
   if (!q) return [];
-  const [played, pre, events] = await Promise.all([data.teams(season), data.pre(season), data.events(season)]);
-  const teams = [...played, ...pre]; // teams that haven't played yet this season are findable too
-  const isNum = /^\d+$/.test(q);
-  const scored = [];
-  const n = played.length || 1;
+  const { played: n, teams, events } = await searchIndex(season); // teams that haven't played yet this season are in it too
+  const isNum = /^\d+$/.test(q), qp = prepText(q);
+  // at most 7 of a kind are shown, so only each kind's best 7 are kept (no sort of every match)
+  const top = { Team: [], Event: [], Page: [] };
   for (const t of teams) {
     let sc = 0;
-    const num = String(t.team);
+    const num = t.num;
     if (isNum) sc = num === q ? 120 : num.startsWith(q) ? 90 - (num.length - q.length) * 3 : 0;
-    else sc = Math.max(textScore(t.name, q), textScore(t.loc, q) * 0.4);
+    else if ((sc = prepScore(t.nameP, qp)) < 40) sc = Math.max(sc, prepScore(t.locP, qp) * 0.4); // a place scores 40 at most
     if (!sc) continue;
     // tie-breaks: played this season, then higher in the rankings
     sc += (t.pre ? 0 : 4) + (t.pre ? 0 : 3 * (1 - (t.rank ?? n) / n));
-    scored.push({ sc, item: { href: `#/${season}/team/${t.team}`, main: num, sub: t.name, kind: "Team" } });
+    keepTop(top.Team, { sc, t });
   }
-  const today = localToday(0);
+  const today = localToday(0), soonEnd = localToday(21);
   // what people call events: "worlds", "states"
-  const alias = { worlds: ["world championship"], world: ["world championship"], states: ["state championship"], state: ["state championship"] }[normText(q)] ?? [];
+  const alias = ({ worlds: ["world championship"], world: ["world championship"], states: ["state championship"], state: ["state championship"] }[qp.t] ?? []).map(prepText);
+  const ql = q.toLowerCase();
   for (const e of events) {
-    const code = e.code.toLowerCase(), ql = q.toLowerCase();
+    const code = e.lc;
     let sc = code === ql ? 110 : !isNum && code.startsWith(ql) && ql.length >= 3 ? 65 : 0;
-    if (!isNum) sc = Math.max(sc, textScore(e.name, q), textScore(e.loc, q) * 0.4, ...alias.map((a) => textScore(e.name, a) - 5));
+    if (!isNum) sc = Math.max(sc, prepScore(e.nameP, qp), prepScore(e.locP, qp) * 0.4, ...alias.map((a) => prepScore(e.nameP, a) - 5));
     if (!sc) continue;
     sc += { FIRSTChampionship: 6, Premier: 3, Championship: 3, SuperQualifier: 2, Qualifier: 1, LeagueTournament: 1 }[e.type] ?? 0;
-    const soon = e.ongoing ? 6 : e.start >= today && e.start <= localToday(21) ? 4 : !e.finished ? 1 : 0;
+    const soon = e.ongoing ? 6 : e.start >= today && e.start <= soonEnd ? 4 : !e.finished ? 1 : 0;
     sc += soon + Math.min(2, (e.teams ?? 0) / 25) - e.name.length / 200; // shorter = the main event, not a division
-    scored.push({ sc, item: { href: `#/${season}/event/${e.code}`, main: e.name, sub: `${fmtDate(e.start)}${e.ongoing ? " · live" : ""}`, kind: "Event" } });
+    keepTop(top.Event, { sc, e });
   }
   const pageSc = normText(q).length >= 3 ? Math.max(textScore("Happening now", q), textScore("live", q)) : 0;
-  if (pageSc && events.some((e) => e.ongoing)) scored.push({ sc: pageSc + 10, item: { href: `#/${season}/live`, main: "Happening now", sub: "Every event running today", kind: "Page" } });
-  scored.sort((x, y) => y.sc - x.sc);
+  if (pageSc && events.some((e) => e.ongoing)) top.Page.push({ sc: pageSc + 10 });
+  // stable sort: ties keep teams, then events, then the page, each in list order
+  const scored = [...top.Team, ...top.Event, ...top.Page].sort((x, y) => y.sc - x.sc).map(({ t, e }) =>
+    t ? { href: `#/${season}/team/${t.num}`, main: t.num, sub: t.name, kind: "Team" }
+    : e ? { href: `#/${season}/event/${e.code}`, main: e.name, sub: `${fmtDate(e.start)}${e.ongoing ? " · live" : ""}`, kind: "Event" }
+    : { href: `#/${season}/live`, main: "Happening now", sub: "Every event running today", kind: "Page" });
   // up to 10, at most 7 of one kind so both show when both match
   const out = [], count = { Team: 0, Event: 0, Page: 0 };
-  for (const { item } of scored) {
+  for (const item of scored) {
     if (count[item.kind] >= 7) continue;
     out.push(item); count[item.kind]++;
     if (out.length >= 10) break;
@@ -263,14 +292,21 @@ function wireSearch(wrap) {
       || (input.value.trim() ? `<div class="empty small"><span class="bot-inline">${robot("", 24)}No teams or events match.</span></div>` : "");
     box.classList.toggle("open", !!input.value.trim());
   };
-  input.oninput = async () => { items = await searchItems(state.season, input.value); sel = 0; draw(); };
+  // results from an older keystroke that finish late are dropped
+  let seq = 0;
+  input.onfocus = () => { searchIndex(state.season).catch(() => {}); }; // load and prepare before the first keystroke
+  input.oninput = async () => {
+    const my = ++seq, got = await searchItems(state.season, input.value);
+    if (my !== seq) return;
+    items = got; sel = 0; draw();
+  };
   input.onkeydown = (e) => {
     if (e.key === "ArrowDown") { sel = Math.min(items.length - 1, sel + 1); draw(); e.preventDefault(); }
     if (e.key === "ArrowUp") { sel = Math.max(0, sel - 1); draw(); e.preventDefault(); }
     if (e.key === "Enter" && items[sel]) { location.hash = items[sel].href; close(); }
     if (e.key === "Escape") close();
   };
-  const close = () => { input.value = ""; items = []; box.classList.remove("open"); input.blur(); };
+  const close = () => { seq++; input.value = ""; items = []; box.classList.remove("open"); input.blur(); };
   box.onclick = () => close();
   if (!wrap.dataset.wired) {
     wrap.dataset.wired = "1";
