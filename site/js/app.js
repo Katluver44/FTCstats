@@ -802,7 +802,7 @@ async function team(r) {
       </div>
     </div>
     <div class="row section" style="justify-content:space-between">
-      <nav class="seg glass">
+      <nav class="seg-switch" aria-label="View">
         <a href="#/${season}/team/${n}" class="${view === "matches" ? "active" : ""}">Matches</a>
         <a href="#/${season}/team/${n}/charts" class="${view === "charts" ? "active" : ""}">Charts</a>
       </nav>
