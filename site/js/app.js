@@ -937,12 +937,20 @@ async function team(r) {
     if (!ms.length) return `<div class="ev ev-empty ev-head">${[link, ...won.map(awardText), fmtDate(ev.start, { month: "short", day: "numeric" })].join(" · ")}</div>`;
     const stats = [ev.rank != null ? `Rank <b>${ev.rank}</b>` : null, ev.wins != null ? `<b>${ev.wins}-${ev.losses}${ev.ties ? `-${ev.ties}` : ""}</b>` : null,
       (ev.epaEnd ?? ev.epaStart) != null ? `<span title="EPA after its last match at this event">EPA <b>${fmt(ev.epaEnd ?? ev.epaStart)}</b></span>` : null].filter(Boolean);
+    // desktop: the event's rank / record / EPA as a box on the right; phones: the same as one plain line under the title
     return `<div class="ev">
       <div class="ev-head">
-        <h2>${link}</h2>
-        <div class="small muted">${typeName(ev.type)} · ${fmtDate(ev.start, { month: "short", day: "numeric", year: "numeric" })}</div>
-        ${stats.length ? `<div class="ev-stats muted">${stats.join(" · ")}</div>` : ""}
-        ${won.length ? `<div class="ev-awards small muted">${won.map(awardText).join(" · ")}</div>` : ""}
+        <div class="ev-main">
+          <h2>${link}</h2>
+          <div class="small muted">${typeName(ev.type)} · ${fmtDate(ev.start, { month: "short", day: "numeric", year: "numeric" })}</div>
+          ${stats.length ? `<div class="ev-stats muted">${stats.join(" · ")}</div>` : ""}
+          ${won.length ? `<div class="ev-awards small muted">${won.map(awardText).join(" · ")}</div>` : ""}
+        </div>
+        <div class="ev-box">
+          <div><span class="k">Rank</span><b>${ev.rank ?? "–"}</b></div>
+          <div><span class="k">Record</span><b>${ev.wins != null ? `${ev.wins}-${ev.losses}${ev.ties ? `-${ev.ties}` : ""}` : "–"}</b></div>
+          <div title="EPA after its last match at this event"><span class="k">EPA</span><b>${fmt(ev.epaEnd ?? ev.epaStart)}</b></div>
+        </div>
       </div>
       ${matchTable(season, ms, { me: n, rpNames: meta.rpNames, video, href: (m) => matchHref(season, ev.code, m.d) })}
     </div>`;

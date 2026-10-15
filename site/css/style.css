@@ -1753,7 +1753,10 @@ main > #tab > .card:last-child { flex: 1; }
 .th-ranks b { font-size: 15px; font-weight: 800; letter-spacing: 0; }
 /* team events: one pane, a hairline between events, the event's numbers as one plain line */
 .team-evs .ev + .ev { border-top: 1px solid var(--line); }
-.team-evs .ev-head { display: block; padding-top: 24px; padding-bottom: 8px; }
+.team-evs .ev-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding-top: 24px; padding-bottom: 8px; }
+.team-evs .ev-main { min-width: 0; }
+.team-evs .ev-stats { display: none; } /* desktop: the numbers are in the box on the right */
+@media (max-width: 640px) { .team-evs .ev-head { display: block; } .team-evs .ev-box { display: none; } .team-evs .ev-stats { display: block; } }
 .team-evs .ev-head h2 { margin: 0; }
 .ev-stats { margin-top: 4px; font-size: 15px; font-variant-numeric: tabular-nums; }
 .ev-stats b { color: var(--text); font-weight: 600; }
@@ -1944,7 +1947,6 @@ td.epa-col .epa { background: none !important; color: var(--text) !important; pa
 @media (min-width: 901px) { .nav-search .search-results { left: auto; min-width: 480px; } }
 /* events list: the name column takes the slack so the number columns sit together and the last one stays near the edge;
    no Matches column when nothing listed has been played */
-.ev-list th:first-child { width: 42%; }
 .ev-list.none-played .col-matches { display: none; }
 /* match page previous / next: a soft pill behind the link under the pointer, like the gear button's hover */
 .page-head .head-nav { gap: 4px; margin-right: -8px; }
@@ -1953,10 +1955,17 @@ td.epa-col .epa { background: none !important; color: var(--text) !important; pa
 @media (max-width: 640px) { .page-head .head-nav { margin: -12px 0 0 -8px; } }
 /* teams list "Season only | All events": the same segmented switch as Table | Chart beside it */
 .toolbar .scope { gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
-.toolbar .scope a { min-height: 28px; padding: 0 12px; border: 0; border-radius: 6px; color: var(--muted); }
+.toolbar .scope a { min-height: 32px; margin: 0; padding: 0 12px; border: 0; border-radius: 6px; color: var(--muted); }
 .toolbar .scope a:hover { color: var(--text); }
 /* the chosen side: solid blue with white text (Table | Chart matches) */
 .toolbar .scope a.active, .toolbar .scope a.active:hover, .view-pick button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); box-shadow: none; }
 .toolbar .scope a.active::after { content: none; }
 /* phones: the blue sorted column gets a little room either side of its numbers */
 @media (max-width: 640px) { th.col-sorted, td.col-sorted { padding-left: 16px !important; padding-right: 16px !important; } }
+/* sortable lists (teams, events, event Teams tab): number columns hug their content, with a floor so they stay evenly
+   readable; the Team / Event column takes every leftover pixel, so a wide screen never stretches the last column */
+@media (min-width: 641px) {
+  :is(#tbl, .tt-card) table :is(th.num, th.r, th.c) { width: 1%; min-width: 96px; white-space: nowrap; }
+  :is(#tbl, .tt-card) table th.num { min-width: 56px; }
+  :is(#tbl, .tt-card) table :is(td.r, td.c) { white-space: nowrap; }
+}
