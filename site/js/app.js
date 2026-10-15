@@ -1235,8 +1235,7 @@ async function events(r) {
     { key: "start", label: "Date", cls: "c small muted", render: (e) => fmtDate(e.start) },
     { key: "type", label: "Type", cls: "c small muted hide-sm", render: (e) => esc(typeName(e.type)) },
     { key: "teams", label: "Teams", cls: "r hide-sm" },
-        // events not played yet: no match count, and no strength until its teams have ratings (it read "0.0")
-    { key: "played", label: "Matches", cls: "r small hide-sm col-matches", render: (e) => (e.matches ? (e.played < e.matches ? `${e.played}/${e.matches}` : e.matches) : "") },
+        // events not played yet: no strength until its teams have ratings (it read "0.0")
     { key: "strength", label: "Strength", cls: "r epa-col hide-sm", render: (e) => (e.strength > 0 ? epa(e.strength, meta) : '<span class="faint">–</span>') },
   ];
   $("#tbl").classList.add("ev-list");
@@ -1244,14 +1243,13 @@ async function events(r) {
   // first); past seasons just run newest first. Clicking Date sorts by date as usual.
   const current = season === state.defaultSeason, todayMs = Date.parse(localToday(0));
   for (const e of evs) { const d = Date.parse(e.start) - todayMs; e.soon = e.ongoing ? -1 : !e.finished && d >= -86400e3 ? Math.max(0, d) : 1e15 - d; }
-  const table = sortableTable($("#tbl"), evs, cols, current ? { sortKey: "soon", desc: false } : { sortKey: "start" });
+  const table = sortableTable($("#tbl"), evs, cols, current ? { sortKey: "soon", desc: false, mark: "start" } : { sortKey: "start" });
   const fillStates = regionSelect($("#state"), () => evs.filter((e) => e.country === $("#country").value), query.get("state"));
   const apply = () => {
     const q = $("#filter").value.trim().toLowerCase(), ty = $("#type").value, c = $("#country").value, st = $("#state").value, mo = $("#month").value, stat = $("#status")?.value ?? "";
     syncQuery({ q: $("#filter").value.trim(), type: ty, country: c, state: st, month: mo, status: stat });
     const shown = evs.filter((e) => (!ty || e.type === ty) && (!c || e.country === c) && (!st || e.region === st) && (!mo || e.month === mo) && (!stat || status(e) === stat) &&
       (!q || e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q) || e.loc.toLowerCase().includes(q)));
-    $("#tbl").classList.toggle("none-played", !shown.some((e) => e.matches)); // no Matches column when nothing listed has played
     table.setRows(shown);
   };
   $("#filter").oninput = apply; $("#type").onchange = apply; $("#state").onchange = apply; $("#month").onchange = apply; if ($("#status")) $("#status").onchange = apply;

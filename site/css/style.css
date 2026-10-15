@@ -1945,9 +1945,6 @@ td.epa-col .epa { background: none !important; color: var(--text) !important; pa
 .search-results a .muted { flex: none; white-space: nowrap; }
 /* desktop header search: results wider than the box (opening leftwards), so division names fit */
 @media (min-width: 901px) { .nav-search .search-results { left: auto; min-width: 480px; } }
-/* events list: the name column takes the slack so the number columns sit together and the last one stays near the edge;
-   no Matches column when nothing listed has been played */
-.ev-list.none-played .col-matches { display: none; }
 /* match page previous / next: a soft pill behind the link under the pointer, like the gear button's hover */
 .page-head .head-nav { gap: 4px; margin-right: -8px; }
 .page-head .head-nav .link { padding: 4px 8px; border-radius: 8px; transition: background-color .12s; }

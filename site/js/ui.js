@@ -391,9 +391,12 @@ function niceStep(raw) {
 }
 
 // Sortable table: cols [{ key, label, cls, render(row), sort? }]
-export function sortableTable(el, rows, cols, { sortKey, desc = true, pageSize = 100, rowClass = null } = {}) {
+// mark: the column shown as sorted (arrow, blue strip) when the sort key isn't a column, e.g. an "upcoming first"
+// order that is really by date; clicking that column then sorts by it as usual
+export function sortableTable(el, rows, cols, { sortKey, desc = true, pageSize = 100, rowClass = null, mark = null } = {}) {
   let key = sortKey, dir = desc ? -1 : 1, shown = pageSize;
   const draw = () => {
+    const markKey = cols.some((c) => c.key === key) ? key : mark;
     const sorted = [...rows].sort((a, b) => {
       const av = a[key], bv = b[key];
       if (av == null) return 1;
@@ -401,9 +404,9 @@ export function sortableTable(el, rows, cols, { sortKey, desc = true, pageSize =
       return (av > bv ? 1 : av < bv ? -1 : 0) * dir;
     });
     const head = cols.map((c) =>
-      `<th class="${c.cls ?? ""} ${c.sort === false ? "" : "sortable"} ${c.key === key ? `sorted col-sorted ${dir > 0 ? "asc" : ""}` : ""}" data-k="${c.key}">${c.label}</th>`).join("");
+      `<th class="${c.cls ?? ""} ${c.sort === false ? "" : "sortable"} ${c.key === markKey ? `sorted col-sorted ${dir > 0 ? "asc" : ""}` : ""}" data-k="${c.key}">${c.label}</th>`).join("");
     const body = sorted.slice(0, shown).map((r) =>
-      `<tr${rowClass?.(r) ? ` class="${rowClass(r)}"` : ""}>${cols.map((c) => `<td class="${c.cls ?? ""} ${c.key === key ? "col-sorted" : ""}">${c.render ? c.render(r) : esc(r[c.key])}</td>`).join("")}</tr>`).join("");
+      `<tr${rowClass?.(r) ? ` class="${rowClass(r)}"` : ""}>${cols.map((c) => `<td class="${c.cls ?? ""} ${c.key === markKey ? "col-sorted" : ""}">${c.render ? c.render(r) : esc(r[c.key])}</td>`).join("")}</tr>`).join("");
     el.innerHTML = `<div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body || `<tr><td colspan="${cols.length}" class="empty"><span class="bot-inline">${robot("", 28)}Nothing matches. Try fewer filters.</span></td></tr>`}</tbody></table></div>${
       sorted.length > shown ? `<button class="more">Show more (${fmtInt(sorted.length - shown)} left)</button>` : ""}`;
     el.querySelectorAll("th.sortable").forEach((th) => (th.onclick = () => {
