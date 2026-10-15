@@ -579,11 +579,13 @@ async function teams(r) {
   const FIXED = new Set(["rank", "team", "np"]);
   const EXTRA = ["country", "region", "matches", "events", "cons", "sos", ...rpNames.map((_, i) => `rpr${i}`)];
   const plain = (c) => c.label.replace(/<[^>]+>/g, "");
-  // teamCols4: SOS and the per-RP columns start hidden (an earlier list showed them)
+  // desktop (teamCols5): #, Team, EPA, Auto / Teleop / Endgame, Record and Trend; country and
+  // state already sit under the name, so they start hidden with RPs and the rarer columns
+  // (the key moved from teamCols4 so devices that had saved the old wide set start clean)
   // phones: just #, Team and EPA unless the phone has saved its own set (teamCols5m)
   const PHONE_HIDDEN = cols.filter((c) => !FIXED.has(c.key)).map((c) => c.key);
-  const colKey = phone ? "teamCols5m" : "teamCols4";
-  let hiddenCols = new Set(pref.get(colKey, null) ?? (phone ? PHONE_HIDDEN : ["wr", ...EXTRA]));
+  const colKey = phone ? "teamCols5m" : "teamCols5";
+  let hiddenCols = new Set(pref.get(colKey, null) ?? (phone ? PHONE_HIDDEN : ["wr", "rps", ...EXTRA]));
   $("#col-list").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) =>
     `<button type="button" class="col-btn" data-k="${c.key}" aria-pressed="${!hiddenCols.has(c.key)}">${esc(plain(c))}</button>`).join("");
   let table, shown = rows;
@@ -703,7 +705,8 @@ async function team(r) {
   if (n == null) { app.innerHTML = `<div class="bot-empty">${robot("", 56)}<b>That isn't a team number</b><span class="muted">Team numbers are up to 6 digits, like 20265.</span></div>`; return; }
   // just the season summary and this team's file (ranks are precomputed); the radar fills in from the team list after
   const [meta, t] = await Promise.all([data.meta(season), data.team(season, n).catch(() => null)]);
-  const videos = t ? await data.videos(season, (t.events ?? []).map((e) => e.code)) : {};
+  // video buttons fill in when their files arrive; the page doesn't wait on them
+  const videosP = t ? data.videos(season, (t.events ?? []).map((e) => e.code)) : Promise.resolve({});
   if (stale(r)) return;
   if (!t) {
     // not played this season: if it played last season, show who it is and the EPA it starts on
@@ -925,7 +928,7 @@ async function team(r) {
     const txt = `${esc((AWARD_NAMES[a.type] ?? a.type).replace(/ Award$/, ""))}${place}`;
     return isBanner(a) ? `<span class="ev-win">${txt}</span>` : txt;
   };
-  $("#view").innerHTML = `<div class="card section team-evs">${[...t.events].reverse().map((ev) => {
+  const drawEvents = (videos) => ($("#view").innerHTML = `<div class="card section team-evs">${[...t.events].reverse().map((ev) => {
     const won = (t.awards ?? []).filter((a) => a.ev === ev.code).sort((a, b) => isBanner(b) - isBanner(a) || ["Finalist", "DivisionFinalist"].includes(b.type) - ["Finalist", "DivisionFinalist"].includes(a.type));
     const ms = t.matches.filter((m) => m.ev === ev.code).map((m) => toMatch(m, n));
     const video = (m) => videoFor(videos, ev.code, m.time);
@@ -943,7 +946,11 @@ async function team(r) {
       </div>
       ${matchTable(season, ms, { me: n, rpNames: meta.rpNames, video, href: (m) => matchHref(season, ev.code, m.d) })}
     </div>`;
-  }).join("")}</div>`;
+  }).join("")}</div>`);
+  drawEvents({});
+  videosP.then((videos) => {
+    if (!stale(r) && Object.keys(videos).length && $("#view")) drawEvents(videos);
+  }).catch(() => {});
 }
 
 // The radar's five attributes, each the team's percentile among this season's
@@ -1865,17 +1872,16 @@ function eventAdvancement(season, meta, ev, matches, official) {
   // forecast: from the schedule as it stands, or from random schedules before it's out
   const quals = matches.filter((m) => m.level === "Quals");
   const ranks = new Map(ev.teamList.filter((t) => t.rank != null).map((t) => [t.team, t.rank]));
-  let rows, sims;
+  let rows;
   if (quals.length) {
     const cutoff = quals.filter((m) => m.actuallyPlayed ?? m.played).length;
     const { model, matches: replayed } = replayEvent(meta, ev, matches.map((m) => ({ ...m, played: m.actuallyPlayed ?? m.played })), cutoff);
-    rows = forecastRankings(season, ev.teamList.map((t) => t.team), replayed, (sims = 3000), { model, advancement: { official, ranks } });
+    rows = forecastRankings(season, ev.teamList.map((t) => t.team), replayed, 3000, { model, advancement: { official, ranks } });
   } else {
-    rows = forecastFromRoster(season, meta, ev, { sims: (sims = 2000), advancement: { official } });
+    rows = forecastFromRoster(season, meta, ev, { sims: 2000, advancement: { official } });
   }
   rows.sort((a, b) => b.eTotal - a.eTotal);
-  $("#tab").innerHTML = `<div class="card card-pad"><div class="small muted">Expected points from quals, alliance selection and playoffs over ${fmtInt(sims)} simulated events; judged awards aren't forecast.</div></div>
-    <div class="card section">${rows.length ? `<div class="table-wrap"><table class="adv-table">
+  $("#tab").innerHTML = `<div class="card section">${rows.length ? `<div class="table-wrap"><table class="adv-table">
       <thead><tr><th>Proj.</th><th>Team</th><th class="r"><span title="Expected points, without judged awards">Exp. pts</span></th><th class="r hide-sm">Quals</th><th class="r hide-sm">Selection</th><th class="r hide-sm">Playoff</th><th class="r">Win</th></tr></thead>
       <tbody>${rows.map((r, i) => `<tr>
         <td class="faint num">${i + 1}</td>
@@ -1890,13 +1896,10 @@ function eventAdvancement(season, meta, ev, matches, official) {
 
 // Before the schedule is out: simulate random FTC schedules from the team list.
 function rosterForecast(season, meta, ev) {
-  const unrated = ev.teamList.filter((t) => !t.state || t.state.n === 0).length;
   let perTeam = 5;
   $("#tab").innerHTML = `
     <div class="card card-pad">
-      <div class="row" style="justify-content:space-between">
-        <div><b>Predicted rankings before the schedule is released</b>
-          <div class="small muted desk-only">2,000 random qualification schedules, each played out from every team's rating entering the event.${unrated ? ` ${unrated} of ${ev.teamList.length} teams haven't played this season yet, so their rating comes from past seasons (rookies start just below average). Expect early forecasts to be rough.` : ""}</div></div>
+      <div class="row" style="justify-content:flex-end">
         <label class="row small">Matches per team
           <select id="per">${[4, 5, 6, 7, 8].map((n) => `<option ${n === perTeam ? "selected" : ""}>${n}</option>`).join("")}</select></label>
       </div>
@@ -2866,6 +2869,25 @@ async function about(r) {
 
 // ---------------- boot ----------------
 
+// Fetch the files a page link will need (into getJSON's cache) without drawing anything.
+// Covers the season summary plus team, event and match pages; anything else is ignored.
+const warmed = new Set();
+function warm(href) {
+  const m = href?.match(/^#\/(\d{4})(?:\/(team|event|match)\/([^/?#]+))?/);
+  if (!m || warmed.has(m[0])) return;
+  warmed.add(m[0]);
+  const [, s, page, id] = m;
+  data.meta(s).catch(() => {});
+  if (page === "team" && /^\d{1,6}$/.test(id)) {
+    data.team(s, +id).then((t) => data.videos(s, (t.events ?? []).map((ev) => ev.code))).catch(() => {});
+  } else if (page === "event" || page === "match") {
+    const code = decodeURIComponent(id);
+    data.event(s, code).catch(() => {});
+    data.videos(s, [code]).catch(() => {});
+    if (page === "event") data.alliances(s).catch(() => {});
+  }
+}
+
 async function boot() {
   // the logo robot is drawn from the same parts as everywhere else (index.html has a plain fallback)
   const logoBot = $(".logo-bot .bot-g");
@@ -2875,6 +2897,8 @@ async function boot() {
   document.documentElement.dataset.theme = "dark";
   try { localStorage.removeItem("theme"); } catch {}
 
+  // a link straight to a page: start on its files now, alongside the season index below
+  warm(location.hash);
   // one small file says which seasons exist and which to open by default. A link that names
   // a season routes at once (below) instead of waiting a round trip for it; the season menu
   // fills in when it lands, and pages that need the list await this same promise.
@@ -2941,6 +2965,14 @@ async function boot() {
     figs[i].classList.remove("on");
     figs[(i + 1) % figs.length].classList.add("on");
   });
+  // start loading a page's files as soon as the pointer lands on its link (hover on desktop,
+  // touch on phones), so the page is usually ready by the time the click arrives
+  const prefetchLink = (e) => {
+    const a = e.target.closest?.("a[href^='#/']") ?? e.target.closest?.("#app tbody tr")?.querySelector("a.ev-cell, a.team-cell, a.match-link");
+    if (a) warm(a.getAttribute("href"));
+  };
+  document.addEventListener("pointerover", prefetchLink, { passive: true });
+  document.addEventListener("pointerdown", prefetchLink, { passive: true });
   window.addEventListener("hashchange", route);
   route();
 }
