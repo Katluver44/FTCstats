@@ -45,9 +45,27 @@ async function pool(items, n, fn) {
   );
 }
 
+// A season that is over never changes, so once every cached event is finished
+// (and was fetched with the current query) the API is not called at all.
+// FTC_OFFLINE=1 skips the API for every season and uses the cache as-is.
+async function fullyCached(dir, qHash) {
+  const files = await fs.readdir(dir).catch(() => []);
+  if (!files.length) return false;
+  for (const f of files) {
+    if (!f.endsWith(".json")) continue;
+    const ev = await fs.readFile(path.join(dir, f), "utf8").then(JSON.parse).catch(() => null);
+    if (!ev || !ev.finished || ev._q !== qHash) return false;
+  }
+  return true;
+}
+
 export async function fetchSeason(season) {
   const dir = path.join(".cache", String(season));
   await fs.mkdir(dir, { recursive: true });
+  const latest = Math.max(...Object.keys(SEASONS).map(Number));
+  if (process.env.FTC_OFFLINE) return console.log(`${season}: FTC_OFFLINE set, using cache as-is`);
+  if (season < latest && (await fullyCached(dir, createHash("sha1").update(eventQuery(season)).digest("hex").slice(0, 10))))
+    return console.log(`${season}: season over and fully cached, skipping the API`);
 
   const { eventsSearch } = await gql(
     `query($season: Int!) { eventsSearch(season: $season, hasMatches: true) { code finished remote } }`,
