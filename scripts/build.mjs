@@ -420,9 +420,24 @@ const epaRow = (e) => ({
   rp: e.rp.map(r3),
 });
 
+// Season folders are built in <season>.tmp and swapped in at the end (no window where the
+// live site 404s). A file whose bytes match the live copy is hard-linked from it, and any
+// file left unchanged is not rewritten, so its mtime (the server's cache key) stays put.
+const staging = new Map(); // tmp dir -> live dir
 async function writeJson(file, data) {
+  const buf = Buffer.from(JSON.stringify(data));
   await fs.mkdir(path.dirname(file), { recursive: true });
-  await fs.writeFile(file, JSON.stringify(data));
+  const same = (f) => fs.readFile(f).then((old) => old.equals(buf), () => false);
+  if (await same(file)) return;
+  for (const [tmp, live] of staging) {
+    if (!file.startsWith(tmp + path.sep)) continue;
+    const old = path.join(live, path.relative(tmp, file));
+    if (await same(old)) {
+      await fs.rm(file, { force: true });
+      if (await fs.link(old, file).then(() => true, () => false)) return;
+    }
+  }
+  await fs.writeFile(file, buf);
 }
 
 // params: prediction-track overrides; epaOver: EPA-track overrides ({ shared, auto, teleop, endgame }).
@@ -510,13 +525,15 @@ export async function build(season, params = {}, epaOver = {}) {
     byMonth: [...months].filter(([, m]) => m.n >= 200).map(([month, m]) => ({ month, matches: m.n, epa: r3(m.c / m.n), opr: r3(m.o / m.n) })),
   };
 
-  const out = path.join("site", "data", String(season));
+  const live = path.join("site", "data", String(season));
+  const out = `${live}.tmp`;
   // videos.json / alliances.json come from other scripts (videos.mjs, alliances.mjs); keep them
   const keep = {};
-  for (const f of ["videos.json", "alliances.json"]) keep[f] = await fs.readFile(path.join(out, f)).catch(() => null);
+  for (const f of ["videos.json", "alliances.json"]) keep[f] = await fs.readFile(path.join(live, f)).catch(() => null);
   await fs.rm(out, { recursive: true, force: true });
   await fs.mkdir(out, { recursive: true });
-  for (const [f, buf] of Object.entries(keep)) if (buf) await fs.writeFile(path.join(out, f), buf);
+  staging.set(out, live);
+  for (const [f, buf] of Object.entries(keep)) if (buf) await fs.link(path.join(live, f), path.join(out, f)).catch(() => fs.writeFile(path.join(out, f), buf));
   if (keep["videos.json"]) await splitVideos(out, JSON.parse(keep["videos.json"]));
 
   // ---- team info gathered from event rosters ----
@@ -867,6 +884,13 @@ export async function build(season, params = {}, epaOver = {}) {
     solo: fits.map((f) => ({ comp: f.comp, label: f.label, moved: f.moved, parked: f.parked, robots: f.robots, values: f.values, exact: r3(f.exact) })),
   };
   await writeJson(path.join(out, "meta.json"), meta);
+  // swap the finished folder in: two renames, so the live folder is missing for well under a millisecond
+  staging.delete(out);
+  const old = `${live}.old`;
+  await fs.rm(old, { recursive: true, force: true });
+  await fs.rename(live, old).catch((e) => { if (e.code !== "ENOENT") throw e; });
+  await fs.rename(out, live);
+  await fs.rm(old, { recursive: true, force: true });
   return meta;
 }
 
