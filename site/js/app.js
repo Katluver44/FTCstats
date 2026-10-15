@@ -542,8 +542,8 @@ async function teams(r) {
       // predicted teams (haven't played yet): an asterisk straight after the name
       // number, then name over location as one block; predicted teams get an asterisk after the name
       render: (r) => `<a class="team-cell team-cell2" href="#/${season}/team/${r.team}"><span class="n">${r.team}</span><span class="tc-text"><span class="nm">${esc(r.name)}${r.pre ? `<span class="pred-star" title="Hasn't played yet this season: its EPA is the one it starts on">*</span>` : ""}</span>${r.loc ? `<span class="tc-loc">${esc(r.loc)}</span>` : ""}</span></a>` },
-    { key: "country", label: "Country", cls: "small muted", render: (r) => esc(r.country ?? "") },
-    { key: "region", label: "State / region", cls: "small muted", render: (r) => esc(r.region || "–") },
+    { key: "country", label: "Country", cls: "c small muted", render: (r) => esc(r.country ?? "") },
+    { key: "region", label: "State / region", cls: "c small muted", render: (r) => esc(r.region || "–") },
     { key: "np", label: `<span title="${EPA_TIP}">EPA</span>`, cls: "c epa-col",
       render: (r) => epa(r.np, meta) },
     { key: "auto", label: "Auto", cls: "r", render: (r) => fmt(r.auto) },
