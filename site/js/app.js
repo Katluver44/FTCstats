@@ -648,7 +648,8 @@ async function team(r) {
   if (n == null) { app.innerHTML = `<div class="bot-empty">${robot("", 56)}<b>That isn't a team number</b><span class="muted">Team numbers are up to 6 digits, like 20265.</span></div>`; return; }
   // just the season summary and this team's file (ranks are precomputed); the radar fills in from the team list after
   const [meta, t] = await Promise.all([data.meta(season), data.team(season, n).catch(() => null)]);
-  const videos = t ? await data.videos(season, (t.events ?? []).map((e) => e.code)) : {};
+  // video buttons fill in when their files arrive; the page doesn't wait on them
+  const videosP = t ? data.videos(season, (t.events ?? []).map((e) => e.code)) : Promise.resolve({});
   if (stale(r)) return;
   if (!t) {
     // not played this season: if it played last season, show who it is and the EPA it starts on
@@ -874,7 +875,7 @@ async function team(r) {
     const gold = isBanner(a) || ["Finalist", "DivisionFinalist"].includes(a.type);
     return `<span class="ev-award ${gold ? "win" : ""}">${esc((AWARD_NAMES[a.type] ?? a.type).replace(/ Award$/, ""))}${place}</span>`;
   };
-  $("#view").innerHTML = [...t.events].reverse().map((ev) => {
+  const drawEvents = (videos) => ($("#view").innerHTML = [...t.events].reverse().map((ev) => {
     const won = (t.awards ?? []).filter((a) => a.ev === ev.code).sort((a, b) => isBanner(b) - isBanner(a) || ["Finalist", "DivisionFinalist"].includes(b.type) - ["Finalist", "DivisionFinalist"].includes(a.type));
     const ms = t.matches.filter((m) => m.ev === ev.code).map((m) => toMatch(m, n));
     const video = (m) => videoFor(videos, ev.code, m.time);
@@ -892,7 +893,11 @@ async function team(r) {
       </div>
       ${matchTable(season, ms, { me: n, rpNames: meta.rpNames, video, href: (m) => matchHref(season, ev.code, m.d) })}
     </div>`;
-  }).join("");
+  }).join(""));
+  drawEvents({});
+  videosP.then((videos) => {
+    if (!stale(r) && Object.keys(videos).length && $("#view")) drawEvents(videos);
+  }).catch(() => {});
 }
 
 // The radar's five attributes, each the team's percentile among this season's
@@ -1086,6 +1091,8 @@ function plaque(a, season) {
 // card for that team, event or match (see photo-service/api/share.js)
 const SHARE_ICON = '<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 9V1.8M4 4.6 7 1.6l3 3M2.5 7.5v4.2h9V7.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const shareButton = (path, title) => `<button class="pill share-btn" data-share="${esc(path)}" data-title="${esc(title)}" title="Copy a link that shows a preview card when shared">${SHARE_ICON} Share</button>`;
+// the same share action as a plain text link, for rows of links like the match page header
+const shareIcon = (path, title) => `<button class="link share-btn" data-share="${esc(path)}" data-title="${esc(title)}" title="Copy a link that shows a preview card when shared">${SHARE_ICON} Share</button>`;
 async function share(btn) {
   const url = `${location.origin}${location.pathname.replace(/[^/]*$/, "")}${btn.dataset.share}`;
   try {
@@ -2624,6 +2631,17 @@ async function boot() {
     figs[i].classList.remove("on");
     figs[(i + 1) % figs.length].classList.add("on");
   });
+  // start loading a team's file as soon as the pointer lands on its link (hover on desktop,
+  // touch on phones), so the page is usually ready by the time the click arrives
+  const prefetchTeam = (e) => {
+    const a = e.target.closest?.("a[href*='/team/']") ?? e.target.closest?.("#app tbody tr")?.querySelector("a.team-cell");
+    const m = a?.getAttribute("href")?.match(/^#\/(\d{4})\/team\/(\d{1,6})\b/);
+    if (!m) return;
+    data.meta(m[1]).catch(() => {});
+    data.team(m[1], +m[2]).then((t) => data.videos(m[1], (t.events ?? []).map((ev) => ev.code))).catch(() => {});
+  };
+  document.addEventListener("pointerover", prefetchTeam, { passive: true });
+  document.addEventListener("pointerdown", prefetchTeam, { passive: true });
   window.addEventListener("hashchange", route);
   route();
 }
