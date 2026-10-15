@@ -1694,10 +1694,6 @@ async function match(r) {
     return `<span class="bug-n ${s}-text ${winner && winner !== "tie" && winner !== s ? "lost" : ""} ${!played ? "pred" : ""}">${v}</span>`;
   };
   const r0 = p ? Math.round(p.pRed * 100) : null;
-  const verdict = !p ? (played ? "No prediction for this match" : "Not played yet")
-    : !played ? `Predicted ${fmt(p.red.total, 0)}–${fmt(p.blue.total, 0)} · ${Side(fav)} favoured`
-    : winner === "tie" ? `Tie · predicted ${fmt(p.red.total, 0)}–${fmt(p.blue.total, 0)}`
-    : `<b class="${winner === fav ? "good-text" : "bad-text"}">${winner === fav ? "Called it" : "Upset"}</b> · predicted ${fmt(p.red.total, 0)}–${fmt(p.blue.total, 0)}`;
   const board = `<div class="bug">
     <div class="bug-row">
       ${bugTeams("red")}
@@ -1705,7 +1701,6 @@ async function match(r) {
       ${bugTeams("blue")}
     </div>
     ${p ? `<div class="bug-chance"><span class="red-text">${r0}%</span><span class="mb-bar"><i style="width:${r0}%"></i></span><span class="blue-text">${100 - r0}%</span></div>` : ""}
-    <div class="bug-verdict small muted">${p ? "Win chance before the match · " : ""}${verdict}</div>
   </div>`;
 
   // with a video the page is built around it: player on the left, a compact
@@ -1732,8 +1727,8 @@ async function match(r) {
   </div>` : `<div class="section">${board}</div>`;
 
   // line score: one row per alliance, a column per period, then each bonus RP.
-  // The prediction sits small under every number; the winner's final is bold.
-  const periods = [["auto", "Auto"], ["teleop", "Teleop"], ["endgame", "Endgame"], ["pen", "Penalties"], ["total", "Final"]];
+  // The prediction sits small under every number (desktop; phones show the actual only).
+  const periods = [["auto", "Auto"], ["teleop", "Teleop"], ["endgame", "Endgame"], ["pen", "Penalties"]]; // the final is the big score above
   const val = (o, k) => (o == null ? null : k === "pen" ? o.total - o.np : o[k]);
   const lsCell = (s, k) => {
     const ac = played ? val(m[`${s}Score`], k) : null, pr = val(p?.[s], k);
@@ -1778,32 +1773,29 @@ async function match(r) {
   const when = m.time ? new Date(m.time).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: ev.timezone || undefined }) : fmtRange(ev.start, ev.end);
   const evLink = `#/${season}/event/${encodeURIComponent(code)}${isQual ? "" : "/playoffs"}`;
   app.innerHTML = `
-    <div class="card card-pad"><div class="page-head">
-      <div>
+    <div class="card-pad head-plain"><div class="page-head">
+      <div class="head-main">
         <div class="kicker"><a class="link" href="${evLink}">${esc(ev.name)}</a> · ${esc(when)}</div>
-        <h1>${esc(matchTitle(m.d))}</h1>
-        <div class="row" style="margin-top:8px">
-          <a class="pill desk-only" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}/matches" target="_blank" rel="noopener">FTCScout ↗</a>
-          ${links && links.site !== "YouTube" ? `<a class="pill" href="${openUrl}" target="_blank" rel="noopener">${links.site} ↗</a>` : ""}
-          ${shareButton(`m/${season}/${encodeURIComponent(code)}/${encodeURIComponent(m.d)}`, `${ev.name} · ${m.d}`)}
+        <div class="head-title"><h1>${esc(matchTitle(m.d))}</h1>
+          <span class="head-links">
+            ${prev ? `<a class="link" href="${matchHref(season, code, prev.d)}">← ${esc(prev.d)}</a>` : ""}
+            ${next ? `<a class="link" href="${matchHref(season, code, next.d)}">${esc(next.d)} →</a>` : ""}
+            <a class="link desk-only" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}/matches" target="_blank" rel="noopener">FTCScout ↗</a>
+            ${links && links.site !== "YouTube" ? `<a class="link hide-sm" href="${openUrl}" target="_blank" rel="noopener">${links.site} ↗</a>` : ""}
+            ${v ? `<button class="link show-sm head-watch" data-video="${esc(v.id)}" data-t="${v.t}"${v.ext ? ' data-ext="1"' : ""} data-title="${esc(`${ev.name} · ${m.d}`)}">Watch</button>` : ""}
+            ${shareIcon(`m/${season}/${encodeURIComponent(code)}/${encodeURIComponent(m.d)}`, `${ev.name} · ${m.d}`)}
+          </span>
         </div>
       </div>
-      <div class="match-actions">
-        ${v ? (v.ext ? `<a class="btn btn-solid watch-cta" href="${openUrl}" target="_blank" rel="noopener">${PLAY_ICON} Watch on ${links.site} ↗</a>`
-          : `<button class="btn btn-solid watch-cta" data-play-inline>${PLAY_ICON} Watch match</button>`) : ""}
-        <nav class="match-steps">
-          ${prev ? `<a class="btn btn-outline" href="${matchHref(season, code, prev.d)}">← ${esc(prev.d)}</a>` : ""}
-          <a class="btn btn-outline" href="${evLink}">All matches</a>
-          ${next ? `<a class="btn btn-outline" href="${matchHref(season, code, next.d)}">${esc(next.d)} →</a>` : ""}
-        </nav>
-      </div>
+      ${v ? `<div class="match-actions">${v.ext ? `<a class="btn btn-solid watch-cta" href="${openUrl}" target="_blank" rel="noopener">${PLAY_ICON} Watch on ${links.site} ↗</a>`
+          : `<button class="btn btn-solid watch-cta" data-play-inline>${PLAY_ICON} Watch match</button>`}</div>` : ""}
     </div></div>
 
     ${stage}
 
-    <div class="card card-pad section ls-card"><h2>Line score</h2>${lineScore}</div>
+    <div class="card card-pad section ls-card match-sec"><h2>Line score</h2>${lineScore}</div>
 
-    <div class="card section"><div class="card-pad" style="padding-bottom:6px"><h2 style="margin:0">Teams</h2><p class="small muted desk-only" style="margin:4px 0 0">Each robot's EPA going into this match, and where this result moved it${isQual ? ". Event rank and record are as of the end of this match" : ""}.</p></div><div class="table-wrap"><table class="match-teams">
+    <div class="card section match-sec"><div class="card-pad" style="padding-bottom:6px"><h2 style="margin:0">Teams</h2><p class="small muted desk-only" style="margin:4px 0 0">Each robot's EPA going into this match, and where this result moved it${isQual ? ". Event rank and record are as of the end of this match" : ""}.</p></div><div class="table-wrap"><table class="match-teams">
       <thead><tr><th>Team</th><th class="c">EPA before</th><th class="r">After</th><th class="r hide-sm">Auto</th><th class="r hide-sm">Teleop</th><th class="r hide-sm">Endgame</th><th class="r"><span class="hide-sm">${isQual ? "Event" : "Qual"} </span>rank</th><th class="r hide-sm">Record</th></tr></thead>
       <tbody>${teamRows}</tbody></table></div></div>`;
   // team photos (when a team has one) as small avatars in the line score

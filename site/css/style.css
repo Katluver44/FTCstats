@@ -771,17 +771,15 @@ a.match-link:hover { color: var(--accent); text-decoration: underline; }
 .watch-cta:hover { color: #fff; filter: brightness(1.1); opacity: 1; }
 .watch-cta svg { width: 14px; height: 14px; }
 /* the video gets its own row, centred and as big as fits; the scoreboard sits below */
-/* with a video: player on the left, the scorebug beside it, so score and video share the first screen */
-.match-stage { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 32px; align-items: center; padding: 0 var(--gutter); }
-.stage-side .bug { padding: 0; }
-.stage-side .bug-row { grid-template-columns: 1fr 1fr; gap: 12px 16px; }
-.stage-side .bug-score { grid-row: 1; grid-column: 1 / -1; justify-content: center; font-size: 56px; margin-bottom: 6px; }
-.stage-side .bug-al.red { grid-row: 2; grid-column: 1; align-items: flex-start; text-align: left; }
-.stage-side .bug-al.blue { grid-row: 2; grid-column: 2; align-items: flex-end; text-align: right; }
-.stage-side .bug-team b { font-size: 20px; }
-.stage-side .bug-team span { max-width: 180px; }
-.stage-side .bug-chance { margin-top: 18px; }
-@media (max-width: 900px) { .match-stage { grid-template-columns: 1fr; } }
+/* with a video the video is the page: as big as the screen allows, centred, with a slim score strip right under it */
+.match-stage { padding: 0 var(--gutter); }
+.match-stage .stage-video { width: min(100%, calc((100vh - 330px) * 16 / 9)); min-width: min(100%, 720px); margin: 0 auto; }
+.stage-side .bug { padding: 14px 0 0; width: min(100%, calc((100vh - 330px) * 16 / 9)); min-width: min(100%, 720px); max-width: none; } /* same width as the video */
+.stage-side .bug-row { gap: 24px; }
+.stage-side .bug-score { font-size: 44px; }
+.stage-side .bug-team b { font-size: 18px; }
+.stage-side .bug-al { gap: 4px; }
+.stage-side .bug-chance { margin-top: 12px; }
 .stage-video { position: relative; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.22); }
 .stage-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .stage-play { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
@@ -1309,10 +1307,10 @@ main > #tab > .card:last-child { flex: 1; }
 .bug-chance > :last-child { text-align: right; }
 .mb-bar { height: 6px; border-radius: 3px; background: var(--blue); overflow: hidden; }
 .mb-bar i { display: block; height: 100%; background: var(--red); }
-.bug-verdict { text-align: center; margin-top: 8px; }
 /* line score: one row per alliance, a column per period, then the bonus RPs; prediction small underneath */
 .ls-card h2 { margin: 0 0 12px; }
-.line-score { width: auto; min-width: min(100%, 720px); }
+.line-score { width: 100%; table-layout: fixed; }
+.line-score td.ls-who, .line-score th:first-child { width: 96px; }
 .line-score th { font-size: 12px; }
 .line-score td, .line-score th { padding: 10px 18px; }
 .line-score td:first-child { padding-left: 16px; }
@@ -1331,6 +1329,7 @@ main > #tab > .card:last-child { flex: 1; }
   .bug-score { font-size: 40px; gap: 6px; }
   .bug-team b { font-size: 17px; }
   .bug-team span { display: none; }
+  .line-score { table-layout: auto; width: auto; min-width: 100%; } /* scrolls sideways in its card instead of squeezing the headers */
   .line-score td, .line-score th { padding: 8px 8px; }
   .line-score td b { font-size: 16px; }
   .line-score .ls-final b { font-size: 20px; }
@@ -1647,7 +1646,7 @@ main > #tab > .card:last-child { flex: 1; }
 @media (max-width: 640px) { .nav .logo { display: none; } }
 .bot-inline { display: inline-flex; align-items: center; gap: 10px; }
 /* line score: the alliance's robots (with a photo avatar when the team has one) instead of a bare "Red"/"Blue" */
-.line-score td.ls-who { padding-left: 16px; padding-right: 8px; }
+.card .line-score td.ls-who { padding-left: 18px; padding-right: 8px; }
 .ls-team { display: flex; align-items: center; gap: 8px; line-height: 1.2; }
 .ls-team b { font-size: 15px; font-weight: 750; font-variant-numeric: tabular-nums; }
 .ls-team + .ls-team { margin-top: 4px; }
