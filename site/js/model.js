@@ -83,6 +83,25 @@ export const DEFAULT_PARAMS = {
   // zero in 3 (2019, 2021, 2025). On by owner's call (2026-10-13).
   calPair: 1,
   calPairWin: 1,
+  // Partner covariance (joint attribution). Two partners who split one alliance
+  // surprise end up with negatively correlated errors (if A deserves more, B
+  // deserves less). Each team remembers a few recent partners and the covariance
+  // their shared updates created; when A is later updated with someone else,
+  // covBlend x that covariance passes part of the correction back to B. 0 = off.
+  covBlend: 0.4, // LOSO 2026-10: Brier better in 5 of 6 held-out seasons, flat in 2021 (every fold picked 0.5; 0.4 is the TRAIN pick, flat 0.3-0.85)
+  covDecay: 0.15, // covariance lost per match (robots change, the link goes stale)
+  covEvent: 0.2, // extra factor at a team's first match of a new event
+  covMax: 4, // partners remembered per team
+
+  // Uncertainty-gated in-event OPR. While a team's variance is high (its first
+  // matches at an event), pull its rating toward a ridge OPR solved from the
+  // event's quals so far (causal: only earlier matches). Weight per team:
+  // oprBlend x max(0, v - oprVThr) / v, so it fades out as the Kalman variance
+  // falls. Ridge prior is the team's own rating, so with no data OPR == rating.
+  // Moves the predicted score and win probability only; rating updates are unchanged.
+  oprBlend: 0.2, // 0 = off (LOSO 2026-10, with covBlend: see README)
+  oprVThr: 0.2, // variance below which the OPR gets no weight
+  oprRidge: 1, // ridge toward the rating (in matches' worth of evidence)
 };
 
 // ---- Two tracks ----
@@ -250,6 +269,7 @@ export class Model {
     this.rookieZ = rookieZ;
     this.cv = cv; // spread of team EPAs relative to the mean, for priors
     this.teams = new Map();
+    this.evRows = new Map(); // event code -> { rows: [{nums, score}], opr: Map|null } (oprBlend)
     // running variance of alliance errors per component and in total (for clipC / volK)
     const np0 = this.avgAllianceNp();
     // restored from an event file when replaying in the browser, so live matches the build
@@ -312,11 +332,13 @@ export class Model {
   }
 
   // Restore a team's state, e.g. its rating entering an event.
-  setTeam(num, { auto, teleop, endgame, n, rp, solo, v, ev, evStart, zone }) {
+  setTeam(num, { auto, teleop, endgame, n, rp, solo, v, ev, evStart, zone, cov }) {
     this.teams.set(num, {
       n, v: v ?? this.p.v0, ev: ev ?? null, evStart: evStart ?? null, auto, teleop, endgame,
       solo: this.soloComps.map((_, j) => solo?.[j] ?? 0), rp: [...rp],
       ...(this.zoneRp ? { zone: zone ? [...zone] : [this.avg.zLeave, this.avg.zB0, this.avg.zB1, this.avg.zB2] } : {}),
+      // partner covariances, flat [partner, cov, partner, cov, ...] (see epa())
+      ...(cov?.length ? { cov: new Map(Array.from({ length: cov.length >> 1 }, (_, i) => [cov[2 * i], cov[2 * i + 1]])) } : {}),
     });
   }
 
@@ -327,7 +349,7 @@ export class Model {
     return kStart + ((n - kRampStart) / (kRampEnd - kRampStart)) * (kEnd - kStart);
   }
 
-  allianceExpected(nums) {
+  allianceExpected(nums, eventCode) {
     const out = { auto: 0, teleop: 0, endgame: 0, np: 0, foul: 0, rp: [0, 0, 0], shared: { auto: 0, teleop: 0, endgame: 0 }, solo: this.soloComps.map(() => 0) };
     for (const n of nums) {
       const t = this.team(n);
@@ -340,6 +362,16 @@ export class Model {
     out.foul = this.avg.foul;
     out.np = out.auto + out.teleop + out.endgame;
     out.rp = out.rp.map((r) => clamp(r, 0.01, 0.99));
+    // in-event OPR blend: shift the alliance total toward the event's OPR for uncertain teams
+    if (this.p.oprBlend && eventCode) {
+      const opr = this.eventOpr(eventCode);
+      if (opr) for (const n of nums) {
+        const o = opr.get(n);
+        if (o === undefined) continue;
+        const v = this.preVar(n, eventCode), w = this.p.oprBlend * Math.max(0, v - this.p.oprVThr) / v;
+        out.np += w * (o - this.epa(n).np);
+      }
+    }
     // overlap: per phase, the weaker robot's points (per-robot elements included)
     out.overlap = 0;
     if (this.p.calPair && nums.length >= 2) {
@@ -347,6 +379,25 @@ export class Model {
       for (const c of COMPONENTS) out.overlap += Math.min(...per.map((x) => x[c]));
     }
     return out;
+  }
+
+  // Ridge OPR of every team at an event from its quals so far, shrunk toward each
+  // team's current rating. Cached until the next qual result arrives.
+  eventOpr(code) {
+    const st = this.evRows.get(code);
+    if (!st || !st.rows.length) return null;
+    if (st.opr) return st.opr;
+    const teams = [...new Set(st.rows.flatMap((r) => r.nums))];
+    const idx = new Map(teams.map((t, i) => [t, i])), n = teams.length, lam = this.p.oprRidge;
+    const M = Array.from({ length: n }, () => new Array(n).fill(0)), y = new Array(n).fill(0);
+    teams.forEach((t, i) => { const e = this.epa(t).np; M[i][i] = lam; y[i] = lam * e; });
+    for (const { nums, score } of st.rows) {
+      const ix = nums.map((t) => idx.get(t));
+      for (const a of ix) { y[a] += score; for (const b of ix) M[a][b] += 1; }
+    }
+    const x = solve(M, y);
+    st.opr = new Map(teams.map((t, i) => [t, x[i]]));
+    return st.opr;
   }
 
   // a team's points per phase, per-robot elements included
@@ -381,8 +432,8 @@ export class Model {
   }
 
   predict(red, blue, eventCode) {
-    const r = this.allianceExpected(red);
-    const b = this.allianceExpected(blue);
+    const r = this.allianceExpected(red, eventCode);
+    const b = this.allianceExpected(blue, eventCode);
     const A = Math.max(10, this.avgAllianceNp());
     // win probability (and rating updates) use the ratings as they are
     r.rawNp = r.np; b.rawNp = b.np;
@@ -479,6 +530,7 @@ export class Model {
     for (const t of ts) {
       if (eventCode && t.ev !== eventCode) {
         if (t.ev) t.v += this.p.vEvent;
+        if (t.cov) for (const [j, c] of t.cov) t.cov.set(j, c * this.p.covEvent);
         if (this.p.mom) {
           if (t.ev && t.evStart) for (const c of COMPONENTS) t[c] += this.p.mom * (t[c] - t.evStart[c]);
           t.evStart = { auto: t.auto, teleop: t.teleop, endgame: t.endgame };
@@ -487,7 +539,41 @@ export class Model {
       }
     }
     const sum = ts.reduce((s, t) => s + t.v, 0) + this.p.vObs * this.levelScale(level, this.p.obsHet);
+    this.lastS = sum;
     return ts.map((t) => t.v / sum);
+  }
+
+  // Joint attribution: the observation of `nums` (innovation err, variance S)
+  // also tells us about earlier partners of these teams through the covariance
+  // their shared updates left. Then the pairs inside this alliance get a new
+  // (negative) covariance from the update: c' = c - (v_i + c)(v_j + c) / S.
+  covStep(nums, preV, err, S, w) {
+    const { covBlend, covDecay, covMax } = this.p;
+    const ts = nums.map((n) => this.team(n));
+    ts.forEach((t, i) => {
+      if (!t.cov) return;
+      for (const [j, c] of [...t.cov]) {
+        if (nums.includes(j)) continue;
+        const tj = this.team(j);
+        const lim = 0.9 * Math.sqrt(t.v * tj.v);
+        for (const comp of COMPONENTS) tj[comp] += covBlend * w * (clamp(c, -lim, lim) / S) * err[comp];
+      }
+    });
+    ts.forEach((t, i) => {
+      t.cov ??= new Map();
+      for (const [j, c] of t.cov) t.cov.set(j, c * (1 - covDecay));
+      nums.forEach((o, j) => {
+        if (j === i) return;
+        const c = t.cov.get(o) ?? 0;
+        // keep it a valid correlation: |c| <= 0.9 sqrt(v_i v_j)
+        const lim = 0.9 * Math.sqrt(preV[i] * preV[j]);
+        t.cov.set(o, clamp(c - w * ((preV[i] + c) * (preV[j] + c)) / S, -lim, lim));
+      });
+      if (t.cov.size > covMax) {
+        const keep = [...t.cov].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, covMax);
+        t.cov = new Map(keep);
+      }
+    });
   }
 
   // actual: { red: {auto, teleop, endgame, np, total, rp, solo?}, blue: {...} }
@@ -544,6 +630,7 @@ export class Model {
       if (!isElim) this.errVar.np += ea * (eNp * eNp - this.errVar.np);
       const volAdd = this.p.volK ? this.p.volK * Math.max(0, Math.abs(zNp) - this.p.volThr) ** 2 : 0;
 
+      const S = this.lastS, preV = nums.map((n) => this.team(n).v);
       nums.forEach((num, i) => {
         const t = this.team(num);
         const k = share[i] * w;
@@ -562,6 +649,7 @@ export class Model {
         if (this.p.kalman) t.v = t.v * (1 - share[i] * w) + this.p.vMatch + volAdd * w;
         t.n++;
       });
+      if (this.p.kalman && this.p.covBlend) this.covStep(nums, preV, err, S, w);
 
       // season-wide averages drift as teams improve
       const a = this.p.emaAlpha;
@@ -581,6 +669,12 @@ export class Model {
     }
     // how far off the predicted score difference was (fouls tracked apart),
     // in level-normalised units
+    if (this.p.oprBlend && !isElim && eventCode) {
+      let st = this.evRows.get(eventCode);
+      if (!st) this.evRows.set(eventCode, (st = { rows: [], opr: null }));
+      st.rows.push({ nums: red, score: actual.red.np }, { nums: blue, score: actual.blue.np });
+      st.opr = null;
+    }
     const wa = this.p.winAlpha;
     const foulDiff = (actual.red.total - actual.red.np) - (actual.blue.total - actual.blue.np);
     const npErr = (actual.red.np - actual.blue.np) - (pred.red.rawNp + pred.blue.foul - pred.blue.rawNp - pred.red.foul);
@@ -591,7 +685,7 @@ export class Model {
 
   epa(num) {
     const t = this.team(num);
-    const e = { n: t.n, v: t.v, ev: t.ev, evStart: t.evStart ?? null, ...(t.zone ? { zone: [...t.zone] } : {}), auto: t.auto, teleop: t.teleop, endgame: t.endgame, rp: [...t.rp], solo: [...t.solo] };
+    const e = { n: t.n, v: t.v, ev: t.ev, evStart: t.evStart ?? null, ...(t.zone ? { zone: [...t.zone] } : {}), ...(t.cov?.size ? { cov: [...t.cov].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, this.p.covMax).flatMap(([j, c]) => [j, c]) } : {}), auto: t.auto, teleop: t.teleop, endgame: t.endgame, rp: [...t.rp], solo: [...t.solo] };
     const shared = { auto: t.auto, teleop: t.teleop, endgame: t.endgame };
     t.solo.forEach((s, j) => (e[this.soloComps[j]] += s));
     e.np = e.auto + e.teleop + e.endgame;
