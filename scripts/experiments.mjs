@@ -48,6 +48,10 @@ const ROBUST = { volK: 0.1, volThr: 0.5, clipC: 1.25, clipUp: 0, vMatch: 0.01 };
 const WIN = { winSelf: 0.4, winFoul: 0.4, winVar: 0.02 }; // self-calibrating, foul- and uncertainty-aware spread
 const variants = [
   ["current", {}], ["robust updates", ROBUST], ["win-prob spread", WIN], ["both", { ...ROBUST, ...WIN }],
+  // League-drift growth on the prediction track (Model.enter): candidate, tune on TRAIN only.
+  // The gain, if any, should show in "early" (a team's first matches at an event).
+  ["grow .5", { grow: 0.5 }], ["grow .5 head .5", { grow: 0.5, growHead: 0.5 }], ["grow .5 mom -.1", { grow: 0.5, mom: -0.1 }],
+  ["grow 1", { grow: 1 }],
   ...process.argv.slice(2).map((a) => [a, JSON.parse(a)]),
 ];
 for (const [name, p] of variants) run(name, p);

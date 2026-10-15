@@ -292,6 +292,14 @@ function makeTrack(matches, modelArgs, { unofficial = UNOFFICIAL, offWeight = 0 
   };
 }
 
+// A team's prediction-track state entering an event it hasn't played yet,
+// including between-event growth (p.grow), without changing the model.
+function grown(model, code, num) {
+  const f = model.fork();
+  f.enter([num], code);
+  return f.epa(num);
+}
+
 // The prediction track.
 export function simulate(matches, { season, params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, unofficial = UNOFFICIAL, offWeight = 0, zone = true }, onMatch) {
   const types = new Map(matches.map((x) => [x.ev.code, x.ev.type]));
@@ -300,6 +308,9 @@ export function simulate(matches, { season, params, baseline, priors, cv, soloCo
   const acc = newAcc();
   for (const [i, x] of matches.entries()) {
     const m = track.at(x);
+    // between-event growth (p.grow, off by default); before `before` so event-file
+    // states include it and live.js replays match the build without calling enter()
+    m.enter([...x.red, ...x.blue], x.ev.code);
     const before = onMatch ? new Map([...x.red, ...x.blue].map((t) => [t, m.epa(t)])) : null;
     const avgBefore = onMatch ? { ...m.avg, rp: [...m.avg.rp], solo: [...m.avg.solo], clipVar: { ...m.errVar }, cal: structuredClone(m.cal) } : null;
     const pre = m.update(x.red, x.blue, x.actual, x.elim, x.ev.code);
@@ -721,7 +732,8 @@ export async function build(season, params = {}, epaOver = {}) {
       const e = history.has(tp.teamNumber) ? epaTrack.rate(tp.teamNumber) : null;
       // prediction rating entering the event; for teams that haven't played here yet, their current rating
       // teams yet to play this season get their starting rating from past seasons
-      const start = eventStart.get(`${ev.code}:${tp.teamNumber}`) ?? model.epa(tp.teamNumber);
+      // (with p.grow, apply the between-event growth on a throwaway fork, as simulate() would at its first match)
+      const start = eventStart.get(`${ev.code}:${tp.teamNumber}`) ?? (model.p.grow ? grown(model, ev.code, tp.teamNumber) : model.epa(tp.teamNumber));
       const eStart = epaStart.get(`${ev.code}:${tp.teamNumber}`) ?? epaTrack.rate(tp.teamNumber).np;
       const h = history.get(tp.teamNumber)?.filter((x) => x.ev === ev.code) ?? [];
       return {

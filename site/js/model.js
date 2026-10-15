@@ -65,6 +65,15 @@ export const DEFAULT_PARAMS = {
   winAlpha: 0.01, // speed of the error / foul variance trackers
   winHet: 0.7, // spread x (match's predicted level / league average)^winHet
   mom: -0.2, // at a new event, add mom x the team's rating change over its previous event
+  // League-drift growth (DARKO-style lag correction; candidate, off): at a team's
+  // first match of a new event, add grow x the rise in the league-average component
+  // (per robot) since its last match, so a team back from weeks idle isn't rated
+  // stale against opponents who played last week. The recalibration intercept
+  // can't fix this: it moves both alliances alike. Applied by Model.enter(), which
+  // build.mjs simulate() calls before each match; event files' `state` already
+  // includes it, so live.js replays need no call. 0 = off (bit-identical to before).
+  grow: 0,
+  growHead: 0, // growth x (1 + growHead x (1 - rating / average robot)), clamped to [0, 2]: weaker teams grow more
   // Score recalibration: predicted np' = np + A (b0 + b1 (np/A - 1) + b2 (opp np/A - 1)),
   // A = league-average alliance score, b refitted after every qual match from
   // exponentially weighted moments of earlier matches (ridge toward 0).
@@ -454,19 +463,27 @@ export class Model {
     this.cal.b = solve(XX.map((row, i) => row.map((v, j) => v + (i === j ? this.p.calRidge : 0))), XY);
   }
 
-  // Between-event growth (p.grow, EPA track): call before a match is predicted.
+  // Between-event growth (p.grow): call before a match is predicted (both tracks).
   // At a team's first match of a new event, its components rise by grow x the
   // league-average rise (per robot) since its last match.
   enter(nums, eventCode) {
     if (!this.p.grow) return;
     for (const n of nums) {
-      const t = this.team(n);
+      const t = this.team(n); // on a fork, this snapshots `base` (before the growth)
       if (t.gEv === eventCode) continue;
       if (!t.gAvg) { t.gEv = eventCode; continue; }
       // headroom factor from the team's whole rating vs an average robot, in [0, 2]
       const np = this.epa(n).np, avgRobot = Math.max(1, this.avgAllianceNp() / 2);
       const f = clamp(1 + (this.p.growHead ?? 0) * (1 - np / avgRobot), 0, 2);
-      for (const c of COMPONENTS) t[c] += (f * this.p.grow * (this.avg[c] - t.gAvg[c])) / 2;
+      const g = Object.fromEntries(COMPONENTS.map((c) => [c, (f * this.p.grow * (this.avg[c] - t.gAvg[c])) / 2]));
+      for (const c of COMPONENTS) t[c] += g[c];
+      // event-change reversion (mom, in shares()) reverts part of t - evStart:
+      // shift evStart too, so it reverts only the last event's own change.
+      // (A new object: epa() snapshots share the old one.)
+      if (t.evStart) t.evStart = Object.fromEntries(COMPONENTS.map((c) => [c, t.evStart[c] + g[c]]));
+      // fork: merge(w) carries w x (t - base) to the parent, whose stale gAvg
+      // grows it again at its next event; shift base so growth isn't counted twice
+      if (this.parent) { const b = this.base.get(n); for (const c of COMPONENTS) b[c] += g[c]; }
       t.gEv = eventCode;
     }
   }
