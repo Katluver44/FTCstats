@@ -1326,9 +1326,9 @@ function eventPlayoffs(season, meta, ev, matches, official, video) {
       <div class="po-bracket">${bracket}</div>
       <div class="po-alliances">
         <div class="po-h">Alliances</div>
-        <table class="alliances">
+        <div class="table-wrap"><table class="alliances">
           <thead><tr><th>Seed</th><th>Teams</th><th class="r" title="Adds the EPAs of each alliance's two best robots">Strength</th><th class="r">W-L</th><th>Result</th></tr></thead>
-          <tbody>${allianceRows}</tbody></table>
+          <tbody>${allianceRows}</tbody></table></div>
         ${official ? "" : `<div class="po-note">Seeds worked out from qualification ranks until FIRST publishes the official list.</div>`}
       </div>
     </div>`;  if (p.columns) drawBracketLines($(".dgrid"), p.feeds);
