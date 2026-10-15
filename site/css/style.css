@@ -96,6 +96,14 @@
   color-scheme: dark;
 }
 
+/* Roboto, self-hosted: one Latin variable file covers every weight we use (400-900),
+   so 550/650/750 render true instead of being faked. Rename the file if it ever changes:
+   the server caches /fonts/ for a year. */
+@font-face {
+  font-family: Roboto; font-style: normal; font-weight: 400 900; font-display: swap;
+  src: url(../fonts/roboto-latin-var.woff2) format("woff2");
+}
+
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {

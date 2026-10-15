@@ -19,7 +19,8 @@ const port = +(process.argv[2] ?? process.env.PORT ?? 8080);
 const ROOT = path.resolve(process.env.SITE_DIR ?? "site");
 const brotli = promisify(zlib.brotliCompress), gzip = promisify(zlib.gzip);
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json; charset=utf-8",
-  ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".ico": "image/x-icon", ".txt": "text/plain; charset=utf-8" };
+  ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".ico": "image/x-icon", ".txt": "text/plain; charset=utf-8",
+  ".woff2": "font/woff2" };
 const COMPRESSIBLE = new Set([".html", ".js", ".css", ".json", ".svg", ".txt"]);
 const REWRITES = [
   [/^\/t\/(\d{4})\/([^/]+)$/, (m) => `/api/share?kind=team&season=${m[1]}&id=${m[2]}`],
@@ -38,6 +39,8 @@ const cacheControl = (p) =>
   // cached old app.js could otherwise run against new markup and die at boot ("Loading…" forever)
   : /^\/(js|css)\//.test(p) ? "public, max-age=0, must-revalidate"
   : p.endsWith(".html") || p === "/" ? "public, max-age=0, must-revalidate"
+  // fonts never change in place (a new font gets a new file name)
+  : p.startsWith("/fonts/") ? "public, max-age=31536000, immutable"
   : "public, max-age=3600";
 
 // small LRU by total bytes
