@@ -1,6 +1,6 @@
 import {
   $, $$, esc, data, getJSON, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
-  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, videoLinks, PLAY_ICON, downloadCsv, CSV_ICON } from "./ui.js";
+  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, videoLinks, PLAY_ICON, downloadCsv, CSV_ICON, robot, ROBOT_PARTS } from "./ui.js";
 import { SEASONS } from "./seasons.js";
 import { scatter, histogram, breakdown } from "./charts.js";
 import { addEventSos, sosValue, sosPlaces } from "./sos.js";
@@ -37,7 +37,7 @@ function labelFilters(root = document) {
 }
 document.addEventListener("change", (e) => { if (e.target instanceof HTMLSelectElement) labelFilters(e.target.parentElement ?? document); }, true);
 const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", sim: "SIM event", about: "Our methodology" };
-const setTitle = (name) => (document.title = name ? `${name} · FTCstats` : "FTCstats · FTC ratings & match predictions");
+const setTitle = (name) => (document.title = name ? `${name} · oddrobot` : "oddrobot · FTC ratings & match predictions");
 
 async function route() {
   clearInterval(state.liveTimer);
@@ -50,7 +50,7 @@ async function route() {
   // keep the current page (dimmed) until the new one is ready, instead of flashing a blank
   // "Loading…" screen; only a slow load (over 0.6 s) shows the loading message
   app.classList.add("routing");
-  const slow = setTimeout(() => { if (!stale(r)) { app.innerHTML = `<div class="loading">Loading…</div>`; window.scrollTo(0, 0); } }, 600);
+  const slow = setTimeout(() => { if (!stale(r)) { app.innerHTML = `<div class="loading">${robot("bot-wait", 48)}<span>Loading…</span></div>`; window.scrollTo(0, 0); } }, 600);
   const pages = { "": home, teams, team, events, event, match, compete, h2h, sim, about };
   const fn = pages[r.page] ?? notFound;
   setTitle(r.page && (PAGE_TITLES[r.page] ?? "Page not found"));
@@ -59,7 +59,7 @@ async function route() {
     clearTimeout(slow);
     if (!stale(r)) { app.classList.remove("routing"); window.scrollTo(0, 0); }
     if (!stale(r)) labelFilters($("#app")); // filters set from the link already read "All …"
-    // a heading names the page better, e.g. "20265 Heart of RoBots · FTCstats"
+    // a heading names the page better, e.g. "20265 Heart of RoBots · oddrobot"
     const h1 = !stale(r) && r.page && $("#app h1");
     if (h1) setTitle(h1.textContent.trim().replace(/\s+/g, " "));
     if (!stale(r)) trackPage(`/${r.season}/${[r.page, ...r.args].filter(Boolean).join("/")}`, document.title);
@@ -184,7 +184,8 @@ const seasonLabel = (s, game) => `${s}–${String(s + 1).slice(2)}${game ? ` · 
 
 const EPA_TIP = "EPA: points this team adds to its alliance right now (auto + teleop + endgame). Tuned to represent robot strength.";
 
-const notFound = () => (app.innerHTML = `<div class="empty">Page not found.</div>`);
+const notFound = () => (app.innerHTML = `<div class="bot-empty">${robot("", 56)}<b>Page not found</b>
+  <span class="muted">This robot drove off the field. <a class="link" href="#/${state.season}/">Back to the start →</a></span></div>`);
 
 // ---------------- search ----------------
 
@@ -252,7 +253,7 @@ function wireSearch(wrap) {
   const draw = () => {
     box.innerHTML = items.map((it, i) =>
       `<a href="${it.href}" class="${i === sel ? "sel" : ""}"><b>${esc(it.main)}</b><span class="muted small">${esc(it.sub)}</span><span class="kind">${it.kind}</span></a>`).join("")
-      || (input.value.trim() ? `<div class="empty small">No teams or events match.</div>` : "");
+      || (input.value.trim() ? `<div class="empty small"><span class="bot-inline">${robot("", 24)}No teams or events match.</span></div>` : "");
     box.classList.toggle("open", !!input.value.trim());
   };
   input.oninput = async () => { items = await searchItems(state.season, input.value); sel = 0; draw(); };
@@ -374,7 +375,7 @@ async function home(r) {
       <span class="hl-main"><b title="${esc(e.name)}">${esc(e.name)}</b><small>${fmtRange(e.start, e.end)} · ${esc(e.loc)}</small>
         <small class="hl-meta">${esc(typeName(e.type))} · ${e.teams} teams${e.topTeams?.length ? ` · Top: ${e.topTeams.slice(0, 3).join(", ")}` : ""}</small></span>
       <span class="hl-val">${e.ongoing ? '<span class="pill live">Live</span>' : `${epa(e.strength, meta)}<small>Strength</small>`}</span>
-    </a>`).join("")}</div>` : `<div class="empty">No events yet.</div>`;
+    </a>`).join("")}</div>` : `<div class="bot-empty">${robot("", 44)}<span class="muted">No events yet this season.</span></div>`;
   fitHome();
 }
 
@@ -662,7 +663,7 @@ async function teams(r) {
 async function team(r) {
   const { season, args } = r;
   const n = /^\d{1,6}$/.test(args[0] ?? "") ? +args[0] : null, view = args[1] ?? "matches";
-  if (n == null) { app.innerHTML = `<div class="card empty">That isn't a team number.</div>`; return; }
+  if (n == null) { app.innerHTML = `<div class="bot-empty">${robot("", 56)}<b>That isn't a team number</b><span class="muted">Team numbers are up to 6 digits, like 20265.</span></div>`; return; }
   // just the season summary and this team's file (ranks are precomputed); the radar fills in from the team list after
   const [meta, t] = await Promise.all([data.meta(season), data.team(season, n).catch(() => null)]);
   const videos = t ? await data.videos(season, (t.events ?? []).map((e) => e.code)) : {};
@@ -685,7 +686,7 @@ async function team(r) {
       ${[100, 200, 300, 400, 500].map((x) => `<line x1="${x}" y1="1" x2="${x}" y2="149" class="wf-line"/>`).join("")}
       <line x1="1" y1="75" x2="599" y2="75" class="wf-line"/>
       <path d="M40 112 C 160 112, 200 38, 300 38 S 440 112, 560 112" class="wf-path"/>
-      <g class="wf-bot"><rect x="-20" y="-20" width="40" height="40" rx="6" class="wf-body"/>${[[-17, -25, 1], [5, -25, -1], [-17, 19, -1], [5, 19, 1]].map(([x, y, d]) => `<rect x="${x}" y="${y}" width="12" height="6" rx="2" class="wf-wheel"/>${[3, 7].map((u) => `<line x1="${x + u}" y1="${d > 0 ? y + 6 : y}" x2="${x + u + 3}" y2="${d > 0 ? y : y + 6}" class="wf-roller"/>`).join("")}`).join("")}</g>
+      <g class="wf-bot">${ROBOT_PARTS}</g>
     </svg>`;
     const header = p ? `<div class="card card-pad team-hero"><div class="th-top">
         <div class="th-id">
@@ -2516,6 +2517,9 @@ async function about(r) {
 
 async function boot() {
   initAnalytics();
+  // the logo robot is drawn from the same parts as everywhere else (index.html has a plain fallback)
+  const logoBot = $(".logo-bot .bot-g");
+  if (logoBot) logoBot.innerHTML = ROBOT_PARTS;
   // dark only (no theme toggle); forget a light choice saved by the old toggle
   document.documentElement.dataset.theme = "dark";
   try { localStorage.removeItem("theme"); } catch {}

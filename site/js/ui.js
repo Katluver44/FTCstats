@@ -392,7 +392,7 @@ export function sortableTable(el, rows, cols, { sortKey, desc = true, pageSize =
       `<th class="${c.cls ?? ""} ${c.sort === false ? "" : "sortable"} ${c.key === key ? `sorted col-sorted ${dir > 0 ? "asc" : ""}` : ""}" data-k="${c.key}">${c.label}</th>`).join("");
     const body = sorted.slice(0, shown).map((r) =>
       `<tr${rowClass?.(r) ? ` class="${rowClass(r)}"` : ""}>${cols.map((c) => `<td class="${c.cls ?? ""} ${c.key === key ? "col-sorted" : ""}">${c.render ? c.render(r) : esc(r[c.key])}</td>`).join("")}</tr>`).join("");
-    el.innerHTML = `<div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body || `<tr><td colspan="${cols.length}" class="empty">Nothing matches.</td></tr>`}</tbody></table></div>${
+    el.innerHTML = `<div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body || `<tr><td colspan="${cols.length}" class="empty"><span class="bot-inline">${robot("", 28)}Nothing matches. Try fewer filters.</span></td></tr>`}</tbody></table></div>${
       sorted.length > shown ? `<button class="more">Show more (${fmtInt(sorted.length - shown)} left)</button>` : ""}`;
     el.querySelectorAll("th.sortable").forEach((th) => (th.onclick = () => {
       const k = th.dataset.k;
@@ -433,3 +433,12 @@ export function radar(axes, { size = 300, values = true } = {}) {
   return `<svg class="radar" viewBox="0 0 ${size} ${size}" role="img" aria-label="${esc(axes.map((a) => `${a.label}: ${a.tip}`).join("; "))}">
     ${rings}${spokes}<polygon points="${shape}" class="rd-shape"/>${dots}${labels}</svg>`;
 }
+
+// ---------- the robot ----------
+// oddrobot's mascot: a top-down mecanum robot (body, four wheels, rollers in an X).
+// Drawn around (0, 0) in a 56 x 56 box so it can spin and strafe in place.
+export const ROBOT_PARTS = `<rect x="-20" y="-20" width="40" height="40" rx="6" class="wf-body"/>${[[-17, -25, 1], [5, -25, -1], [-17, 19, -1], [5, 19, 1]]
+  .map(([x, y, d]) => `<rect x="${x}" y="${y}" width="12" height="6" rx="2" class="wf-wheel"/>${[3, 7].map((u) => `<line x1="${x + u}" y1="${d > 0 ? y + 6 : y}" x2="${x + u + 3}" y2="${d > 0 ? y : y + 6}" class="wf-roller"/>`).join("")}`).join("")}`;
+// cls picks its motion: "bot-wait" drives side to side (loading), "" sits still
+export const robot = (cls = "", size = 40) =>
+  `<svg class="bot ${cls}" width="${size}" height="${size}" viewBox="-28 -28 56 56" aria-hidden="true"><g class="bot-g">${ROBOT_PARTS}</g></svg>`;
