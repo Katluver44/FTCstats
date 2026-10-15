@@ -18,6 +18,17 @@ import { first, hasFirstApi } from "./first-api.mjs";
 const YT = "https://www.googleapis.com/youtube/v3/videos";
 const CACHE_V = 2; // bump when we start reading a new field
 
+// Every YouTube Data API key we have: YOUTUBE_API_KEY, a comma list in YOUTUBE_API_KEYS,
+// and any other Google API key (AIza…) in .env whatever its name. Each Google Cloud
+// project has its own daily quota, so when one key is refused or out of quota we move on.
+async function ytKeys() {
+  const text = await fs.readFile(".env", "utf8").catch(() => "");
+  const fromEnv = [process.env.YOUTUBE_API_KEY, ...(process.env.YOUTUBE_API_KEYS ?? "").split(",")];
+  const fromFile = [...text.matchAll(/^[\w-]+=(AIza[\w-]{35})\s*$/gm)].map((m) => m[1]);
+  return [...new Set([...fromEnv, ...fromFile].map((k) => k?.trim()).filter(Boolean))];
+}
+let ytKeyList = null, ytKeyAt = 0;
+
 async function env(name) {
   if (process.env[name]) return process.env[name];
   const text = await fs.readFile(".env", "utf8").catch(() => "");
@@ -45,15 +56,21 @@ let ytDown = false;
 async function youtubeDetails(ids, cacheFile) {
   const shared = path.join("cache", "youtube", path.basename(cacheFile));
   const cache = { ...(await readJson(shared, {})), ...(await readJson(cacheFile, {})) };
-  const key = await env("YOUTUBE_API_KEY");
+  ytKeyList ??= await ytKeys();
   const todo = [...new Set(ids)].filter((id) => !cache[id] || cache[id].live || cache[id].v !== CACHE_V);
-  if (key && todo.length && !ytDown) {
+  if (ytKeyList.length && todo.length && !ytDown) {
     for (let i = 0; i < todo.length; i += 50) {
       const batch = todo.slice(i, i + 50);
-      const res = await fetch(`${YT}?part=liveStreamingDetails,contentDetails,status,snippet&id=${batch.join(",")}&key=${key}`);
-      const json = await res.json();
+      let json;
+      for (;;) {
+        const res = await fetch(`${YT}?part=liveStreamingDetails,contentDetails,status,snippet&id=${batch.join(",")}&key=${ytKeyList[ytKeyAt]}`);
+        json = await res.json();
+        if (!json.error) break;
+        console.warn(`YouTube API key ${ytKeyAt + 1}/${ytKeyList.length}: ${json.error.message.replace(/<[^>]+>/g, "")}`);
+        if (++ytKeyAt >= ytKeyList.length) break;
+      }
       if (json.error) {
-        console.warn(`YouTube API: ${json.error.message.replace(/<[^>]+>/g, "")} (using cached details; ${todo.length - i} videos skipped this run)`);
+        console.warn(`YouTube API: no working key left (using cached details; ${todo.length - i} videos skipped this run)`);
         ytDown = true;
         break;
       }
