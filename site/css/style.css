@@ -1333,6 +1333,7 @@ main > #tab > .card:last-child { flex: 1; }
   .line-score td, .line-score th { padding: 8px 8px; }
   .line-score td b { font-size: 16px; }
   .line-score .ls-final b { font-size: 20px; }
+}
 
 /* ---- QA fixes ---- */
 /* white text needs a deeper blue than the dark-mode accent (#4da3ea) to be readable */
