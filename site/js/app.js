@@ -200,8 +200,14 @@ const notFound = () => (app.innerHTML = `<div class="bot-empty">${robot("", 56)}
 // have played, and events that are live or soon.
 const normText = (x) => String(x ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 // normalized once: the text, the same without spaces, and with a leading space (word starts)
-const prepText = (x) => { const t = normText(x); return { t, tc: t.replace(/ /g, ""), ts: " " + t }; };
-function prepScore({ t, tc, ts }, { t: tq, tc: qc, ts: qs }) {
+// ini: the words' first letters, so an acronym finds its event ("mti" → Multinational Tech Invitational)
+const prepText = (x) => { const t = normText(x); return { t, tc: t.replace(/ /g, ""), ts: " " + t, ini: t.split(" ").map((w) => w[0] ?? "").join("") }; };
+function prepScore({ t, tc, ts, ini }, { t: tq, tc: qc, ts: qs }) {
+  // acronyms: three or more letters, no spaces, matching the initials (exactly, or their start)
+  const acro = qc.length >= 3 && tq === qc && !/\d/.test(qc) && ini.length >= 3 ? (ini === qc ? 75 : ini.startsWith(qc) ? 55 : 0) : 0;
+  return Math.max(acro, textMatch(t, tc, ts, tq, qc, qs));
+}
+function textMatch(t, tc, ts, tq, qc, qs) {
   // every match below has the search inside the spaceless text, so most rows stop here
   if (!tq || !tc.includes(qc)) return 0;
   if (t === tq || tc === qc) return 100;
@@ -235,10 +241,14 @@ function keepTop(list, entry) {
   list.splice(i, 0, entry);
   if (list.length > 7) list.pop();
 }
+// the seasons either side of the one being viewed: on a new season with few events yet, last season's
+// events (an off-season like MTI) still turn up, marked with their season
+const nearSeasons = (season) => [season - 1, season + 1].filter((s) => state.seasons.includes(s));
 async function searchItems(season, q) {
   q = q.trim();
   if (!q) return [];
-  const { played: n, teams, events } = await searchIndex(season); // teams that haven't played yet this season are in it too
+  const [{ played: n, teams, events }, ...near] = await Promise.all([searchIndex(season), ...nearSeasons(season).map((s) => searchIndex(s).then((ix) => ({ s, ix })).catch(() => null))]);
+  // teams that haven't played yet this season are in it too
   const isNum = /^\d+$/.test(q), qp = prepText(q);
   // at most 7 of a kind are shown, so only each kind's best 7 are kept (no sort of every match)
   const top = { Team: [], Event: [], Page: [] };
@@ -256,7 +266,8 @@ async function searchItems(season, q) {
   // what people call events: "worlds", "states"
   const alias = ({ worlds: ["world championship"], world: ["world championship"], states: ["state championship"], state: ["state championship"] }[qp.t] ?? []).map(prepText);
   const ql = q.toLowerCase();
-  for (const e of events) {
+  const evLists = [{ s: season, list: events, off: 0 }, ...near.filter(Boolean).map(({ s, ix }) => ({ s, list: ix.events, off: -8 }))];
+  for (const { s: es, list, off } of evLists) for (const e of list) {
     const code = e.lc;
     let sc = code === ql ? 110 : !isNum && code.startsWith(ql) && ql.length >= 3 ? 65 : 0;
     if (!isNum) sc = Math.max(sc, prepScore(e.nameP, qp), prepScore(e.locP, qp) * 0.4, ...alias.map((a) => prepScore(e.nameP, a) - 5));
@@ -264,14 +275,14 @@ async function searchItems(season, q) {
     sc += { FIRSTChampionship: 6, Premier: 3, Championship: 3, SuperQualifier: 2, Qualifier: 1, LeagueTournament: 1 }[e.type] ?? 0;
     const soon = e.ongoing ? 6 : e.start >= today && e.start <= soonEnd ? 4 : !e.finished ? 1 : 0;
     sc += soon + Math.min(2, (e.teams ?? 0) / 25) - e.name.length / 200; // shorter = the main event, not a division
-    keepTop(top.Event, { sc, e });
+    keepTop(top.Event, { sc: sc + off, e, es });
   }
   const pageSc = normText(q).length >= 3 ? Math.max(textScore("Happening now", q), textScore("live", q)) : 0;
   if (pageSc && events.some((e) => e.ongoing)) top.Page.push({ sc: pageSc + 10 });
   // stable sort: ties keep teams, then events, then the page, each in list order
-  const scored = [...top.Team, ...top.Event, ...top.Page].sort((x, y) => y.sc - x.sc).map(({ t, e }) =>
+  const scored = [...top.Team, ...top.Event, ...top.Page].sort((x, y) => y.sc - x.sc).map(({ t, e, es }) =>
     t ? { href: `#/${season}/team/${t.num}`, main: t.num, sub: t.name, kind: "Team" }
-    : e ? { href: `#/${season}/event/${e.code}`, main: e.name, sub: `${fmtDate(e.start)}${e.ongoing ? " · live" : ""}`, kind: "Event" }
+    : e ? { href: `#/${es}/event/${e.code}`, main: e.name, sub: `${fmtDate(e.start)}${es !== season ? ` · ${seasonLabel(es)}` : e.ongoing ? " · live" : ""}`, kind: "Event" }
     : { href: `#/${season}/live`, main: "Happening now", sub: "Every event running today", kind: "Page" });
   // up to 10, at most 7 of one kind so both show when both match
   const out = [], count = { Team: 0, Event: 0, Page: 0 };
@@ -294,7 +305,7 @@ function wireSearch(wrap) {
   };
   // results from an older keystroke that finish late are dropped
   let seq = 0;
-  input.onfocus = () => { searchIndex(state.season).catch(() => {}); }; // load and prepare before the first keystroke
+  input.onfocus = () => { for (const s of [state.season, ...nearSeasons(state.season)]) searchIndex(s).catch(() => {}); }; // load and prepare before the first keystroke
   input.oninput = async () => {
     const my = ++seq, got = await searchItems(state.season, input.value);
     if (my !== seq) return;
