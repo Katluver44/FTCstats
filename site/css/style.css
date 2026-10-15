@@ -1906,11 +1906,9 @@ button.link { padding: 0; border: 0; background: none; font: inherit; font-weigh
   .mt th.vid-cell, .mt td.vid-cell { text-align: left; }
 }
 
-/* phones: the EPA column of the teams and events lists is a light blue strip with plain numbers, no chips */
-@media (max-width: 640px) {
-  td.epa-col, th.epa-col { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-  td.epa-col .epa { background: none !important; color: var(--text) !important; padding: 0; min-width: 0; font-weight: 600; }
-}
+/* the EPA column of the teams and events lists is a light blue strip with plain numbers, no chips */
+td.epa-col, th.epa-col, tbody tr td.epa-col { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+td.epa-col .epa { background: none !important; color: var(--text) !important; padding: 0; min-width: 0; font-weight: 600; }
 /* event Teams tab: the gear's middle on the header row's middle (the 40px phone tap target sat 6px low) */
 @media (max-width: 640px) { .tt-gear { top: -4px; } }
 /* phones: each team number in a match list is its own ~26px-tall, wider tap target (they were 21px slivers);
@@ -1930,7 +1928,6 @@ button.link { padding: 0; border: 0; background: none; font: inherit; font-weigh
 /* the EPA strip stays one even colour through the zebra rows; the season reference list has no zebra (it drew boxes
    inside the padded card); the match Teams table keeps the 16px margin on the right too */
 @media (max-width: 640px) {
-  tbody tr td.epa-col { background: color-mix(in srgb, var(--accent) 12%, transparent); }
   .ref tbody tr td { background: none; }
   .card .match-teams :is(td, th):nth-last-child(1 of :not(.hide-sm)) { padding-right: 16px; } /* the hidden Record column is the real last child */
 }
@@ -1953,3 +1950,9 @@ button.link { padding: 0; border: 0; background: none; font: inherit; font-weigh
 .page-head .head-nav .link { padding: 4px 8px; border-radius: 8px; transition: background-color .12s; }
 .page-head .head-nav .link:hover { background: var(--surface-2); text-decoration: none; }
 @media (max-width: 640px) { .page-head .head-nav { margin: -12px 0 0 -8px; } }
+/* teams list "Season only | All events": the same segmented switch as Table | Chart beside it */
+.toolbar .scope { gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+.toolbar .scope a { min-height: 28px; padding: 0 12px; border: 0; border-radius: 6px; color: var(--muted); }
+.toolbar .scope a:hover { color: var(--text); }
+.toolbar .scope a.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgba(0, 0, 0, .08), 0 0 0 1px var(--line); }
+.toolbar .scope a.active::after { content: none; }
