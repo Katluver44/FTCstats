@@ -4,7 +4,7 @@
 
 import { put, list, del, copy } from "@vercel/blob";
 
-export const ALLOWED_ORIGINS = ["https://ftcstats-photos.vercel.app", "https://katluver44.github.io", "http://localhost:5173"];
+export const ALLOWED_ORIGINS = ["https://oddbot.org", "https://www.oddbot.org", "https://ftcstats-photos.vercel.app", "https://katluver44.github.io", "http://localhost:5173"];
 export const MAX_BYTES = 4 * 1024 * 1024; // the site shrinks photos before upload
 export const MAX_PER_TEAM = 20; // a cap per team, so one bad actor can't flood a page
 
