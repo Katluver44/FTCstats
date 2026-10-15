@@ -810,7 +810,11 @@ a.stage-play small { max-width: 80%; text-align: center; }
 /* team page header (ESPN-style): identity + EPA, then radar + stat cards */
 /* the header card stays full width like every card; its contents keep to 1200px so they don't drift apart */
 .team-hero > * { max-width: none; }
-.th-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
+/* EPA keeps its own right-hand column; name and awards share the left, awards
+   beside the name when there's room and wrapping under it when there isn't */
+.th-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 24px; }
+.th-left { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; min-width: 0; }
+.th-left .th-id { flex: 0 1 auto; min-width: 0; }
 .th-id h1 { margin: 0 0 4px; }
 .th-facts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .th-fact { font-size: 13px; color: var(--muted); padding: 5px 11px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); }
@@ -857,7 +861,7 @@ a.th-add:hover { color: var(--accent); border-color: var(--accent); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gold-rank b { color: #f2c94c; } }
 .th-photo .team-photo { width: 100%; }
 /* one trophy shelf: banners first, then plaques, wrapping as a single row, bottoms aligned */
-.th-awards { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; flex: 1 1 280px; justify-content: center; align-self: center; padding: 0 16px; }
+.th-awards { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; flex: 1 1 320px; justify-content: center; align-self: center; }
 .th-awards .plaques, .th-awards .banners { display: contents; }
 @media (max-width: 700px) { .th-awards { order: 3; justify-content: flex-start; } }
 .th-awards .th-h { margin: 0 6px 0 0; }
@@ -867,6 +871,10 @@ a.th-add:hover { color: var(--accent); border-color: var(--accent); }
 @media (max-width: 1000px) {
   .th-body, .th-body.has-photo { grid-template-columns: 1fr; }
   .th-body .radar-box { justify-self: center; }
+}
+@media (max-width: 700px) {
+  .th-top { display: flex; flex-direction: column; }
+  .th-left { display: contents; }
 }
 @media (max-width: 640px) {
   .th-epa { text-align: left; }

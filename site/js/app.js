@@ -701,6 +701,7 @@ async function team(r) {
   app.innerHTML = `
     <div class="card card-pad team-hero">
       <div class="th-top">
+        <div class="th-left">
         <div class="th-id">
           <h1><span class="team-num">${n}</span> ${esc(t.name)}</h1>
           <div class="muted">${esc(t.loc)}${t.rookie ? ` · Rookie year ${t.rookie}` : ""}</div>
@@ -714,6 +715,7 @@ async function team(r) {
         ${awards.length ? `<div class="th-awards">
           <div class="banners">${banners.map((a) => banner(a, season)).join("")}</div><div class="plaques">${plaques.map((a) => plaque(a, season)).join("")}</div>
         </div>` : ""}
+        </div>
         <div class="th-epa">
           <div class="label">EPA · points added per match</div>
           <b>${fmt(e.np)}</b>
