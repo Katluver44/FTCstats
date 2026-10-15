@@ -280,6 +280,8 @@ function makeTrack(matches, modelArgs, { unofficial = UNOFFICIAL, offWeight = 0 
   };
   const lastOf = new Map();
   matches.forEach((x, i) => unofficial.has(x.ev.type) && weight(x.ev) && lastOf.set(x.ev.code, i));
+  const endOf = new Map(); // every event's last match (frees its fullCov matrix)
+  matches.forEach((x, i) => endOf.set(x.ev.code, i));
   return {
     model,
     // the model a match is played on
@@ -288,7 +290,10 @@ function makeTrack(matches, modelArgs, { unofficial = UNOFFICIAL, offWeight = 0 
       if (!forks.has(x.ev.code)) forks.set(x.ev.code, model.fork());
       return forks.get(x.ev.code);
     },
-    done(x, i) { if (lastOf.get(x.ev.code) === i) this.at(x).merge(weight(x.ev)); },
+    done(x, i) {
+      if (lastOf.get(x.ev.code) === i) this.at(x).merge(weight(x.ev));
+      if (endOf.get(x.ev.code) === i) this.at(x).endEvent(x.ev.code);
+    },
   };
 }
 

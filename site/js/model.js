@@ -83,6 +83,16 @@ export const DEFAULT_PARAMS = {
   // zero in 3 (2019, 2021, 2025). On by owner's call (2026-10-13).
   calPair: 1,
   calPairWin: 1,
+  // Event-local joint (full-covariance) Kalman update (needs kalman). The default
+  // filter keeps one variance per team, so it never "explains away": if A+B beat
+  // their prediction and later B+C fall short, A keeps all its credit. With
+  // fullCov each event keeps the teams' joint covariance; after a match, every
+  // team at the event (on the field or not) moves by its correlation with the
+  // on-field teams. Without process noise this is ridge (MMSE) OPR re-solved
+  // after every match, with each team's entering rating as the prior. With no
+  // cross terms (fresh partners) it is exactly the default update.
+  fullCov: 0,
+  jointWinVar: 0, // with fullCov: the win spread uses the covariance of red - blue, not the summed variances
 };
 
 // ---- Two tracks ----
@@ -250,6 +260,8 @@ export class Model {
     this.rookieZ = rookieZ;
     this.cv = cv; // spread of team EPAs relative to the mean, for priors
     this.teams = new Map();
+    // fullCov: event code -> { teams: [num], seq: [team's evSeq when added], at: Map(num -> row), P: [[...]] }
+    this.evCov = new Map();
     // running variance of alliance errors per component and in total (for clipC / volK)
     const np0 = this.avgAllianceNp();
     // restored from an event file when replaying in the browser, so live matches the build
@@ -294,7 +306,7 @@ export class Model {
   fork() {
     const f = Object.create(Model.prototype);
     Object.assign(f, this, {
-      parent: this, teams: new Map(), base: new Map(),
+      parent: this, teams: new Map(), base: new Map(), evCov: new Map(),
       avg: structuredClone(this.avg), errVar: { ...this.errVar }, cal: structuredClone(this.cal),
     });
     return f;
@@ -387,7 +399,8 @@ export class Model {
     // win probability (and rating updates) use the ratings as they are
     r.rawNp = r.np; b.rawNp = b.np;
     const level = (r.np + b.np) / (2 * A);
-    const varSum = this.p.kalman ? [...red, ...blue].reduce((s, n) => s + this.preVar(n, eventCode), 0) : 0;
+    let varSum = this.p.kalman ? [...red, ...blue].reduce((s, n) => s + this.preVar(n, eventCode), 0) : 0;
+    if (this.p.fullCov && this.p.jointWinVar && this.p.kalman && eventCode) varSum = this.diffVar(red, blue, eventCode) ?? varSum;
     // the overlap part of the recalibration can also move the win probability
     const ov = (x) => (this.p.cal && this.p.calPair ? this.p.calPairWin * A * this.cal.b[3] * 2 * (x.overlap / A - 0.25) : 0);
     const pRed = this.winProb(r.np + ov(r) + b.foul, b.np + ov(b) + r.foul, varSum, level);
@@ -484,10 +497,135 @@ export class Model {
           t.evStart = { auto: t.auto, teleop: t.teleop, endgame: t.endgame };
         }
         t.ev = eventCode;
+        if (this.p.fullCov) t.evSeq = (t.evSeq ?? 0) + 1; // a row from an earlier stay at this event is stale
       }
     }
     const sum = ts.reduce((s, t) => s + t.v, 0) + this.p.vObs * this.levelScale(level, this.p.obsHet);
     return ts.map((t) => t.v / sum);
+  }
+
+  // Per-component shares of an alliance's error, from per-robot signals of who
+  // did the work (see update): auto / teleop are re-split, keeping their sum.
+  reshare(share, noMove, noEnd, dead) {
+    const reweight = (idle, weight) => {
+      if (!idle || weight === 1) return share;
+      if (!idle.some((x) => x) || idle.every((x) => x)) return share;
+      const raw = share.map((s, i) => s * (idle[i] ? weight : 1));
+      const scale = share.reduce((a, b) => a + b, 0) / raw.reduce((a, b) => a + b, 0);
+      return raw.map((s) => s * scale);
+    };
+    const auto = reweight(noMove, this.p.idleShare);
+    let teleop = reweight(noEnd, this.p.endIdleShare);
+    if (this.p.deadShare !== 1) teleop = reweight(dead, this.p.deadShare);
+    return { auto, teleop, endgame: share };
+  }
+
+  // ---- fullCov: event-local joint covariance ----
+  // A row is live while its team is still at the event it was added at (a team
+  // that leaves and comes back starts a fresh row, with no cross terms).
+  covLive(M, i) {
+    const t = this.team(M.teams[i]);
+    return t.ev === M.code && (t.evSeq ?? 0) === M.seq[i];
+  }
+
+  // The event's matrix with stale rows dropped (created if missing).
+  evMatrix(code) {
+    let M = this.evCov.get(code);
+    if (!M) {
+      M = { code, teams: [], seq: [], at: new Map(), P: [] };
+      this.evCov.set(code, M);
+    }
+    const keep = M.teams.map((_, i) => i).filter((i) => this.covLive(M, i));
+    if (keep.length < M.teams.length) {
+      M.teams = keep.map((i) => M.teams[i]);
+      M.seq = keep.map((i) => M.seq[i]);
+      M.P = keep.map((i) => keep.map((j) => M.P[i][j]));
+      M.at = new Map(M.teams.map((n, i) => [n, i]));
+    }
+    return M;
+  }
+
+  // Free an event's matrix once its last match is played.
+  endEvent(code) {
+    this.evCov.delete(code);
+  }
+
+  // Variance of (red sum - blue sum) from the event's joint covariance, or null
+  // if some team on the field has no live row there yet.
+  diffVar(red, blue, code) {
+    const M = this.evCov.get(code);
+    if (!M) return null;
+    const d = new Map();
+    for (const n of red) d.set(n, (d.get(n) ?? 0) + 1);
+    for (const n of blue) d.set(n, (d.get(n) ?? 0) - 1);
+    const rows = [];
+    for (const [n, s] of d) {
+      const i = M.at.get(n);
+      if (i == null || !this.covLive(M, i)) return null;
+      rows.push([i, s]);
+    }
+    let v = 0;
+    for (const [i, a] of rows) for (const [j, b] of rows) v += a * b * M.P[i][j];
+    return Math.max(0, v);
+  }
+
+  // One joint Kalman update for both alliances (two observations: each
+  // alliance's component score = sum of its on-field teams + noise R).
+  //   sides: [{ nums, R, err (clipped, per component), noMove, noEnd, dead, volAdd }] for red, blue
+  // Every team at the event moves by its covariance with the on-field teams:
+  //   G = P H (H' P H + diag R)^-1,  x += w G e,  P -= w G H' P.
+  // With no cross terms this is exactly the per-alliance update in update().
+  jointUpdate(code, sides, w) {
+    const M = this.evMatrix(code);
+    for (const { nums } of sides) for (const n of nums) {
+      if (M.at.has(n)) continue;
+      const t = this.team(n), i = M.teams.length;
+      for (const row of M.P) row.push(0);
+      M.P.push(new Array(i + 1).fill(0));
+      M.P[i][i] = t.v;
+      M.at.set(n, i); M.teams.push(n); M.seq.push(t.evSeq ?? 0);
+    }
+    const P = M.P, n = M.teams.length;
+    const idx = sides.map((s) => s.nums.map((x) => M.at.get(x)));
+    // U = P H (n x 2); S = H' P H + diag(R)
+    const U = P.map((row) => idx.map((I) => I.reduce((s, k) => s + row[k], 0)));
+    const hU = (a, b) => idx[a].reduce((s, j) => s + U[j][b], 0);
+    const S00 = hU(0, 0) + sides[0].R, S11 = hU(1, 1) + sides[1].R;
+    const S01 = (hU(0, 1) + hU(1, 0)) / 2;
+    let G;
+    if (S01 === 0) G = U.map(([u0, u1]) => [u0 / S00, u1 / S11]);
+    else {
+      const det = S00 * S11 - S01 * S01;
+      const i00 = S11 / det, i11 = S00 / det, i01 = -S01 / det;
+      G = U.map(([u0, u1]) => [u0 * i00 + u1 * i01, u0 * i01 + u1 * i11]);
+    }
+    // per-component gains; on-field entries re-split by the per-robot signals
+    const gain = {};
+    for (const c of COMPONENTS) gain[c] = G.map((g) => [...g]);
+    sides.forEach((s, a) => {
+      const r = this.reshare(idx[a].map((j) => G[j][a]), s.noMove, s.noEnd, s.dead);
+      idx[a].forEach((j, pos) => { for (const c of COMPONENTS) gain[c][j][a] = r[c][pos]; });
+    });
+    for (let j = 0; j < n; j++) {
+      const t = this.team(M.teams[j]);
+      for (const c of COMPONENTS) t[c] += gain[c][j][0] * w * sides[0].err[c] + gain[c][j][1] * w * sides[1].err[c];
+    }
+    // covariance (kept exactly symmetric)
+    const side = new Map();
+    idx.forEach((I, a) => I.forEach((j) => side.set(j, a)));
+    for (let j = 0; j < n; j++) {
+      for (let k = j + 1; k < n; k++) {
+        const d = (G[j][0] * U[k][0] + G[j][1] * U[k][1] + G[k][0] * U[j][0] + G[k][1] * U[j][1]) / 2;
+        P[j][k] -= w * d;
+        P[k][j] = P[j][k];
+      }
+      const a = side.get(j);
+      // a team uncorrelated with the field: the same arithmetic as the diagonal update
+      if (a != null && U[j][a] === P[j][j] && U[j][1 - a] === 0) P[j][j] = P[j][j] * (1 - G[j][a] * w);
+      else P[j][j] = Math.max(1e-9, P[j][j] - w * (G[j][0] * U[j][0] + G[j][1] * U[j][1]));
+      if (a != null) P[j][j] = P[j][j] + this.p.vMatch + sides[a].volAdd * w;
+      this.team(M.teams[j]).v = P[j][j];
+    }
   }
 
   // actual: { red: {auto, teleop, endgame, np, total, rp, solo?}, blue: {...} }
@@ -496,11 +634,14 @@ export class Model {
   update(red, blue, actual, isElim, eventCode) {
     const pred = this.predict(red, blue, eventCode);
     const w = isElim ? this.p.elimWeight : 1;
+    // fullCov: means and variances move in one joint update after both alliances
+    const joint = this.p.fullCov && this.p.kalman && eventCode ? [] : null;
     for (const [nums, side] of [[red, "red"], [blue, "blue"]]) {
       const exp = pred[side], act = actual[side];
       const other = side === "red" ? "blue" : "red";
       const foulsMade = actual[other].total - actual[other].np;
-      const share = this.shares(nums, eventCode, exp.rawNp / Math.max(10, this.avgAllianceNp()));
+      const level = exp.rawNp / Math.max(10, this.avgAllianceNp());
+      const share = this.shares(nums, eventCode, level);
 
       // shared part of each component = component minus its per-robot elements
       const actShared = { auto: act.auto, teleop: act.teleop, endgame: act.endgame };
@@ -517,18 +658,9 @@ export class Model {
         const pts = spec >= 0 ? act.solo?.[spec] : null;
         return pts && pts.length === nums.length ? pts.map((p) => p <= 0) : null;
       };
-      const reweight = (idle, weight) => {
-        if (!idle || weight === 1) return share;
-        if (!idle.some((x) => x) || idle.every((x) => x)) return share;
-        const raw = share.map((s, i) => s * (idle[i] ? weight : 1));
-        const scale = share.reduce((a, b) => a + b, 0) / raw.reduce((a, b) => a + b, 0);
-        return raw.map((s) => s * scale);
-      };
       const noMove = idleIn(this.movedSpec), noEnd = idleIn(this.parkedSpec);
       const dead = noMove && noEnd ? noMove.map((x, i) => x && noEnd[i]) : null;
-      const autoShare = reweight(noMove, this.p.idleShare);
-      let teleShare = reweight(noEnd, this.p.endIdleShare);
-      if (this.p.deadShare !== 1) teleShare = reweight(dead, this.p.deadShare);
+      const { auto: autoShare, teleop: teleShare } = this.reshare(share, noMove, noEnd, dead);
 
       // Robust errors: one breakdown or freak match moves ratings by at most clipC SDs' worth.
       const err = {}, ea = this.p.errAlpha;
@@ -544,10 +676,12 @@ export class Model {
       if (!isElim) this.errVar.np += ea * (eNp * eNp - this.errVar.np);
       const volAdd = this.p.volK ? this.p.volK * Math.max(0, Math.abs(zNp) - this.p.volThr) ** 2 : 0;
 
+      if (joint) joint.push({ nums, R: this.p.vObs * this.levelScale(level, this.p.obsHet), err, noMove, noEnd, dead, volAdd });
+
       nums.forEach((num, i) => {
         const t = this.team(num);
         const k = share[i] * w;
-        for (const c of COMPONENTS) {
+        if (!joint) for (const c of COMPONENTS) {
           const kc = c === "auto" ? autoShare[i] * w : c === "teleop" ? teleShare[i] * w : k;
           t[c] += kc * err[c];
         }
@@ -559,7 +693,7 @@ export class Model {
           const kr = this.p.kRp / nums.length;
           t.rp = t.rp.map((r, j) => clamp(r + kr * ((act.rp?.[j] ? 1 : 0) - exp.rp[j]), -0.2, 1));
         }
-        if (this.p.kalman) t.v = t.v * (1 - share[i] * w) + this.p.vMatch + volAdd * w;
+        if (this.p.kalman && !joint) t.v = t.v * (1 - share[i] * w) + this.p.vMatch + volAdd * w;
         t.n++;
       });
 
@@ -573,6 +707,7 @@ export class Model {
       this.avg.foul += a * (foulsMade - this.avg.foul);
       if (!isElim) this.avg.rp = this.avg.rp.map((r, j) => r + a * ((act.rp?.[j] ? 1 : 0) - r));
     }
+    if (joint) this.jointUpdate(eventCode, joint, w);
     if (this.p.grow) for (const n of [...red, ...blue]) this.team(n).gAvg = { auto: this.avg.auto, teleop: this.avg.teleop, endgame: this.avg.endgame };
     if (this.zoneRp && !isElim) { this.zoneStep(red, actual.red); this.zoneStep(blue, actual.blue); }
     if (this.p.cal && !isElim) {
