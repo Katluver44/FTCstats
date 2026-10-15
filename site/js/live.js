@@ -1,6 +1,6 @@
 // Event replay, live updates, and ranking forecasts — all in the browser.
 
-import { Model, allianceTeams } from "./model.js";
+import { Model, allianceTeams, onField } from "./model.js";
 import { SEASONS, eventQuery, API, soloPoints } from "./seasons.js";
 import { qualPts, selectionPts, allianceCount, PLAYOFF_PTS } from "./advancement.js";
 import { playoffs, TEMPLATES } from "./playoffs.js";
@@ -41,7 +41,7 @@ export function normalizeLive(season, ev, meta) {
     .sort((a, b) => time(a) - time(b) || a.id - b.id)
     .map((m) => {
       const side = (al) => allianceTeams(m, al);
-      const on = (al) => allianceTeams({ teams: m.teams.filter((t) => t.onField && !t.noShow) }, al);
+      const on = (al) => onField(m, al);
       const played = m.hasBeenPlayed && !!m.scores?.red;
       const isQual = m.tournamentLevel === "Quals";
       const sc = (raw) => {

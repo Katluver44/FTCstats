@@ -613,8 +613,10 @@ export function allianceTeams(match, alliance) {
 // Which teams actually played for an alliance in a match, in station order
 // (station 1 first), which is the order per-robot score fields use.
 export function onField(match, alliance) {
+  // some events never set onField (every robot false, with a real score): then the flag is missing, not the robots
+  const flagged = match.teams.some((t) => t.onField);
   return match.teams
-    .filter((t) => t.alliance === alliance && t.onField && !t.noShow)
+    .filter((t) => t.alliance === alliance && (flagged ? t.onField : true) && !t.noShow)
     .sort((a, b) => (STATION[a.station] ?? 9) - (STATION[b.station] ?? 9))
     .map((t) => t.teamNumber);
 }
