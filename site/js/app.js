@@ -77,7 +77,8 @@ function seasonHref(s, { page, args }) {
 function renderNav(r) {
   const { season, page } = r;
   const years = (s) => `${s}–${String(s + 1).slice(2)}`;
-  $("#season .season-cur").textContent = years(season);
+  // the short form ("25–26") only shows on the narrowest phones (style.css, ≤356px), where the full label doesn't fit the header row
+  $("#season .season-cur").innerHTML = `<span class="sc-long">${years(season)}</span><span class="sc-short">${years(season).slice(2)}</span>`;
   $("#season .season-btn").setAttribute("aria-label", `Season: ${years(season)}. Change season`);
   $("#season-menu").innerHTML = state.seasons
     .map((s) => `<a href="${seasonHref(s, r)}" ${s === season ? 'aria-current="true"' : ""}>
@@ -1238,7 +1239,15 @@ async function event(r) {
     else if (tab === "pickmap" && ev.teamList.length >= 4) eventPickMap(season, ev);
     else if (tab === "playoffs" && hasPlayoffs) eventPlayoffs(season, meta, ev, matches, official[code], (m) => videoFor(videos, code, m.time));
     else if (tab === "forecast" && canForecast) eventForecast(season, meta, ev, matches);
-    else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
+    else {
+      // mid-event, phones only (style.css): a button above the table jumps to the first unplayed match
+      // instead of a scroll past every played one
+      const played = matches.filter((m) => m.played).length, nextUp = !ev.finished && played ? matches.find((m) => !m.played) : null;
+      $("#tab").innerHTML = `<div class="card">
+        ${nextUp ? `<div class="mt-jump"><button type="button" class="pill" id="mt-jump">${played} of ${matches.length} played · Jump to ${esc(nextUp.d)} ↓</button></div>` : ""}
+        ${matchTable(season, matches, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
+      $("#mt-jump")?.addEventListener("click", () => $("#tab .mt tr.up")?.scrollIntoView({ block: "center", behavior: "smooth" }));
+    }
   };
 
   draw();
@@ -2322,15 +2331,16 @@ async function h2h(r) {
     const la = awardsOf(ta), lb = awardsOf(tb);
     const ORDER = ["Winner", "DivisionWinner", "Finalist", "DivisionFinalist", "ConferenceFinalist"];
     const types = [...ORDER, ...Object.keys(AWARD_NAMES).filter((k) => !ORDER.includes(k))].filter((k) => la.some((a) => a.type === k) || lb.some((a) => a.type === k));
-    if (!types.length) return `<div class="card empty">Neither team has won an award ${view === "career" ? "yet" : "this season"}.</div>`;
+    if (!types.length) return `<div class="card empty desk-only">Neither team has won an award ${view === "career" ? "yet" : "this season"}.</div>`;
     const where = (n, list) => list.map((a) => `${a.placement > 1 && !/Winner|Finalist/.test(a.type) ? `${ordinal(a.placement)} · ` : ""}${a.evName ?? a.ev}${view === "career" ? ` (${a.s}–${String(a.s + 1).slice(2)})` : ""}`).join("; ");
-    return `<div class="card card-pad"><div class="tape">${types.map((k) => {
+    return `<div class="card card-pad desk-only"><div class="tape">${types.map((k) => {
       const xa = la.filter((a) => a.type === k), xb = lb.filter((a) => a.type === k);
       const label = (AWARD_NAMES[k] ?? k).replace(/ Award$/, "");
       return tape(label, xa.length, xb.length, (v) => fmtInt(v), { tip: [xa.length ? `${A}: ${where(A, xa)}` : "", xb.length ? `${B}: ${where(B, xb)}` : ""].filter(Boolean).join("\n") });
     }).join("")}</div></div>`;
   };
-  const awardsTitle = `<div class="section-title"><h2>Awards</h2><p class="muted desk-only" style="margin:6px 0 0">How many times each team has won each award${view === "career" ? " across every season" : " this season"}, counting 2nd and 3rd places. Hover a row for where.</p></div>`;
+  // phones: the tape's Awards row is the summary; the per-award breakdown is desk-only
+  const awardsTitle = `<div class="section-title desk-only"><h2>Awards</h2><p class="muted desk-only" style="margin:6px 0 0">How many times each team has won each award${view === "career" ? " across every season" : " this season"}, counting 2nd and 3rd places. Hover a row for where.</p></div>`;
 
   if (view === "season") {
     const a = cur(ta), b = cur(tb);

@@ -201,6 +201,8 @@ export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
     nums[i] != null ? `<td class="c hide-sm"><a class="tn ${side} ${nums[i] === me ? "me" : ""}" href="#/${s}/team/${nums[i]}">${nums[i]}</a></td>` : '<td class="hide-sm"></td>').join("")
     // phones: the alliance's teams stacked in one narrow cell
     + `<td class="c show-sm mt-al">${nums.map((n) => `<a class="tn ${side} ${n === me ? "me" : ""}" href="#/${s}/team/${n}">${n}</a>`).join("")}</td>`;
+  // phones drop the Video column when no match in the table has one (mt-novid, style.css); desktop keeps the greyed icons
+  const anyVideo = !!video && matches.some((m) => m.played && video(m));
   const rows = matches.map((m) => {
     const rs = m.redScore?.total ?? m.redScore?.np, bs = m.blueScore?.total ?? m.blueScore?.np;
     const pr = m.pred?.red?.rp?.map((p) => p > 0.5), pb = m.pred?.blue?.rp?.map((p) => p > 0.5);
@@ -210,7 +212,7 @@ export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
     const final = m.played
       ? `${rpDots("red", m.redScore.rp, rpNames)} <span class="final"><span class="${rs > bs ? "w" : "l"}">${rs}</span><span class="faint">–</span><span class="${bs > rs ? "w" : "l"}">${bs}</span></span> ${rpDots("blue", m.blueScore.rp, rpNames)}`
       : `<span class="faint small">upcoming</span>`;
-    return `<tr>
+    return `<tr${m.played ? "" : ' class="up"'}>
       ${m.evName ? `<td class="small"><a href="#/${s}/event/${m.ev}">${esc(m.evName)}</a></td>` : ""}
       ${video ? `<td class="vid-cell">${(() => {
         if (!m.played) return "";
@@ -225,8 +227,8 @@ export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
       <td class="c mt-final">${final}</td>
     </tr>`;
   }).join("");
-  return `<div class="table-wrap"><table class="mt">
-    <thead><tr>${video ? '<th class="c vid-cell">Video</th>' : ""}${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c hide-sm" colspan="${slots}">Red</th><th class="c show-sm">Red</th><th class="c hide-sm" colspan="${slots}">Blue</th><th class="c show-sm">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Icons: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Icons: bonus RPs earned (hover them to see which)." : ""}">Final</span></th></tr></thead>
+  return `<div class="table-wrap"><table class="mt${video && !anyVideo ? " mt-novid" : ""}">
+    <thead><tr>${video ? '<th class="c vid-cell"><span class="hide-sm">Video</span></th>' : ""}${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c hide-sm" colspan="${slots}">Red</th><th class="c show-sm">Red</th><th class="c hide-sm" colspan="${slots}">Blue</th><th class="c show-sm">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Icons: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Icons: bonus RPs earned (hover them to see which)." : ""}">Final</span></th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
 }
 

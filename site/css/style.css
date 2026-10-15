@@ -432,7 +432,11 @@ tbody tr:hover .team-cell .n { text-decoration: none; background: color-mix(in s
 .pick-list .auto, .pl-legend .auto { background: #f59e0b; }
 .pick-list .teleop, .pl-legend .teleop { background: var(--accent); }
 .pick-list .endgame, .pl-legend .endgame { background: #10b981; }
-@media (max-width: 640px) { .pl-row { grid-template-columns: 22px minmax(90px, 130px) 1fr 44px; gap: 8px; } }
+/* phones: the bar sits under the name instead of beside it, so names get the row's width ("Thomas Jefferson …" rather than "Thomas Je…") */
+@media (max-width: 640px) {
+  .pl-row { grid-template-columns: 22px minmax(0, 1fr) 48px; grid-template-areas: "rank team epa" "rank bar epa"; gap: 4px 8px; padding: 6px 8px; }
+  .pl-rank { grid-area: rank; } .pl-team { grid-area: team; } .pl-bar { grid-area: bar; height: 8px; } .pl-epa { grid-area: epa; }
+}
 .col-pick { position: relative; }
 .col-pick summary { list-style: none; cursor: pointer; font-size: 13px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--glass-strong); }
 .col-pick summary::-webkit-details-marker { display: none; }
@@ -1477,7 +1481,10 @@ main > #tab > .card:last-child { flex: 1; }
   .dgrid { column-gap: 20px; }
   .bt { font-size: 12.5px; }
   .po-alliances td.res { max-width: none; white-space: normal; }
-  .al-name { max-width: 120px; }
+  /* Strength and W-L are desk-only, so the Teams column takes the spare width and the captain's name fills it
+     (width 0 + min-width 100%: the name never sets the column's width, only fills it) */
+  .po-alliances td:nth-child(2) { width: 100%; }
+  .al-name { max-width: none; width: 0; min-width: 100%; }
   /* rankings forecast: six columns fit 360px */
   #fc .epa { min-width: 40px; padding: 2px 5px; }
 }
@@ -1572,3 +1579,42 @@ main > #tab > .card:last-child { flex: 1; }
   #tab .pick-list .auto, #tab .pick-list .teleop, #tab .pick-list .endgame { background: var(--accent); }
 }
 /* -- end integration -- */
+/* -- mobile: QA round 2 (header at 320, match table width, tap targets, live jump) -- */
+.season-cur .sc-short { display: none; }
+.mt-jump { display: none; }
+@media (max-width: 640px) {
+  /* match tables: no Video column when nothing in the table has one (ui.js adds mt-novid); when there is one,
+     the header cell is blank so the 40px column isn't widened by the "VIDEO" label. Fits 360 without sideways scroll. */
+  .mt.mt-novid .vid-cell { display: none; }
+  .card .mt.mt-novid .vid-cell + td, .card .mt.mt-novid .vid-cell + th { padding-left: 16px; } /* the hidden cell is still :first-child */
+  /* headers may wrap: "Win prob" on two lines frees ~26px, so a table with the video column fits 360 (and 320) */
+  .mt th { white-space: normal; line-height: 1.2; }
+  /* live event: "20 of 36 played · Jump to Q-21" above the table */
+  .mt-jump { display: flex; padding: 12px 16px 4px; }
+  .mt-jump .pill { min-height: 40px; }
+  /* tap targets: the home banner's "Switch to …" link, the h2h team-name links, "Add a photo" */
+  .banner a { display: inline-flex; align-items: center; min-height: 40px; margin-top: 2px; }
+  .side .who { margin: 0 0 4px 4px; min-height: 0; }
+  .side .who a { display: inline-flex; align-items: center; min-height: 36px; }
+  .th-fact.th-add { min-height: 36px; }
+}
+/* narrowest phones (320): the header row needed 357px. Short season label ("25–26"), tighter links and a
+   smaller logo bring it under 320 with the theme toggle still on screen. */
+@media (max-width: 356px) {
+  .season-cur .sc-long { display: none; }
+  .season-cur .sc-short { display: inline; }
+  .nav .logo { min-width: 32px; }
+  .nav .logo svg { width: 24px; height: 24px; }
+  .nav .nav-links a { padding: 0 2px; font-size: 12.5px; }
+  .nav .season-btn { padding: 0 5px; }
+  /* match table with a video column: smaller headers and no minimum on the team numbers bring it from 340 to 320 */
+  .mt th { font-size: 10.5px; letter-spacing: .03em; }
+  .mt-al .tn { min-width: 0; }
+  .card .mt td:first-child, .card .mt th:first-child { padding-left: 10px; }
+  .card .mt td:last-child, .card .mt th:last-child { padding-right: 10px; }
+  .card .mt.mt-novid .vid-cell + td, .card .mt.mt-novid .vid-cell + th { padding-left: 10px; }
+  /* about tables: smaller type and tighter cells so the track-record table fits 320 */
+  .about-tbl table { font-size: 13px; }
+  .about-tbl th, .about-tbl td { padding-left: 6px; padding-right: 6px; }
+}
+/* -- end QA round 2 -- */
