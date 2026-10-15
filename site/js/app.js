@@ -2103,10 +2103,10 @@ async function match(r) {
           </span>
         </div>
       </div>
-      ${prev || next ? `<div class="head-links head-nav">
-        ${prev ? `<a class="link" href="${matchHref(season, code, prev.d)}">← ${esc(prev.d)}</a>` : ""}
-        ${next ? `<a class="link" href="${matchHref(season, code, next.d)}">${esc(next.d)} →</a>` : ""}
-      </div>` : ""}
+      ${prev || next ? `<nav class="match-nav-btns" aria-label="Other matches">
+        ${prev ? `<a href="${matchHref(season, code, prev.d)}" title="Previous match">← ${esc(prev.d)}</a>` : ""}
+        ${next ? `<a href="${matchHref(season, code, next.d)}" title="Next match">${esc(next.d)} →</a>` : ""}
+      </nav>` : ""}
     </div></div>
 
     ${stage}
@@ -2937,8 +2937,12 @@ async function boot() {
       box.innerHTML = `<iframe src="${videoLinks(id, +t || 0).embed}" title="${esc(title)}"
         allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
     }
-    box.scrollIntoView({ behavior: "smooth", block: "center" });
+    // theatre: the player grows to fill the window below the header, and the page scrolls to put it there
+    // (getBoundingClientRect lays the page out with the class on, so the target is the new position)
+    document.body.classList.add("theatre");
+    scrollTo({ top: scrollY + box.getBoundingClientRect().top - ($("header.nav")?.offsetHeight ?? 0) - 16, behavior: "smooth" });
   });
+  addEventListener("hashchange", () => document.body.classList.remove("theatre"));
 
   document.addEventListener("click", (e) => { const b = e.target.closest("[data-share]"); if (b) { e.preventDefault(); share(b); } });
   // match videos: one player dialog for every ▶ button
