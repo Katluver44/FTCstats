@@ -1198,6 +1198,9 @@ async function event(r) {
       </div></div>
       <nav class="tabs seg glass">${tabs.map(([k, label]) => `<a href="#/${season}/event/${code}/${k}" class="${k === (tabs.some(([t]) => t === tab) ? tab : "matches") ? "active" : ""}">${label}</a>`).join("")}</nav>
       <div id="tab"></div>`;
+    // On phones the tab strip scrolls sideways (style.css); keep the chosen tab in view after each redraw.
+    const nav = $(".tabs"), active = nav.querySelector("a.active");
+    if (active) nav.scrollLeft += active.getBoundingClientRect().right - nav.getBoundingClientRect().right;
     if (tab === "teams") eventTeams(season, meta, ev, matches);
     else if (tab === "pickmap" && ev.teamList.length >= 4) eventPickMap(season, ev);
     else if (tab === "playoffs" && hasPlayoffs) eventPlayoffs(season, meta, ev, matches, official[code], (m) => videoFor(videos, code, m.time));
