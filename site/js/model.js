@@ -432,22 +432,28 @@ export class Model {
   }
 
   predict(red, blue, eventCode) {
-    const r = this.allianceExpected(red, eventCode);
-    const b = this.allianceExpected(blue, eventCode);
-    const A = Math.max(10, this.avgAllianceNp());
+    return this.predictFrom(this.allianceBase(red, eventCode), this.allianceBase(blue, eventCode), red, blue, eventCode);
+  }
+
+  // The part of predict() that depends on one alliance alone. predictFrom() doesn't
+  // modify it, so the roster forecast reuses one per team pair across matches.
+  allianceBase(nums, eventCode) {
+    const a = this.allianceExpected(nums, eventCode);
     // win probability (and rating updates) use the ratings as they are
-    r.rawNp = r.np; b.rawNp = b.np;
+    a.rawNp = a.np;
+    if (this.zoneRp && nums.length === 2) a.rp[this.zoneRp.rp] = clamp(this.zoneChance(nums, this.zoneRp.thr(this.eventType(eventCode))), 0.01, 0.99);
+    return a;
+  }
+
+  // varSum: pass it when already summed (red then blue, in order) to skip the array work
+  predictFrom(rBase, bBase, red, blue, eventCode, varSum = null) {
+    const r = { ...rBase }, b = { ...bBase };
+    const A = Math.max(10, this.avgAllianceNp());
     const level = (r.np + b.np) / (2 * A);
-    const varSum = this.p.kalman ? [...red, ...blue].reduce((s, n) => s + this.preVar(n, eventCode), 0) : 0;
+    if (varSum == null) varSum = this.p.kalman ? [...red, ...blue].reduce((s, n) => s + this.preVar(n, eventCode), 0) : 0;
     // the overlap part of the recalibration can also move the win probability
     const ov = (x) => (this.p.cal && this.p.calPair ? this.p.calPairWin * A * this.cal.b[3] * 2 * (x.overlap / A - 0.25) : 0);
     const pRed = this.winProb(r.np + ov(r) + b.foul, b.np + ov(b) + r.foul, varSum, level);
-    if (this.zoneRp) {
-      const thr = this.zoneRp.thr(this.eventType(eventCode));
-      for (const [al, nums] of [[r, red], [b, blue]]) {
-        if (nums.length === 2) al.rp[this.zoneRp.rp] = clamp(this.zoneChance(nums, thr), 0.01, 0.99);
-      }
-    }
     if (this.p.cal) {
       r.calX = [1, r.rawNp / A - 1, b.rawNp / A - 1];
       b.calX = [1, b.rawNp / A - 1, r.rawNp / A - 1];

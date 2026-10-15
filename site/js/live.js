@@ -352,48 +352,54 @@ export function forecastFromRoster(season, meta, ev, { perTeam = 5, sims = 2000,
   if (!given) for (const t of ev.teamList) if (t.state) model.setTeam(t.team, t.state);
   const N = teams.length;
   if (N < 4) return [];
-  const idx = new Map(teams.map((t, i) => [t, i]));
   const strength = teams.map((t) => model.epa(t).np); // shown in the table; legacy tiebreak proxy
   const sim = makeSim(season, model, { corr, tb });
   const vf = sim.field === "losingNp" ? "np" : sim.field;
   sim.setup(teams, 2 * teams.reduce((s, t) => s + (model.epa(t)[vf] ?? model.epa(t).np), 0) / N);
-  const cache = new Map(); // "a,b|c,d" -> prediction
-  const predict = (red, blue) => {
-    const k = `${red}|${blue}`;
-    if (!cache.has(k)) {
-      const p = model.predict(red, blue);
-      if (rpProb) { p.red.rp = rpProb(red, p.red); p.blue.rp = rpProb(blue, p.blue); }
-      cache.set(k, p);
-    }
-    return cache.get(k);
+  // Alliance-only half of model.predict, once per ordered team pair (index i*N+j; order
+  // kept so sums match predict() to the bit). Each match only combines two of them.
+  const base = new Array(N * N);
+  const allianceOf = (i, j) => {
+    const k = i * N + j;
+    return base[k] ??= model.allianceBase([teams[i], teams[j]]);
   };
+  const preV = teams.map((t) => model.preVar(t));
+  const kalman = !!model.p.kalman;
 
   const rankSum = new Float64Array(N), rsSum = new Float64Array(N);
   const top1 = new Float64Array(N), top4 = new Float64Array(N), top8 = new Float64Array(N);
   const rp = new Float64Array(N), played = new Float64Array(N), rs = new Float64Array(N), tbs = new Float64Array(N);
   const order = Array.from({ length: N }, (_, i) => i);
   const adv = advancement ? makeAdvSim(teams, model, strength, advancement) : null;
+  const order0 = Array.from({ length: N }, (_, i) => i);
+  const scoreSd = SCORE_NOISE * model.avgAllianceNp();
 
   for (let s = 0; s < sims; s++) {
     rp.fill(0); played.fill(0); tbs.fill(0);
     sim.newEvent();
-    for (const m of randomSchedule(teams, perTeam)) {
-      const p = predict(m.red, m.blue);
+    const sched = randomSchedule(order0, perTeam); // team indices
+    for (let k = 0; k < sched.length; k++) {
+      const m = sched[k], R = m.red, B = m.blue;
+      const varSum = kalman ? 0 + preV[R[0]] + preV[R[1]] + preV[B[0]] + preV[B[1]] : 0;
+      const p = model.predictFrom(allianceOf(R[0], R[1]), allianceOf(B[0], B[1]), null, null, undefined, varSum);
+      if (rpProb) {
+        const red = [teams[R[0]], teams[R[1]]], blue = [teams[B[0]], teams[B[1]]];
+        p.red.rp = rpProb(red, p.red); p.blue.rp = rpProb(blue, p.blue);
+      }
       let rr, br, tr = 0, tbb = 0;
       if (byScore) {
-        const sd = SCORE_NOISE * model.avgAllianceNp();
-        rr = Math.max(0, p.red.total + sd * gauss());
-        br = Math.max(0, p.blue.total + sd * gauss());
+        rr = Math.max(0, p.red.total + scoreSd * gauss());
+        br = Math.max(0, p.blue.total + scoreSd * gauss());
       } else {
-        [rr, br, tr, tbb] = sim.play(p, m.red.map((t) => idx.get(t)), m.blue.map((t) => idx.get(t)), bonus);
+        [rr, br, tr, tbb] = sim.play(p, R, B, bonus);
       }
-      [...m.red, ...m.blue].forEach((t, j) => {
-        if (m.surrogate[j]) return;
-        const i = idx.get(t);
+      for (let j = 0; j < 4; j++) {
+        if (m.surrogate[j]) continue;
+        const i = j < 2 ? R[j] : B[j - 2];
         rp[i] += j < 2 ? rr : br;
         tbs[i] += j < 2 ? tr : tbb;
         played[i]++;
-      });
+      }
     }
     for (let i = 0; i < N; i++) rs[i] = byScore ? rp[i] : played[i] ? rp[i] / played[i] : 0;
     const tbv = tb === "legacy" ? strength : tbs.map((x, i) => x / Math.max(1, played[i]));
