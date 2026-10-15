@@ -83,7 +83,8 @@ function seasonHref(s, { page, args }) {
 function renderNav(r) {
   const { season, page } = r;
   const years = (s) => `${s}–${String(s + 1).slice(2)}`;
-  $("#season .season-cur").textContent = years(season);
+  // the short form ("25–26") only shows on the narrowest phones (style.css, ≤356px), where the full label doesn't fit the header row
+  $("#season .season-cur").innerHTML = `<span class="sc-long">${years(season)}</span><span class="sc-short">${years(season).slice(2)}</span>`;
   $("#season .season-btn").setAttribute("aria-label", `Season: ${years(season)}. Change season`);
   $("#season-menu").innerHTML = state.seasons
     .map((s) => `<a href="${seasonHref(s, r)}" ${s === season ? 'aria-current="true"' : ""}>
@@ -326,12 +327,12 @@ async function home(r) {
         ${banner}
         <div class="eyebrow">${seasonLabel(season, meta.game)} season</div>
         <div class="hero-title">Every FTC match, predicted.</div>
-        <div class="hero-sub">Team ratings that update after every match, win chances you can check against real results, and ranking forecasts for live events.</div>
+        <div class="hero-sub desk-only">Team ratings that update after every match, win chances you can check against real results, and ranking forecasts for live events.</div>
         <div class="search hero-search mobile-only" id="hero-search">${SEARCH_ICON}<input placeholder="Search teams & events" autocomplete="off"><div class="search-results"></div></div>
         <div class="hero-row">
         <div class="hero-actions">
-          <a class="btn btn-solid" href="#/${season}/teams">Find a team</a>
-          <a class="btn btn-outline" href="#/${season}/about">Our methodology</a>
+          <a class="btn btn-solid desk-only" href="#/${season}/teams">Find a team</a>
+          <a class="btn btn-outline desk-only" href="#/${season}/about">Our methodology</a>
         </div>
         <div class="hero-stats">
           <div><b>${pct(acc.accuracy, 1)}</b><span>winners called before the match</span></div>
@@ -340,7 +341,7 @@ async function home(r) {
         </div>
         </div>
       </div>
-      <div class="hero-media">${feature}</div>
+      <div class="hero-media desk-only">${feature}</div>
     </section>
     <div class="hero-below">
       <div class="grid cols-2">
@@ -466,12 +467,14 @@ async function teams(r) {
   byEpa.forEach((r, i) => (r.rankAll = i + 1));
   byEpa.filter((r) => !r.pre).forEach((r, i) => (r.rankPlayed = i + 1));
   const countries = [...new Set(rows.map((r) => r.country).filter(Boolean))].sort();
-  let view = query.get("view") === "chart" ? "chart" : "table";
+  // phones: no chart view (a scatter is unreadable at 360px), so a shared ?view=chart opens the table
+  const phone = matchMedia("(max-width: 640px)").matches;
+  let view = !phone && query.get("view") === "chart" ? "chart" : "table";
   const chart = { type: query.get("chart") ?? "scatter", x: query.get("x") ?? "auto", y: query.get("y") ?? "teleop", m: query.get("m") ?? "np" };
   app.innerHTML = `
     <div class="card">
       <div class="toolbar">
-        <div class="view-pick" role="group" aria-label="View">
+        <div class="view-pick desk-only" role="group" aria-label="View">
           <button type="button" data-view="table" aria-pressed="${view === "table"}">${TABLE_ICON}Table</button>
           <button type="button" data-view="chart" aria-pressed="${view === "chart"}">${CHART_ICON}Chart</button>
         </div>
@@ -485,7 +488,7 @@ async function teams(r) {
             .map(([k, l, tip]) => `<a href="#" data-off="${k}" class="${k === off ? "active" : ""}" title="${tip}">${l}</a>`).join("")}
         </div>` : ""}
         <details class="col-pick"${view === "chart" ? " hidden" : ""}><summary>Columns</summary><div id="col-list"></div></details>
-        <button type="button" class="csv-btn" id="csv" title="Download this list (filters, sort and shown columns) as a spreadsheet">${CSV_ICON}CSV</button>
+        <button type="button" class="csv-btn desk-only" id="csv" title="Download this list (filters, sort and shown columns) as a spreadsheet">${CSV_ICON}CSV</button>
       </div>
       <div id="tbl"${view === "chart" ? " hidden" : ""}></div>
       <div id="charts" class="card-pad team-charts"${view === "table" ? " hidden" : ""}></div>
@@ -539,7 +542,10 @@ async function teams(r) {
   const EXTRA = ["country", "region", "matches", "events", "cons", "sos", ...rpNames.map((_, i) => `rpr${i}`)];
   const plain = (c) => c.label.replace(/<[^>]+>/g, "");
   // teamCols4: SOS and the per-RP columns start hidden (an earlier list showed them)
-  let hiddenCols = new Set(pref.get("teamCols4", null) ?? ["wr", ...EXTRA]);
+  // phones: #, Team, EPA and Record unless the phone has saved its own set (teamCols4m)
+  const PHONE_HIDDEN = cols.filter((c) => !FIXED.has(c.key) && c.key !== "wins").map((c) => c.key);
+  const colKey = phone ? "teamCols4m" : "teamCols4";
+  let hiddenCols = new Set(pref.get(colKey, null) ?? (phone ? PHONE_HIDDEN : ["wr", ...EXTRA]));
   $("#col-list").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) =>
     `<button type="button" class="col-btn" data-k="${c.key}" aria-pressed="${!hiddenCols.has(c.key)}">${esc(plain(c))}</button>`).join("");
   let table, shown = rows;
@@ -550,7 +556,7 @@ async function teams(r) {
     const k = b.dataset.k, on = hiddenCols.has(k);
     on ? hiddenCols.delete(k) : hiddenCols.add(k);
     b.setAttribute("aria-pressed", String(on));
-    pref.set("teamCols4", [...hiddenCols]);
+    pref.set(colKey, [...hiddenCols]);
     mount();
   };
 
@@ -689,7 +695,7 @@ async function team(r) {
         <div class="th-epa">
           <div class="label" title="Carried over from its past seasons; it moves once the team plays">Predicted EPA</div>
           <b>${fmt(p.np)}</b>
-          <div class="th-ranks"><span>Auto <b>${fmt(p.auto)}</b></span><span>Teleop <b>${fmt(p.teleop)}</b></span><span>Endgame <b>${fmt(p.endgame)}</b></span></div>
+          <div class="th-ranks desk-only"><span>Auto <b>${fmt(p.auto)}</b></span><span>Teleop <b>${fmt(p.teleop)}</b></span><span>Endgame <b>${fmt(p.endgame)}</b></span></div>
         </div>
       </div></div>` : "";
     app.innerHTML = `${header}
@@ -703,6 +709,9 @@ async function team(r) {
   }
   const evName = new Map((t.events ?? []).map((e) => [e.code, e.name]));
   const e = t.epa;
+  // only off-season matches so far: the build lists such teams last, so a rank would mislead
+  const official = t.matches.some((m) => !m.off);
+  const phone = matchMedia("(max-width: 640px)").matches;
   const w = t.matches.filter((m) => m.score > m.oppScore).length;
   const l = t.matches.filter((m) => m.score < m.oppScore).length;
   const ti = t.matches.length - w - l;
@@ -717,8 +726,10 @@ async function team(r) {
   const plaques = awards.filter((a) => !isBanner(a)), banners = awards.filter(isBanner);
   const fact = (b, k) => `<span class="th-fact"><b>${b}</b> ${k}</span>`;
   // ranks as one line under the EPA, e.g. "#26 World · #8 Romania · #1 BZ"
-  const rankLine = [["World", t.rank, t.of], places.country, places.state].filter(Boolean)
-    .map(([label, rank, of]) => `<span title="out of ${fmtInt(of)}" class="${rank === 1 ? "gold-rank" : ""}"><b>#${fmtInt(rank)}</b> ${esc(label)}</span>`).join("");
+  const rankLine = !official
+    ? `<span class="th-unranked" title="Only off-season matches so far; official events decide the rank">Not ranked yet</span>`
+    : [["World", t.rank, t.of], places.country, places.state].filter(Boolean)
+      .map(([label, rank, of]) => `<span title="out of ${fmtInt(of)}" class="${rank === 1 ? "gold-rank" : ""}"><b>#${fmtInt(rank)}</b> ${esc(label)}</span>`).join("");
   app.innerHTML = `
     <div class="card card-pad team-hero">
       <div class="th-top">
@@ -729,23 +740,24 @@ async function team(r) {
           <div class="th-facts">
             ${fact(`${w}-${l}${ti ? `-${ti}` : ""}`, "record")}
             ${fact(t.matches.length ? pct(w / t.matches.length) : "–", "win rate")}
+            ${awards.length ? `<span class="th-fact th-awards-sum"><b>${awards.length}</b> award${awards.length === 1 ? "" : "s"}${banners.length ? ` · <b>${banners.length}</b> win${banners.length === 1 ? "" : "s"}` : ""}</span>` : ""}
             ${addPhotoLink(n)}
             ${shareButton(`t/${season}/${n}`, `${n} ${t.name}`)}
           </div>
         </div>
-        ${awards.length ? `<div class="th-awards">
+        ${awards.length ? `<div class="th-awards desk-only">
           <div class="banners">${banners.map((a) => banner(a, season)).join("")}</div><div class="plaques">${plaques.map((a) => plaque(a, season)).join("")}</div>
         </div>` : ""}
         </div>
         <div class="th-epa">
-          <div class="label">EPA · points added per match</div>
+          <div class="label">${official ? "EPA · points added per match" : "EPA · carried from past seasons"}</div>
           <b>${fmt(e.np)}</b>
           <div class="th-ranks">${rankLine}</div>
         </div>
       </div>
       <div class="th-body">
-        <div class="radar-box" id="radar"></div>
-        <div class="th-stats">
+        <div class="radar-box desk-only" id="radar"></div>
+        <div class="th-stats desk-only">
           <div class="stat-grid" id="stat-grid"></div>
         </div>
         <div class="th-photo" id="photo-slot" hidden></div>
@@ -796,13 +808,16 @@ async function team(r) {
     const result = (m) => `${m.score > m.oppScore ? "W" : m.score < m.oppScore ? "L" : "T"} ${m.score}–${m.oppScore}`;
     const note = (s) => ($("#chart-note").textContent = s);
     if (g === "epa") {
-      note("EPA after each match: points this team adds to its alliance, and how they split by period.");
+      // phones: the overall EPA line only (no auto / teleop / endgame split)
+      note(phone ? "EPA after each match." : "EPA after each match: points this team adds to its alliance, and how they split by period.");
       mountLineChart($("#chart"), {
         series: [
           { name: "EPA", color: "var(--text)", values: ms.map((m) => m.epa[0]), width: 2.5, smooth: true },
-          { name: "Auto", color: "#f59e0b", values: ms.map((m) => m.epa[1]), smooth: true },
-          { name: "Teleop", color: "var(--accent)", values: ms.map((m) => m.epa[2]), smooth: true },
-          { name: "Endgame", color: "#10b981", values: ms.map((m) => m.epa[3]), smooth: true },
+          ...(phone ? [] : [
+            { name: "Auto", color: "#f59e0b", values: ms.map((m) => m.epa[1]), smooth: true },
+            { name: "Teleop", color: "var(--accent)", values: ms.map((m) => m.epa[2]), smooth: true },
+            { name: "Endgame", color: "#10b981", values: ms.map((m) => m.epa[3]), smooth: true },
+          ]),
         ],
         bands,
         tooltip: (i) => `${head(ms[i])}<br>EPA ${fmt(ms[i].epa[0])} · ${result(ms[i])}`,
@@ -819,7 +834,9 @@ async function team(r) {
       const did = (m, j) => (m.solo[j] ?? 0) > 0;
       const COLORS = ["#f59e0b", "#10b981", "var(--accent)", "#a855f7", "var(--red)"];
       const total = specs.map((sp, j) => `${sp.label} ${qs.filter((m) => did(m, j)).length} of ${qs.length}`).join(" · ");
-      note(qs.length
+      note(!qs.length ? "No qualification matches with per-robot scores yet."
+        : phone ? `Share of its last 10 quals where this robot did each one. This season: ${total}.`
+        : qs.length
         ? `These are the only things FTC's score sheet credits to one robot rather than the alliance, so they're the closest public data gets to scouting a robot. Lines show the share of its last 10 qualification matches it did each one. A miss is usually a robot problem, but some strong teams skip one on purpose, so check the match video before reading too much into it. This season: ${total}.`
         : "No qualification matches with per-robot scores yet.");
       if (qs.length) mountLineChart($("#chart"), {
@@ -1148,9 +1165,9 @@ async function events(r) {
     { key: "name", label: "Event", sort: false, render: (e) => evCell(season, e.code, e.name, `${esc(e.loc)} ${e.ongoing ? '<span class="pill live">Live</span>' : ""}`) },
     { key: "start", label: "Date", cls: "c small muted", render: (e) => fmtDate(e.start) },
     { key: "type", label: "Type", cls: "c small muted hide-sm", render: (e) => esc(typeName(e.type)) },
-    { key: "teams", label: "Teams", cls: "r hide-sm" },
+    { key: "teams", label: "Teams", cls: "r" },
     { key: "played", label: "Matches", cls: "r small hide-sm", render: (e) => (e.matches ? (e.played < e.matches ? `${e.played}/${e.matches}` : e.matches) : "–") },
-    { key: "strength", label: "Strength", cls: "r", render: (e) => epa(e.strength, meta) },
+    { key: "strength", label: "Strength", cls: "r desk-only", render: (e) => epa(e.strength, meta) },
   ];
   const table = sortableTable($("#tbl"), evs, cols, { sortKey: "start" });
   const fillStates = regionSelect($("#state"), () => evs.filter((e) => e.country === $("#country").value), query.get("state"));
@@ -1213,7 +1230,7 @@ async function event(r) {
           <div class="row" style="margin-top:8px">
             ${liveAt ? `<span class="pill live">Live · updated ${liveAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>` : ""}
             <span class="pill">${ev.teams} teams</span><span class="pill">${played.length}/${matches.length} matches played</span>
-            <a class="pill" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}" target="_blank" rel="noopener">FTCScout ↗</a>
+            <a class="pill desk-only" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}" target="_blank" rel="noopener">FTCScout ↗</a>
             ${shareButton(`e/${season}/${encodeURIComponent(code)}`, ev.name)}
             ${videos?.[code]?.streams?.[0] ? `<button class="pill" data-video="${videos[code].streams[0].id}" data-t="0"${videos[code].streams[0].ext ? ' data-ext="1"' : ""} data-title="${esc(ev.name)}">▶ Event stream</button>` : ""}
           </div>
@@ -1228,7 +1245,15 @@ async function event(r) {
     else if (tab === "pickmap" && ev.teamList.length >= 4) eventPickMap(season, ev);
     else if (tab === "playoffs" && hasPlayoffs) eventPlayoffs(season, meta, ev, matches, official[code], (m) => videoFor(videos, code, m.time));
     else if (tab === "forecast" && canForecast) eventForecast(season, meta, ev, matches);
-    else $("#tab").innerHTML = `<div class="card">${matchTable(season, matches, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
+    else {
+      // mid-event, phones only (style.css): a button above the table jumps to the first unplayed match
+      // instead of a scroll past every played one
+      const played = matches.filter((m) => m.played).length, nextUp = !ev.finished && played ? matches.find((m) => !m.played) : null;
+      $("#tab").innerHTML = `<div class="card">
+        ${nextUp ? `<div class="mt-jump"><button type="button" class="pill" id="mt-jump">${played} of ${matches.length} played · Jump to ${esc(nextUp.d)} ↓</button></div>` : ""}
+        ${matchTable(season, matches, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
+      $("#mt-jump")?.addEventListener("click", () => $("#tab .mt tr.up")?.scrollIntoView({ block: "center", behavior: "smooth" }));
+    }
   };
 
   draw();
@@ -1251,8 +1276,8 @@ function eventPlayoffs(season, meta, ev, matches, official, video) {
   const allianceRows = p.alliances.map((a) => `<tr class="${a.result === "Winner" ? "champ" : ""}">
     <td class="num"><span class="seed">A${a.seed}</span></td>
     <td><div class="al-teams">${a.teams.map((t) => tn(t)).join("")}</div><div class="al-name">${esc(name(a.captain))}</div></td>
-    <td class="r"><b>${fmt(strength(a))}</b></td>
-    <td class="r small muted">${record(a)}</td>
+    <td class="r desk-only"><b>${fmt(strength(a))}</b></td>
+    <td class="r small muted desk-only">${record(a)}</td>
     <td class="small res ${a.result === "Winner" ? "res-win" : a.result === "Finalist" ? "res-final" : "muted"}">${esc(a.result)}</td>
   </tr>`).join("");
 
@@ -1307,10 +1332,10 @@ function eventPlayoffs(season, meta, ev, matches, official, video) {
     </div>`;
     // round robin: standings decide who reaches the final
     if (p.standings) bracket += `<div class="rr-standings"><div class="bsec-h">Round robin standings</div>
-      <table><thead><tr><th></th><th>Alliance</th><th class="r">W-L</th><th class="r">Avg score</th><th></th></tr></thead><tbody>
+      <table><thead><tr><th></th><th>Alliance</th><th class="r">W-L</th><th class="r desk-only">Avg score</th><th></th></tr></thead><tbody>
       ${p.standings.map((r, i) => `<tr class="${i < 2 ? "adv" : ""}"><td class="faint small">${esc(r.place.replace("Tied ", "T-"))}</td>
         <td><span class="seed">A${r.a.seed}</span> ${r.a.teams.map((t) => tn(t)).join("")}</td>
-        <td class="r">${r.w}-${r.l}${r.t ? `-${r.t}` : ""}</td><td class="r">${fmt(r.avg)}</td>
+        <td class="r">${r.w}-${r.l}${r.t ? `-${r.t}` : ""}</td><td class="r desk-only">${fmt(r.avg)}</td>
         <td class="small ${i < 2 ? "res-win" : "faint"}">${i < 2 ? "→ Final" : ""}</td></tr>`).join("")}
       </tbody></table><div class="po-note" style="padding-left:0">Ordered by wins, then average score; FIRST's official tiebreakers may differ.</div></div>`;
     wide = n >= 5;
@@ -1333,7 +1358,7 @@ function eventPlayoffs(season, meta, ev, matches, official, video) {
       <div class="po-alliances">
         <div class="po-h">Alliances</div>
         <div class="table-wrap"><table class="alliances">
-          <thead><tr><th>Seed</th><th>Teams</th><th class="r" title="Adds the EPAs of each alliance's two best robots">Strength</th><th class="r">W-L</th><th>Result</th></tr></thead>
+          <thead><tr><th>Seed</th><th>Teams</th><th class="r desk-only" title="Adds the EPAs of each alliance's two best robots">Strength</th><th class="r desk-only">W-L</th><th>Result</th></tr></thead>
           <tbody>${allianceRows}</tbody></table></div>
         ${official ? "" : `<div class="po-note">Seeds worked out from qualification ranks until FIRST publishes the official list.</div>`}
       </div>
@@ -1409,8 +1434,12 @@ function eventTeams(season, meta, ev, matches = ev.matchList) {
   ];
   const FIXED = new Set(["rank", "team", "epaHere"]);
   const plain = (c) => c.label.replace(/<[^>]+>/g, "");
-  // default: the original columns (record, EPA, change, SOS); the gear adds the rest
-  let hidden = new Set(pref.get("eventCols2", ["rp", "auto", "teleop", "endgame", "epaStart", "wr"]));
+  // default: the original columns (record, EPA, change, SOS); the gear adds the rest.
+  // Phones keep their own choice under a separate key and default to Rank, Team, Record, EPA.
+  const phone = matchMedia("(max-width: 640px)").matches;
+  const colKey = phone ? "eventCols2m" : "eventCols2";
+  const PHONE_HIDDEN = ["rp", "auto", "teleop", "endgame", "epaStart", "delta", "wr", "sos"];
+  let hidden = new Set(pref.get(colKey, phone ? PHONE_HIDDEN : ["rp", "auto", "teleop", "endgame", "epaStart", "wr"]));
   // the gear sits in the header row, in the margin right of the last column
   $("#tab").innerHTML = `<div class="card tt-card"><details class="col-pick gear-pick tt-gear"><summary title="Columns" aria-label="Choose columns">${GEAR_ICON}</summary><div id="tt-cols"></div></details><div id="tt"></div></div>`;
   $("#tt-cols").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) => `<button type="button" class="col-btn" data-k="${c.key}" aria-pressed="${!hidden.has(c.key)}">${esc(plain(c))}</button>`).join("");
@@ -1422,7 +1451,7 @@ function eventTeams(season, meta, ev, matches = ev.matchList) {
     const k = b.dataset.k, on = hidden.has(k);
     on ? hidden.delete(k) : hidden.add(k);
     b.setAttribute("aria-pressed", String(on));
-    pref.set("eventCols2", [...hidden]);
+    pref.set(colKey, [...hidden]);
     mount();
   };
 }
@@ -1442,7 +1471,7 @@ function eventPickMap(season, ev) {
   $("#tab").innerHTML = `<div class="card card-pad">
     <div class="chart-head"><div>
         <h2 style="margin:0">Pick list</h2>
-        <p class="small muted" style="margin:4px 0 0">${played ? "Ranked by EPA after each team's last match here" : "Ranked by EPA coming into the event"}, split into what each team scores in auto, teleop and endgame.</p>
+        <p class="small muted desk-only" style="margin:4px 0 0">${played ? "Ranked by EPA after each team's last match here" : "Ranked by EPA coming into the event"}, split into what each team scores in auto, teleop and endgame.</p>
       </div>
       <div class="pl-legend small"><span><i class="auto"></i>Auto</span><span><i class="teleop"></i>Teleop</span><span><i class="endgame"></i>Endgame</span></div>
     </div>
@@ -1480,12 +1509,12 @@ function eventForecast(season, meta, ev, matches) {
     const rows = forecastRankings(season, teams, replayed, 3000, { model });
     const showFinal = ev.teamList.some((t) => t.rank != null) && playedQuals > 0 && (done || cutoff < playedQuals);
     $("#fc").innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Proj.</th><th>Team</th><th class="r">Current RS</th><th class="r">Proj. RS</th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th>${showFinal ? '<th class="r">Actual rank</th>' : ""}</tr></thead>
+      <thead><tr><th>Proj.</th><th>Team</th><th class="r desk-only">Current RS</th><th class="r desk-only">Proj. RS</th><th class="r">Avg rank</th><th class="r">#1</th><th class="r">Top 4</th><th class="r hide-sm">Top 8</th>${showFinal ? '<th class="r">Actual rank</th>' : ""}</tr></thead>
       <tbody>${rows.map((r, i) => `<tr>
         <td class="faint num">${i + 1}</td>
         <td>${teamCell(season, r.team, names.get(r.team))}</td>
-        <td class="r small">${r.currentRs != null ? fmt(r.currentRs, 2) : "–"} <span class="faint" title="matches played">(${r.played} played)</span></td>
-        <td class="r">${fmt(r.meanRs, 2)}</td>
+        <td class="r small desk-only">${r.currentRs != null ? fmt(r.currentRs, 2) : "–"} <span class="faint" title="matches played">(${r.played} played)</span></td>
+        <td class="r desk-only">${fmt(r.meanRs, 2)}</td>
         <td class="r">${fmt(r.meanRank, 1)}</td>
         <td class="r">${probCell(r.p1)}</td>
         <td class="r">${probCell(r.p4)}</td>
@@ -1514,7 +1543,7 @@ function rosterForecast(season, meta, ev) {
     <div class="card card-pad">
       <div class="row" style="justify-content:space-between">
         <div><b>Predicted rankings before the schedule is released</b>
-          <div class="small muted">2,000 random qualification schedules, each played out from every team's rating entering the event.${unrated ? ` ${unrated} of ${ev.teamList.length} teams haven't played this season yet, so their rating comes from past seasons (rookies start just below average). Expect early forecasts to be rough.` : ""}</div></div>
+          <div class="small muted desk-only">2,000 random qualification schedules, each played out from every team's rating entering the event.${unrated ? ` ${unrated} of ${ev.teamList.length} teams haven't played this season yet, so their rating comes from past seasons (rookies start just below average). Expect early forecasts to be rough.` : ""}</div></div>
         <label class="row small">Matches per team
           <select id="per">${[4, 5, 6, 7, 8].map((n) => `<option ${n === perTeam ? "selected" : ""}>${n}</option>`).join("")}</select></label>
       </div>
@@ -1712,7 +1741,7 @@ async function match(r) {
         <div class="kicker"><a class="link" href="${evLink}">${esc(ev.name)}</a> · ${esc(when)}</div>
         <h1>${esc(matchTitle(m.d))}</h1>
         <div class="row" style="margin-top:8px">
-          <a class="pill" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}/matches" target="_blank" rel="noopener">FTCScout ↗</a>
+          <a class="pill desk-only" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}/matches" target="_blank" rel="noopener">FTCScout ↗</a>
           ${links && links.site !== "YouTube" ? `<a class="pill" href="${openUrl}" target="_blank" rel="noopener">${links.site} ↗</a>` : ""}
           ${shareButton(`m/${season}/${encodeURIComponent(code)}/${encodeURIComponent(m.d)}`, `${ev.name} · ${m.d}`)}
         </div>
@@ -1735,7 +1764,7 @@ async function match(r) {
       ${rpCard}
     </div>
 
-    <div class="card section"><div class="card-pad" style="padding-bottom:6px"><h3 style="margin:0">Teams</h3><p class="small muted" style="margin:4px 0 0">Each robot's EPA going into this match, and where this result moved it${isQual ? ". Event rank and record are as of the end of this match" : ""}.</p></div><div class="table-wrap"><table class="match-teams">
+    <div class="card section"><div class="card-pad" style="padding-bottom:6px"><h3 style="margin:0">Teams</h3><p class="small muted desk-only" style="margin:4px 0 0">Each robot's EPA going into this match, and where this result moved it${isQual ? ". Event rank and record are as of the end of this match" : ""}.</p></div><div class="table-wrap"><table class="match-teams">
       <thead><tr><th>Team</th><th class="c">EPA before</th><th class="r hide-sm">Auto</th><th class="r hide-sm">Teleop</th><th class="r hide-sm">Endgame</th><th class="r">EPA after</th><th class="r"><span class="hide-sm">${isQual ? "Event" : "Qual"} </span>rank</th><th class="r hide-sm">Record</th></tr></thead>
       <tbody>${teamRows}</tbody></table></div></div>`;
 }
@@ -1783,7 +1812,7 @@ async function compete(r) {
       <div class="card card-pad"><div class="page-head"><div>
         <div class="kicker">${seasonLabel(season, meta.game)}</div>
         <h1>Compete</h1>
-        <p class="muted" style="margin:4px 0 0">Put any teams against each other and see the predicted score, who wins and how often. Uses each team's current EPA.</p>
+        <p class="muted desk-only" style="margin:4px 0 0">Put any teams against each other and see the predicted score, who wins and how often. Uses each team's current EPA.</p>
       </div>${competeModes(season, "compete")}</div></div>
       <div class="compete-bar section">
         <div class="row"><button type="button" class="pill" id="swap">⇄ Swap sides</button><button type="button" class="pill" id="random">Random</button><button type="button" class="pill" id="clear">Clear</button></div>
@@ -1927,11 +1956,11 @@ async function compete(r) {
     $("#out").innerHTML = `
       <div class="section">${board}</div><div class="out-rest">
       ${uneven ? `<p class="small muted section compete-note">Real FTC matches are 2 v 2. With other sizes each side's score is the sum of its robots' ratings, so read it as a what-if (field space and shared goals aren't modelled).</p>` : ""}
-      <div class="grid ${rpCard ? "cols-2" : ""} section">
+      <div class="grid ${rpCard ? "cols-2" : ""} section desk-only">
         <div class="card card-pad"><h3>Score breakdown</h3>${breakdown}</div>
         ${rpCard}
       </div>
-      <div class="section-title"><h2>Robots</h2><p class="muted" style="margin:6px 0 0">Each robot's EPA and how much of its alliance's points it brings.</p></div>
+      <div class="section-title"><h2>Robots</h2><p class="muted desk-only" style="margin:6px 0 0">Each robot's EPA and how much of its alliance's points it brings.</p></div>
       <div class="card"><div class="table-wrap"><table class="match-teams">
         <thead><tr><th>Team</th><th class="c">EPA</th><th class="r hide-sm">Auto</th><th class="r hide-sm">Teleop</th><th class="r hide-sm">Endgame</th><th class="r">Share</th><th class="r hide-sm">Record</th></tr></thead>
         <tbody>${robotRows}</tbody></table></div></div></div>`;
@@ -2034,7 +2063,7 @@ async function sim(r) {
     <div class="card card-pad"><div class="page-head"><div>
       <div class="kicker">${seasonLabel(season, meta.game)}</div>
       <h1>SIM event</h1>
-      <p class="muted" style="margin:4px 0 0">Pick any teams and see how a qualification tournament between them would likely rank: thousands of random schedules, each played out from every team's current EPA.</p>
+      <p class="muted desk-only" style="margin:4px 0 0">Pick any teams and see how a qualification tournament between them would likely rank: thousands of random schedules, each played out from every team's current EPA.</p>
     </div>${competeModes(season, "sim")}</div></div>
     <div class="compete-bar section">
       <div class="row">
@@ -2223,7 +2252,7 @@ async function h2h(r) {
     <div class="card card-pad"><div class="page-head"><div>
       <div class="kicker">${seasonLabel(season, meta.game)}</div>
       <h1>Head to head</h1>
-      <p class="muted" style="margin:4px 0 0">Two teams side by side: this season's ratings and every match they've played against or with each other, or their whole careers.</p>
+      <p class="muted desk-only" style="margin:4px 0 0">Two teams side by side: this season's ratings and every match they've played against or with each other, or their whole careers.</p>
     </div>${competeModes(season, "h2h")}</div></div>
     <div class="compete-bar section">
       <nav class="chart-pick" aria-label="Compare over">${[["season", "This season"], ["career", "Career"]].map(([k, l]) => `<a href="${href({ view: k })}" class="${k === view ? "active" : ""}">${l}</a>`).join("")}</nav>
@@ -2253,7 +2282,7 @@ async function h2h(r) {
   if (A === B) { out.innerHTML = `<div class="section"><div class="card empty">Pick two different teams.</div></div>`; return; }
 
   // one row of the tale of the tape: mirrored bars, the better side in its colour
-  const tape = (label, va, vb, show, { low = false, tip = "", text = null } = {}) => {
+  const tape = (label, va, vb, show, { low = false, tip = "", text = null, cls = "" } = {}) => {
     const ok = va != null && vb != null;
     const better = !ok || va === vb ? 0 : (low ? va < vb : va > vb) ? -1 : 1;
     const size = (v, o) => {
@@ -2263,7 +2292,7 @@ async function h2h(r) {
       const top = Math.max(v, o ?? 0, 1e-9);
       return Math.max(0, Math.round((Math.max(0, v) / top) * 100));
     };
-    return `<div class="tape-row"${tip ? ` title="${esc(tip)}"` : ""}>
+    return `<div class="tape-row${cls ? ` ${cls}` : ""}"${tip ? ` title="${esc(tip)}"` : ""}>
       <b class="tape-v ${better === -1 ? "win red-text" : "muted"}">${va == null ? "–" : text ? text[0] : show(va)}</b>
       <span class="tape-bar left"><i class="red" style="width:${size(va, vb)}%"></i></span>
       <span class="tape-k">${label}</span>
@@ -2308,15 +2337,16 @@ async function h2h(r) {
     const la = awardsOf(ta), lb = awardsOf(tb);
     const ORDER = ["Winner", "DivisionWinner", "Finalist", "DivisionFinalist", "ConferenceFinalist"];
     const types = [...ORDER, ...Object.keys(AWARD_NAMES).filter((k) => !ORDER.includes(k))].filter((k) => la.some((a) => a.type === k) || lb.some((a) => a.type === k));
-    if (!types.length) return `<div class="card empty">Neither team has won an award ${view === "career" ? "yet" : "this season"}.</div>`;
+    if (!types.length) return `<div class="card empty desk-only">Neither team has won an award ${view === "career" ? "yet" : "this season"}.</div>`;
     const where = (n, list) => list.map((a) => `${a.placement > 1 && !/Winner|Finalist/.test(a.type) ? `${ordinal(a.placement)} · ` : ""}${a.evName ?? a.ev}${view === "career" ? ` (${a.s}–${String(a.s + 1).slice(2)})` : ""}`).join("; ");
-    return `<div class="card card-pad"><div class="tape">${types.map((k) => {
+    return `<div class="card card-pad desk-only"><div class="tape">${types.map((k) => {
       const xa = la.filter((a) => a.type === k), xb = lb.filter((a) => a.type === k);
       const label = (AWARD_NAMES[k] ?? k).replace(/ Award$/, "");
       return tape(label, xa.length, xb.length, (v) => fmtInt(v), { tip: [xa.length ? `${A}: ${where(A, xa)}` : "", xb.length ? `${B}: ${where(B, xb)}` : ""].filter(Boolean).join("\n") });
     }).join("")}</div></div>`;
   };
-  const awardsTitle = `<div class="section-title"><h2>Awards</h2><p class="muted" style="margin:6px 0 0">How many times each team has won each award${view === "career" ? " across every season" : " this season"}, counting 2nd and 3rd places. Hover a row for where.</p></div>`;
+  // phones: the tape's Awards row is the summary; the per-award breakdown is desk-only
+  const awardsTitle = `<div class="section-title desk-only"><h2>Awards</h2><p class="muted desk-only" style="margin:6px 0 0">How many times each team has won each award${view === "career" ? " across every season" : " this season"}, counting 2nd and 3rd places. Hover a row for where.</p></div>`;
 
   if (view === "season") {
     const a = cur(ta), b = cur(tb);
@@ -2324,17 +2354,17 @@ async function h2h(r) {
     out.innerHTML = `
       <div class="section card card-pad">${headRow(a, b)}<div class="tape">
         ${tape("EPA", a.epa.np, b.epa.np, (v) => fmt(v), { tip: EPA_TIP })}
-        ${tape("Auto", a.epa.auto, b.epa.auto, (v) => fmt(v))}
-        ${tape("Teleop", a.epa.teleop, b.epa.teleop, (v) => fmt(v))}
-        ${tape("Endgame", a.epa.endgame, b.epa.endgame, (v) => fmt(v))}
-        ${meta.rpNames.length ? tape("Bonus RPs", rpSum(a), rpSum(b), (v) => fmt(v), { tip: "Bonus ranking points earned in an average match" }) : ""}
+        ${tape("Auto", a.epa.auto, b.epa.auto, (v) => fmt(v), { cls: "desk-only" })}
+        ${tape("Teleop", a.epa.teleop, b.epa.teleop, (v) => fmt(v), { cls: "desk-only" })}
+        ${tape("Endgame", a.epa.endgame, b.epa.endgame, (v) => fmt(v), { cls: "desk-only" })}
+        ${meta.rpNames.length ? tape("Bonus RPs", rpSum(a), rpSum(b), (v) => fmt(v), { tip: "Bonus ranking points earned in an average match", cls: "desk-only" }) : ""}
         ${tape("Win rate", rate(a.matches), rate(b.matches), (v) => pct(v), { tip: "Share of matches won (partners count too)" })}
         ${tape("Matches", a.matches.length, b.matches.length, (v) => fmtInt(v))}
         ${tape("World rank", a.rank / a.of, b.rank / b.of, () => "", { low: true, text: [`#${fmtInt(a.rank)}`, `#${fmtInt(b.rank)}`], tip: `Bars: share of the season's ${fmtInt(a.of)} teams ranked below` })}
         ${tape("Awards", (a.awards ?? []).length, (b.awards ?? []).length, (v) => fmtInt(v))}
       </div></div>
       ${awardsTitle}${awardsCard()}
-      <div class="section-title"><h2>EPA through the season</h2><p class="muted" style="margin:6px 0 0">By match number (1st match, 2nd, …) so seasons of different lengths line up.</p></div>
+      <div class="section-title"><h2>EPA through the season</h2><p class="muted desk-only" style="margin:6px 0 0">By match number (1st match, 2nd, …) so seasons of different lengths line up.</p></div>
       <div class="card card-pad"><div id="chart"></div></div>
       <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(g.vs)}</b> for ${A} · Together: <b>${recordOf(g.withB)}</b> · scores show ${A}'s alliance first</p></div>
       ${meetTable([g], evNames)}`;
@@ -2375,7 +2405,7 @@ async function h2h(r) {
       ${tape("Awards", ca.awards, cb.awards, (v) => fmtInt(v))}
       ${tape("Wins (banners)", ca.banners, cb.banners, (v) => fmtInt(v), { tip: "Event wins and Inspire awards" })}
     </div></div>
-    <div class="section-title"><h2>Season by season</h2><p class="muted" style="margin:6px 0 0">World rank each season; bars compare it as a share of that season's teams, since each game scores differently and EPAs don't compare across seasons. Hover for EPAs.</p></div>
+    <div class="section-title"><h2>Season by season</h2><p class="muted desk-only" style="margin:6px 0 0">World rank each season; bars compare it as a share of that season's teams, since each game scores differently and EPAs don't compare across seasons. Hover for EPAs.</p></div>
     <div class="card card-pad"><div class="tape">${seasonRows}</div></div>
     ${awardsTitle}${awardsCard()}
     <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(allVs)}</b> for ${A} · Together: <b>${recordOf(allWith)}</b> · scores show ${A}'s alliance first</p></div>
@@ -2390,7 +2420,7 @@ async function about(r) {
   if (stale(r)) return;
   const a = meta.accuracy, c = meta.compare;
   const row = (k, label) => a[k] ? `<tr><td>${label}</td><td class="r">${fmtInt(a[k].matches)}</td><td class="r"><b>${pct(a[k].accuracy, 1)}</b></td><td class="r">${fmt(a[k].brier, 3)}</td><td class="r hide-sm">${fmt(a[k].scoreMae)}</td>${meta.rpNames.length ? `<td class="r hide-sm">${a[k].rpBrier != null ? fmt(a[k].rpBrier, 3) : "–"}</td>` : ""}</tr>` : "";
-  const cmpRow = (k, name, note) => c?.[k] ? `<tr><td>${k === "epa" ? `<b>${name}</b>` : name}<div class="small muted">${note}</div></td><td class="r">${k === "epa" ? `<b>${pct(c[k].accuracy, 1)}</b>` : pct(c[k].accuracy, 1)}</td><td class="r">${fmt(c[k].brier, 3)}</td></tr>` : "";
+  const cmpRow = (k, name, note) => c?.[k] ? `<tr><td>${k === "epa" ? `<b>${name}</b>` : name}<div class="small muted desk-only">${note}</div></td><td class="r">${k === "epa" ? `<b>${pct(c[k].accuracy, 1)}</b>` : pct(c[k].accuracy, 1)}</td><td class="r">${fmt(c[k].brier, 3)}</td></tr>` : "";
   const solo = (meta.solo ?? []).map((x) => esc(x.label ?? x.robots[0])).join(", ");
 
   // calibration plot: predicted chance (x) vs how often the favourite won (y), 50-100%
@@ -2421,24 +2451,24 @@ async function about(r) {
     ${c ? `<div class="section-title"><div class="eyebrow">Is EPA the best rating?</div><h2>Compared with the alternatives, ${season}</h2>
       <p class="muted" style="margin:6px 0 0;max-width:760px">Every rating predicted the same ${fmtInt(a.all.matches)} matches, each using only what was known before the match. Brier score measures the win chances themselves: 0.25 is a coin flip, lower is better.</p></div>
     <div class="grid cols-2">
-      <div class="card"><div class="table-wrap"><table>
+      <div class="card about-tbl"><div class="table-wrap"><table>
         <thead><tr><th>Rating</th><th class="r">Winner correct</th><th class="r">Brier</th></tr></thead><tbody>
         ${cmpRow("epa", "EPA (this site)", "points added, per robot, updated every match")}
         ${cmpRow("opr", "OPR, updated live", "what FTCScout shows, re-solved before every match")}
         ${cmpRow("avg", "Average score so far", "each team's average alliance score")}
         ${cmpRow("elo", "Elo", "wins and losses only, like chess ratings")}
       </tbody></table></div></div>
-      <div class="card card-pad"><div class="small muted">Winners called by month: EPA vs OPR</div><div id="by-month"></div></div>
+      <div class="card card-pad desk-only"><div class="small muted">Winners called by month: EPA vs OPR</div><div id="by-month"></div></div>
     </div>` : ""}
 
     <div class="section-title"><div class="eyebrow">Track record</div><h2>How EPA did in ${season}</h2></div>
-    <div class="card"><div class="table-wrap"><table>
+    <div class="card about-tbl"><div class="table-wrap"><table>
       <thead><tr><th></th><th class="r">Matches</th><th class="r">Winner correct</th><th class="r">Brier</th><th class="r hide-sm">Score error (avg pts)</th>${meta.rpNames.length ? '<th class="r hide-sm">Bonus RP Brier</th>' : ""}</tr></thead>
       <tbody>${row("all", "All matches")}${row("quals", "Qualifications")}${row("elims", "Playoffs")}${row("champs", "Championships")}</tbody>
     </table></div></div>
 
     <div class="grid cols-2 section">
-      <div class="card card-pad">
+      <div class="card card-pad desk-only">
         <h3>Calibration</h3>
         <p class="small muted">When EPA gives the favourite a 75% chance, does the favourite win about 75% of the time? Dots on the dashed line mean yes; bigger dots are more matches.</p>
         <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;display:block;margin:6px auto 0" role="img" aria-label="Calibration plot">
@@ -2463,7 +2493,7 @@ async function about(r) {
       </div>
     </div>
 
-    <div class="card card-pad section"><div class="prose">
+    <div class="card card-pad section desk-only"><div class="prose">
       <h3>Tried and dropped</h3>
       <p class="small muted" style="margin-top:6px">Ideas that sounded right but didn't predict better on held-out seasons, so they're not in the model: per-team foul ratings; less teleop credit for robots that skipped the endgame (strong robots often skip parking to keep scoring); treating robots that neither moved nor parked as broken; blending EPA with OPR; a defense term; bonus-RP chances in pre-schedule ranking forecasts.</p>
     </div></div>`;
