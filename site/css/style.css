@@ -1926,3 +1926,10 @@ button.link { padding: 0; border: 0; background: none; font: inherit; font-weigh
   .card .match-teams td:first-child { padding-left: 16px; }
   .match-teams .team-cell .n { padding-left: 0; }
 }
+/* the EPA strip stays one even colour through the zebra rows; the season reference list has no zebra (it drew boxes
+   inside the padded card); the match Teams table keeps the 16px margin on the right too */
+@media (max-width: 640px) {
+  tbody tr td.epa-col { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .ref tbody tr td { background: none; }
+  .card .match-teams :is(td, th):nth-last-child(1 of :not(.hide-sm)) { padding-right: 16px; } /* the hidden Record column is the real last child */
+}
