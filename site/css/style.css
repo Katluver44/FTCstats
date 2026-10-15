@@ -1347,3 +1347,18 @@ main > #tab > .card:last-child { flex: 1; }
   .more { padding-left: 16px; padding-right: 16px; }
   .po-alliances { min-width: 0; max-width: 100%; }
 }
+
+/* ==== Mobile experience (≤640px) ====
+   Desktop-only extras are hidden on phones with .desk-only; each area keeps its
+   phone rules in its own block below. */
+@media (max-width: 640px) { .desk-only { display: none !important; } }
+/* -- mobile: shell, header, home, global tokens -- */
+/* -- end shell -- */
+/* -- mobile: team page -- */
+/* -- end team page -- */
+/* -- mobile: event page -- */
+/* -- end event page -- */
+/* -- mobile: teams/events lists, compete -- */
+/* -- end lists -- */
+/* -- mobile: match page -- */
+/* -- end match page -- */
