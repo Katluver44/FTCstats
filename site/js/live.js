@@ -2,6 +2,8 @@
 
 import { Model, allianceTeams } from "./model.js";
 import { SEASONS, eventQuery, API, soloPoints } from "./seasons.js";
+import { qualPts, selectionPts, allianceCount, PLAYOFF_PTS } from "./advancement.js";
+import { playoffs, TEMPLATES } from "./playoffs.js";
 
 export async function fetchLiveEvent(season, code) {
   const res = await fetch(API, {
@@ -202,7 +204,8 @@ function makeSim(season, model, { corr = 1, tb = "sim" } = {}) {
 
 // Monte Carlo over the remaining quals. Returns per-team ranking odds.
 // Pass the replay's `model` to draw correlated team strengths (see makeSim).
-export function forecastRankings(season, teams, matches, sims = 3000, { model = null, corr = 1, tb = "sim" } = {}) {
+// advancement: { official } (FIRST's alliances, if out) also forecasts advancement points (see makeAdvSim); needs `model`.
+export function forecastRankings(season, teams, matches, sims = 3000, { model = null, corr = 1, tb = "sim", advancement = null } = {}) {
   reseed(teams.length * 7919 + matches.length);
   const { rankBy } = SEASONS[season];
   const byScore = rankBy === "score";
@@ -245,6 +248,7 @@ export function forecastRankings(season, teams, matches, sims = 3000, { model = 
   const rp = new Float64Array(N), tbs = new Float64Array(N);
   const order = Array.from({ length: N }, (_, i) => i);
   const rs = new Float64Array(N);
+  const adv = advancement && model ? makeAdvSim(teams, model, teams.map((t) => model.epa(t).np), { ...advancement, matches, quals: !remaining.length }) : null;
 
   for (let s = 0; s < sims; s++) {
     rp.set(baseRp); tbs.set(baseTb);
@@ -271,10 +275,11 @@ export function forecastRankings(season, teams, matches, sims = 3000, { model = 
       if (r < 4) top4[t]++;
       if (r < 8) top8[t]++;
     });
+    adv?.add(order);
   }
 
   return teams.map((team, i) => ({
-    team,
+    team, ...(adv ? adv.result(i, sims) : {}),
     currentRs: !basePlayed[i] ? null : byScore ? baseRp[i] : baseRp[i] / basePlayed[i],
     played: basePlayed[i],
     left: totalPlayed[i] - basePlayed[i],
@@ -338,7 +343,7 @@ function shuffle(a) {
 // random schedules are already well calibrated, and both made the 2023-2025
 // backtest worse (corr=1 underconfident; tb "sim" -0.01 Spearman in 2023/2024).
 // model: pass one to reuse (e.g. strength of schedule compares against a replay's model)
-export function forecastFromRoster(season, meta, ev, { perTeam = 5, sims = 2000, bonus = false, corr = 0, tb = "legacy", rpProb = null, model: given = null } = {}) {
+export function forecastFromRoster(season, meta, ev, { perTeam = 5, sims = 2000, bonus = false, corr = 0, tb = "legacy", rpProb = null, model: given = null, advancement = null } = {}) {
   reseed(ev.teamList.length * 7919 + perTeam);
   const { rankBy } = SEASONS[season];
   const byScore = rankBy === "score";
@@ -367,6 +372,7 @@ export function forecastFromRoster(season, meta, ev, { perTeam = 5, sims = 2000,
   const top1 = new Float64Array(N), top4 = new Float64Array(N), top8 = new Float64Array(N);
   const rp = new Float64Array(N), played = new Float64Array(N), rs = new Float64Array(N), tbs = new Float64Array(N);
   const order = Array.from({ length: N }, (_, i) => i);
+  const adv = advancement ? makeAdvSim(teams, model, strength, advancement) : null;
 
   for (let s = 0; s < sims; s++) {
     rp.fill(0); played.fill(0); tbs.fill(0);
@@ -398,9 +404,124 @@ export function forecastFromRoster(season, meta, ev, { perTeam = 5, sims = 2000,
       if (r < 4) top4[t]++;
       if (r < 8) top8[t]++;
     });
+    adv?.add(order);
   }
   return teams.map((team, i) => ({
-    team, epa: strength[i], meanRank: rankSum[i] / sims, meanRs: rsSum[i] / sims,
+    team, epa: strength[i], ...(adv ? adv.result(i, sims) : {}), meanRank: rankSum[i] / sims, meanRs: rsSum[i] / sims,
     p1: top1[i] / sims, p4: top4[i] / sims, p8: top8[i] / sims,
   })).sort((a, b) => a.meanRank - b.meanRank);
+}
+
+// Advancement points (advancement.js) in each simulated event, for the forecasts above.
+// - Quals: points for the simulated rank; once quals are over (`quals`), the official
+//   ranks in `ranks` (team -> rank) instead.
+// - Alliance selection (Table 13-2 alliance count): each captain is the best-ranked team
+//   left and picks the highest-rated team left (so a picked lower captain's place moves
+//   up, §13.7.1); declines aren't modelled. FIRST's alliances once they're out (`official`,
+//   or the playoff matches themselves).
+// - Playoffs: the double-elimination bracket (playoffs.js TEMPLATES) played match by match
+//   from the model's win chances, one draw per match. In the 4-8 alliance brackets the
+//   upper-bracket winner takes the final with one win and the lower-bracket winner needs
+//   two (M-10, then M-11 if required, as events play it); a 2-alliance final is best of 3.
+//   Matches already played keep their real winners.
+// Judged awards aren't forecast.
+function makeAdvSim(teams, model, strength, { official = null, matches = [], ranks = null, quals = false } = {}) {
+  const N = teams.length;
+  const idx = new Map(teams.map((t, i) => [t, i]));
+  const qp = Array.from({ length: N }, (_, r) => qualPts(r + 1, N));
+  const byStrength = teams.map((_, i) => i).sort((a, b) => strength[b] - strength[a]);
+  // the official ranking once quals are over
+  const fixedOrder = quals && ranks && teams.every((t) => ranks.get(t) != null)
+    ? teams.map((_, i) => i).sort((a, b) => ranks.get(teams[a]) - ranks.get(teams[b])) : null;
+
+  // real alliances and bracket results, once they exist
+  let alliances = null;
+  const known = new Map(); // match number -> index of the winning alliance
+  const finalWins = new Map(); // 2-alliance best-of-3 final: alliance index -> games won
+  const elims = matches.filter((m) => m.level && m.level !== "Quals");
+  const p = elims.length || official?.length ? playoffs(elims.length ? matches : [], teams.map((t) => ({ team: t, rank: ranks?.get(t) ?? null })), official) : null;
+  if (official?.length) alliances = official.map((a) => a.filter((t) => idx.has(t)).map((t) => idx.get(t)));
+  else if (p && p.alliances.length === allianceCount(N)) alliances = p.alliances.map((a) => a.teams.filter((t) => idx.has(t)).map((t) => idx.get(t)));
+  const A = alliances?.length ?? allianceCount(N);
+  const tpl = TEMPLATES[A];
+  if (p && alliances) {
+    const seedOf = (a) => (a ? a.seed - 1 : null);
+    for (const sec of p.sections) for (const r of sec.rounds) for (const sl of r.slots) {
+      if (!sl.winner) {
+        if (sl.key === "F" && (sl.redWins || sl.blueWins)) { finalWins.set(seedOf(sl.red), sl.redWins); finalWins.set(seedOf(sl.blue), sl.blueWins); }
+        continue;
+      }
+      if (sl.key === "F") { finalWins.set(seedOf(sl.red), sl.redWins); finalWins.set(seedOf(sl.blue), sl.blueWins); continue; }
+      const n = /^M-(\d+)$/.exec(sl.key)?.[1];
+      if (!n) continue;
+      if (A === 2) finalWins.set(seedOf(sl.winner), (finalWins.get(seedOf(sl.winner)) ?? 0) + 1);
+      else known.set(+n, seedOf(sl.winner));
+    }
+  }
+
+  const cache = new Map();
+  const pRed = (a, b) => {
+    const k = `${a}|${b}`;
+    if (!cache.has(k)) cache.set(k, model.predict(a.map((i) => teams[i]), b.map((i) => teams[i])).pRed);
+    return cache.get(k);
+  };
+  const qual = new Float64Array(N), sel = new Float64Array(N), po = new Float64Array(N);
+  const win = new Float64Array(N), cap = new Float64Array(N);
+  const taken = new Uint8Array(N);
+  const nonFinal = tpl ? Object.keys(tpl.src).map(Number).filter((n) => !tpl.final.includes(n)).sort((a, b) => a - b) : [];
+
+  return {
+    add(order) {
+      const ord = fixedOrder ?? order;
+      ord.forEach((t, r) => (qual[t] += qp[r]));
+      let al = alliances;
+      if (!al) {
+        taken.fill(0);
+        al = [];
+        let c = 0, s = 0;
+        for (let k = 0; k < A; k++) {
+          while (c < N && taken[ord[c]]) c++;
+          if (c >= N) break;
+          const captain = ord[c]; taken[captain] = 1;
+          while (s < N && taken[byStrength[s]]) s++;
+          const pick = s < N ? byStrength[s] : null;
+          if (pick != null) taken[pick] = 1;
+          al.push(pick != null ? [captain, pick] : [captain]);
+        }
+      }
+      al.forEach((a, k) => {
+        for (const t of a) sel[t] += selectionPts(k + 1);
+        if (a.length) cap[a[0]]++;
+      });
+      if (!tpl || al.length !== A) return;
+      const res = new Map();
+      const who = (x) => (x[0] === "A" ? +x.slice(1) - 1 : x[0] === "W" ? res.get(+x.slice(1))[0] : res.get(+x.slice(1))[1]);
+      const play = (r, b) => (rand() < pRed(al[r], al[b]) ? [r, b] : [b, r]);
+      for (const n of nonFinal) {
+        const [r, b] = tpl.src[n].map(who);
+        const w = known.get(n);
+        res.set(n, w === r || w === b ? (w === r ? [r, b] : [b, r]) : play(r, b));
+      }
+      const [fa, fb] = tpl.src[tpl.final[0]].map(who);
+      const game = (n) => { const w = known.get(n); return w === fa || w === fb ? w : play(fa, fb)[0]; };
+      let champ;
+      if (A === 2) {
+        let wa = finalWins.get(fa) ?? 0, wb = finalWins.get(fb) ?? 0;
+        while (wa < 2 && wb < 2) { if (play(fa, fb)[0] === fa) wa++; else wb++; }
+        champ = wa >= 2 ? fa : fb;
+      } else {
+        // fa comes from the upper bracket: one win takes it; fb must win twice
+        champ = game(tpl.final[0]) === fa ? fa : game(tpl.final[1]);
+      }
+      const runner = champ === fa ? fb : fa;
+      const award = (k, pts) => { for (const t of al[k]) po[t] += pts; };
+      award(champ, PLAYOFF_PTS.Winner); award(runner, PLAYOFF_PTS.Finalist);
+      for (const t of al[champ]) win[t]++;
+      for (const [n, place] of Object.entries(tpl.place)) if (PLAYOFF_PTS[place]) award(res.get(+n)[1], PLAYOFF_PTS[place]);
+    },
+    result(i, sims) {
+      const eQual = qual[i] / sims, eSel = sel[i] / sims, ePlayoff = po[i] / sims;
+      return { eQual, eSel, ePlayoff, eTotal: eQual + eSel + ePlayoff, pWin: win[i] / sims, pCaptain: cap[i] / sims };
+    },
+  };
 }

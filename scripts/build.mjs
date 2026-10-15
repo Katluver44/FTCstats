@@ -13,6 +13,8 @@ import { oprPredictions } from "./opr.mjs";
 import { localToUtc, splitVideos } from "./videos.mjs";
 import { elo, avgScore } from "./baselines.mjs";
 import { addEventSos, sosValue, sosPlaces } from "../site/js/sos.js";
+import { ADVANCING_TYPES, advRules } from "../site/js/advancement.js";
+import { divisionsOf, buildAdv } from "./advancement.mjs";
 
 const r1 = (x) => Math.round(x * 10) / 10;
 
@@ -712,6 +714,12 @@ export async function build(season, params = {}, epaOver = {}) {
 
   // ---- events ----
   const evList = [];
+  // advancement points (advancement.js): divisions are scored inside the parent event,
+  // so advancing events and their divisions are written after the loop
+  const divisions = advRules(season) ? await divisionsOf(season, events) : new Map();
+  const divParent = new Map([...divisions].flatMap(([p, cs]) => cs.map((c) => [c, p])));
+  const officialAlliances = keep["alliances.json"] ? JSON.parse(keep["alliances.json"]) : {};
+  const deferred = new Map();
   for (const ev of events) {
     // parent events with divisions list every division's teams; keep only the
     // teams that actually played in this event's own matches
@@ -799,7 +807,24 @@ export async function build(season, params = {}, epaOver = {}) {
     const avg = { auto: r1(av.auto), teleop: r1(av.teleop), endgame: r1(av.endgame), foul: r1(av.foul), errVar: r1(av.errVar), foulDiffVar: r1(av.foulDiffVar), solo: av.solo.map(r1), rp: av.rp.map(r3),
       clipVar: Object.fromEntries(Object.entries(av.clipVar ?? model.errVar).map(([k, v]) => [k, r1(v)])), cal: av.cal ?? model.cal,
       ...(av.zLeave != null ? { zLeave: r3(av.zLeave), zB0: r3(av.zB0), zB1: r3(av.zB1), zB2: r3(av.zB2) } : {}) };
-    await writeJson(path.join(out, "event", `${ev.code}.json`), { ...summary, timezone: ev.timezone, avg, teamList: teams, matchList: ms });
+    const file = { ...summary, timezone: ev.timezone, avg, teamList: teams, matchList: ms,
+      ...(divisions.has(ev.code) ? { divisions: divisions.get(ev.code) } : {}), ...(divParent.has(ev.code) ? { divisionOf: divParent.get(ev.code) } : {}) };
+    if (advRules(season) && (ADVANCING_TYPES.has(ev.type) || divParent.has(ev.code))) deferred.set(ev.code, { ev, file });
+    else await writeJson(path.join(out, "event", `${ev.code}.json`), file);
+  }
+  for (const { ev, file } of deferred.values()) {
+    if (ev.finished && ADVANCING_TYPES.has(ev.type) && !divParent.has(ev.code)) {
+      const divs = (divisions.get(ev.code) ?? []).map((c) => deferred.get(c)?.file).filter(Boolean);
+      const units = divs.length ? divs : [file];
+      const adv = await buildAdv(season, ev, units.map((f) => ({ code: f.code, teamList: f.teamList, matchList: f.matchList })), divs.length ? file : null, officialAlliances);
+      if (adv) {
+        // names for division teams that aren't on the parent event's own team list
+        const known = new Set(file.teamList.map((t) => t.team));
+        const names = Object.fromEntries(divs.flatMap((f) => f.teamList).filter((t) => !known.has(t.team)).map((t) => [t.team, t.name]));
+        file.adv = { ...adv, ...(Object.keys(names).length ? { names } : {}) };
+      }
+    }
+    await writeJson(path.join(out, "event", `${ev.code}.json`), file);
   }
   evList.sort((a, b) => b.start.localeCompare(a.start) || b.strength - a.strength);
   await writeJson(path.join(out, "events.json"), evList);

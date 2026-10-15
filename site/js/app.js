@@ -5,6 +5,7 @@ import { SEASONS } from "./seasons.js";
 import { scatter, histogram, breakdown } from "./charts.js";
 import { addEventSos, sosValue, sosPlaces } from "./sos.js";
 import { playoffs } from "./playoffs.js";
+import { ADVANCING_TYPES, advRules } from "./advancement.js";
 import { initAnalytics, trackPage } from "./analytics.js";
 import { CONFIG } from "./config.js";
 import { fetchLiveEvent, normalizeLive, replayEvent, forecastRankings, forecastFromRoster, modelFromMeta, standings } from "./live.js";
@@ -1192,7 +1193,7 @@ async function event(r) {
       }
       liveAt = new Date();
       // don't reset a forecast someone is looking at; it picks up new results on the next visit
-      if (tab !== "forecast") draw();
+      if (tab !== "forecast" && tab !== "advancement") draw();
     } catch (e) { console.warn(e); }
   };
 
@@ -1203,7 +1204,10 @@ async function event(r) {
     // Once quals are done it still replays: "what did the forecast say after match N?"
     const canForecast = hasQuals || (!matches.length && ev.teamList.length >= 4);
     const hasPlayoffs = matches.some((m) => m.level && m.level !== "Quals");
-    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(ev.teamList.length >= 4 ? [["pickmap", "Pick list"]] : []), ...(hasPlayoffs ? [["playoffs", "Playoffs"]] : []), ...(canForecast ? [["forecast", "Rankings forecast"]] : [])];
+    // advancement points: FIRST's numbers once the event is over, a forecast before (divisions are scored in the parent event)
+    const canAdv = !!advRules(season) && ADVANCING_TYPES.has(ev.type) && !ev.divisionOf
+      && (ev.adv ? true : !ev.finished && !ev.divisions && ev.teamList.length >= 4 && canForecast);
+    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(ev.teamList.length >= 4 ? [["pickmap", "Pick list"]] : []), ...(hasPlayoffs ? [["playoffs", "Playoffs"]] : []), ...(canAdv ? [["advancement", "Advancement"]] : []), ...(canForecast ? [["forecast", "Rankings forecast"]] : [])];
     app.innerHTML = `
       <div class="card card-pad"><div class="page-head">
         <div>
@@ -1227,6 +1231,7 @@ async function event(r) {
     else if (tab === "pickmap" && ev.teamList.length >= 4) eventPickMap(season, ev);
     else if (tab === "playoffs" && hasPlayoffs) eventPlayoffs(season, meta, ev, matches, official[code], (m) => videoFor(videos, code, m.time));
     else if (tab === "forecast" && canForecast) eventForecast(season, meta, ev, matches);
+    else if (tab === "advancement" && canAdv) eventAdvancement(season, meta, ev, matches, official[code]);
     else {
       // mid-event, phones only (style.css): a button above the table jumps to the first unplayed match
       // instead of a scroll past every played one
@@ -1515,6 +1520,57 @@ function eventForecast(season, meta, ev, matches) {
       timer = setTimeout(run, 120);
     };
   }
+}
+
+// Advancement points (advancement.js): computed from FIRST's rules for finished events
+// (scripts/check-advancement.mjs checks them against FIRST's reports), forecast before.
+function eventAdvancement(season, meta, ev, matches, official) {
+  const names = new Map([...ev.teamList.map((t) => [t.team, t.name]), ...Object.entries(ev.adv?.names ?? {}).map(([t, n]) => [+t, n])]);
+  if (ev.adv) {
+    const adv = new Set(ev.adv.advanced), dec = new Set(ev.adv.declined);
+    const showAdv = adv.size > 0 || dec.size > 0;
+    $("#tab").innerHTML = `<div class="card card-pad"><div class="row" style="justify-content:space-between">
+        <div class="small muted">Quals, alliance selection, playoff and judged award points, worked out from FIRST's rules and results.</div>
+        <a class="pill" href="https://ftc-events.firstinspires.org/${season}/${encodeURIComponent(ev.code)}/advancementpoints" target="_blank" rel="noopener">FIRST report ↗</a>
+      </div></div>
+      <div class="card section"><div class="table-wrap"><table>
+        <thead><tr><th>Rank</th><th>Team</th><th class="r">Total</th><th class="r hide-sm">Awards</th><th class="r hide-sm">Playoff</th><th class="r hide-sm">Selection</th><th class="r hide-sm">Quals</th>${showAdv ? '<th class="r">Advanced</th>' : ""}</tr></thead>
+        <tbody>${ev.adv.rows.map(([team, total, judging, playoff, selection, qual], i) => `<tr>
+          <td class="faint num">${i + 1}</td>
+          <td>${teamCell(season, team, names.get(team) ?? "")}</td>
+          <td class="r"><b>${total}</b></td>
+          <td class="r hide-sm">${judging || '<span class="faint">–</span>'}</td>
+          <td class="r hide-sm">${playoff || '<span class="faint">–</span>'}</td>
+          <td class="r hide-sm">${selection || '<span class="faint">–</span>'}</td>
+          <td class="r hide-sm">${qual}</td>
+          ${showAdv ? `<td class="r">${adv.has(team) ? '<span class="pill">Advanced</span>' : dec.has(team) ? '<span class="faint small">Declined</span>' : ""}</td>` : ""}
+        </tr>`).join("")}</tbody></table></div></div>`;
+    return;
+  }
+  // forecast: from the schedule as it stands, or from random schedules before it's out
+  const quals = matches.filter((m) => m.level === "Quals");
+  const ranks = new Map(ev.teamList.filter((t) => t.rank != null).map((t) => [t.team, t.rank]));
+  let rows, sims;
+  if (quals.length) {
+    const cutoff = quals.filter((m) => m.actuallyPlayed ?? m.played).length;
+    const { model, matches: replayed } = replayEvent(meta, ev, matches.map((m) => ({ ...m, played: m.actuallyPlayed ?? m.played })), cutoff);
+    rows = forecastRankings(season, ev.teamList.map((t) => t.team), replayed, (sims = 3000), { model, advancement: { official, ranks } });
+  } else {
+    rows = forecastFromRoster(season, meta, ev, { sims: (sims = 2000), advancement: { official } });
+  }
+  rows.sort((a, b) => b.eTotal - a.eTotal);
+  $("#tab").innerHTML = `<div class="card card-pad"><div class="small muted">Expected points from quals, alliance selection and playoffs over ${fmtInt(sims)} simulated events; judged awards aren't forecast.</div></div>
+    <div class="card section">${rows.length ? `<div class="table-wrap"><table>
+      <thead><tr><th>Proj.</th><th>Team</th><th class="r"><span title="Expected points, without judged awards">Exp. pts</span></th><th class="r hide-sm">Quals</th><th class="r hide-sm">Selection</th><th class="r hide-sm">Playoff</th><th class="r">Win</th></tr></thead>
+      <tbody>${rows.map((r, i) => `<tr>
+        <td class="faint num">${i + 1}</td>
+        <td>${teamCell(season, r.team, names.get(r.team))}</td>
+        <td class="r"><b>${fmt(r.eTotal, 1)}</b></td>
+        <td class="r hide-sm">${fmt(r.eQual, 1)}</td>
+        <td class="r hide-sm">${fmt(r.eSel, 1)}</td>
+        <td class="r hide-sm">${fmt(r.ePlayoff, 1)}</td>
+        <td class="r">${probCell(r.pWin)}</td>
+      </tr>`).join("")}</tbody></table></div>` : `<div class="empty">Not enough teams registered yet.</div>`}</div>`;
 }
 
 // Before the schedule is out: simulate random FTC schedules from the team list.

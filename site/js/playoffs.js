@@ -20,7 +20,7 @@ const winner = (m) => {
 // level with the ones that feed it. `src` says who plays each match (red, blue):
 // A1 = alliance 1, W3 / L3 = winner / loser of match 3. `place` is where the
 // loser of a lower-bracket match finishes.
-const TEMPLATES = {
+export const TEMPLATES = {
   2: { cols: [], final: [1, 2, 3], src: { 1: ["A1", "A2"], 2: ["A1", "A2"], 3: ["A1", "A2"] }, place: {} },
   4: {
     cols: [{ u: [1, 2] }, { u: [4], l: [3] }, { l: [5] }], final: [6, 7],
