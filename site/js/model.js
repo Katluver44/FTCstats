@@ -332,11 +332,13 @@ export class Model {
   }
 
   // Restore a team's state, e.g. its rating entering an event.
-  setTeam(num, { auto, teleop, endgame, n, rp, solo, v, ev, evStart, zone }) {
+  setTeam(num, { auto, teleop, endgame, n, rp, solo, v, ev, evStart, zone, cov }) {
     this.teams.set(num, {
       n, v: v ?? this.p.v0, ev: ev ?? null, evStart: evStart ?? null, auto, teleop, endgame,
       solo: this.soloComps.map((_, j) => solo?.[j] ?? 0), rp: [...rp],
       ...(this.zoneRp ? { zone: zone ? [...zone] : [this.avg.zLeave, this.avg.zB0, this.avg.zB1, this.avg.zB2] } : {}),
+      // partner covariances, flat [partner, cov, partner, cov, ...] (see epa())
+      ...(cov?.length ? { cov: new Map(Array.from({ length: cov.length >> 1 }, (_, i) => [cov[2 * i], cov[2 * i + 1]])) } : {}),
     });
   }
 
@@ -683,7 +685,7 @@ export class Model {
 
   epa(num) {
     const t = this.team(num);
-    const e = { n: t.n, v: t.v, ev: t.ev, evStart: t.evStart ?? null, ...(t.zone ? { zone: [...t.zone] } : {}), auto: t.auto, teleop: t.teleop, endgame: t.endgame, rp: [...t.rp], solo: [...t.solo] };
+    const e = { n: t.n, v: t.v, ev: t.ev, evStart: t.evStart ?? null, ...(t.zone ? { zone: [...t.zone] } : {}), ...(t.cov?.size ? { cov: [...t.cov].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, this.p.covMax).flatMap(([j, c]) => [j, c]) } : {}), auto: t.auto, teleop: t.teleop, endgame: t.endgame, rp: [...t.rp], solo: [...t.solo] };
     const shared = { auto: t.auto, teleop: t.teleop, endgame: t.endgame };
     t.solo.forEach((s, j) => (e[this.soloComps[j]] += s));
     e.np = e.auto + e.teleop + e.endgame;
