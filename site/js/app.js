@@ -1228,7 +1228,7 @@ async function events(r) {
     { key: "teams", label: "Teams", cls: "r hide-sm" },
         // events not played yet: no match count, and no strength until its teams have ratings (it read "0.0")
     { key: "played", label: "Matches", cls: "r small hide-sm col-matches", render: (e) => (e.matches ? (e.played < e.matches ? `${e.played}/${e.matches}` : e.matches) : "") },
-    { key: "strength", label: '<span class="hide-sm">Strength</span><span class="show-sm">EPA</span>', cls: "r epa-col", render: (e) => (e.strength > 0 ? epa(e.strength, meta) : '<span class="faint">–</span>') },
+    { key: "strength", label: "Strength", cls: "r epa-col hide-sm", render: (e) => (e.strength > 0 ? epa(e.strength, meta) : '<span class="faint">–</span>') },
   ];
   $("#tbl").classList.add("ev-list");
   const table = sortableTable($("#tbl"), evs, cols, { sortKey: "start" });

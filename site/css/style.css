@@ -1958,3 +1958,5 @@ td.epa-col .epa { background: none !important; color: var(--text) !important; pa
 /* the chosen side: solid blue with white text (Table | Chart matches) */
 .toolbar .scope a.active, .toolbar .scope a.active:hover, .view-pick button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); box-shadow: none; }
 .toolbar .scope a.active::after { content: none; }
+/* phones: the blue sorted column gets a little room either side of its numbers */
+@media (max-width: 640px) { th.col-sorted, td.col-sorted { padding-left: 16px !important; padding-right: 16px !important; } }
