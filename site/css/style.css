@@ -302,7 +302,7 @@ td.c, th.c { text-align: center; }
 .team-cell { display: flex; gap: 10px; align-items: baseline; }
 /* team number: just bigger and bolder, tabular digits so a column of numbers lines up */
 .team-cell .n { flex: none; min-width: 56px; font-size: 15.5px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
-.team-cell .nm { color: var(--text); white-space: normal; }
+.team-cell .nm { color: var(--text); white-space: normal; overflow-wrap: anywhere; } /* one huge word in a team name can't widen a phone table */
 .ev-cell { display: flex; flex-direction: column; line-height: 1.3; }
 .ev-cell .n { font-weight: 650; white-space: normal; min-width: 200px; }
 .ev-cell .nm { white-space: normal; }
@@ -1333,6 +1333,7 @@ main > #tab > .card:last-child { flex: 1; }
   .line-score td, .line-score th { padding: 8px 8px; }
   .line-score td b { font-size: 16px; }
   .line-score .ls-final b { font-size: 20px; }
+}
 
 /* ---- QA fixes ---- */
 /* white text needs a deeper blue than the dark-mode accent (#4da3ea) to be readable */
@@ -1653,3 +1654,5 @@ main > #tab > .card:last-child { flex: 1; }
 .ls-team.sat-out { opacity: .5; }
 .ls-team:hover b { text-decoration: underline; }
 .avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; background: var(--surface-2); flex: none; }
+/* advancement tables on phones: names stop at two lines so Total and Advanced stay on screen */
+@media (max-width: 640px) { .adv-table .team-cell .nm { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 46vw; } }

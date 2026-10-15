@@ -1543,9 +1543,9 @@ function eventAdvancement(season, meta, ev, matches, official) {
     const showAdv = adv.size > 0 || dec.size > 0;
     $("#tab").innerHTML = `<div class="card card-pad"><div class="row" style="justify-content:space-between">
         <div class="small muted">Quals, alliance selection, playoff and judged award points, worked out from FIRST's rules and results.</div>
-        <a class="pill" href="https://ftc-events.firstinspires.org/${season}/${encodeURIComponent(ev.code)}/advancementpoints" target="_blank" rel="noopener">FIRST report ↗</a>
+        <a class="link small" href="https://ftc-events.firstinspires.org/${season}/${encodeURIComponent(ev.code)}/advancementpoints" target="_blank" rel="noopener">FIRST's report ↗</a>
       </div></div>
-      <div class="card section"><div class="table-wrap"><table>
+      <div class="card section"><div class="table-wrap"><table class="adv-table">
         <thead><tr><th>Rank</th><th>Team</th><th class="r">Total</th><th class="r hide-sm">Awards</th><th class="r hide-sm">Playoff</th><th class="r hide-sm">Selection</th><th class="r hide-sm">Quals</th>${showAdv ? '<th class="r">Advanced</th>' : ""}</tr></thead>
         <tbody>${ev.adv.rows.map(([team, total, judging, playoff, selection, qual], i) => `<tr>
           <td class="faint num">${i + 1}</td>
@@ -1555,7 +1555,7 @@ function eventAdvancement(season, meta, ev, matches, official) {
           <td class="r hide-sm">${playoff || '<span class="faint">–</span>'}</td>
           <td class="r hide-sm">${selection || '<span class="faint">–</span>'}</td>
           <td class="r hide-sm">${qual}</td>
-          ${showAdv ? `<td class="r">${adv.has(team) ? '<span class="pill">Advanced</span>' : dec.has(team) ? '<span class="faint small">Declined</span>' : ""}</td>` : ""}
+          ${showAdv ? `<td class="r">${adv.has(team) ? '<b class="small">Advanced</b>' : dec.has(team) ? '<span class="faint small">Declined</span>' : ""}</td>` : ""}
         </tr>`).join("")}</tbody></table></div></div>`;
     return;
   }
@@ -1572,7 +1572,7 @@ function eventAdvancement(season, meta, ev, matches, official) {
   }
   rows.sort((a, b) => b.eTotal - a.eTotal);
   $("#tab").innerHTML = `<div class="card card-pad"><div class="small muted">Expected points from quals, alliance selection and playoffs over ${fmtInt(sims)} simulated events; judged awards aren't forecast.</div></div>
-    <div class="card section">${rows.length ? `<div class="table-wrap"><table>
+    <div class="card section">${rows.length ? `<div class="table-wrap"><table class="adv-table">
       <thead><tr><th>Proj.</th><th>Team</th><th class="r"><span title="Expected points, without judged awards">Exp. pts</span></th><th class="r hide-sm">Quals</th><th class="r hide-sm">Selection</th><th class="r hide-sm">Playoff</th><th class="r">Win</th></tr></thead>
       <tbody>${rows.map((r, i) => `<tr>
         <td class="faint num">${i + 1}</td>
