@@ -17,7 +17,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import { youtubeId } from "./videos.mjs";
+import { youtubeId, notFtc } from "./videos.mjs";
 import { pageDetailsMany } from "./yt-page.mjs";
 import { parseTimestamps, matchEvent } from "./find-timestamped.mjs";
 
@@ -120,6 +120,16 @@ const event = async (code, s = season) => {
   return evCache.get(k);
 };
 // "Qualification 12", "Qual 12", "Q12", "Q-01", "Playoff M-03", "Playoff 3", "Playoff Match 3", "Match 3", "Semifinal 1-2", "Final 2"
+// Does a video's title/channel name this event? Shares a distinctive word with the event's
+// name or location, or says FTC / an FTC game.
+const GENERIC = new Set("first tech challenge ftc robotics robot championship championships qualifier qualifiers qualifying regional state national league meet meets tournament event events invitational scrimmage premier division super presented by the and of at for in day part live stream match matches finals final".split(" "));
+function eventAffinity(text, ev) {
+  if (/\b(?:FTC|FIRST Tech|Tech Challenge)\b/i.test(text)) return true;
+  const words = (s) => (s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !GENERIC.has(w));
+  const have = new Set(words(text));
+  return [...words(ev.name), ...words(ev.loc)].some((w) => have.has(w));
+}
+
 function titleMatch(t, bareM = false) {
   let x;
   if ((x = t.match(/\b(?:Qualifications?|Quals?|QM|Q)[\s#-]*(?:(?:Match|Number|No\.?)\s*#?\s*)?(\d{1,3})\b/i))) return `Q-${+x[1]}`; // "Qualification Match 8", "QM 8", "Quals 18"
@@ -163,7 +173,8 @@ for (const c of cands) {
   // embedding turned off is fine (the site opens those on YouTube); blocked in the US is not
   if ((region.blocked ?? []).includes("US") || (region.allowed && !region.allowed.includes("US"))) { why(c, "blocked in the US"); continue; }
   const title = v.snippet.title, live = v.liveStreamingDetails ?? {};
-  if (/\b(vex|frc|fll|lego|rebuilt)\b/i.test(title)) { why(c, `not FTC: ${title}`); continue; }
+  const frc = notFtc(title, v.snippet.channelTitle);
+  if (frc) { why(c, `not FTC ("${frc}"): ${title}`); continue; }
 
   // 1. timestamps in the description
   const stamps = parseTimestamps(v.snippet.description);
@@ -189,6 +200,12 @@ for (const c of cands) {
   if (d?.startsWith("M-") && ev && !/playoff/i.test(title) && !ev.matchList.some((m) => m.d.startsWith("M-"))) d = `Q-${d.slice(2)}`;
   const seconds = v.contentDetails?.duration?.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   const len = seconds ? (+(seconds[1] ?? 0)) * 3600 + (+(seconds[2] ?? 0)) * 60 + +(seconds[3] ?? 0) : 0;
+  // a bare "Qualification 12" fits any event's schedule: unless a search tied it to the
+  // official schedule (c.match) or it was given by hand, the title or channel must name
+  // this event (a word of its name or city) or the title must say FTC / the game
+  if (d && !c.match && !c.trusted && ev && !eventAffinity(`${title} ${v.snippet.channelTitle ?? ""}`, ev)) {
+    why(c, `"${title}" doesn't name ${ev.code} (${ev.name})`); continue;
+  }
   if (d && len && len < 20 * 60 && ev) {
     const pub = Date.parse(v.snippet.publishedAt), from = Date.parse(ev.start) - 864e5, to = Date.parse(ev.end) + 240 * 864e5; // teams often upload a season's matches months later
     if (!ev.matchList.some((m) => m.d === d)) { why(c, `${ev.code} has no match ${d}`); reroute.push({ c, v, d }); continue; }

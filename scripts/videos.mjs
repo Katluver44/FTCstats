@@ -36,6 +36,23 @@ async function env(name) {
 }
 
 // YouTube video id from any of the URL shapes events use
+// Not an FTC video: FRC (and VEX / FLL) recordings kept turning up in searches for FTC
+// events, e.g. "Qualification 23 - FIRST Chesapeake District Championship" placed on
+// Brazil's FTC championship. Returns what gave it away, or null. A title naming an FTC game
+// or "FTC" itself always passes (FIRST in Michigan / Indiana run both programs).
+const FTC_WORDS = /\b(?:FTC|FIRST Tech|Tech Challenge|Skystone|Rover Ruckus|Ultimate Goal|Freight Frenzy|Power ?Play|Center ?Stage|Into the Deep|DECODE)\b/i;
+const NOT_FTC = new RegExp([
+  String.raw`\bFRC\b`, String.raw`FIRST Robotics Competition`, String.raw`\b(?:VEX|VRC|FLL|LEGO)\b`,
+  String.raw`\bDistrict (?:Championship|Event)\b`, String.raw`\bCHS District\b`, String.raw`\bChesapeake\b.*\bDistrict\b`, String.raw`FIRST Chesapeake Archive`, String.raw`Robotics Gameday`,
+  String.raw`\b(?:19|20)\d\d\b[^|]*\bRegional\b(?!\s+Championship)`, String.raw`\bRegional\s*#\d`,
+  // FRC game names
+  String.raw`\b(?:REBUILT|REEFSCAPE|CRESCENDO|CHARGED UP|RAPID REACT|INFINITE RECHARGE|DEEP SPACE|POWER UP|STEAMWORKS|STRONGHOLD)\b`,
+].join("|"), "i");
+export function notFtc(title = "", channel = "") {
+  if (FTC_WORDS.test(title)) return null;
+  return `${title} ${channel}`.match(NOT_FTC)?.[0] ?? null;
+}
+
 export function youtubeId(url) {
   const m = String(url ?? "").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|live\/|embed\/)|youtu\.be\/)([\w-]{11})/);
   return m?.[1] ?? null;
@@ -228,12 +245,13 @@ export async function buildVideos(season) {
   for (const [code, e] of Object.entries(events)) {
     const streams = [...e.streams]
       .map((id) => ({ id, ...yt[id] }))
-      .filter((v) => v.start && !v.missing && !v.usBlocked)
+      .filter((v) => v.start && !v.missing && !v.usBlocked && !notFtc(v.title))
       .map((v) => ({ ...v, start: v.start + (offsets[v.id] ?? 0) * 1000 }))
       .map((v) => ({ id: v.id, start: v.start, end: Math.min(v.end ?? Infinity, v.start + Math.min(v.seconds ?? 43200, 43200) * 1000), title: v.title, ...(v.embeddable ? {} : { ext: 1 }),
         // cal: its clock offset was measured, so links can start right before the match
         ...(offsets[v.id] != null ? { cal: 1 } : {}) }));
-    const uploads = e.uploads.filter((u) => isBili(u.id) || (yt[u.id] && !yt[u.id].missing && !yt[u.id].usBlocked))
+    // notFtc: a last check on every recording, however it got into the lists above
+    const uploads = e.uploads.filter((u) => isBili(u.id) || (yt[u.id] && !yt[u.id].missing && !yt[u.id].usBlocked && !notFtc(yt[u.id].title)))
       .map((u) => (isBili(u.id) ? { ...u, platform: "bilibili" } : yt[u.id].embeddable ? u : { ...u, ext: 1 }));
     if (streams.length || uploads.length) result[code] = { streams, uploads };
   }
