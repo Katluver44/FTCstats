@@ -1881,16 +1881,16 @@ button.link { padding: 0; border: 0; background: none; font: inherit; font-weigh
   #out .match-board { margin-left: 16px; margin-right: 16px; }
 }
 
-/* phone header: a real search bar on the left, links, season on the right; a little taller than before */
+/* phone header: season on the left, links, a real search bar on the right; a little taller than before */
 @media (max-width: 640px) {
   .nav .nav-inner { height: 64px; gap: 8px; }
-  .nav .nav-search, .nav.search-open .nav-search { display: block !important; position: static; order: -1; flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; background: none; border: 0; box-shadow: none; }
+  .nav .nav-search, .nav.search-open .nav-search { display: block !important; position: static; flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; background: none; border: 0; box-shadow: none; }
   .nav .nav-search > svg { position: absolute; left: auto; top: auto; transform: none; margin: 12px 0 0 12px; }
   .nav.search-open .nav-search > svg, .nav .nav-search > svg { left: auto !important; }
   .nav .nav-search input, .nav.search-open .nav-search input { width: 100%; height: 40px; padding: 0 8px 0 32px; border: 1px solid var(--line); }
   .nav .nav-search input:focus { border-color: var(--text); }
   .nav .nav-search .search-results, .nav.search-open .nav-search .search-results { top: 100%; left: 16px; right: 16px; min-width: 0; max-height: calc(100dvh - 80px); overflow-y: auto; }
-  .nav .nav-links { margin-left: auto; }
+  .nav .season-picker { order: -1; }
   .nav-search-btn { display: none !important; }
   .nav .season-menu { top: 72px; }
 }
@@ -1903,4 +1903,26 @@ button.link { padding: 0; border: 0; background: none; font: inherit; font-weigh
 /* team match tables: the play button lines up with the event title on the left */
 @media (min-width: 641px) {
   .mt th.vid-cell, .mt td.vid-cell { text-align: left; }
+}
+
+/* phones: the EPA column of the teams and events lists is a light blue strip with plain numbers, no chips */
+@media (max-width: 640px) {
+  td.epa-col, th.epa-col { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  td.epa-col .epa { background: none !important; color: var(--text) !important; padding: 0; min-width: 0; font-weight: 600; }
+}
+/* event Teams tab: the gear's middle on the header row's middle (the 40px phone tap target sat 6px low) */
+@media (max-width: 640px) { .tt-gear { top: -4px; } }
+/* phones: each team number in a match list is its own ~26px-tall, wider tap target (they were 21px slivers);
+   the row keeps its height because the line is tighter */
+@media (max-width: 640px) {
+  .mt .mt-al .tn { display: block; line-height: 1.3; padding: 4px 12px; }
+}
+/* phones, small alignment fixes: methodology tables share column widths so Winner correct / Brier line up between them;
+   season reference values sit on the right edge; match Teams table: number and name start on the same 16px line */
+@media (max-width: 640px) {
+  .about-tbl :is(th, td):nth-last-child(1 of :not(.hide-sm)) { width: 64px; }
+  .about-tbl :is(th, td):nth-last-child(2 of :not(.hide-sm)) { width: 112px; }
+  .ref td.r { text-align: right; }
+  .card .match-teams td:first-child { padding-left: 16px; }
+  .match-teams .team-cell .n { padding-left: 0; }
 }

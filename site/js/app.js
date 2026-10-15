@@ -544,7 +544,7 @@ async function teams(r) {
       render: (r) => `<a class="team-cell team-cell2" href="#/${season}/team/${r.team}"><span class="n">${r.team}</span><span class="tc-text"><span class="nm">${esc(r.name)}${r.pre ? `<span class="pred-star" title="Hasn't played yet this season: its EPA is the one it starts on">*</span>` : ""}</span>${r.loc ? `<span class="tc-loc">${esc(r.loc)}</span>` : ""}</span></a>` },
     { key: "country", label: "Country", cls: "small muted", render: (r) => esc(r.country ?? "") },
     { key: "region", label: "State / region", cls: "small muted", render: (r) => esc(r.region || "–") },
-    { key: "np", label: `<span title="${EPA_TIP}">EPA</span>`, cls: "c",
+    { key: "np", label: `<span title="${EPA_TIP}">EPA</span>`, cls: "c epa-col",
       render: (r) => epa(r.np, meta) },
     { key: "auto", label: "Auto", cls: "r", render: (r) => fmt(r.auto) },
     { key: "teleop", label: "Teleop", cls: "r", render: (r) => fmt(r.teleop) },
@@ -567,9 +567,9 @@ async function teams(r) {
   const EXTRA = ["country", "region", "matches", "events", "cons", "sos", ...rpNames.map((_, i) => `rpr${i}`)];
   const plain = (c) => c.label.replace(/<[^>]+>/g, "");
   // teamCols4: SOS and the per-RP columns start hidden (an earlier list showed them)
-  // phones: #, Team, EPA and Record unless the phone has saved its own set (teamCols4m)
-  const PHONE_HIDDEN = cols.filter((c) => !FIXED.has(c.key) && c.key !== "wins").map((c) => c.key);
-  const colKey = phone ? "teamCols4m" : "teamCols4";
+  // phones: just #, Team and EPA unless the phone has saved its own set (teamCols5m)
+  const PHONE_HIDDEN = cols.filter((c) => !FIXED.has(c.key)).map((c) => c.key);
+  const colKey = phone ? "teamCols5m" : "teamCols4";
   let hiddenCols = new Set(pref.get(colKey, null) ?? (phone ? PHONE_HIDDEN : ["wr", ...EXTRA]));
   $("#col-list").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) =>
     `<button type="button" class="col-btn" data-k="${c.key}" aria-pressed="${!hiddenCols.has(c.key)}">${esc(plain(c))}</button>`).join("");
@@ -1205,9 +1205,9 @@ async function events(r) {
     { key: "name", label: "Event", sort: false, render: (e) => evCell(season, e.code, e.name, `${shortLoc(e)} ${e.ongoing ? '<span class="pill live">Live</span>' : ""}`) },
     { key: "start", label: "Date", cls: "c small muted", render: (e) => fmtDate(e.start) },
     { key: "type", label: "Type", cls: "c small muted hide-sm", render: (e) => esc(typeName(e.type)) },
-    { key: "teams", label: "Teams", cls: "r" },
+    { key: "teams", label: "Teams", cls: "r hide-sm" },
     { key: "played", label: "Matches", cls: "r small hide-sm", render: (e) => (e.matches ? (e.played < e.matches ? `${e.played}/${e.matches}` : e.matches) : "–") },
-    { key: "strength", label: "Strength", cls: "r desk-only", render: (e) => epa(e.strength, meta) },
+    { key: "strength", label: '<span class="hide-sm">Strength</span><span class="show-sm">EPA</span>', cls: "r epa-col", render: (e) => epa(e.strength, meta) },
   ];
   const table = sortableTable($("#tbl"), evs, cols, { sortKey: "start" });
   const fillStates = regionSelect($("#state"), () => evs.filter((e) => e.country === $("#country").value), query.get("state"));
@@ -1726,7 +1726,9 @@ function eventTeams(season, meta, ev, matches = ev.matchList) {
   // the gear sits in the header row, in the margin right of the last column
   $("#tab").innerHTML = `<div class="card tt-card"><details class="col-pick gear-pick tt-gear"><summary title="Columns" aria-label="Choose columns">${GEAR_ICON}</summary><div id="tt-cols"></div></details><div id="tt"></div></div>`;
   $("#tt-cols").innerHTML = cols.filter((c) => !FIXED.has(c.key)).map((c) => `<button type="button" class="col-btn" data-k="${c.key}" aria-pressed="${!hidden.has(c.key)}">${esc(plain(c))}</button>`).join("");
-  const mount = () => sortableTable($("#tt"), rows, cols.filter((c) => !hidden.has(c.key)), { sortKey: "epaHere" });
+  const mount = () => sortableTable($("#tt"), rows, cols.filter((c) => !hidden.has(c.key)),
+    // once there are rankings, the list reads in rank order (sorted by EPA the Rank column was a jumble); tap EPA to re-sort
+    rows.some((r) => r.rank != null) ? { sortKey: "rank", desc: false } : { sortKey: "epaHere" });
   mount();
   $("#tt-cols").onclick = (e) => {
     const b = e.target.closest("[data-k]");
