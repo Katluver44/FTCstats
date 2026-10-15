@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  SITE_URL: https://ftcstats-photos.vercel.app
+  SITE_URL: https://oddbot.org
   # not secrets: they only say which Vercel project to deploy to
   VERCEL_ORG_ID: team_r1o66OZwsgZCXGjollpuMNFZ
   VERCEL_PROJECT_ID: prj_EYnS7Q15FgxkYGBeqF5AyCkwb0iF

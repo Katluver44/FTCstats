@@ -2,7 +2,7 @@
 
 FTC team ratings, match predictions you can check, and ranking forecasts,
 for every season from 2019 (SKYSTONE) to now. A faster, prediction-first
-alternative to FTCScout. Live at https://ftcstats-photos.vercel.app/ (the old GitHub Pages address redirects there).
+alternative to FTCScout. Live at https://oddbot.org/ (the old GitHub Pages address redirects there).
 
 ## How it works
 - `scripts/fetch.mjs <season>` downloads every event (matches with per-robot

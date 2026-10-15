@@ -102,7 +102,7 @@ async function toaStreams(season) {
   // free key from a myTOA account (theorangealliance.org/account); skipped when unset
   const toaKey = await env("TOA_API_KEY");
   if (!toaKey) return out;
-  const toaHeaders = { "X-TOA-Key": toaKey, "X-Application-Origin": "FTCstats", "User-Agent": "FTCstats (https://ftcstats-photos.vercel.app)" };
+  const toaHeaders = { "X-TOA-Key": toaKey, "X-Application-Origin": "FTCstats", "User-Agent": "FTCstats (https://oddbot.org)" };
   try {
     const [streams, events] = await Promise.all([
       fetch(`${TOA}/streams`, { headers: toaHeaders }).then((r) => r.json()),

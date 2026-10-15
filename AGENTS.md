@@ -1,7 +1,7 @@
 # FTCstats
 
 FTC team ratings (EPA), match predictions and ranking forecasts for every season
-since 2019. Live at https://ftcstats-photos.vercel.app (GitHub Pages at
+since 2019. Live at https://oddbot.org (GitHub Pages at
 katluver44.github.io/FTCstats only redirects there). README.md has the full model
 write-up and accuracy table; read it before changing the model.
 
