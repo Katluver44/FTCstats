@@ -92,6 +92,16 @@ export const DEFAULT_PARAMS = {
   covDecay: 0.05, // covariance lost per match (robots change, the link goes stale)
   covEvent: 0.5, // extra factor at a team's first match of a new event
   covMax: 8, // partners remembered per team
+
+  // Uncertainty-gated in-event OPR. While a team's variance is high (its first
+  // matches at an event), pull its rating toward a ridge OPR solved from the
+  // event's quals so far (causal: only earlier matches). Weight per team:
+  // oprBlend x max(0, v - oprVThr) / v, so it fades out as the Kalman variance
+  // falls. Ridge prior is the team's own rating, so with no data OPR == rating.
+  // Moves the predicted score and win probability only; rating updates are unchanged.
+  oprBlend: 0, // 0 = off
+  oprVThr: 0.2, // variance below which the OPR gets no weight
+  oprRidge: 1.5, // ridge toward the rating (in matches' worth of evidence)
 };
 
 // ---- Two tracks ----
@@ -259,6 +269,7 @@ export class Model {
     this.rookieZ = rookieZ;
     this.cv = cv; // spread of team EPAs relative to the mean, for priors
     this.teams = new Map();
+    this.evRows = new Map(); // event code -> { rows: [{nums, score}], opr: Map|null } (oprBlend)
     // running variance of alliance errors per component and in total (for clipC / volK)
     const np0 = this.avgAllianceNp();
     // restored from an event file when replaying in the browser, so live matches the build
@@ -336,7 +347,7 @@ export class Model {
     return kStart + ((n - kRampStart) / (kRampEnd - kRampStart)) * (kEnd - kStart);
   }
 
-  allianceExpected(nums) {
+  allianceExpected(nums, eventCode) {
     const out = { auto: 0, teleop: 0, endgame: 0, np: 0, foul: 0, rp: [0, 0, 0], shared: { auto: 0, teleop: 0, endgame: 0 }, solo: this.soloComps.map(() => 0) };
     for (const n of nums) {
       const t = this.team(n);
@@ -349,6 +360,16 @@ export class Model {
     out.foul = this.avg.foul;
     out.np = out.auto + out.teleop + out.endgame;
     out.rp = out.rp.map((r) => clamp(r, 0.01, 0.99));
+    // in-event OPR blend: shift the alliance total toward the event's OPR for uncertain teams
+    if (this.p.oprBlend && eventCode) {
+      const opr = this.eventOpr(eventCode);
+      if (opr) for (const n of nums) {
+        const o = opr.get(n);
+        if (o === undefined) continue;
+        const v = this.preVar(n, eventCode), w = this.p.oprBlend * Math.max(0, v - this.p.oprVThr) / v;
+        out.np += w * (o - this.epa(n).np);
+      }
+    }
     // overlap: per phase, the weaker robot's points (per-robot elements included)
     out.overlap = 0;
     if (this.p.calPair && nums.length >= 2) {
@@ -356,6 +377,25 @@ export class Model {
       for (const c of COMPONENTS) out.overlap += Math.min(...per.map((x) => x[c]));
     }
     return out;
+  }
+
+  // Ridge OPR of every team at an event from its quals so far, shrunk toward each
+  // team's current rating. Cached until the next qual result arrives.
+  eventOpr(code) {
+    const st = this.evRows.get(code);
+    if (!st || !st.rows.length) return null;
+    if (st.opr) return st.opr;
+    const teams = [...new Set(st.rows.flatMap((r) => r.nums))];
+    const idx = new Map(teams.map((t, i) => [t, i])), n = teams.length, lam = this.p.oprRidge;
+    const M = Array.from({ length: n }, () => new Array(n).fill(0)), y = new Array(n).fill(0);
+    teams.forEach((t, i) => { const e = this.epa(t).np; M[i][i] = lam; y[i] = lam * e; });
+    for (const { nums, score } of st.rows) {
+      const ix = nums.map((t) => idx.get(t));
+      for (const a of ix) { y[a] += score; for (const b of ix) M[a][b] += 1; }
+    }
+    const x = solve(M, y);
+    st.opr = new Map(teams.map((t, i) => [t, x[i]]));
+    return st.opr;
   }
 
   // a team's points per phase, per-robot elements included
@@ -390,8 +430,8 @@ export class Model {
   }
 
   predict(red, blue, eventCode) {
-    const r = this.allianceExpected(red);
-    const b = this.allianceExpected(blue);
+    const r = this.allianceExpected(red, eventCode);
+    const b = this.allianceExpected(blue, eventCode);
     const A = Math.max(10, this.avgAllianceNp());
     // win probability (and rating updates) use the ratings as they are
     r.rawNp = r.np; b.rawNp = b.np;
@@ -627,6 +667,12 @@ export class Model {
     }
     // how far off the predicted score difference was (fouls tracked apart),
     // in level-normalised units
+    if (this.p.oprBlend && !isElim && eventCode) {
+      let st = this.evRows.get(eventCode);
+      if (!st) this.evRows.set(eventCode, (st = { rows: [], opr: null }));
+      st.rows.push({ nums: red, score: actual.red.np }, { nums: blue, score: actual.blue.np });
+      st.opr = null;
+    }
     const wa = this.p.winAlpha;
     const foulDiff = (actual.red.total - actual.red.np) - (actual.blue.total - actual.blue.np);
     const npErr = (actual.red.np - actual.blue.np) - (pred.red.rawNp + pred.blue.foul - pred.blue.rawNp - pred.red.foul);
