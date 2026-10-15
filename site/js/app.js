@@ -282,7 +282,11 @@ function wireSearch(wrap) {
 function wireNavSearchToggle() {
   const nav = $("header.nav"), btn = $(".nav-search-btn"), input = $(".nav-search input");
   if (!nav || !btn || !input) return;
-  const set = (open) => { nav.classList.toggle("search-open", open); btn.setAttribute("aria-expanded", String(open)); };
+  // phones show the box as a narrow bar beside the links: the full placeholder would be cut off
+  const phone = matchMedia("(max-width: 640px)"), full = input.placeholder;
+  const fit = () => { input.placeholder = phone.matches ? "Search" : full; };
+  fit(); phone.addEventListener("change", fit);
+  const set =(open) => { nav.classList.toggle("search-open", open); btn.setAttribute("aria-expanded", String(open)); };
   btn.onclick = () => {
     const open = !nav.classList.contains("search-open");
     set(open);
@@ -2023,8 +2027,6 @@ async function match(r) {
         <div class="kicker"><a class="link" href="${evLink}">${esc(ev.name)}</a> · ${esc(when)}</div>
         <div class="head-title"><h1>${esc(matchTitle(m.d))}</h1>
           <span class="head-links">
-            ${prev ? `<a class="link" href="${matchHref(season, code, prev.d)}">← ${esc(prev.d)}</a>` : ""}
-            ${next ? `<a class="link" href="${matchHref(season, code, next.d)}">${esc(next.d)} →</a>` : ""}
             <a class="link desk-only" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}/matches" target="_blank" rel="noopener">FTCScout ↗</a>
             ${links && links.site !== "YouTube" ? `<a class="link hide-sm" href="${openUrl}" target="_blank" rel="noopener">${links.site} ↗</a>` : ""}
             ${v ? `<button class="link show-sm head-watch" data-video="${esc(v.id)}" data-t="${v.t}"${v.ext ? ' data-ext="1"' : ""} data-title="${esc(`${ev.name} · ${m.d}`)}">Watch</button>` : ""}
@@ -2032,8 +2034,10 @@ async function match(r) {
           </span>
         </div>
       </div>
-      ${v ? `<div class="match-actions">${v.ext ? `<a class="btn btn-solid watch-cta" href="${openUrl}" target="_blank" rel="noopener">${PLAY_ICON} Watch on ${links.site} ↗</a>`
-          : `<button class="btn btn-solid watch-cta" data-play-inline>${PLAY_ICON} Watch match</button>`}</div>` : ""}
+      ${prev || next ? `<div class="head-links head-nav">
+        ${prev ? `<a class="link" href="${matchHref(season, code, prev.d)}">← ${esc(prev.d)}</a>` : ""}
+        ${next ? `<a class="link" href="${matchHref(season, code, next.d)}">${esc(next.d)} →</a>` : ""}
+      </div>` : ""}
     </div></div>
 
     ${stage}
