@@ -2712,12 +2712,6 @@ async function h2h(r) {
   };
   const ca = total(ta), cb = total(tb);
   const topPct = (p) => `Top ${Math.max(1, Math.round(p * 100))}%`;
-  const seasonRows = seasons.map((s, i) => {
-    const a = ta[i], b = tb[i];
-    if (!a && !b) return "";
-    return tape(`${s}–${String(s + 1).slice(2)} <small class="faint">${esc(SEASONS[s]?.game ?? "")}</small>`, a?.rank ? a.rank / a.of : null, b?.rank ? b.rank / b.of : null,
-      (v) => topPct(v), { low: true, text: [a ? `#${fmtInt(a.rank)}` : "–", b ? `#${fmtInt(b.rank)}` : "–"], tip: `${a ? `${A}: #${fmtInt(a.rank)} of ${fmtInt(a.of)}, EPA ${fmt(a.epa.np)}` : `${A} didn't play`} · ${b ? `${B}: #${fmtInt(b.rank)} of ${fmtInt(b.of)}, EPA ${fmt(b.epa.np)}` : `${B} didn't play`}` });
-  }).reverse().join("");
   const allVs = groups.flatMap((x) => x.vs), allWith = groups.flatMap((x) => x.withB);
   out.innerHTML = `
     <div class="section card card-pad">${headRow(anyOf(ta), anyOf(tb))}<div class="tape">
@@ -2728,11 +2722,24 @@ async function h2h(r) {
       ${tape("Awards", ca.awards, cb.awards, (v) => fmtInt(v))}
       ${tape("Wins (banners)", ca.banners, cb.banners, (v) => fmtInt(v), { tip: "Event wins and Inspire awards" })}
     </div></div>
-    <div class="section-title"><h2>Season by season</h2><p class="muted desk-only" style="margin:6px 0 0">World rank each season; bars compare it as a share of that season's teams, since each game scores differently and EPAs don't compare across seasons. Hover for EPAs.</p></div>
-    <div class="card card-pad"><div class="tape">${seasonRows}</div></div>
+    <div class="section-title"><h2>Season by season</h2><p class="muted desk-only" style="margin:6px 0 0">Share of each season's teams ranked below them (higher is better), since each game scores differently and EPAs don't compare across seasons. Hover for ranks and EPAs.</p></div>
+    <div class="card card-pad"><div id="chart"></div></div>
     ${awardsTitle}${awardsCard()}
     <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(allVs)}</b> for ${A} · Together: <b>${recordOf(allWith)}</b> · scores show ${A}'s alliance first</p></div>
     ${meetTable(groups, evNames)}`;
+  // a line per team: 100 = best in the world that season, 0 = last; a season a team skipped is a gap
+  const played = seasons.map((s, i) => ({ s, a: ta[i], b: tb[i] })).filter((x) => x.a || x.b);
+  const beat = (t) => (t?.rank ? (1 - (t.rank - 1) / t.of) * 100 : null);
+  mountLineChart($("#chart"), {
+    series: [
+      { name: `${A} ${anyOf(ta).name}`, color: "var(--red)", values: played.map((x) => beat(x.a)), width: 2.5 },
+      { name: `${B} ${anyOf(tb).name}`, color: "var(--blue)", values: played.map((x) => beat(x.b)), width: 2.5 },
+    ],
+    max: 100,
+    bands: played.map((x, i) => ({ from: i, to: i, label: `${x.s}–${String(x.s + 1).slice(2)}` })),
+    tooltip: (i) => `<b>${played[i].s}–${String(played[i].s + 1).slice(2)}</b> <span class="faint">${esc(SEASONS[played[i].s]?.game ?? "")}</span><br>` + [[A, played[i].a], [B, played[i].b]]
+      .map(([n, t]) => (t?.rank ? `<b>${n}</b> · #${fmtInt(t.rank)} of ${fmtInt(t.of)} (${topPct(t.rank / t.of)}) · EPA ${fmt(t.epa.np)}` : `<b>${n}</b> · didn't play`)).join("<br>"),
+  });
 }
 
 // ---------------- about / accuracy ----------------
