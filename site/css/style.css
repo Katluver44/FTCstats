@@ -299,7 +299,6 @@ tbody tr:hover .ev-cell .n { color: var(--accent); }
 tbody tr:hover .team-cell .nm, tbody tr:hover .ev-cell .n { text-decoration: underline; text-underline-offset: 3px; }
 /* numbers sit centred under their headings */
 td.r, th.r { text-align: center; }
-/* the sorted column has no tint: the header arrow already marks it */
 
 td.c, th.c { text-align: center; }
 .team-cell { display: flex; gap: 10px; align-items: baseline; }
@@ -1906,8 +1905,9 @@ button.link { padding: 0; border: 0; background: none; font: inherit; font-weigh
   .mt th.vid-cell, .mt td.vid-cell { text-align: left; }
 }
 
-/* the EPA column of the teams and events lists is a light blue strip with plain numbers, no chips */
-td.epa-col, th.epa-col, tbody tr td.epa-col { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+/* the sorted column is a light blue strip (it moves when you sort by another column);
+   the teams and events lists show EPA there as plain numbers, no chips */
+th.col-sorted, td.col-sorted, tbody tr td.col-sorted { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 td.epa-col .epa { background: none !important; color: var(--text) !important; padding: 0; min-width: 0; font-weight: 600; }
 /* event Teams tab: the gear's middle on the header row's middle (the 40px phone tap target sat 6px low) */
 @media (max-width: 640px) { .tt-gear { top: -4px; } }
