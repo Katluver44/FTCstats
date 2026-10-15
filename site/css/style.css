@@ -140,6 +140,7 @@ h3 { font-size: 13px; font-weight: 700; color: var(--accent); text-transform: up
 .card td:last-child, .card th:last-child { padding-right: var(--gutter); }
 .grid { gap: 0; }
 .grid.cols-2 > .card + .card { border-left: 1px solid var(--glass-border); }
+.grid.cols-2:has(> .card + .card) { gap: 0; } /* side-by-side cards share one rule, no gutter (the generic .grid gap below is 14px) */
 .page-pad { padding: 0 32px; }
 .tiles.section, .row.section { padding: 0 var(--gutter); }
 .more { border-radius: 0; }
