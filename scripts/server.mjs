@@ -78,6 +78,32 @@ async function readAndCompress(file, st, key) {
   return f;
 }
 
+// index.html with every script and the stylesheet at a URL that names its content (?v=<hash>), plus an import map
+// that does the same for the modules' own imports ("./ui.js"). A changed file gets a new URL, so Cloudflare or a
+// browser can never pair a new app.js with an old ui.js (that left the site on "Loading…").
+const indexCache = new Map();
+async function versionedIndex(file, st) {
+  const jsDir = path.join(ROOT, "js");
+  const names = (await fs.readdir(jsDir)).filter((n) => n.endsWith(".js")).sort();
+  const assets = [...names.map((n) => `js/${n}`), "css/style.css"];
+  const tags = await Promise.all(assets.map(async (a) => {
+    const p = path.join(ROOT, a), s = await fs.stat(p).catch(() => null);
+    return s ? [a, (await loadFile(p, s)).etag.slice(1, 9)] : null;
+  }));
+  const ver = new Map(tags.filter(Boolean));
+  const key = `${st.mtimeMs}:${[...ver.values()].join("")}`;
+  if (indexCache.has(key)) return indexCache.get(key);
+  const page = await loadFile(file, st);
+  const map = { imports: Object.fromEntries([...ver].filter(([a]) => a.startsWith("js/")).map(([a, h]) => [`/${a}`, `/${a}?v=${h}`])) };
+  let html = page.raw.toString("utf8").replace(/(href|src)="((?:js\/[\w-]+\.js)|css\/style\.css)"/g, (m, attr, a) => ver.has(a) ? `${attr}="${a}?v=${ver.get(a)}"` : m);
+  html = html.replace(/(\s*)<link rel="modulepreload"/, (m, ws) => `${ws}<script type="importmap">${JSON.stringify(map)}</script>${m}`);
+  const raw = Buffer.from(html);
+  const f = { raw, etag: `"${crypto.createHash("sha1").update(raw).digest("base64url").slice(0, 16)}"` };
+  [f.br, f.gz] = await Promise.all([brotli(raw), gzip(raw, { level: 9 })]);
+  indexCache.clear(); indexCache.set(key, f);
+  return f;
+}
+
 function sendBody(req, res, { raw, br, gz, etag }, type, cache) {
   const ae = String(req.headers["accept-encoding"] ?? "");
   const headers = { "Content-Type": type, "Cache-Control": cache, ETag: etag, Vary: "Accept-Encoding", "X-Content-Type-Options": "nosniff" };
@@ -149,7 +175,11 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(404, { "Content-Type": "text/plain", ...(rel.startsWith("/data/") && { "Cache-Control": "public, max-age=300, s-maxage=3600" }) });
       return res.end("Not found");
     }
-    sendBody(req, res, await loadFile(file, st), TYPES[path.extname(file)] ?? "application/octet-stream", cacheControl(url.pathname === "/" ? "/" : rel));
+    if (rel === "/index.html") return sendBody(req, res, await versionedIndex(file, st), TYPES[".html"], cacheControl("/"));
+    const f = await loadFile(file, st);
+    // a ?v= URL whose hash matches this file's content never changes: keep it for a year
+    const v = url.searchParams.get("v");
+    sendBody(req, res, f, TYPES[path.extname(file)] ?? "application/octet-stream", v && v === f.etag.slice(1, 9) ? "public, max-age=31536000, immutable" : cacheControl(url.pathname === "/" ? "/" : rel));
   } catch (e) {
     console.error(new Date().toISOString(), req.method, req.url, e);
     if (!res.headersSent) res.writeHead(500);

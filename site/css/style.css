@@ -1899,8 +1899,7 @@ button.link { padding: 0; border: 0; background: none; font: inherit; font-weigh
 @media (max-width: 640px) { .page-head .head-nav { margin-top: -12px; min-height: 36px; } }
 /* head to head keeps its VS column between the two teams (the compete cut above made the grid two columns) */
 @media (min-width: 701px) { .predictor:has(> .vs) { grid-template-columns: 1fr auto 1fr; } }
-/* team match tables: the play button lines up with the event title on the left, the final score with the right edge */
+/* team match tables: the play button lines up with the event title on the left */
 @media (min-width: 641px) {
   .mt th.vid-cell, .mt td.vid-cell { text-align: left; }
-  .mt th:last-child, .mt td.mt-final { text-align: right; }
 }
