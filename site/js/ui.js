@@ -192,7 +192,7 @@ export function videoLinks(id, t = 0) {
 export const PLAY_ICON = '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1.2v7.6L8.6 5Z" fill="currentColor"/></svg>';
 
 // outline play-circle, as in Statbotics' video column
-const VIDEO_ICON = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.3"/><path d="M7.1 5.6v6.8L12.4 9Z" fill="currentColor"/></svg>';
+export const VIDEO_ICON = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.3"/><path d="M7.1 5.6v6.8L12.4 9Z" fill="currentColor"/></svg>';
 
 export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
   if (!matches.length) return `<div class="empty">No matches yet.</div>`;

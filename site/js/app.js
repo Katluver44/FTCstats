@@ -1,6 +1,6 @@
 import {
   $, $$, esc, data, getJSON, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
-  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, videoLinks, PLAY_ICON, robot, ROBOT_PARTS } from "./ui.js";
+  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, videoLinks, PLAY_ICON, VIDEO_ICON, robot, ROBOT_PARTS } from "./ui.js";
 import { SEASONS } from "./seasons.js";
 import { scatter, histogram, breakdown } from "./charts.js";
 import { addEventSos, sosValue, sosPlaces } from "./sos.js";
@@ -37,7 +37,7 @@ function labelFilters(root = document) {
   }
 }
 document.addEventListener("change", (e) => { if (e.target instanceof HTMLSelectElement) labelFilters(e.target.parentElement ?? document); }, true);
-const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", sim: "SIM event", about: "Our methodology" };
+const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", sim: "SIM event", about: "Our methodology", live: "Happening now" };
 const setTitle = (name) => (document.title = name ? `${name} · oddrobot` : "oddrobot · FTC ratings & match predictions");
 
 async function route() {
@@ -52,7 +52,7 @@ async function route() {
   // "Loading…" screen; only a slow load (over 0.6 s) shows the loading message
   app.classList.add("routing");
   const slow = setTimeout(() => { if (!stale(r)) { app.innerHTML = `<div class="loading">${robot("bot-wait", 48)}<span>Loading…</span></div>`; window.scrollTo(0, 0); } }, 600);
-  const pages = { "": home, teams, team, events, event, match, compete, h2h, sim, about };
+  const pages = { "": home, teams, team, events, event, match, compete, h2h, sim, about, live };
   const fn = pages[r.page] ?? notFound;
   setTitle(r.page && (PAGE_TITLES[r.page] ?? "Page not found"));
   try {
@@ -75,7 +75,7 @@ async function route() {
 // the same kind of page in another season; event codes differ by season, so events go to the list
 function seasonHref(s, { page, args }) {
   const keep = {
-    teams: "teams", events: "events", compete: "compete", h2h: `h2h?${new URLSearchParams(location.hash.split("?")[1] ?? "")}`, about: "about", sim: "sim", event: "events", match: "events",
+    teams: "teams", events: "events", compete: "compete", h2h: `h2h?${new URLSearchParams(location.hash.split("?")[1] ?? "")}`, about: "about", sim: "sim", live: "live", event: "events", match: "events",
     team: `team/${args.join("/")}`,
   }[page] ?? "";
   return `#/${s}/${keep}`;
@@ -237,9 +237,11 @@ async function searchItems(season, q) {
     sc += soon + Math.min(2, (e.teams ?? 0) / 25) - e.name.length / 200; // shorter = the main event, not a division
     scored.push({ sc, item: { href: `#/${season}/event/${e.code}`, main: e.name, sub: `${fmtDate(e.start)}${e.ongoing ? " · live" : ""}`, kind: "Event" } });
   }
+  const pageSc = Math.max(textScore("Happening now", q), textScore("live", q));
+  if (pageSc && events.some((e) => e.ongoing)) scored.push({ sc: pageSc + 10, item: { href: `#/${season}/live`, main: "Happening now", sub: "Every event running today", kind: "Page" } });
   scored.sort((x, y) => y.sc - x.sc);
   // up to 10, at most 7 of one kind so both show when both match
-  const out = [], count = { Team: 0, Event: 0 };
+  const out = [], count = { Team: 0, Event: 0, Page: 0 };
   for (const { item } of scored) {
     if (count[item.kind] >= 7) continue;
     out.push(item); count[item.kind]++;
@@ -353,7 +355,7 @@ async function home(r) {
         </div>
         <div>
           <div class="section-title"><div class="eyebrow">${live.length ? "Live" : "Results"}</div><h2>${live.length ? "Happening now" : "Recent events"}</h2></div>
-          <div class="card"><div id="home-events"></div><a class="more" href="#/${season}/events">All events →</a></div>
+          <div class="card"><div id="home-events"></div>${live.length ? `<a class="more" href="#/${season}/live">All live events →</a>` : `<a class="more" href="#/${season}/events">All events →</a>`}</div>
         </div>
       </div>
     </div>`;
@@ -1152,7 +1154,7 @@ async function events(r) {
         <select id="country" aria-label="Country"><option value="" data-all="All countries">Country</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
         <select id="state" aria-label="State or region" hidden></select>
         <select id="month" aria-label="Month"><option value="" data-all="Any month">Month</option>${months.map((m) => `<option value="${m}" ${m === query.get("month") ? "selected" : ""}>${monthName(m)}</option>`).join("")}</select>
-        <select id="status" aria-label="Status"><option value="" data-all="Any status">Status</option>${[["upcoming", "Upcoming"], ["live", "Live now"], ["done", "Finished"]].map(([k, l]) => `<option value="${k}" ${k === query.get("status") ? "selected" : ""}>${l}</option>`).join("")}</select>
+        <select id="status" aria-label="Status"><option value="" data-all="Any status">Status</option>${[["upcoming", "Upcoming"], ["live", "Live now"], ["done", "Finished"]].map(([k, l]) => `<option value="${k}" ${k === query.get("status") ? "selected" : ""}>${l}</option>`).join("")}</select>${evs.some((e) => e.ongoing) ? `<a class="link" href="#/${season}/live">Watch live →</a>` : ""}
       </div>
       <div id="tbl"></div>
     </div>`;
@@ -1198,11 +1200,7 @@ async function event(r) {
     try {
       const raw = await fetchLiveEvent(season, code);
       if (stale(r)) return clearInterval(state.liveTimer);
-      matches = replayEvent(meta, ev, normalizeLive(season, raw, meta)).matches;
-      for (const tp of raw.teams) {
-        const row = ev.teamList.find((x) => x.team === tp.teamNumber);
-        if (row && tp.stats) Object.assign(row, { rank: tp.stats.rank, wins: tp.stats.wins, losses: tp.stats.losses, ties: tp.stats.ties });
-      }
+      matches = applyLive(season, meta, ev, raw);
       liveAt = new Date();
       // don't reset a forecast someone is looking at; it picks up new results on the next visit
       if (tab !== "forecast" && tab !== "advancement") draw();
@@ -1260,6 +1258,241 @@ async function event(r) {
     refresh();
     state.liveTimer = setInterval(() => document.visibilityState === "visible" && refresh(), 60_000);
   }
+}
+
+// ---------------- happening now ----------------
+
+// FTCScout's live answer for an event, replayed through the model; also copies the
+// official rank / RS / record onto the event's team list. -> the replayed matches
+function applyLive(season, meta, ev, raw) {
+  const matches = replayEvent(meta, ev, normalizeLive(season, raw, meta)).matches;
+  for (const tp of raw.teams) {
+    const row = ev.teamList.find((x) => x.team === tp.teamNumber);
+    if (row && tp.stats) Object.assign(row, { rank: tp.stats.rank, rp: tp.stats.rp ?? row.rp, wins: tp.stats.wins, losses: tp.stats.losses, ties: tp.stats.ties });
+  }
+  return matches;
+}
+
+const LIVE_TYPE_RANK = { FIRSTChampionship: 6, Championship: 5, Premier: 4, SuperQualifier: 4, Qualifier: 3, LeagueTournament: 2, LeagueMeet: 1, OffSeason: 1, Scrimmage: 0 };
+// a two-day event has one stream per day: the newest is the one that's on
+const latestStream = (videos, code) => [...(videos?.[code]?.streams ?? [])].sort((a, b) => a.start - b.start).at(-1);
+
+// Every event running today, the biggest ones with standings and the next matches.
+// Featured panels refresh from FTCScout one at a time each minute (visible tab only);
+// the list below never fetches. ?e=CODE1,CODE2 picks the panels; ?at=YYYY-MM-DD
+// (a test hook) pretends it is that day.
+async function live(r) {
+  const { season, query } = r;
+  const newest = state.seasons[0];
+  const at = /^\d{4}-\d{2}-\d{2}$/.test(query.get("at") ?? "") ? query.get("at") : null;
+  const years = (s) => `${s}–${String(s + 1).slice(2)}`;
+  const head = (kicker, extra = "") => `<div class="card card-pad"><div class="page-head"><div>
+      <div class="kicker" id="lv-kicker">${kicker}</div>
+      <h1>Happening now</h1>${extra}
+    </div></div></div>`;
+  if (season !== newest && !at) {
+    app.innerHTML = `${head("Nothing live right now")}
+      <div class="card section empty">The ${years(season)} season is over. <a class="link" href="#/${newest}/live">See ${years(newest)} →</a></div>`;
+    return;
+  }
+  let [meta, evs] = await Promise.all([data.meta(season), data.events(season)]);
+  if (stale(r)) return;
+  const day = (off = 0) => (at ? new Date(Date.parse(`${at}T12:00:00Z`) + off * 864e5).toISOString().slice(0, 10) : localToday(off));
+  const country = (e) => e.loc.split(", ").pop() ?? "";
+  const phone = matchMedia("(max-width: 640px)").matches;
+  const K = phone ? 2 : 4, TOP = phone ? 5 : 8;
+  const picks = (query.get("e") ?? "").split(",").map((c) => c.trim().toUpperCase()).filter(Boolean);
+  // a day either side: event dates are local to the event, not the viewer
+  const isCand = (e) => (at || !e.finished) && e.teams >= 2 && e.start <= day(1) && day(-1) <= e.end;
+  let cands = evs.filter(isCand);
+  let cty = query.get("country") ?? "";
+  let videos = {};
+  const panels = new Map(); // code -> { row, ev, matches, fetched, done, ongoing }
+  let featured = [], liveAt = null, ticks = 0, busy = false;
+
+  const loadVideos = async (codes) => {
+    const need = codes.filter((c) => !(c in videos));
+    if (!need.length) return;
+    const got = await data.videos(season, need);
+    for (const c of need) videos[c] = got[c] ?? null;
+  };
+  const ongoing = (e) => panels.get(e.code)?.ongoing ?? e.ongoing;
+  const order = (a, b) => ongoing(b) - ongoing(a) || !!latestStream(videos, b.code) - !!latestStream(videos, a.code)
+    || (LIVE_TYPE_RANK[b.type] ?? 0) - (LIVE_TYPE_RANK[a.type] ?? 0) || (b.strength ?? 0) - (a.strength ?? 0);
+  const streamBtn = (s, title) => (s ? `<button class="pill" data-video="${s.id}" data-t="0"${s.ext ? ' data-ext="1"' : ""} data-title="${esc(title)}">▶ Event stream</button>` : "");
+  const plainTable = (cols, rows) => `<div class="table-wrap"><table><thead><tr>${cols.map((c) => `<th class="${c.cls ?? ""}">${c.label}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map((x) => `<tr>${cols.map((c) => `<td class="${c.cls ?? ""}">${c.render(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  const rec = (x) => (x.wins != null ? `${x.wins}-${x.losses}${x.ties ? `-${x.ties}` : ""}` : "–");
+
+  // one featured event: standings on the left, the last and next matches on the right
+  const panelHtml = (code) => {
+    const p = panels.get(code), e = p.row, ev = p.ev, ms = p.matches;
+    const played = ms.filter((m) => m.played);
+    const final = p.done || (e.finished && !p.fetched);
+    const top = `<div class="section-title"><div class="page-head"><div>
+        <div class="kicker">${esc(typeName(e.type))} · ${esc(e.loc)} · ${final ? "Final" : `${played.length}/${ms.length} played`}</div>
+        <h2><a href="#/${season}/event/${code}">${esc(e.name)}</a></h2></div>${streamBtn(latestStream(videos, code), e.name)}</div></div>`;
+    if (!ev) return `${top}<div class="card empty">No team list for this event yet.</div>`;
+    let label = "Standings", table;
+    let ranked = ev.teamList.filter((t) => t.rank != null);
+    if (!ranked.length && played.length) { // no official standings yet: work them out from the played quals
+      const st = standings(season, ev.teamList.map((t) => t.team), ms);
+      ranked = ev.teamList.map((t) => { const x = st.get(t.team); return { ...t, rank: x?.rank ?? null, rp: x?.rs ?? null, wins: x?.wins, losses: x?.losses, ties: x?.ties }; })
+        .filter((t) => t.rank != null);
+    }
+    // before the first qual (or a finals-only parent event): the strongest teams coming in
+    if (!ranked.length) {
+      label = "Top teams by EPA";
+      const v = (t) => t.epaStart ?? t.epaIn?.[0] ?? null;
+      const rows = [...ev.teamList].sort((a, b) => (v(b) ?? -1e9) - (v(a) ?? -1e9)).slice(0, TOP);
+      table = plainTable([
+        { label: "Team", render: (t) => teamCell(season, t.team, t.name) },
+        { label: "EPA", cls: "c", render: (t) => epa(v(t), meta) },
+      ], rows);
+    } else {
+      const rows = [...ranked].sort((a, b) => a.rank - b.rank).slice(0, TOP);
+      table = plainTable([
+        { label: "Rank", cls: "num", render: (t) => t.rank ?? "–" },
+        { label: "Team", render: (t) => teamCell(season, t.team, t.name) },
+        { label: "Record", cls: "r small", render: rec },
+        { label: `<span title="Ranking score: the event's official ranking points per match">RS</span>`, cls: "r small", render: (t) => (t.rp != null ? fmt(t.rp, 2) : "–") },
+      ], rows);
+    }
+    const next = ms.filter((m) => !m.played);
+    const shown = final || !next.length ? played.slice(-4) : played.length ? [played.at(-1), ...next.slice(0, 3)] : next.slice(0, 4);
+    const standCard = `<div class="card"><div class="card-head"><b>${label}</b></div>${table}</div>`;
+    const matchCard = `<div class="card"><div class="card-head"><b>${played.length && (final || !next.length) ? "Last matches" : "Next matches"}</b></div>
+        ${matchTable(season, shown, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
+    // the match table needs about 1050px, so standings sit beside it only on very wide screens;
+    // otherwise the matches come first and the standings below
+    return innerWidth >= 2200 ? `${top}<div class="grid cols-2">${standCard}${matchCard}</div>` : `${top}${matchCard}${standCard}`;
+  };
+
+  // the rest: static rows from the hourly build, never fetched
+  const listRow = (e) => {
+    const s = latestStream(videos, e.code);
+    const val = e.ongoing ? '<span class="pill live">Live</span>'
+      : e.finished || e.end < day(0) ? "<small>Final</small>"
+      : e.start > day(0) ? `<small>Starts ${fmtDate(e.start)}</small>` : "<small>Today</small>";
+    return `<div class="hl-row">
+      <span class="hl-main"><b title="${esc(e.name)}"><a href="#/${season}/event/${e.code}">${esc(e.name)}</a></b><small>${fmtRange(e.start, e.end)} · ${esc(e.loc)}</small>
+        <small class="hl-meta">${esc(typeName(e.type))} · ${e.teams} teams${e.matches ? ` · ${e.played}/${e.matches} played` : ""}</small></span>
+      <span class="hl-val">${val}${s ? `<button class="vid" data-video="${s.id}" data-t="0"${s.ext ? ' data-ext="1"' : ""} data-title="${esc(e.name)}" aria-label="Watch the ${esc(e.name)} stream" title="Watch the event stream">${VIDEO_ICON}</button>` : ""}</span>
+    </div>`;
+  };
+
+  const drawUpdated = () => {
+    const el = $("#lv-upd");
+    if (el) el.innerHTML = liveAt ? `<span class="pill live">Live · updated ${liveAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>` : "";
+  };
+
+  const comingUp = () => {
+    const up = evs.filter((e) => e.start >= day(0) && (!cty || country(e) === cty))
+      .sort((a, b) => a.start.localeCompare(b.start) || (b.strength ?? 0) - (a.strength ?? 0));
+    const big = up.filter((e) => e.teams >= 8);
+    const next = (big.length >= 8 ? big : up).slice(0, 8);
+    if (!next.length) return `<div class="card section empty">No events scheduled yet.</div>`;
+    const when = (d) => {
+      const n = Math.round((Date.parse(`${d}T12:00:00Z`) - Date.parse(`${day(0)}T12:00:00Z`)) / 864e5);
+      return n <= 0 ? "Today" : n === 1 ? "Tomorrow" : n < 7 ? new Date(`${d}T12:00:00`).toLocaleDateString(undefined, { weekday: "long" }) : `in ${n} days`;
+    };
+    return `<div class="section-title"><h2>Coming up</h2></div>
+      <div class="card"><div class="hl" id="live-events">${next.map((e) => `
+        <a class="hl-row" href="#/${season}/event/${e.code}">
+          <span class="hl-main"><b title="${esc(e.name)}">${esc(e.name)}</b><small>${fmtRange(e.start, e.end)} · ${esc(e.loc)}</small>
+            <small class="hl-meta">${esc(typeName(e.type))} · ${e.teams} teams</small></span>
+          <span class="hl-val"><b>${when(e.start)}</b><small>${fmtDate(e.start)}</small></span>
+        </a>`).join("")}</div>
+        <a class="more" href="#/${season}/events?status=upcoming">All upcoming events →</a></div>`;
+  };
+
+  // one featured event from FTCScout; a failure keeps what's shown (and the "updated" time)
+  const refreshPanel = async (code) => {
+    const p = panels.get(code);
+    if (!p?.ev || p.done) return;
+    try {
+      const raw = await fetchLiveEvent(season, code);
+      if (stale(r)) return;
+      p.matches = applyLive(season, meta, p.ev, raw);
+      Object.assign(p, { fetched: true, done: !!raw.finished, ongoing: !!raw.ongoing });
+      liveAt = new Date();
+      const el = document.getElementById(`lp-${code}`);
+      if (el) el.innerHTML = panelHtml(code);
+      drawUpdated();
+    } catch (e) { console.warn(e); }
+  };
+  // one request at a time, never more than the K featured events
+  const pollPanels = async (onlyNew = false) => {
+    if (busy) return;
+    busy = true;
+    try {
+      for (const e of [...featured]) {
+        if (stale(r)) return;
+        if (!onlyNew || !panels.get(e.code)?.fetched) await refreshPanel(e.code);
+      }
+    } finally { busy = false; }
+  };
+
+  const render = async () => {
+    const inC = cands.filter((e) => !cty || country(e) === cty).sort(order);
+    featured = picks.length ? picks.map((c) => evs.find((e) => e.code.toUpperCase() === c)).filter(Boolean).slice(0, 4) : inC.slice(0, K);
+    const rest = inC.filter((e) => !featured.includes(e));
+    await Promise.all(featured.filter((e) => !panels.has(e.code)).map(async (e) => {
+      const ev = await data.event(season, e.code).catch(() => null);
+      panels.set(e.code, { row: e, ev, matches: ev?.matchList ?? [], fetched: false, done: false, ongoing: e.ongoing });
+    }));
+    if (stale(r)) return;
+    const countries = [...new Set([...cands.map(country), cty].filter(Boolean))].sort();
+    const sel = countries.length ? `<select id="lv-country" aria-label="Country"><option value="" data-all="All countries">Country</option>${countries.map((c) => `<option ${c === cty ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>` : "";
+    const where = cty ? ` in ${esc(cty)}` : "";
+    const kicker = inC.length ? `${inC.length} event${inC.length === 1 ? "" : "s"} live${where}` : `Nothing live${where} right now`;
+    app.innerHTML = `${head(kicker, `<div class="row" style="margin-top:8px"><span id="lv-upd"></span>${sel}</div>`)}
+      ${featured.map((e) => `<section id="lp-${e.code}">${panelHtml(e.code)}</section>`).join("")}
+      ${rest.length ? `<div class="section-title"><h2>All live events</h2></div><div class="card"><div class="hl" id="live-events">${rest.map(listRow).join("")}</div></div>` : ""}
+      ${!featured.length && !rest.length ? comingUp() : ""}`;
+    drawUpdated();
+    labelFilters(app);
+    const s = $("#lv-country");
+    if (s) s.onchange = async () => {
+      cty = s.value;
+      syncQuery({ at, e: query.get("e"), country: cty });
+      await render();
+      if (!stale(r)) pollPanels(true);
+    };
+  };
+
+  // a page left open all day picks up events that start later (events.json, past the session cache)
+  const refreshEvents = async () => {
+    try {
+      const res = await fetch(`data/${season}/events.json`, { cache: "no-cache" });
+      if (!res.ok) throw new Error(`${res.status} events.json`);
+      const fresh = await res.json();
+      if (stale(r)) return;
+      const before = cands.map((e) => e.code).join();
+      evs = fresh;
+      cands = evs.filter(isCand);
+      for (const p of panels.values()) p.row = evs.find((e) => e.code === p.row.code) ?? p.row;
+      await loadVideos(cands.map((e) => e.code));
+      if (stale(r)) return;
+      if (cands.map((e) => e.code).join() !== before) await render();
+      else {
+        const list = $("#live-events");
+        const rest = cands.filter((e) => (!cty || country(e) === cty) && !featured.some((f) => f.code === e.code)).sort(order);
+        if (list && rest.length) list.innerHTML = rest.map(listRow).join("");
+      }
+    } catch (e) { console.warn(e); }
+  };
+
+  await loadVideos([...new Set([...cands.map((e) => e.code), ...picks])]);
+  if (stale(r)) return;
+  await render();
+  if (stale(r)) return;
+  pollPanels();
+  state.liveTimer = setInterval(async () => {
+    if (document.visibilityState !== "visible" || busy) return;
+    if (++ticks % 15 === 0) await refreshEvents();
+    if (!stale(r)) pollPanels();
+  }, 60_000);
 }
 
 // Alliance selections and the bracket (see playoffs.js for how they're worked out).
@@ -2611,8 +2844,8 @@ async function boot() {
   document.addEventListener("click", (e) => {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
     if (e.target.closest("a, button, input, select, label")) return;
-    const row = e.target.closest("#app tbody tr");
-    const link = row?.querySelector("a.ev-cell, a.team-cell, a.match-link");
+    const row = e.target.closest("#app tbody tr, #app div.hl-row");
+    const link = row?.querySelector("a.ev-cell, a.team-cell, a.match-link, .hl-main a");
     if (link && !getSelection().toString()) location.hash = link.getAttribute("href");
   });
   // team photos: "N photos ›" cycles through them

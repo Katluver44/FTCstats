@@ -127,7 +127,7 @@ h3, .eyebrow { font-size: 13px; font-weight: 700; color: var(--accent); text-tra
   border-top: 1px solid var(--glass-border);
   border-bottom: 1px solid var(--glass-border);
 }
-.card-pad, .card-head, .toolbar, .ev-head { padding-left: var(--gutter) !important; padding-right: var(--gutter) !important; }
+.card-pad, .card-head, .toolbar, .ev-head, #live-events .hl-row { padding-left: var(--gutter) !important; padding-right: var(--gutter) !important; }
 .card td:first-child, .card th:first-child { padding-left: var(--gutter); }
 .card td:last-child, .card th:last-child { padding-right: var(--gutter); }
 .grid { gap: 0; }
@@ -488,7 +488,7 @@ footer a { text-decoration: underline; }
   .nav-search { display: none; }
 }
 @media (max-width: 640px) {
-  .card-pad, .card-head, .toolbar, .ev-head { padding-left: 16px !important; padding-right: 16px !important; }
+  .card-pad, .card-head, .toolbar, .ev-head, #live-events .hl-row { padding-left: 16px !important; padding-right: 16px !important; }
   /* five tabs do not fit a phone: the strip scrolls sideways under the screen edges instead of wrapping or
      widening the page. The baseline is an inset shadow so the tabs (3px underline, no negative margin) never
      overflow the strip vertically, which would make a vertical swipe on it scroll the strip instead of the page. */
@@ -937,7 +937,7 @@ a.th-add:hover { color: var(--accent); border-color: var(--accent); }
 .hl-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 16px 24px; border-bottom: 1px solid var(--line); color: var(--text); }
 .hl-row:hover { background: var(--hover); color: var(--text); }
 .hl-row:last-child { border-bottom: 0; }
-#home-events .hl-row { grid-template-columns: minmax(0, 1fr) auto; }
+#home-events .hl-row, #live-events .hl-row { grid-template-columns: minmax(0, 1fr) auto; }
 .hl-rank { font-size: 26px; font-weight: 800; color: var(--faint); width: 28px; text-align: center; font-variant-numeric: tabular-nums; }
 .hl-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .hl-main b { font-size: 18px; font-weight: 750; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
