@@ -237,7 +237,7 @@ async function searchItems(season, q) {
     sc += soon + Math.min(2, (e.teams ?? 0) / 25) - e.name.length / 200; // shorter = the main event, not a division
     scored.push({ sc, item: { href: `#/${season}/event/${e.code}`, main: e.name, sub: `${fmtDate(e.start)}${e.ongoing ? " · live" : ""}`, kind: "Event" } });
   }
-  const pageSc = Math.max(textScore("Happening now", q), textScore("live", q));
+  const pageSc = normText(q).length >= 3 ? Math.max(textScore("Happening now", q), textScore("live", q)) : 0;
   if (pageSc && events.some((e) => e.ongoing)) scored.push({ sc: pageSc + 10, item: { href: `#/${season}/live`, main: "Happening now", sub: "Every event running today", kind: "Page" } });
   scored.sort((x, y) => y.sc - x.sc);
   // up to 10, at most 7 of one kind so both show when both match
@@ -1288,8 +1288,8 @@ async function live(r) {
   const years = (s) => `${s}–${String(s + 1).slice(2)}`;
   const head = (kicker, extra = "") => `<div class="card card-pad"><div class="page-head"><div>
       <div class="kicker" id="lv-kicker">${kicker}</div>
-      <h1>Happening now</h1>${extra}
-    </div></div></div>`;
+      <h1>Happening now</h1>
+    </div>${extra}</div></div>`;
   if (season !== newest && !at) {
     app.innerHTML = `${head("Nothing live right now")}
       <div class="card section empty">The ${years(season)} season is over. <a class="link" href="#/${newest}/live">See ${years(newest)} →</a></div>`;
@@ -1304,6 +1304,7 @@ async function live(r) {
   const picks = (query.get("e") ?? "").split(",").map((c) => c.trim().toUpperCase()).filter(Boolean);
   // a day either side: event dates are local to the event, not the viewer
   const isCand = (e) => (at || !e.finished) && e.teams >= 2 && e.start <= day(1) && day(-1) <= e.end;
+  const isToday = (e) => e.start <= day(0) && day(0) <= e.end;
   let cands = evs.filter(isCand);
   let cty = query.get("country") ?? "";
   let videos = {};
@@ -1317,7 +1318,7 @@ async function live(r) {
     for (const c of need) videos[c] = got[c] ?? null;
   };
   const ongoing = (e) => panels.get(e.code)?.ongoing ?? e.ongoing;
-  const order = (a, b) => ongoing(b) - ongoing(a) || !!latestStream(videos, b.code) - !!latestStream(videos, a.code)
+  const order = (a, b) => ongoing(b) - ongoing(a) || isToday(b) - isToday(a) || !!latestStream(videos, b.code) - !!latestStream(videos, a.code)
     || (LIVE_TYPE_RANK[b.type] ?? 0) - (LIVE_TYPE_RANK[a.type] ?? 0) || (b.strength ?? 0) - (a.strength ?? 0);
   const streamBtn = (s, title) => (s ? `<button class="pill" data-video="${s.id}" data-t="0"${s.ext ? ' data-ext="1"' : ""} data-title="${esc(title)}">▶ Event stream</button>` : "");
   const plainTable = (cols, rows) => `<div class="table-wrap"><table><thead><tr>${cols.map((c) => `<th class="${c.cls ?? ""}">${c.label}</th>`).join("")}</tr></thead>
@@ -1330,7 +1331,7 @@ async function live(r) {
     const played = ms.filter((m) => m.played);
     const final = p.done || (e.finished && !p.fetched);
     const top = `<div class="section-title"><div class="page-head"><div>
-        <div class="kicker">${esc(typeName(e.type))} · ${esc(e.loc)} · ${final ? "Final" : `${played.length}/${ms.length} played`}</div>
+        <div class="kicker">${esc(typeName(e.type))} · ${esc(e.loc)} · ${final ? "Final" : ms.length ? `${played.length}/${ms.length} played` : "No schedule yet"}</div>
         <h2><a href="#/${season}/event/${code}">${esc(e.name)}</a></h2></div>${streamBtn(latestStream(videos, code), e.name)}</div></div>`;
     if (!ev) return `${top}<div class="card empty">No team list for this event yet.</div>`;
     let label = "Standings", table;
@@ -1365,6 +1366,7 @@ async function live(r) {
         ${matchTable(season, shown, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
     // the match table needs about 1050px, so standings sit beside it only on very wide screens;
     // otherwise the matches come first and the standings below
+    if (!ms.length) return `${top}${standCard}`;
     return innerWidth >= 2200 ? `${top}<div class="grid cols-2">${standCard}${matchCard}</div>` : `${top}${matchCard}${standCard}`;
   };
 
@@ -1445,10 +1447,11 @@ async function live(r) {
     const countries = [...new Set([...cands.map(country), cty].filter(Boolean))].sort();
     const sel = countries.length ? `<select id="lv-country" aria-label="Country"><option value="" data-all="All countries">Country</option>${countries.map((c) => `<option ${c === cty ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>` : "";
     const where = cty ? ` in ${esc(cty)}` : "";
-    const kicker = inC.length ? `${inC.length} event${inC.length === 1 ? "" : "s"} live${where}` : `Nothing live${where} right now`;
-    app.innerHTML = `${head(kicker, `<div class="row" style="margin-top:8px"><span id="lv-upd"></span>${sel}</div>`)}
+    const nNow = inC.filter((e) => ongoing(e) || isToday(e)).length;
+    const kicker = nNow ? `${nNow} event${nNow === 1 ? "" : "s"} today${where}` : `Nothing live${where} right now`;
+    app.innerHTML = `${head(kicker, `<div class="row"><span id="lv-upd"></span>${sel}</div>`)}
       ${featured.map((e) => `<section id="lp-${e.code}">${panelHtml(e.code)}</section>`).join("")}
-      ${rest.length ? `<div class="section-title"><h2>All live events</h2></div><div class="card"><div class="hl" id="live-events">${rest.map(listRow).join("")}</div></div>` : ""}
+      ${rest.length ? `<div class="section-title"><h2>Other events</h2></div><div class="card"><div class="hl" id="live-events">${rest.map(listRow).join("")}</div></div>` : ""}
       ${!featured.length && !rest.length ? comingUp() : ""}`;
     drawUpdated();
     labelFilters(app);
