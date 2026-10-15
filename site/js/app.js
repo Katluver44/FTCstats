@@ -237,7 +237,7 @@ async function searchItems(season, q) {
     sc += soon + Math.min(2, (e.teams ?? 0) / 25) - e.name.length / 200; // shorter = the main event, not a division
     scored.push({ sc, item: { href: `#/${season}/event/${e.code}`, main: e.name, sub: `${fmtDate(e.start)}${e.ongoing ? " · live" : ""}`, kind: "Event" } });
   }
-  const pageSc = Math.max(textScore("Happening now", q), textScore("live", q));
+  const pageSc = normText(q).length >= 3 ? Math.max(textScore("Happening now", q), textScore("live", q)) : 0;
   if (pageSc && events.some((e) => e.ongoing)) scored.push({ sc: pageSc + 10, item: { href: `#/${season}/live`, main: "Happening now", sub: "Every event running today", kind: "Page" } });
   scored.sort((x, y) => y.sc - x.sc);
   // up to 10, at most 7 of one kind so both show when both match
@@ -291,7 +291,6 @@ function wireNavSearchToggle() {
 
 // ---------------- home ----------------
 
-const SEARCH_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`;
 
 async function home(r) {
   const { season } = r;
@@ -301,7 +300,7 @@ async function home(r) {
   const acc = meta.accuracy.all;
   const newest = state.seasons[0];
   const banner = season !== newest
-    ? `<div class="banner">The ${newest}–${String(newest + 1).slice(2)} season has started, with ${fmtInt((await data.meta(newest)).matches)} matches so far. <a href="#/${newest}/">Switch to ${newest} →</a></div>`
+    ? `<p class="banner">${newest}–${String(newest + 1).slice(2)} has started · <a href="#/${newest}/">Switch →</a></p>`
     : "";
   const { live, recent } = sum;
 
@@ -329,18 +328,16 @@ async function home(r) {
     <section class="hero">
       <div>
         ${banner}
-        <div class="eyebrow">${seasonLabel(season, meta.game)} season</div>
-        <div class="hero-title">Every FTC match, predicted.</div>
+        <div class="hero-title hide-sm">Every FTC match, predicted.</div>
         <div class="hero-sub desk-only">Team ratings that update after every match, win chances you can check against real results, and ranking forecasts for live events.</div>
-        <div class="search hero-search mobile-only" id="hero-search">${SEARCH_ICON}<input placeholder="Search teams & events" autocomplete="off"><div class="search-results"></div></div>
         <div class="hero-row">
         <div class="hero-actions">
           <a class="btn btn-solid desk-only" href="#/${season}/teams">Find a team</a>
           <a class="btn btn-outline desk-only" href="#/${season}/about">Our methodology</a>
         </div>
         <div class="hero-stats">
-          <div><b>${pct(acc.accuracy, 1)}</b><span>winners called before the match</span></div>
-          <div><b>${fmtInt(meta.matches)}</b><span>matches rated</span></div>
+          <div><b>${pct(acc.accuracy, 1)}</b><span><i class="hs-x">winners </i>called<i class="hs-x"> before the match</i></span></div>
+          <div><b>${fmtInt(meta.matches)}</b><span>matches<i class="hs-x"> rated</i></span></div>
           <div><b>${fmtInt(meta.teams)}</b><span>teams</span></div>
         </div>
         </div>
@@ -350,16 +347,15 @@ async function home(r) {
     <div class="hero-below">
       <div class="grid cols-2">
         <div>
-          <div class="section-title"><div class="eyebrow">Ratings</div><h2>Top teams</h2></div>
+          <div class="section-title"><h2>Top teams by EPA</h2></div>
           <div class="card"><div id="top-teams"></div><a class="more" href="#/${season}/teams">All teams →</a></div>
         </div>
         <div>
-          <div class="section-title"><div class="eyebrow">${live.length ? "Live" : "Results"}</div><h2>${live.length ? "Happening now" : "Recent events"}</h2></div>
+          <div class="section-title"><h2>${live.length ? "Happening now" : "Recent events"}</h2></div>
           <div class="card"><div id="home-events"></div>${live.length ? `<a class="more" href="#/${season}/live">All live events →</a>` : `<a class="more" href="#/${season}/events">All events →</a>`}</div>
         </div>
       </div>
     </div>`;
-  wireSearch($("#hero-search"));
   // five big rows a side: who's on top, and what just happened
   const rec = (x) => `${x.wins}-${x.losses}${x.ties ? `-${x.ties}` : ""}`;
   $("#top-teams").innerHTML = `<div class="hl">${teams.slice(0, 8).map((t) => `
@@ -367,7 +363,7 @@ async function home(r) {
       <span class="hl-rank">${t.rank}</span>
       <span class="hl-main"><b><span class="hl-num">${t.team}</span> ${esc(t.name)}</b><small>${esc(t.loc)}</small>
         <small class="hl-meta">${rec(t)} · Auto ${fmt(t.auto, 0)} · Teleop ${fmt(t.teleop, 0)} · Endgame ${fmt(t.endgame, 0)}</small></span>
-      <span class="hl-val">${epa(t.np, meta)}<small>EPA</small></span>
+      <span class="hl-val">${epa(t.np, meta)}</span>
     </a>`).join("")}</div>`;
   // tiny scrimmages crowd out the events people care about; skip them when there are enough others
   const evPool = live.length ? live : recent;
@@ -377,7 +373,7 @@ async function home(r) {
     <a class="hl-row" href="#/${season}/event/${e.code}">
       <span class="hl-main"><b title="${esc(e.name)}">${esc(e.name)}</b><small>${fmtRange(e.start, e.end)} · ${esc(e.loc)}</small>
         <small class="hl-meta">${esc(typeName(e.type))} · ${e.teams} teams${e.topTeams?.length ? ` · Top: ${e.topTeams.slice(0, 3).join(", ")}` : ""}</small></span>
-      <span class="hl-val">${e.ongoing ? '<span class="pill live">Live</span>' : `${epa(e.strength, meta)}<small>Strength</small>`}</span>
+      <span class="hl-val">${e.ongoing ? '<span class="pill live">Live</span>' : `<span title="Event strength (EPA)">${epa(e.strength, meta)}</span>`}</span>
     </a>`).join("")}</div>` : `<div class="bot-empty">${robot("", 44)}<span class="muted">No events yet this season.</span></div>`;
   fitHome();
 }
@@ -491,7 +487,7 @@ async function teams(r) {
              ["full", "All events", "Adds every off-season event at 40%; modified-rules events left out"]]
             .map(([k, l, tip]) => `<a href="#" data-off="${k}" class="${k === off ? "active" : ""}" title="${tip}">${l}</a>`).join("")}
         </div>` : ""}
-        <details class="col-pick"${view === "chart" ? " hidden" : ""}><summary>Columns</summary><div id="col-list"></div></details>
+        <details class="col-pick"${view === "chart" ? " hidden" : ""}><summary aria-label="Choose columns"><span class="hide-sm">Columns</span><span class="show-sm">${GEAR_ICON}</span></summary><div id="col-list"></div></details>
       </div>
       <div id="tbl"${view === "chart" ? " hidden" : ""}></div>
       <div id="charts" class="card-pad team-charts"${view === "table" ? " hidden" : ""}></div>
@@ -709,7 +705,6 @@ async function team(r) {
   // rank tiles side by side (plus photos when there are any); awards along the bottom
   const awards = t.awards ?? [];
   const plaques = awards.filter((a) => !isBanner(a)), banners = awards.filter(isBanner);
-  const fact = (b, k) => `<span class="th-fact"><b>${b}</b> ${k}</span>`;
   // ranks as one line under the EPA, e.g. "#26 World · #8 Romania · #1 BZ"
   const rankLine = !official
     ? `<span class="th-unranked" title="Only off-season matches so far; official events decide the rank">Not ranked yet</span>`
@@ -723,11 +718,9 @@ async function team(r) {
           <h1><span class="team-num">${n}</span> ${esc(t.name)}</h1>
           <div class="muted">${esc(t.loc)}${t.rookie ? ` · Rookie year ${t.rookie}` : ""}</div>
           <div class="th-facts">
-            ${fact(`${w}-${l}${ti ? `-${ti}` : ""}`, "record")}
-            ${fact(t.matches.length ? pct(w / t.matches.length) : "–", "win rate")}
-            ${awards.length ? `<span class="th-fact th-awards-sum"><b>${awards.length}</b> award${awards.length === 1 ? "" : "s"}${banners.length ? ` · <b>${banners.length}</b> win${banners.length === 1 ? "" : "s"}` : ""}</span>` : ""}
-            ${addPhotoLink(n)}
-            ${shareButton(`t/${season}/${n}`, `${n} ${t.name}`)}
+            <span class="th-line">${[`${w}-${l}${ti ? `-${ti}` : ""}`, t.matches.length ? pct(w / t.matches.length) : null,
+              awards.length ? `${awards.length} award${awards.length === 1 ? "" : "s"}${banners.length ? ` (${banners.length} win${banners.length === 1 ? "" : "s"})` : ""}` : null].filter(Boolean).join(" · ")}</span>
+            <span class="th-links">${addPhotoLink(n)}${shareButton(`t/${season}/${n}`, `${n} ${t.name}`)}</span>
           </div>
         </div>
         ${awards.length ? `<div class="th-awards desk-only">
@@ -869,32 +862,31 @@ async function team(r) {
     return;
   }
 
-  // one card per event, newest first; what the team won there sits beside the event name
-  const awardPill = (a) => {
-    const place = a.placement > 1 && !["Winner", "Finalist", "DivisionWinner", "DivisionFinalist"].includes(a.type) ? ` · ${ordinal(a.placement)}` : "";
-    // gold: banners plus making the final (finalist alliances); banners alone still decide the trophy case
-    const gold = isBanner(a) || ["Finalist", "DivisionFinalist"].includes(a.type);
-    return `<span class="ev-award ${gold ? "win" : ""}">${esc((AWARD_NAMES[a.type] ?? a.type).replace(/ Award$/, ""))}${place}</span>`;
+  // one pane, newest event first, a hairline between events; what the team won there is a plain line (gold = a win)
+  const awardText = (a) => {
+    const place = a.placement > 1 && !["Winner", "Finalist", "DivisionWinner", "DivisionFinalist"].includes(a.type) ? ` ${ordinal(a.placement)}` : "";
+    const txt = `${esc((AWARD_NAMES[a.type] ?? a.type).replace(/ Award$/, ""))}${place}`;
+    return isBanner(a) ? `<span class="ev-win">${txt}</span>` : txt;
   };
-  $("#view").innerHTML = [...t.events].reverse().map((ev) => {
+  $("#view").innerHTML = `<div class="card section team-evs">${[...t.events].reverse().map((ev) => {
     const won = (t.awards ?? []).filter((a) => a.ev === ev.code).sort((a, b) => isBanner(b) - isBanner(a) || ["Finalist", "DivisionFinalist"].includes(b.type) - ["Finalist", "DivisionFinalist"].includes(a.type));
     const ms = t.matches.filter((m) => m.ev === ev.code).map((m) => toMatch(m, n));
     const video = (m) => videoFor(videos, ev.code, m.time);
-    return `<div class="card section">
+    const link = `<a href="#/${season}/event/${ev.code}">${esc(ev.name)}</a>`;
+    // no matches (e.g. a division final it only got an award at): one line
+    if (!ms.length) return `<div class="ev ev-empty ev-head">${[link, ...won.map(awardText), fmtDate(ev.start, { month: "short", day: "numeric" })].join(" · ")}</div>`;
+    const stats = [ev.rank != null ? `Rank <b>${ev.rank}</b>` : null, ev.wins != null ? `<b>${ev.wins}-${ev.losses}${ev.ties ? `-${ev.ties}` : ""}</b>` : null,
+      (ev.epaEnd ?? ev.epaStart) != null ? `<span title="EPA after its last match at this event">EPA <b>${fmt(ev.epaEnd ?? ev.epaStart)}</b></span>` : null].filter(Boolean);
+    return `<div class="ev">
       <div class="ev-head">
-        <div>
-          <div class="ev-title"><h2><a href="#/${season}/event/${ev.code}">${esc(ev.name)}</a></h2>${won.map(awardPill).join("")}</div>
-          <div class="small muted">${typeName(ev.type)} · ${fmtDate(ev.start, { month: "short", day: "numeric", year: "numeric" })}</div>
-        </div>
-        <div class="ev-box">
-          <div><span class="k">Rank</span><b>${ev.rank ?? "–"}</b></div>
-          <div><span class="k">Record</span><b>${ev.wins != null ? `${ev.wins}-${ev.losses}${ev.ties ? `-${ev.ties}` : ""}` : "–"}</b></div>
-          <div title="EPA after its last match at this event"><span class="k">EPA</span><b>${fmt(ev.epaEnd ?? ev.epaStart)}</b></div>
-        </div>
+        <h2>${link}</h2>
+        <div class="small muted">${typeName(ev.type)} · ${fmtDate(ev.start, { month: "short", day: "numeric", year: "numeric" })}</div>
+        ${stats.length ? `<div class="ev-stats muted">${stats.join(" · ")}</div>` : ""}
+        ${won.length ? `<div class="ev-awards small muted">${won.map(awardText).join(" · ")}</div>` : ""}
       </div>
       ${matchTable(season, ms, { me: n, rpNames: meta.rpNames, video, href: (m) => matchHref(season, ev.code, m.d) })}
     </div>`;
-  }).join("");
+  }).join("")}</div>`;
 }
 
 // The radar's five attributes, each the team's percentile among this season's
@@ -936,7 +928,7 @@ function teamAxes(meta, t, rows) {
 
 function addPhotoLink(n) {
   const href = CONFIG.photoApi ? `#upload-${n}` : `${PHOTO_FORM}&title=${encodeURIComponent(`Photo for team ${n}`)}&team=${n}`;
-  return `<a class="th-fact th-add" href="${href}" data-upload="${n}"${CONFIG.photoApi ? "" : ' target="_blank" rel="noopener"'}>＋ Add a photo</a>`;
+  return `<a class="th-add hide-sm" href="${href}" data-upload="${n}"${CONFIG.photoApi ? "" : ' target="_blank" rel="noopener"'}>＋ Add a photo</a>`;
 }
 
 // Team photo area: approved photos (click to see the next one), or an invite to add one.
@@ -1088,6 +1080,8 @@ function plaque(a, season) {
 // card for that team, event or match (see photo-service/api/share.js)
 const SHARE_ICON = '<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 9V1.8M4 4.6 7 1.6l3 3M2.5 7.5v4.2h9V7.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const shareButton = (path, title) => `<button class="pill share-btn" data-share="${esc(path)}" data-title="${esc(title)}" title="Copy a link that shows a preview card when shared">${SHARE_ICON} Share</button>`;
+// the same share action as a bare icon at the end of a page title row (event and match pages)
+const shareIcon = (path, title) => `<button class="share-btn share-icon" data-share="${esc(path)}" data-title="${esc(title)}" aria-label="Share" title="Copy a link that shows a preview card when shared">${SHARE_ICON}</button>`;
 async function share(btn) {
   const url = `${location.origin}${location.pathname.replace(/[^/]*$/, "")}${btn.dataset.share}`;
   try {
@@ -1146,6 +1140,11 @@ async function events(r) {
   const months = [...new Set(evs.map((e) => e.month))].sort();
   const monthName = (ym) => new Date(`${ym}-15T12:00:00`).toLocaleDateString(undefined, { month: "long", year: "numeric" });
   const status = (e) => (e.ongoing ? "live" : e.finished ? "done" : "upcoming");
+  // phones: with a country picked, the location line drops the country it would repeat
+  const shortLoc = (e) => {
+    const c = $("#country")?.value, i = e.loc.lastIndexOf(", ");
+    return c && i > 0 && e.country === c ? `${esc(e.loc.slice(0, i))}<span class="hide-sm">${esc(e.loc.slice(i))}</span>` : esc(e.loc);
+  };
   app.innerHTML = `
     <div class="card">
       <div class="toolbar">
@@ -1154,12 +1153,12 @@ async function events(r) {
         <select id="country" aria-label="Country"><option value="" data-all="All countries">Country</option>${countries.map((c) => `<option ${c === query.get("country") ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
         <select id="state" aria-label="State or region" hidden></select>
         <select id="month" aria-label="Month"><option value="" data-all="Any month">Month</option>${months.map((m) => `<option value="${m}" ${m === query.get("month") ? "selected" : ""}>${monthName(m)}</option>`).join("")}</select>
-        <select id="status" aria-label="Status"><option value="" data-all="Any status">Status</option>${[["upcoming", "Upcoming"], ["live", "Live now"], ["done", "Finished"]].map(([k, l]) => `<option value="${k}" ${k === query.get("status") ? "selected" : ""}>${l}</option>`).join("")}</select>${evs.some((e) => e.ongoing) ? `<a class="link" href="#/${season}/live">Watch live →</a>` : ""}
+        ${evs.some((e) => !e.finished) ? `<select id="status" aria-label="Status"><option value="" data-all="Any status">Status</option>${[["upcoming", "Upcoming"], ["live", "Live now"], ["done", "Finished"]].map(([k, l]) => `<option value="${k}" ${k === query.get("status") ? "selected" : ""}>${l}</option>`).join("")}</select>${evs.some((e) => e.ongoing) ? `<a class="link" href="#/${season}/live">Watch live →</a>` : ""}` : ""}
       </div>
       <div id="tbl"></div>
     </div>`;
   const cols = [
-    { key: "name", label: "Event", sort: false, render: (e) => evCell(season, e.code, e.name, `${esc(e.loc)} ${e.ongoing ? '<span class="pill live">Live</span>' : ""}`) },
+    { key: "name", label: "Event", sort: false, render: (e) => evCell(season, e.code, e.name, `${shortLoc(e)} ${e.ongoing ? '<span class="pill live">Live</span>' : ""}`) },
     { key: "start", label: "Date", cls: "c small muted", render: (e) => fmtDate(e.start) },
     { key: "type", label: "Type", cls: "c small muted hide-sm", render: (e) => esc(typeName(e.type)) },
     { key: "teams", label: "Teams", cls: "r" },
@@ -1169,12 +1168,12 @@ async function events(r) {
   const table = sortableTable($("#tbl"), evs, cols, { sortKey: "start" });
   const fillStates = regionSelect($("#state"), () => evs.filter((e) => e.country === $("#country").value), query.get("state"));
   const apply = () => {
-    const q = $("#filter").value.trim().toLowerCase(), ty = $("#type").value, c = $("#country").value, st = $("#state").value, mo = $("#month").value, stat = $("#status").value;
+    const q = $("#filter").value.trim().toLowerCase(), ty = $("#type").value, c = $("#country").value, st = $("#state").value, mo = $("#month").value, stat = $("#status")?.value ?? "";
     syncQuery({ q: $("#filter").value.trim(), type: ty, country: c, state: st, month: mo, status: stat });
     table.setRows(evs.filter((e) => (!ty || e.type === ty) && (!c || e.country === c) && (!st || e.region === st) && (!mo || e.month === mo) && (!stat || status(e) === stat) &&
       (!q || e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q) || e.loc.toLowerCase().includes(q))));
   };
-  $("#filter").oninput = apply; $("#type").onchange = apply; $("#state").onchange = apply; $("#month").onchange = apply; $("#status").onchange = apply;
+  $("#filter").oninput = apply; $("#type").onchange = apply; $("#state").onchange = apply; $("#month").onchange = apply; if ($("#status")) $("#status").onchange = apply;
   $("#country").onchange = () => { fillStates(); apply(); };
   fillStates();
   apply();
@@ -1217,22 +1216,24 @@ async function event(r) {
     // advancement points: FIRST's numbers once the event is over, a forecast before (divisions are scored in the parent event)
     const canAdv = !!advRules(season) && ADVANCING_TYPES.has(ev.type) && !ev.divisionOf
       && (ev.adv ? true : !ev.finished && !ev.divisions && ev.teamList.length >= 4 && canForecast);
-    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(ev.teamList.length >= 4 ? [["pickmap", "Pick list"]] : []), ...(hasPlayoffs ? [["playoffs", "Playoffs"]] : []), ...(canAdv ? [["advancement", "Advancement"]] : []), ...(canForecast ? [["forecast", "Rankings forecast"]] : [])];
+    // phones skip Picks: it is the Teams tab sorted by EPA once the auto/teleop/endgame split is hidden
+    const tabs = [["matches", "Matches"], ["teams", "Teams"], ...(ev.teamList.length >= 4 ? [["pickmap", "Picks", "hide-sm"]] : []), ...(hasPlayoffs ? [["playoffs", "Playoffs"]] : []), ...(canAdv ? [["advancement", '<span class="hide-sm">Advancement</span><span class="show-sm">Points</span>']] : []), ...(canForecast ? [["forecast", "Forecast"]] : [])];
+    const stream = videos?.[code]?.streams?.[0];
     app.innerHTML = `
-      <div class="card card-pad"><div class="page-head">
-        <div>
-          <div class="kicker">${esc(typeName(ev.type))} · ${fmtRange(ev.start, ev.end)} · ${esc(ev.loc)}</div>
-          <h1>${esc(ev.name)}</h1>
-          <div class="row" style="margin-top:8px">
-            ${liveAt ? `<span class="pill live">Live · updated ${liveAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>` : ""}
-            <span class="pill">${ev.teams} teams</span><span class="pill">${played.length}/${matches.length} matches played</span>
-            <a class="pill desk-only" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}" target="_blank" rel="noopener">FTCScout ↗</a>
-            ${shareButton(`e/${season}/${encodeURIComponent(code)}`, ev.name)}
-            ${videos?.[code]?.streams?.[0] ? `<button class="pill" data-video="${videos[code].streams[0].id}" data-t="0"${videos[code].streams[0].ext ? ' data-ext="1"' : ""} data-title="${esc(ev.name)}">▶ Event stream</button>` : ""}
+      <div class="card-pad head-plain"><div class="page-head">
+        <div class="head-main">
+          <div class="kicker">${esc(typeName(ev.type))} · ${fmtRange(ev.start, ev.end)} · ${esc(ev.loc)} · ${ev.teams} teams${played.length < matches.length ? ` · ${played.length}/${matches.length} matches played` : ""}</div>
+          <div class="head-title head-title-ev"><h1>${esc(ev.name)}</h1>
+            <span class="head-links">
+              ${liveAt ? `<span class="pill live">Live · updated ${liveAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>` : ""}
+              <a class="link desk-only" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}" target="_blank" rel="noopener">FTCScout ↗</a>
+              ${stream ? `<button class="link hide-sm" data-video="${stream.id}" data-t="0"${stream.ext ? ' data-ext="1"' : ""} data-title="${esc(ev.name)}">Event stream</button>` : ""}
+              ${shareIcon(`e/${season}/${encodeURIComponent(code)}`, ev.name)}
+            </span>
           </div>
         </div>
       </div></div>
-      <nav class="tabs seg glass">${tabs.map(([k, label]) => `<a href="#/${season}/event/${code}/${k}" class="${k === (tabs.some(([t]) => t === tab) ? tab : "matches") ? "active" : ""}">${label}</a>`).join("")}</nav>
+      <nav class="tabs seg glass">${tabs.map(([k, label, cls = ""]) => `<a href="#/${season}/event/${code}/${k}" class="${cls} ${k === (tabs.some(([t]) => t === tab) ? tab : "matches") ? "active" : ""}">${label}</a>`).join("")}</nav>
       <div id="tab"></div>`;
     // On phones the tab strip scrolls sideways (style.css); keep the chosen tab in view after each redraw.
     const nav = $(".tabs"), active = nav.querySelector("a.active");
@@ -1288,8 +1289,8 @@ async function live(r) {
   const years = (s) => `${s}–${String(s + 1).slice(2)}`;
   const head = (kicker, extra = "") => `<div class="card card-pad"><div class="page-head"><div>
       <div class="kicker" id="lv-kicker">${kicker}</div>
-      <h1>Happening now</h1>${extra}
-    </div></div></div>`;
+      <h1>Happening now</h1>
+    </div>${extra}</div></div>`;
   if (season !== newest && !at) {
     app.innerHTML = `${head("Nothing live right now")}
       <div class="card section empty">The ${years(season)} season is over. <a class="link" href="#/${newest}/live">See ${years(newest)} →</a></div>`;
@@ -1304,6 +1305,7 @@ async function live(r) {
   const picks = (query.get("e") ?? "").split(",").map((c) => c.trim().toUpperCase()).filter(Boolean);
   // a day either side: event dates are local to the event, not the viewer
   const isCand = (e) => (at || !e.finished) && e.teams >= 2 && e.start <= day(1) && day(-1) <= e.end;
+  const isToday = (e) => e.start <= day(0) && day(0) <= e.end;
   let cands = evs.filter(isCand);
   let cty = query.get("country") ?? "";
   let videos = {};
@@ -1317,7 +1319,7 @@ async function live(r) {
     for (const c of need) videos[c] = got[c] ?? null;
   };
   const ongoing = (e) => panels.get(e.code)?.ongoing ?? e.ongoing;
-  const order = (a, b) => ongoing(b) - ongoing(a) || !!latestStream(videos, b.code) - !!latestStream(videos, a.code)
+  const order = (a, b) => ongoing(b) - ongoing(a) || isToday(b) - isToday(a) || !!latestStream(videos, b.code) - !!latestStream(videos, a.code)
     || (LIVE_TYPE_RANK[b.type] ?? 0) - (LIVE_TYPE_RANK[a.type] ?? 0) || (b.strength ?? 0) - (a.strength ?? 0);
   const streamBtn = (s, title) => (s ? `<button class="pill" data-video="${s.id}" data-t="0"${s.ext ? ' data-ext="1"' : ""} data-title="${esc(title)}">▶ Event stream</button>` : "");
   const plainTable = (cols, rows) => `<div class="table-wrap"><table><thead><tr>${cols.map((c) => `<th class="${c.cls ?? ""}">${c.label}</th>`).join("")}</tr></thead>
@@ -1330,7 +1332,7 @@ async function live(r) {
     const played = ms.filter((m) => m.played);
     const final = p.done || (e.finished && !p.fetched);
     const top = `<div class="section-title"><div class="page-head"><div>
-        <div class="kicker">${esc(typeName(e.type))} · ${esc(e.loc)} · ${final ? "Final" : `${played.length}/${ms.length} played`}</div>
+        <div class="kicker">${esc(typeName(e.type))} · ${esc(e.loc)} · ${final ? "Final" : ms.length ? `${played.length}/${ms.length} played` : "No schedule yet"}</div>
         <h2><a href="#/${season}/event/${code}">${esc(e.name)}</a></h2></div>${streamBtn(latestStream(videos, code), e.name)}</div></div>`;
     if (!ev) return `${top}<div class="card empty">No team list for this event yet.</div>`;
     let label = "Standings", table;
@@ -1365,6 +1367,7 @@ async function live(r) {
         ${matchTable(season, shown, { rpNames: meta.rpNames, video: (m) => videoFor(videos, code, m.time), href: (m) => matchHref(season, code, m.d) })}</div>`;
     // the match table needs about 1050px, so standings sit beside it only on very wide screens;
     // otherwise the matches come first and the standings below
+    if (!ms.length) return `${top}${standCard}`;
     return innerWidth >= 2200 ? `${top}<div class="grid cols-2">${standCard}${matchCard}</div>` : `${top}${matchCard}${standCard}`;
   };
 
@@ -1445,10 +1448,11 @@ async function live(r) {
     const countries = [...new Set([...cands.map(country), cty].filter(Boolean))].sort();
     const sel = countries.length ? `<select id="lv-country" aria-label="Country"><option value="" data-all="All countries">Country</option>${countries.map((c) => `<option ${c === cty ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>` : "";
     const where = cty ? ` in ${esc(cty)}` : "";
-    const kicker = inC.length ? `${inC.length} event${inC.length === 1 ? "" : "s"} live${where}` : `Nothing live${where} right now`;
-    app.innerHTML = `${head(kicker, `<div class="row" style="margin-top:8px"><span id="lv-upd"></span>${sel}</div>`)}
+    const nNow = inC.filter((e) => ongoing(e) || isToday(e)).length;
+    const kicker = nNow ? `${nNow} event${nNow === 1 ? "" : "s"} today${where}` : `Nothing live${where} right now`;
+    app.innerHTML = `${head(kicker, `<div class="row"><span id="lv-upd"></span>${sel}</div>`)}
       ${featured.map((e) => `<section id="lp-${e.code}">${panelHtml(e.code)}</section>`).join("")}
-      ${rest.length ? `<div class="section-title"><h2>All live events</h2></div><div class="card"><div class="hl" id="live-events">${rest.map(listRow).join("")}</div></div>` : ""}
+      ${rest.length ? `<div class="section-title"><h2>Other events</h2></div><div class="card"><div class="hl" id="live-events">${rest.map(listRow).join("")}</div></div>` : ""}
       ${!featured.length && !rest.length ? comingUp() : ""}`;
     drawUpdated();
     labelFilters(app);
@@ -1505,12 +1509,14 @@ function eventPlayoffs(season, meta, ev, matches, official, video) {
   const tn = (n, side = "") => `<a class="tn ${side}" href="#/${season}/team/${n}" title="${esc(name(n))}">${n}</a>`;
   const record = (a) => `${a.wins}-${a.losses}${a.ties ? `-${a.ties}` : ""}`;
 
+  // one-word results: "Tied 5th" → "5th", "Out in semifinals" → "Semis" (the full text is the hover tip)
+  const shortRes = (x) => x.replace(/^Tied /, "").replace(/^Out in (.+)$/, (_, w) => ({ semifinals: "Semis", quarterfinals: "Quarters" })[w] ?? w[0].toUpperCase() + w.slice(1));
   const allianceRows = p.alliances.map((a) => `<tr class="${a.result === "Winner" ? "champ" : ""}">
     <td class="num"><span class="seed">A${a.seed}</span></td>
     <td><div class="al-teams">${a.teams.map((t) => tn(t)).join("")}</div><div class="al-name">${esc(name(a.captain))}</div></td>
     <td class="r desk-only"><b>${fmt(strength(a))}</b></td>
     <td class="r small muted desk-only">${record(a)}</td>
-    <td class="small res ${a.result === "Winner" ? "res-win" : a.result === "Finalist" ? "res-final" : "muted"}">${esc(a.result)}</td>
+    <td class="small res ${a.result === "Winner" ? "res-win" : a.result === "Finalist" ? "res-final" : "muted"}"${shortRes(a.result) !== a.result ? ` title="${esc(a.result)}"` : ""}>${esc(shortRes(a.result))}</td>
   </tr>`).join("");
 
   // one bracket box: two alliance lines with the score (or series wins)
@@ -1731,9 +1737,9 @@ function eventForecast(season, meta, ev, matches) {
   const asOf = (c) => (c === 0 ? "before the first match" : c === playedQuals && !done ? `now, after ${qualName(c)}` : `after ${qualName(c)}`);
 
   $("#tab").innerHTML = `${playedQuals ? `<div class="card card-pad fc-from">
-      <label for="fc-cut"><b>Forecast as of</b> <span id="fc-as">${asOf(cutoff)}</span></label>
+      <label for="fc-cut"><b><span class="hide-sm">Forecast as of</span><span class="show-sm">As of:</span></b> <span id="fc-as">${asOf(cutoff)}</span></label>
       <input type="range" id="fc-cut" min="0" max="${playedQuals}" step="1" value="${cutoff}" aria-label="Forecast as of match">
-      <div class="small muted">Drag to replay the forecast from any point${done ? "; the last column is how it actually finished" : ""}. Each step re-runs 3,000 simulated events.</div>
+      <div class="small muted desk-only">Drag to replay the forecast from any point${done ? "; the last column is how it actually finished" : ""}. Each step re-runs 3,000 simulated events.</div>
     </div>` : ""}<div class="card${playedQuals ? " section" : ""}" id="fc"></div>`;
 
   const run = () => {
@@ -1772,7 +1778,7 @@ function eventForecast(season, meta, ev, matches) {
 function eventAdvancement(season, meta, ev, matches, official) {
   const names = new Map([...ev.teamList.map((t) => [t.team, t.name]), ...Object.entries(ev.adv?.names ?? {}).map(([t, n]) => [+t, n])]);
   if (ev.adv) {
-    const adv = new Set(ev.adv.advanced), dec = new Set(ev.adv.declined);
+    const adv = new Set(ev.adv.advanced), dec = new Set(ev.adv.declined), already = new Set(ev.adv.already ?? []);
     const showAdv = adv.size > 0 || dec.size > 0;
     $("#tab").innerHTML = `<div class="card card-pad"><div class="row" style="justify-content:space-between">
         <div class="small muted">Quals, alliance selection, playoff and judged award points, worked out from FIRST's rules and results.</div>
@@ -1788,7 +1794,7 @@ function eventAdvancement(season, meta, ev, matches, official) {
           <td class="r hide-sm">${playoff || '<span class="faint">–</span>'}</td>
           <td class="r hide-sm">${selection || '<span class="faint">–</span>'}</td>
           <td class="r hide-sm">${qual}</td>
-          ${showAdv ? `<td class="r">${adv.has(team) ? '<b class="small">Advanced</b>' : dec.has(team) ? '<span class="faint small">Declined</span>' : ""}</td>` : ""}
+          ${showAdv ? `<td class="r">${adv.has(team) ? '<b class="small">Advanced</b>' : dec.has(team) ? '<span class="faint small">Declined</span>' : already.has(team) ? '<span class="faint small" title="Already advanced from an earlier event">Already</span>' : ""}</td>` : ""}
         </tr>`).join("")}</tbody></table></div></div>`;
     return;
   }
@@ -1973,9 +1979,10 @@ async function match(r) {
     return `<td class="c ls-rp">${got == null ? '<b class="faint">–</b>' : got ? `<b class="${s}-text">✓</b>` : '<b class="faint">✗</b>'}${ch != null ? `<small>${pct(ch)}</small>` : ""}</td>`;
   };
   const lineScore = `<div class="table-wrap"><table class="line-score">
-    <thead><tr><th></th>${periods.map(([, l]) => `<th class="c">${l}</th>`).join("")}${rpNames.map((nm) => `<th class="c ls-rp">${esc(nm)}</th>`).join("")}</tr></thead>
+    <thead><tr><th></th>${periods.map(([, l]) => `<th class="c"><span class="hide-sm">${l}</span><span class="show-sm">${{ Teleop: "Tele", Endgame: "End", Penalties: "Pen" }[l] ?? l}</span></th>`).join("")}${rpNames.map((nm) => `<th class="c ls-rp">${esc(nm)}</th>`).join("")}</tr></thead>
     <tbody>${["red", "blue"].map((s) => `<tr class="side-${s}"><td class="ls-who">${m[s].map((t) => `<a class="ls-team ${onField(s).includes(t) ? "" : "sat-out"}" href="#/${season}/team/${t}" data-avatar="${t}"><b class="${s}-text">${t}</b></a>`).join("")}</td>${periods.map(([k]) => lsCell(s, k)).join("")}${rpNames.map((_, k) => rpCell(s, k)).join("")}</tr>`).join("")}</tbody>
   </table></div>
+  ${rpNames.length && played ? `<p class="ls-rp-line show-sm small">${["red", "blue"].map((s) => `<span class="${s}-text">${s === "red" ? "Red" : "Blue"}</span> ${rpNames.map((nm, k) => `${esc(nm)} ${m[`${s}Score`].rp?.[k] ? "✓" : "✗"}`).join(" · ")}`).join("<br>")}</p>` : ""}
   <p class="ls-note small faint">${p ? `Small numbers: our prediction${rpNames.length ? " (for bonus RPs, the chance)" : ""}.` : ""}</p>`;
 
   // event rank after this match, and how many places this result moved it (▲ = up the table)
@@ -2077,32 +2084,33 @@ async function compete(r) {
     const input = (side, i) => `<div class="slot"><input autocomplete="off" placeholder="Team # or name" data-side="${side}" data-i="${i}" value="${esc(st[side][i] ?? "")}" aria-label="${side === "r" ? "Red" : "Blue"} robot ${i + 1}">
       ${st[`${side}n`] > 1 ? `<button type="button" class="slot-x" data-drop="${side}${i}" aria-label="Remove this robot">×</button>` : ""}<div class="pick" role="listbox"></div><div class="who" id="who-${side}${i}"></div></div>`;
     const sideBox = (side) => `<div class="side card ${side === "r" ? "red" : "blue"}">
-      <div class="side-head"><b class="${side === "r" ? "red" : "blue"}-text">${side === "r" ? "Red" : "Blue"} alliance</b><span class="faint small">${st[`${side}n`]} robot${st[`${side}n`] > 1 ? "s" : ""}</span></div>
+      <div class="side-head"><b class="${side === "r" ? "red" : "blue"}-text">${side === "r" ? "Red" : "Blue"} alliance</b></div>
       ${Array.from({ length: st[`${side}n`] }, (_, i) => input(side, i)).join("")}
       ${st[`${side}n`] < 4 ? `<button type="button" class="pill add-slot" data-add="${side}">+ Add robot</button>` : ""}</div>`;
     app.innerHTML = `
       <div class="card card-pad"><div class="page-head"><div>
-        <div class="kicker">${seasonLabel(season, meta.game)}</div>
         <h1>Compete</h1>
         <p class="muted desk-only" style="margin:4px 0 0">Put any teams against each other and see the predicted score, who wins and how often. Uses each team's current EPA.</p>
       </div>${competeModes(season, "compete")}</div></div>
+      <div class="predictor section">${sideBox("r")}${sideBox("b")}</div>
       <div class="compete-bar section">
-        <div class="row"><button type="button" class="pill" id="swap">⇄ Swap sides</button><button type="button" class="pill" id="random">Random</button><button type="button" class="pill" id="clear">Clear</button></div>
+        <div class="row"><button type="button" class="btn btn-solid" id="go">Predict</button><button type="button" class="btn btn-outline" id="swap">⇄ Swap</button><button type="button" class="btn btn-outline" id="random">Random</button><button type="button" class="btn btn-outline" id="clear">Clear</button></div>
       </div>
-      <div class="predictor section">${sideBox("r")}<div class="vs"><span>VS</span><button type="button" class="btn btn-solid" id="go">Predict</button></div>${sideBox("b")}</div>
       <div id="out"></div>`;
     $$(".predictor input").forEach((el) => teamPicker(el));
     $$("[data-add]").forEach((b) => (b.onclick = () => { st[`${b.dataset.add}n`]++; shell(); $(`.predictor input[data-side="${b.dataset.add}"][data-i="${st[`${b.dataset.add}n`] - 1}"]`)?.focus(); }));
     $$("[data-drop]").forEach((b) => (b.onclick = () => { const s = b.dataset.drop[0], i = +b.dataset.drop.slice(1); st[s].splice(i, 1); st[`${s}n`]--; const prev = st.shown && $("#out").innerHTML; st.shown = false; shell(); keepDimmed(prev); }));
     $("#swap").onclick = () => { [st.r, st.b, st.rn, st.bn] = [st.b, st.r, st.bn, st.rn]; shell(); };
     $("#clear").onclick = () => { st.r = []; st.b = []; st.shown = false; shell(); $(".predictor input")?.focus(); };
-    $("#go").onclick = () => { st.shown = true; st.animate = true; run(); };
+    // the result sits below the inputs: bring it on screen (phones mostly)
+    const reveal = () => { const o = $("#out"); if (o && o.getBoundingClientRect().top > innerHeight * 0.5) scrollTo(0, scrollY + o.getBoundingClientRect().top - ($("header.nav")?.offsetHeight ?? 64) - 16); };
+    $("#go").onclick = () => { st.shown = true; st.animate = true; run(); reveal(); };
     // four random teams with 5+ matches this season, 2 v 2
     $("#random").onclick = () => {
       const pool = played.filter((x) => x.matches >= 5), t = [];
       while (t.length < 4 && t.length < pool.length) { const n = `${pool[Math.floor(Math.random() * pool.length)].team}`; if (!t.includes(n)) t.push(n); }
       [st.r, st.b, st.rn, st.bn, st.shown, st.animate] = [t.slice(0, 2), t.slice(2), 2, 2, true, true];
-      shell();
+      shell(); reveal();
     };
     run();
   };
@@ -2184,15 +2192,12 @@ async function compete(r) {
     const sure = (q) => (q > 0.995 ? "over 99%" : pct(q));
     const uneven = nums.r.length !== 2 || nums.b.length !== 2;
 
-    const side = (s) => `<div class="feature-side ${s}">${nums[s[0]].map((n) => `<a href="#/${season}/team/${n}">${n}</a><small>${esc(byNum.get(n).name)}</small>`).join("")}</div>`;
     const board = `<div class="feature match-board">
       <div class="feature-head"><b>Predicted score</b><span class="phase">${nums.r.length} v ${nums.b.length}</span></div>
       <div class="feature-body">
-        ${side("red")}
         <div class="feature-score"><span class="score red">${fmt(p.red.total, 0)}</span><span class="faint">–</span><span class="score blue">${fmt(p.blue.total, 0)}</span></div>
-        ${side("blue")}
       </div>
-      <div class="feature-foot">${winBar(p.pRed)}<p>${Side(fav)} wins ${sure(favP)} of the time, by about ${fmt(margin, 0)} points. In a best of 3, ${Side(fav).toLowerCase()} takes the series ${sure(bo3(favP))} of the time.</p></div>
+      <div class="feature-foot">${winBar(p.pRed)}<p>${Side(fav)} by ~${fmt(margin, 0)} pts · best of 3: ${sure(bo3(favP))}</p></div>
     </div>`;
 
     const rows = [["auto", "Auto"], ["teleop", "Teleop"], ["endgame", "Endgame"], ["np", "No-penalty total"], ["pen", "Penalty points"], ["total", "Final"]];
@@ -2217,7 +2222,7 @@ async function compete(r) {
       const ns = nums[s[0]], tot = ns.reduce((a, n) => a + byNum.get(n).np, 0) || 1;
       return ns.map((n) => {
         const t = byNum.get(n);
-        return `<tr class="side-${s}"><td>${teamCell(season, n, t.name)}</td><td class="c">${epa(t.np, meta)}</td>
+        return `<tr class="side-${s}"><td>${teamCell(season, n, t.name)}</td><td class="c"><b>${fmt(t.np)}</b></td>
           <td class="r small hide-sm">${fmt(t.auto)}</td><td class="r small hide-sm">${fmt(t.teleop)}</td><td class="r small hide-sm">${fmt(t.endgame)}</td>
           <td class="r">${pct(t.np / tot)}</td><td class="r small hide-sm">${t.wins}-${t.losses}${t.ties ? `-${t.ties}` : ""}</td></tr>`;
       });
@@ -2333,7 +2338,6 @@ async function sim(r) {
   const evOpts = [...events].filter((e) => e.teams >= 4).sort((a, b) => b.start.localeCompare(a.start));
   app.innerHTML = `
     <div class="card card-pad"><div class="page-head"><div>
-      <div class="kicker">${seasonLabel(season, meta.game)}</div>
       <h1>SIM event</h1>
       <p class="muted desk-only" style="margin:4px 0 0">Pick any teams and see how a qualification tournament between them would likely rank: thousands of random schedules, each played out from every team's current EPA.</p>
     </div>${competeModes(season, "sim")}</div></div>
@@ -2522,7 +2526,6 @@ async function h2h(r) {
       <div class="slot"><input autocomplete="off" placeholder="Team # or name" id="h2h-${side}" value="${n ?? ""}" aria-label="${side === "a" ? "First" : "Second"} team"><div class="pick" role="listbox"></div><div class="who" id="who-${side}"></div></div></div>`;
   app.innerHTML = `
     <div class="card card-pad"><div class="page-head"><div>
-      <div class="kicker">${seasonLabel(season, meta.game)}</div>
       <h1>Head to head</h1>
       <p class="muted desk-only" style="margin:4px 0 0">Two teams side by side: this season's ratings and every match they've played against or with each other, or their whole careers.</p>
     </div>${competeModes(season, "h2h")}</div></div>
@@ -2705,23 +2708,13 @@ async function about(r) {
   const dots = a.calib.filter((b) => b.bin >= 0.5).map((b) => `<circle cx="${px(b.bin + 0.05)}" cy="${py(Math.max(0.5, b.winRate))}" r="${3 + Math.sqrt(b.n) / 30}" fill="var(--accent)" fill-opacity=".85"><title>Predicted ${pct(b.bin)}–${pct(b.bin + 0.1)}: favourite won ${pct(b.winRate, 1)} of ${fmtInt(b.n)} matches</title></circle>`).join("");
 
   app.innerHTML = `
-    <div class="card card-pad"><div class="prose">
-      <div class="eyebrow">${seasonLabel(season, meta.game)}</div>
-      <h1 style="margin-top:8px">Our methodology</h1>
-      <p>Every team has an <b>EPA</b>, short for <i>Expected Points Added</i>: the points it adds to its alliance's score in an average match right now, split into auto, teleop and endgame. An alliance's predicted score is the sum of its two teams' EPAs, and the gap between the two alliances gives the win chance.</p>
-      <p><b>Why EPA?</b> It's measured in points, so it means something on its own ("this team adds about 45 points a match"), it splits into auto, teleop and endgame, and it updates after every match. The name comes from <a class="link" href="https://www.statbotics.io">Statbotics</a>, the FRC site that introduced it. The model here goes further, for FTC: the extras below, each kept only because it predicted better on seasons it wasn't tuned on.</p>
-      <p><b>EPA and predictions.</b> The <b>EPA</b> in team lists, team pages and "Top teams" is tuned to show how strong each robot is right now: the EPA a team brings to an event should match what it actually scores there. Win chances, predicted scores and ranking forecasts come from the same match data but with settings tuned only to call matches well (for example, pulling every rating a little toward average, which would understate the best robots in a list), so they don't follow exactly from the EPAs shown.</p>
-      <ul class="muted">
-        <li><b>Credit by robot.</b> Points the game manual scores per robot go to the robot that earned them instead of being split${solo ? ` (this season: ${solo})` : ""}. Point values are learned from the data and match each manual.</li>
-        <li><b>Auto movement.</b> A robot that didn't move in auto gets little of its alliance's auto credit: alliances where neither robot moves score almost nothing else in auto.</li>
-        <li><b>How sure we are.</b> A team we've seen a lot moves a little after a match; a new team, or one at its first event in weeks, moves more, and a well-known partner doesn't soak up an unknown partner's surprise.</li>
-        <li><b>Starting ratings</b> blend the last three seasons, weighted to the most recent; rookies start a little below average.</li>
-        <li><b>Penalties</b> are left out of ratings (they say more about the opponent) but count when deciding who won.</li>
-      </ul>
+    <div class="card card-pad about-intro"><div class="prose">
+      <h1>Our methodology</h1>
+      <p>Every team has an <b>EPA</b> (<i>Expected Points Added</i>): the points it adds to its alliance's score in an average match, split into auto, teleop and endgame; an alliance's predicted score is its two teams' EPAs added up.</p>
     </div></div>
 
-    ${c ? `<div class="section-title"><div class="eyebrow">Is EPA the best rating?</div><h2>Compared with the alternatives, ${season}</h2>
-      <p class="muted" style="margin:6px 0 0;max-width:760px">Every rating predicted the same ${fmtInt(a.all.matches)} matches, each using only what was known before the match. Brier score measures the win chances themselves: 0.25 is a coin flip, lower is better.</p></div>
+    ${c ? `<div class="section-title"><h2>Compared with the alternatives, ${season}</h2>
+      <p class="muted" style="margin:8px 0 0">Brier: 0.25 is a coin flip, lower is better.</p></div>
     <div class="grid cols-2">
       <div class="card about-tbl"><div class="table-wrap"><table>
         <thead><tr><th>Rating</th><th class="r">Winner correct</th><th class="r">Brier</th></tr></thead><tbody>
@@ -2733,15 +2726,30 @@ async function about(r) {
       <div class="card card-pad desk-only"><div class="small muted">Winners called by month: EPA vs OPR</div><div id="by-month"></div></div>
     </div>` : ""}
 
-    <div class="section-title"><div class="eyebrow">Track record</div><h2>How EPA did in ${season}</h2></div>
+    <div class="section-title"><h2>How EPA did in ${season}</h2></div>
     <div class="card about-tbl"><div class="table-wrap"><table>
       <thead><tr><th></th><th class="r">Matches</th><th class="r">Winner correct</th><th class="r">Brier</th><th class="r hide-sm">Score error (avg pts)</th>${meta.rpNames.length ? '<th class="r hide-sm">Bonus RP Brier</th>' : ""}</tr></thead>
-      <tbody>${row("all", "All matches")}${row("quals", "Qualifications")}${row("elims", "Playoffs")}${row("champs", "Championships")}</tbody>
+      <tbody>${c ? "" : row("all", "All matches")}${row("quals", "Qualifications")}${row("elims", "Playoffs")}${row("champs", "Championships")}</tbody>
     </table></div></div>
+
+    <div class="section-title"><h2>How the model works</h2></div>
+    <div class="card card-pad about-ref"><div class="prose">
+      <ul class="muted about-list">
+        <li><b>Credit by robot.</b> Points the manual scores per robot go to that robot${solo ? ` (this season: ${solo})` : ""}.</li>
+        <li><b>Auto movement.</b> A robot that didn't move in auto gets little of its alliance's auto credit.</li>
+        <li><b>How sure we are.</b> New teams, and teams back after weeks off, move more after a match.</li>
+        <li><b>Starting ratings</b> blend the last three seasons; rookies start a little below average.</li>
+        <li><b>Penalties</b> are left out of ratings but count when deciding who won.</li>
+      </ul>
+      <details class="about-more"><summary>Why EPA, and how predictions differ</summary>
+        <p>It's measured in points, so it means something on its own, it splits into auto, teleop and endgame, and it updates after every match. The name comes from <a class="link" href="https://www.statbotics.io">Statbotics</a>, the FRC site that introduced it; each FTC extra above was kept only because it predicted better on seasons it wasn't tuned on.</p>
+        <p>The EPA in lists and team pages is tuned to show how strong each robot is now. Win chances, predicted scores and ranking forecasts use the same data with settings tuned only to call matches well (for example, pulling every rating a little toward average), so they don't follow exactly from the EPAs shown.</p>
+      </details>
+    </div></div>
 
     <div class="grid cols-2 section">
       <div class="card card-pad desk-only">
-        <h3>Calibration</h3>
+        <h2>Calibration</h2>
         <p class="small muted">When EPA gives the favourite a 75% chance, does the favourite win about 75% of the time? Dots on the dashed line mean yes; bigger dots are more matches.</p>
         <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;display:block;margin:6px auto 0" role="img" aria-label="Calibration plot">
           ${ticks}
@@ -2751,8 +2759,8 @@ async function about(r) {
           ${dots}
         </svg>
       </div>
-      <div class="card card-pad">
-        <h3>Season reference</h3>
+      <div class="card card-pad about-ref">
+        <h2>Season reference</h2>
         <table class="ref"><tbody>
           <tr><td class="muted">Top 1% EPA</td><td class="r">${epa(meta.percentiles.p99, meta)}</td></tr>
           <tr><td class="muted">Top 10%</td><td class="r">${epa(meta.percentiles.p90, meta)}</td></tr>
@@ -2766,7 +2774,7 @@ async function about(r) {
     </div>
 
     <div class="card card-pad section desk-only"><div class="prose">
-      <h3>Tried and dropped</h3>
+      <h2>Tried and dropped</h2>
       <p class="small muted" style="margin-top:6px">Ideas that sounded right but didn't predict better on held-out seasons, so they're not in the model: per-team foul ratings; less teleop credit for robots that skipped the endgame (strong robots often skip parking to keep scoring); treating robots that neither moved nor parked as broken; blending EPA with OPR; a defense term; bonus-RP chances in pre-schedule ranking forecasts.</p>
     </div></div>`;
 
@@ -2787,10 +2795,10 @@ async function about(r) {
 // ---------------- boot ----------------
 
 async function boot() {
-  initAnalytics();
   // the logo robot is drawn from the same parts as everywhere else (index.html has a plain fallback)
   const logoBot = $(".logo-bot .bot-g");
   if (logoBot) logoBot.innerHTML = ROBOT_PARTS;
+  initAnalytics();
   // dark only (no theme toggle); forget a light choice saved by the old toggle
   document.documentElement.dataset.theme = "dark";
   try { localStorage.removeItem("theme"); } catch {}

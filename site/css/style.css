@@ -108,7 +108,7 @@ td, .num, .stat b, .tile b { font-variant-numeric: tabular-nums; }
 h1, h2, h3 { line-height: 1.2; margin: 0; letter-spacing: -0.015em; }
 h1 { font-size: clamp(30px, 4vw, 44px); font-weight: 700; letter-spacing: -0.02em; }
 h2 { font-size: 22px; font-weight: 700; }
-h3, .eyebrow { font-size: 13px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.14em; }
+h3 { font-size: 13px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.14em; }
 .muted { color: var(--muted); }
 .faint { color: var(--faint); }
 .small { font-size: 12.5px; }
@@ -262,14 +262,12 @@ main { padding: 16px 0 48px; flex: 1 0 auto; }
 .feature-foot .wp-track { flex: 1; height: 12px; border-radius: 6px; }
 .feature-foot .wp-label { font-size: 15px; }
 .feature-foot p { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
-.hero-below { padding: 0 0 20px; }
+.hero-below { padding: 0; }
 .section-title { padding: 40px var(--gutter) 14px; }
 .section-title h2 { font-size: clamp(26px, 3vw, 36px); margin-top: 8px; }
 
-.banner {
-  display: inline-flex; background: var(--surface); color: var(--text); border: 1px solid var(--line); gap: 10px; align-items: center; padding: 10px 16px; border-radius: 999px; font-size: 13.5px; margin-bottom: 14px;
-}
-.banner a { color: var(--accent); font-weight: 650; }
+.banner { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+.banner a { color: var(--accent); font-weight: 600; }
 
 /* ---------- tables ---------- */
 .table-wrap { overflow-x: auto; }
@@ -292,11 +290,7 @@ tbody tr:hover .ev-cell .n { color: var(--accent); }
 tbody tr:hover .team-cell .nm, tbody tr:hover .ev-cell .n { text-decoration: underline; text-underline-offset: 3px; }
 /* numbers sit centred under their headings */
 td.r, th.r { text-align: center; }
-/* the sorted column stays tinted */
-/* beats the zebra stripe on even rows (tr:nth-child is more specific than td.class) */
-td.col-sorted, tbody tr:nth-child(even) td.col-sorted { background: var(--accent-soft); }
-tbody tr:hover td.col-sorted { background: color-mix(in srgb, var(--accent) 16%, transparent); }
-th.col-sorted { background: var(--accent-soft); }
+/* the sorted column has no tint: the header arrow already marks it */
 
 td.c, th.c { text-align: center; }
 .team-cell { display: flex; gap: 10px; align-items: baseline; }
@@ -437,7 +431,6 @@ td.c, th.c { text-align: center; }
 .col-pick { position: relative; }
 .col-pick summary { list-style: none; cursor: pointer; font-size: 13px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--glass-strong); }
 .col-pick summary::-webkit-details-marker { display: none; }
-.col-pick summary::after { content: " ▾"; color: var(--muted); }
 .col-pick > div { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; width: 320px; max-width: calc(100vw - 32px); padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--pop-shadow); }
 /* column toggles: an even grid of equal buttons; tinted with a check = shown, plain = hidden */
 .col-btn { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 36px; padding: 0 12px; border-radius: 8px; cursor: pointer;
@@ -465,7 +458,7 @@ td.c, th.c { text-align: center; }
 .prose { max-width: 740px; }
 .prose p { color: var(--muted); }
 .link { color: var(--accent); font-weight: 600; }
-footer { padding: 22px var(--gutter) 34px; color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); background: var(--surface); }
+footer { padding: 24px var(--gutter) 32px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
 footer a { text-decoration: underline; }
 
 /* ---------- responsive ---------- */
@@ -541,6 +534,10 @@ footer a { text-decoration: underline; }
     linear-gradient(135deg, var(--muted) 50%, transparent 50%) calc(100% - 10px) 52% / 4px 4px no-repeat;
 }
 .toolbar input { padding: 7px 12px; font-size: 14px; border: 1px solid var(--line); }
+/* toolbar controls: one look (36px, radius 8, transparent with a 1px line, 13px/600; typed text stays 400) */
+.toolbar input, .toolbar select, .toolbar .col-pick summary { box-sizing: border-box; min-height: 36px; border: 1px solid var(--line); border-radius: var(--radius); background-color: transparent; font-size: 13px; }
+.toolbar select, .toolbar .col-pick summary { font-weight: 600; }
+.toolbar .col-pick summary { display: inline-flex; align-items: center; }
 .toolbar select:focus, .toolbar input:focus { outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 1px; }
 
 /* tables inside padded cards don't need the full-bleed gutter */
@@ -624,9 +621,8 @@ footer a { text-decoration: underline; }
 }
 
 /* Teams page: All events / Season only switch */
-.toolbar .scope { border-bottom: 0; gap: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.toolbar .scope a { padding: 6px 12px; font-size: 13.5px; border-bottom: 0; margin: 0; }
-.toolbar .scope a.active { background: var(--accent); color: #fff; }
+.toolbar .scope { border-bottom: 0; gap: 0; }
+.toolbar .scope a { display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; font-size: 13px; font-weight: 600; }
 .plaque-icon svg { filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
 
 /* match videos */
@@ -946,7 +942,6 @@ a.th-add:hover { color: var(--accent); border-color: var(--accent); }
 .hl-meta { color: var(--faint) !important; font-variant-numeric: tabular-nums; }
 .hl-val { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 70px; }
 .hl-val .epa { font-size: 17px; padding: 4px 12px; }
-.hl-val small { font-size: 10.5px; color: var(--faint); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
 @media (max-width: 640px) {
   .hl-row { padding: 12px 16px; gap: 12px; }
   .hl-main b { font-size: 16px; }
@@ -982,7 +977,6 @@ a.th-add:hover { color: var(--accent); border-color: var(--accent); }
   body.home-fit .hero-media .feature-body { padding-top: clamp(10px, 2vh, 22px); padding-bottom: clamp(10px, 2vh, 22px); }
   body.home-fit .hero-media .feature-foot { padding-bottom: clamp(10px, 2vh, 22px); }
   body.home-fit .hero-media .feature-score { font-size: clamp(28px, 5vh, 40px); }
-  body.home-fit .hero-below .section-title .eyebrow { display: none; }
   body.home-fit .hl-meta { display: none; }
 }
 @media (min-width: 901px) and (min-height: 860px) { body.home-fit .hl-meta { display: block; } }
@@ -1151,6 +1145,7 @@ tr.pre-row:hover td { opacity: .85; }
 .col-pick summary svg { vertical-align: -2px; margin-right: 4px; }
 .team-cell2 { align-items: center; }
 .team-cell2 .tc-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.team-cell2 .nm { font-size: 15px; }
 .team-cell2 .tc-loc { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 tbody tr:hover .team-cell2 .tc-loc { text-decoration: none; }
 /* gear-only column menu: no box, no label */
@@ -1212,7 +1207,6 @@ main > #tab > .card:last-child { flex: 1; }
   .hero-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 28px; }
   .hero-stats b { font-size: 24px; }
   .hero-stats span { display: block; font-size: 12.5px; line-height: 1.3; margin-top: 2px; }
-  .banner { display: block; border-radius: 10px; line-height: 1.45; }
   /* dream match card: the season is already in the eyebrow, so the head keeps just its title on one line */
   .feature-head { padding: 12px 16px; }
   .feature-head span { display: none; }
@@ -1340,7 +1334,7 @@ main > #tab > .card:last-child { flex: 1; }
 :root { --accent-strong: var(--accent); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --accent-strong: #1f6fb5; } }
 :root[data-theme="dark"] { --accent-strong: #1f6fb5; }
-.chart-pick a.active, .toolbar .scope a.active, .stat-pct.hot { background: var(--accent-strong); }
+.chart-pick a.active, .stat-pct.hot { background: var(--accent-strong); }
 @media (max-width: 640px) {
   .more { padding-left: 16px; padding-right: 16px; }
   .po-alliances { min-width: 0; max-width: 100%; }
@@ -1593,7 +1587,6 @@ main > #tab > .card:last-child { flex: 1; }
   .mt-jump { display: flex; padding: 12px 16px 4px; }
   .mt-jump .pill { min-height: 40px; }
   /* tap targets: the home banner's "Switch to …" link, the h2h team-name links, "Add a photo" */
-  .banner a { display: inline-flex; align-items: center; min-height: 40px; margin-top: 2px; }
   .side .who { margin: 0 0 4px 4px; min-height: 0; }
   .side .who a { display: inline-flex; align-items: center; min-height: 36px; }
   .th-fact.th-add { min-height: 36px; }
@@ -1618,6 +1611,48 @@ main > #tab > .card:last-child { flex: 1; }
   .about-tbl th, .about-tbl td { padding-left: 6px; padding-right: 6px; }
 }
 /* -- end QA round 2 -- */
+/* methodology: the "why" detail sits collapsed under the model list */
+.hero-stats i { font-style: normal; }
+.about-more { margin-top: 16px; }
+.about-more summary { cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 600; }
+.about-more p { margin: 8px 0 0; }
+/* ---- mobile cuts: home ---- */
+@media (max-width: 640px) {
+  /* hero: no headline or search (the header icon is the one search); the season line and the stats are one muted line each */
+  .hero { padding: 0 16px; margin-top: 0; gap: 0; }
+  .banner { margin: 0 0 8px; }
+  .hero-row { display: block; }
+  .hero-actions { display: none; }
+  .hero-stats { display: flex; flex-wrap: wrap; gap: 0; margin-top: 0; font-size: 13px; color: var(--muted); }
+  .hero-stats > div { white-space: nowrap; }
+  .hero-stats > div + div::before { content: "·"; padding: 0 8px; }
+  .hero-stats b { display: inline; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--text); }
+  .hero-stats span { display: inline; font-size: 13px; line-height: 1.5; margin: 0 0 0 4px; }
+  .hero-stats .hs-x { display: none; }
+  /* lists sit on the page, rows split by hairlines, no card box */
+  .section-title { padding: 24px 16px 8px; }
+  .section-title h2 { font-size: 20px; margin-top: 0; }
+  .hero-below .card { background: none; border: 0; }
+  .hl-val { min-width: 0; }
+  .hl-row { padding-top: 8px; padding-bottom: 8px; gap: 8px; }
+  .hl-val .epa { font-size: 15px; padding: 4px 8px; }
+  #top-teams .hl-main b { font-size: 15px; white-space: normal; line-height: 1.3; }
+  main { padding-bottom: 16px; }
+  footer { padding: 16px 16px 24px; }
+  /* methodology: tables share one edge (16px gutter both sides), no boxes, 12px headers */
+  .about-tbl.card, .about-ref.card, .about-intro.card { background: none; border: 0; }
+  .about-intro.card-pad { padding-top: 8px; padding-bottom: 0; }
+  .about-intro p { margin: 8px 0 0; }
+  .about-ref.card-pad { padding-top: 0; padding-bottom: 0; }
+  .about-list { margin: 0; padding-left: 16px; }
+  .about-ref > h2 { margin: 8px 0 8px; }
+  .about-tbl th { font-size: 12px; }
+  .about-tbl th:first-child, .about-tbl td:first-child { padding-left: 16px; }
+  .about-tbl th:last-child, .about-tbl td:last-child { padding-right: 16px; }
+  .about-tbl :is(th, td):nth-last-child(1 of :not(.hide-sm)) { padding-right: 16px; }
+  .ref td:first-child { padding-left: 0; }
+  .ref td:last-child { padding-right: 0; }
+}
 
 /* ---------- the robot (mascot) ----------
    One drawing (ROBOT_PARTS in ui.js): the desktop logo, the loading state, empty pages and the
@@ -1646,6 +1681,44 @@ main > #tab > .card:last-child { flex: 1; }
 /* phones: no logo; the nav links take its place */
 @media (max-width: 640px) { .nav .logo { display: none; } }
 .bot-inline { display: inline-flex; align-items: center; gap: 10px; }
+/* ---- mobile cuts: lists ---- */
+@media (max-width: 640px) {
+  /* Teams list: number and name on one line, no location line (it's on the team page; Country/State are filters) */
+  .toolbar:has(.view-pick) ~ #tbl .team-cell2 { flex-direction: row; align-items: baseline; gap: 8px; }
+  .toolbar:has(.view-pick) ~ #tbl .team-cell2 .n { min-width: 5ch; padding: 0; }
+  .toolbar:has(.view-pick) ~ #tbl .team-cell2 .tc-text { width: 0; min-width: 0; flex: 1 1 auto; }
+  .toolbar:has(.view-pick) ~ #tbl .team-cell2 .tc-loc { display: none; }
+  .toolbar:has(.view-pick) ~ #tbl .team-cell2 .nm { width: auto; min-width: 0; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; }
+  /* Teams toolbar: two rows on one 2-column grid; Columns is a gear at the end of the search row;
+     the Season only / All events switch is desktop only */
+  .toolbar:has(.view-pick) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "q q" "c m"; gap: 8px; }
+  .toolbar:has(.view-pick):has(> #state:not([hidden])) { grid-template-areas: "q m" "c s"; }
+  .toolbar:has(.view-pick) > #filter { grid-area: q; width: calc(100% - 44px); }
+  .toolbar:has(.view-pick) > #country { grid-area: c; }
+  .toolbar:has(.view-pick) > #state { grid-area: s; }
+  .toolbar:has(.view-pick) > #minm { grid-area: m; }
+  .toolbar:has(.view-pick) > .col-pick { grid-area: q; justify-self: end; }
+  /* with a state picked, the gear moves to the end of the top row, beside the matches filter */
+  .toolbar:has(.view-pick):has(> #state:not([hidden])) > #filter { width: auto; }
+  .toolbar:has(.view-pick):has(> #state:not([hidden])) > #minm { width: calc(100% - 44px); }
+  .toolbar:has(.view-pick):has(> #state:not([hidden])) > .col-pick { grid-area: m; }
+
+  .toolbar .col-pick summary { width: 36px; padding: 0; justify-content: center; color: var(--muted); }
+  .toolbar .col-pick summary .show-sm { display: inline-flex; }
+  .toolbar .col-pick summary svg { width: 16px; height: 16px; margin: 0; }
+  /* Events toolbar without a Status filter: search shares a row with Month, Type and Country below */
+  .toolbar:has(#month) { gap: 8px; }
+  .toolbar:has(#month):not(:has(#status)) { grid-template-areas: "q mo" "t c"; }
+  .toolbar:has(#month):not(:has(#status)):has(> #state:not([hidden])) { grid-template-areas: "q q" "t c" "s mo"; }
+  .toolbar:has(#month):not(:has(#status)) > #filter { grid-area: q; }
+  .toolbar:has(#month):not(:has(#status)) > #type { grid-area: t; }
+  .toolbar:has(#month):not(:has(#status)) > #country { grid-area: c; }
+  .toolbar:has(#month):not(:has(#status)) > #state { grid-area: s; }
+  .toolbar:has(#month):not(:has(#status)) > #month { grid-area: mo; }
+  /* Events list: one-line event name and location, so every row is the same height */
+  .toolbar:has(#month) ~ #tbl td:has(> a.ev-cell) { width: 100%; max-width: 0; }
+  .toolbar:has(#month) ~ #tbl .ev-cell .n, .toolbar:has(#month) ~ #tbl .ev-cell .nm { max-width: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
 /* line score: the alliance's robots (with a photo avatar when the team has one) instead of a bare "Red"/"Blue" */
 .card .line-score td.ls-who { padding-left: 18px; padding-right: 8px; }
 .ls-team { display: flex; align-items: center; gap: 8px; line-height: 1.2; }
@@ -1656,3 +1729,145 @@ main > #tab > .card:last-child { flex: 1; }
 .avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; background: var(--surface-2); flex: none; }
 /* advancement tables on phones: names stop at two lines so Total and Advanced stay on screen */
 @media (max-width: 640px) { .adv-table .team-cell .nm { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 46vw; } }
+/* ---- team + compete cuts (all widths) ---- */
+/* team header: no card border; record / win rate / awards and the ranks are plain lines, links are small text */
+.team-hero.card { border-top: 0; border-bottom: 0; }
+.th-facts { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin-top: 8px; }
+.th-line { font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.th-links { display: inline-flex; align-items: baseline; gap: 16px; }
+.th-facts .th-links a.th-add, .th-facts .th-links .share-btn { font-size: 13px; font-weight: 400; padding: 0; border: 0; border-radius: 0; background: none; color: var(--muted); }
+.th-facts .th-links a.th-add:hover, .th-facts .th-links .share-btn:hover { color: var(--accent); }
+.th-ranks { display: block; font-size: 15px; font-weight: 400; color: var(--muted); }
+.th-ranks > span, .th-ranks > span.gold-rank, .th-ranks > span.th-unranked { display: inline; padding: 0; border: 0; border-radius: 0; background: none; font-size: 15px; font-weight: 400; }
+.th-ranks > span + span::before { content: " · "; }
+.th-ranks b { font-size: 15px; font-weight: 800; letter-spacing: 0; }
+/* team events: one pane, a hairline between events, the event's numbers as one plain line */
+.team-evs .ev + .ev { border-top: 1px solid var(--line); }
+.team-evs .ev-head { display: block; padding-top: 24px; padding-bottom: 8px; }
+.team-evs .ev-head h2 { margin: 0; }
+.ev-stats { margin-top: 4px; font-size: 15px; font-variant-numeric: tabular-nums; }
+.ev-stats b { color: var(--text); font-weight: 600; }
+.ev-awards { margin-top: 4px; }
+.ev-win { color: var(--gold); font-weight: 600; }
+.team-evs .ev-empty { padding-top: 16px; padding-bottom: 16px; font-size: 15px; color: var(--muted); }
+.team-evs .ev-empty a { color: var(--text); font-weight: 600; }
+.vid-lbl { display: none; }
+/* team charts: plain-text legend, no empty note */
+.team-chart .series-toggle { gap: 4px 16px; }
+.team-chart .series-toggle button { padding: 4px 0; border: 0; border-radius: 0; background: none; font-size: 13px; }
+#chart-note:empty { display: none; }
+/* compete: alliances side by side marked by their heading only; Predict and its helpers in one row below */
+.predictor { grid-template-columns: 1fr 1fr; }
+.predictor .side.red, .predictor .side.blue { box-shadow: none; }
+.compete-bar .row { gap: 8px; }
+.compete-bar .btn { min-height: 32px; padding: 4px 16px; font-size: 13px; font-weight: 600; border-width: 1px; }
+#go:disabled { opacity: 0.45; cursor: not-allowed; }
+.match-board .feature-body { grid-template-columns: 1fr; padding-top: 16px; padding-bottom: 8px; }
+.match-board .feature-score { font-size: 56px; font-weight: 800; }
+/* ---- mobile cuts: team ---- */
+@media (max-width: 640px) {
+  /* header: EPA with the ranks as one plain line beside it */
+  .th-ranks { display: block; margin-top: 0; }
+  .th-ranks > span { display: inline; white-space: nowrap; line-height: 1.5; text-align: left; }
+  .th-ranks b { display: inline; font-size: 15px; margin: 0; }
+  .th-facts { margin-top: 8px; }
+  .th-facts .th-links .share-btn { min-height: 36px; }
+  /* event list: no Video column; the match label plays the video, rows without one show nothing extra */
+  .team-evs .ev-head { padding-top: 16px; }
+  .team-evs .ev-head h2 { font-size: 18px; }
+  .team-evs .mt .vid-cell { display: none; }
+  .card.team-evs .mt .vid-cell + td, .card.team-evs .mt .vid-cell + th { padding-left: 16px; }
+  .team-evs .mt td.lvl:has(.vid-lbl) .match-link { display: none; }
+  .team-evs .mt .vid-lbl { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
+  /* charts: compare box at its natural width */
+  .vs-form { flex: none; }
+  .vs-form input { flex: none; width: 160px; }
+  /* compete: alliances stacked; score at the phone display size */
+  .predictor { grid-template-columns: 1fr; }
+  .compete-bar .btn { min-height: 36px; padding: 4px 12px; }
+  /* Robots table: number and name share one left edge */
+  #out .match-teams td:first-child, #out .match-teams th:first-child { padding-left: 16px; }
+  #out .match-teams .team-cell .n { padding-left: 0; padding-right: 0; }
+  .match-board .feature-score { font-size: 32px; }
+}
+/* ---- event + match pages: plain header, one pane (all widths) ---- */
+/* header on the page background: kicker, then the title with its links as small text and Share as an icon */
+.head-plain { padding-top: 24px; padding-bottom: 8px; }
+.head-plain .head-main { flex: 1 1 auto; min-width: 0; }
+.head-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
+.head-links { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; font-size: 13px; }
+button.link { padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--accent); cursor: pointer; }
+.share-icon { display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 6px; background: none; cursor: pointer; }
+.share-icon svg { width: 16px; height: 16px; }
+/* match sections share the page: a hairline between them instead of a box each */
+.match-sec.card { background: none; border-bottom: 0; border-top: 1px solid var(--line); }
+.match-sec h2 { font-size: 20px; }
+/* match tables: the winner's score is bold text, not green (green means up/down) */
+.final .w { color: var(--text); }
+/* playoffs: seeds and game scores as plain text, alliance shown by the team colours, plain section labels */
+.seed { min-width: 0; padding: 0; border-radius: 0; background: none; font-size: 12px; font-weight: 600; }
+.bl, .bl.red, .bl.blue { border-left: 0; }
+.bgame, .bgame.red, .bgame.blue { padding: 0; border-radius: 0; background: none; font-size: 12px; font-weight: 600; color: var(--muted); }
+.bgame + .bgame::before { content: ", "; color: var(--muted); }
+.po-h, .bsec-h { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: none; letter-spacing: 0; }
+/* ---- mobile cuts: event ---- */
+@media (max-width: 640px) {
+  /* headers: tighter, links stay on the title row */
+  .head-plain { padding-top: 16px; padding-bottom: 0; }
+  .head-title { gap: 4px 16px; }
+  /* event: a long name wraps beside its Share icon instead of leaving the icon alone on a line */
+  .head-title-ev { flex-wrap: nowrap; align-items: flex-start; }
+  .head-title-ev h1 { min-width: 0; }
+  .head-title-ev .head-links { flex: none; }
+  .head-links .show-sm { display: inline; }
+  /* tabs: Picks is hidden and the labels are short, so every tab fits 360px without scrolling */
+  .tabs a.hide-sm { display: none; }
+  .tabs a { padding: 8px; font-size: 13px; }
+  .head-links .link:not(.hide-sm) { display: inline-flex; align-items: center; min-height: 36px; }
+  .share-icon { width: 36px; height: 36px; margin-right: -8px; }
+  /* match: no video placeholder (Watch in the header opens the player); the score comes right after the header */
+  .match-stage .stage-video { display: none; }
+  .match-stage { gap: 0; }
+  /* the Teams table below is the roster, so the scoreboard is just the score */
+  .bug-al { display: none; }
+  .bug-row, .stage-side .bug-row { grid-template-columns: 1fr; }
+  .bug-score { justify-content: center; }
+  .match-sec h2 { font-size: 18px; }
+  /* line score: actual numbers only; the predicted total is under the big score */
+  .line-score td small, .ls-note { display: none; }
+  .line-score td:not(:first-child), .line-score th:not(:first-child) { padding-left: 4px; padding-right: 4px; }
+  /* no video: the scoreboard keeps the page's 16px sides */
+  .section > .bug { padding-left: 16px; padding-right: 16px; }
+  /* event Matches: no video column (the match page has the video) */
+  #tab .mt .vid-cell { display: none; }
+  #tab .mt .vid-cell + td, #tab .mt .vid-cell + th { padding-left: 16px; }
+  /* playoffs: the alliances and how they finished first; the bracket is the Matches tab's playoff rows */
+  .po-alliances { order: -1; border-top: 0; }
+  .po-bracket:not(:has(.rr-standings)) { display: none; }
+  .po-bracket > :not(.rr-standings) { display: none; }
+  .po-bracket { border-top: 1px solid var(--line); }
+  /* forecast: short label, number and name on one line sharing a left edge, #1 as plain text */
+  .fc-from .show-sm { display: inline; }
+  #fc .team-cell { flex-direction: row; align-items: baseline; gap: 8px; }
+  #fc .team-cell .n { padding: 0; }
+  #fc .team-cell .nm { flex: 1 1 auto; width: 0; min-width: 0; }
+  #fc td:nth-child(6) .epa { min-width: 0; padding: 0; background: none !important; color: var(--text) !important; font-weight: 600; }
+}
+
+/* ---- QA follow-ups (phones) ---- */
+@media (max-width: 640px) {
+  /* event names that differ only at the end stay tellable apart: 2 lines, then … */
+  .toolbar:has(#month) ~ #tbl .ev-cell .n { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .toolbar .scope a { white-space: nowrap; }
+  th span.show-sm { display: inline; }
+  .card .line-score td.ls-who { padding-left: 12px; padding-right: 4px; }
+  /* Points tab: plain "Advanced" text instead of a pill, so the table fits 360px */
+  .adv-table .pill { background: none; border: 0; padding: 0; color: var(--good); font-weight: 600; }
+  .adv-table td, .adv-table th { padding-left: 6px; padding-right: 6px; }
+  /* match line score: bonus RPs move to a line under the table instead of off-screen columns */
+  .line-score .ls-rp { display: none; }
+  .line-score { table-layout: fixed; width: 100%; min-width: 0; }
+  .ls-rp-line { margin: 8px 0 0; color: var(--muted); line-height: 1.6; }
+  /* compete result card keeps the page gutter */
+  #out .match-board { margin-left: 16px; margin-right: 16px; }
+}
