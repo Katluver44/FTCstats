@@ -263,6 +263,21 @@ function wireSearch(wrap) {
   }
 }
 
+// phones: the header's search box is folded into an icon; tapping it drops the box down under the header
+function wireNavSearchToggle() {
+  const nav = $("header.nav"), btn = $(".nav-search-btn"), input = $(".nav-search input");
+  if (!nav || !btn || !input) return;
+  const set = (open) => { nav.classList.toggle("search-open", open); btn.setAttribute("aria-expanded", String(open)); };
+  btn.onclick = () => {
+    const open = !nav.classList.contains("search-open");
+    set(open);
+    if (open) input.focus();
+  };
+  input.addEventListener("keydown", (e) => { if (e.key === "Escape") { set(false); btn.focus(); } });
+  document.addEventListener("click", (e) => { if (!nav.contains(e.target) || e.target.closest(".search-results a")) set(false); });
+  window.addEventListener("hashchange", () => set(false));
+}
+
 // ---------------- home ----------------
 
 const SEARCH_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`;
@@ -1585,31 +1600,25 @@ async function match(r) {
   const prev = matches[i - 1], next = matches[i + 1];
   const Side = (s) => (s === "red" ? "Red" : "Blue");
 
-  // verdict box: did we call it?
-  const verdict = !played || !p ? `<div class="big-epa"><div class="label">Favourite</div><b class="${fav ?? ""}-text">${p ? pct(favP) : "–"}</b><div class="label">${p ? `${Side(fav)} to win` : "no prediction"}</div></div>`
-    : winner === "tie" ? `<div class="big-epa"><div class="label">Result</div><b>Tie</b><div class="label">${Side(fav)} was favoured ${pct(favP)}</div></div>`
-    : `<div class="big-epa"><div class="label">Prediction</div><b class="${winner === fav ? "good-text" : "bad-text"}">${winner === fav ? "Correct" : "Upset"}</b><div class="label">${Side(fav)} was favoured ${pct(favP)}</div></div>`;
-
-  // one sentence under the score: what we expected and whether it happened
-  const lose = fav === "red" ? "blue" : "red";
-  const footLine = !p ? "No prediction for this match."
-    : !played ? `${Side(fav)} is favoured to win, ${pct(favP)}.`
-    : winner === "tie" ? `Tie. ${Side(fav)} was favoured ${pct(favP)}.`
-    : winner === fav ? `${Side(fav)} was favoured ${pct(favP)} and won.`
-    : `<b class="bad-text">Upset:</b> ${lose} won with a ${pct(1 - favP)} chance.`;
-  // scoreboard: teams either side, the final (or predicted) score in the middle
+  // scoreboard: red alliance | score | blue alliance, then the win chance going in
   const onField = (side) => m[`${side}On`] ?? m[side];
-  const side = (s) => `<div class="feature-side ${s}">${m[s].map((t) => `<a href="#/${season}/team/${t}" class="${onField(s).includes(t) ? "" : "sat-out"}">${t}</a><small>${esc(team.get(t)?.name ?? "")}${onField(s).includes(t) ? "" : " · didn't play"}</small>`).join("")}</div>`;
-  const big = (sideKey, val) => `<span class="score ${sideKey} ${winner && winner !== sideKey && winner !== "tie" ? "lost" : ""}">${val}</span>`;
-  const board = `<div class="feature match-board">
-    <div class="feature-head"><b>${played ? "Final score" : "Predicted score"}</b><span>${winner ? (winner === "tie" ? "Tie" : `${Side(winner)} wins`) : "Not played yet"}</span></div>
-    <div class="feature-body">
-      ${side("red")}
-      <div class="feature-score">${played ? `${big("red", rs.total)}<span class="faint">–</span>${big("blue", bs.total)}` : p ? `${big("red", fmt(p.red.total, 0))}<span class="faint">–</span>${big("blue", fmt(p.blue.total, 0))}` : "–"}
-        ${played && p ? `<div class="small muted pred-line">Predicted ${fmt(p.red.total, 0)}–${fmt(p.blue.total, 0)}</div>` : ""}</div>
-      ${side("blue")}
+  const allianceBox = (s) => `<div class="mb-al ${s} ${winner === s ? "won" : ""}">
+    ${winner === s ? '<span class="mb-won">Won</span>' : ""}
+    ${m[s].map((t) => `<div class="mb-team ${onField(s).includes(t) ? "" : "sat-out"}"><a href="#/${season}/team/${t}">${t}</a><small>${esc(team.get(t)?.name ?? "")}${onField(s).includes(t) ? "" : " · didn't play"}</small></div>`).join("")}
+  </div>`;
+  const big = (sideKey, val) => `<span class="${sideKey}-text ${winner && winner !== sideKey && winner !== "tie" ? "lost" : ""}">${val}</span>`;
+  const r0 = p ? Math.round(p.pRed * 100) : null;
+  const board = `<div class="card card-pad mboard">
+    <div class="mb-grid">
+      ${allianceBox("red")}
+      <div class="mb-score">
+        <div class="mb-big">${played ? `${big("red", rs.total)}<span class="faint">–</span>${big("blue", bs.total)}` : p ? `${big("red", fmt(p.red.total, 0))}<span class="faint">–</span>${big("blue", fmt(p.blue.total, 0))}` : "–"}</div>
+        <div class="small muted">${played ? (winner === "tie" ? "Tie" : "Final") + (p ? ` · predicted ${fmt(p.red.total, 0)}–${fmt(p.blue.total, 0)}` : "") : p ? "Predicted score · not played yet" : "Not played yet"}</div>
+      </div>
+      ${allianceBox("blue")}
     </div>
-    <div class="feature-foot">${winBar(p?.pRed)}<p>${footLine}</p></div>
+    ${p ? `<div class="mb-chance"><span class="red-text">Red ${r0}%</span><span class="mb-bar"><i style="width:${r0}%"></i></span><span class="blue-text">Blue ${100 - r0}%</span></div>
+    <div class="mb-chance-note small muted">Chance to win before the match</div>` : ""}
   </div>`;
 
   // with a video the page is built around it: player on the left, a compact
@@ -1635,22 +1644,24 @@ async function match(r) {
   </div>
   <div class="section">${board}</div>` : `<div class="section">${board}</div>`;
 
-  // score breakdown: predicted vs actual per period, with a bar for each
-  const rows = [["auto", "Auto"], ["teleop", "Teleop"], ["endgame", "Endgame"], ["np", "No-penalty total"], ["pen", "Penalty points"], ["total", "Final"]];
+  // score breakdown: red and blue mirrored around each period, predicted in grey under each value
+  const rows = [["auto", "Auto"], ["teleop", "Teleop"], ["endgame", "Endgame"], ["pen", "Penalties"], ["total", "Final"]];
   const val = (o, k) => (o == null ? null : k === "pen" ? o.total - o.np : o[k]);
   const maxOf = Math.max(1, ...["auto", "teleop", "endgame"].flatMap((k) => [val(rs, k), val(bs, k), val(p?.red, k), val(p?.blue, k)]).filter((x) => x != null));
-  const cell = (pr, ac, k, s) => {
-    const diff = pr != null && ac != null ? ac - pr : null;
-    const bar = ["auto", "teleop", "endgame"].includes(k)
-      ? `<span class="bk-bar"><i class="${s}" style="width:${Math.round(((ac ?? pr ?? 0) / maxOf) * 100)}%"></i>${pr != null ? `<em style="left:calc(${Math.min(100, Math.round((pr / maxOf) * 100))}% - ${(Math.min(1, pr / maxOf) * 2).toFixed(1)}px)" title="Predicted ${fmt(pr)}"></em>` : ""}</span>` : "";
-    return `<td class="r faint">${pr != null ? fmt(pr, 0) : "–"}</td>
-      <td class="r"><b>${ac ?? "–"}</b>${diff != null && Math.abs(diff) >= 1 ? ` <span class="small ${diff > 0 ? "trend-up" : "trend-down"}">${diff > 0 ? "+" : "−"}${fmt(Math.abs(diff), 0)}</span>` : ""}</td>
-      <td class="bk-cell hide-sm">${bar}</td>`;
+  const bkBar = (s, k) => {
+    if (!["auto", "teleop", "endgame"].includes(k)) return `<span></span>`;
+    const ac = played ? val(s === "red" ? rs : bs, k) : null, pr = val(p?.[s], k);
+    const w = (x) => Math.min(100, Math.round(((x ?? 0) / maxOf) * 100));
+    return `<span class="bk2-bar ${s}"><i style="width:${w(ac ?? pr)}%"></i>${pr != null && ac != null ? `<em style="${s === "red" ? "right" : "left"}:${w(pr)}%" title="Predicted ${fmt(pr, 0)}"></em>` : ""}</span>`;
   };
-  const breakdown = `<div class="table-wrap"><table class="breakdown">
-    <thead><tr><th></th><th class="r red-text">Pred</th><th class="r red-text">Red</th><th class="hide-sm"></th><th class="r blue-text">Pred</th><th class="r blue-text">Blue</th><th class="hide-sm"></th></tr></thead>
-    <tbody>${rows.map(([k, label]) => `<tr class="${k === "total" ? "tot" : ""}"><td class="muted">${label}</td>${cell(val(p?.red, k), played ? val(rs, k) : null, k, "red")}${cell(val(p?.blue, k), played ? val(bs, k) : null, k, "blue")}</tr>`).join("")}</tbody>
-  </table></div>`;
+  const bkVal = (s, k) => {
+    const ac = played ? val(s === "red" ? rs : bs, k) : null, pr = val(p?.[s], k);
+    return `<span class="bk2-v"><b>${ac ?? (pr != null ? fmt(pr, 0) : "–")}</b>${ac != null && pr != null ? `<small>${fmt(pr, 0)}</small>` : ""}</span>`;
+  };
+  const breakdown = `<div class="bk2">
+    <div class="bk2-head"><span class="red-text">Red</span><span></span><span class="small muted">${played && p ? "grey = predicted" : ""}</span><span></span><span class="blue-text">Blue</span></div>
+    ${rows.map(([k, label]) => `<div class="bk2-row ${k === "total" ? "tot" : ""}">${bkBar("red", k)}${bkVal("red", k)}<span class="bk2-l">${label}</span>${bkVal("blue", k)}${bkBar("blue", k)}</div>`).join("")}
+  </div>`;
 
   // bonus ranking points: chance before the match, and whether it was earned
   const rpCell = (s, k) => {
@@ -1695,21 +1706,21 @@ async function match(r) {
         <div class="kicker"><a class="link" href="${evLink}">${esc(ev.name)}</a> · ${esc(when)}</div>
         <h1>${esc(matchTitle(m.d))}</h1>
         <div class="row" style="margin-top:8px">
-          <span class="pill">${esc(m.d)}</span>
           <a class="pill" href="https://ftcscout.org/events/${season}/${encodeURIComponent(code)}/matches" target="_blank" rel="noopener">FTCScout ↗</a>
           ${links && links.site !== "YouTube" ? `<a class="pill" href="${openUrl}" target="_blank" rel="noopener">${links.site} ↗</a>` : ""}
           ${shareButton(`m/${season}/${encodeURIComponent(code)}/${encodeURIComponent(m.d)}`, `${ev.name} · ${m.d}`)}
         </div>
       </div>
-      ${v ? (v.ext ? `<a class="btn btn-solid watch-cta" href="${openUrl}" target="_blank" rel="noopener">${PLAY_ICON} Watch on ${links.site} ↗</a>`
-        : `<button class="btn btn-solid watch-cta" data-play-inline>${PLAY_ICON} Watch match</button>`) : verdict}
+      <div class="match-actions">
+        ${v ? (v.ext ? `<a class="btn btn-solid watch-cta" href="${openUrl}" target="_blank" rel="noopener">${PLAY_ICON} Watch on ${links.site} ↗</a>`
+          : `<button class="btn btn-solid watch-cta" data-play-inline>${PLAY_ICON} Watch match</button>`) : ""}
+        <nav class="match-steps">
+          ${prev ? `<a class="btn btn-outline" href="${matchHref(season, code, prev.d)}">← ${esc(prev.d)}</a>` : ""}
+          <a class="btn btn-outline" href="${evLink}">All matches</a>
+          ${next ? `<a class="btn btn-outline" href="${matchHref(season, code, next.d)}">${esc(next.d)} →</a>` : ""}
+        </nav>
+      </div>
     </div></div>
-
-    <div class="match-nav section">
-      ${prev ? `<a class="btn btn-outline" href="${matchHref(season, code, prev.d)}">← ${esc(prev.d)}</a>` : "<span></span>"}
-      <a class="small link" href="${evLink}">All matches at this event</a>
-      ${next ? `<a class="btn btn-outline" href="${matchHref(season, code, next.d)}">${esc(next.d)} →</a>` : "<span></span>"}
-    </div>
 
     ${stage}
 
@@ -1718,8 +1729,7 @@ async function match(r) {
       ${rpCard}
     </div>
 
-    <div class="section-title"><h2>Teams</h2><p class="muted" style="margin:6px 0 0">Each robot's EPA going into this match, and where this result moved it${isQual ? ". Event rank and record are as of the end of this match" : ""}.</p></div>
-    <div class="card"><div class="table-wrap"><table class="match-teams">
+    <div class="card section"><div class="card-pad" style="padding-bottom:6px"><h3 style="margin:0">Teams</h3><p class="small muted" style="margin:4px 0 0">Each robot's EPA going into this match, and where this result moved it${isQual ? ". Event rank and record are as of the end of this match" : ""}.</p></div><div class="table-wrap"><table class="match-teams">
       <thead><tr><th>Team</th><th class="c">EPA before</th><th class="r hide-sm">Auto</th><th class="r hide-sm">Teleop</th><th class="r hide-sm">Endgame</th><th class="r">EPA after</th><th class="r"><span class="hide-sm">${isQual ? "Event" : "Qual"} </span>rank</th><th class="r hide-sm">Record</th></tr></thead>
       <tbody>${teamRows}</tbody></table></div></div>`;
 }
@@ -2495,6 +2505,7 @@ async function boot() {
 
   wireSeasonPicker();
   wireSearch($(".nav-search"));
+  wireNavSearchToggle();
   // match page: play in the page's own player (and bring it into view)
   document.addEventListener("click", (e) => {
     if (!e.target.closest("[data-play-inline]")) return;

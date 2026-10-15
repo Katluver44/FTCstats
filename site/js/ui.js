@@ -191,7 +191,9 @@ export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
   if (!matches.length) return `<div class="empty">No matches yet.</div>`;
   const slots = Math.max(2, ...matches.map((m) => Math.max(m.red.length, m.blue.length)));
   const teams = (side, nums) => Array.from({ length: slots }, (_, i) =>
-    nums[i] != null ? `<td class="c"><a class="tn ${side} ${nums[i] === me ? "me" : ""}" href="#/${s}/team/${nums[i]}">${nums[i]}</a></td>` : "<td></td>").join("");
+    nums[i] != null ? `<td class="c hide-sm"><a class="tn ${side} ${nums[i] === me ? "me" : ""}" href="#/${s}/team/${nums[i]}">${nums[i]}</a></td>` : '<td class="hide-sm"></td>').join("")
+    // phones: the alliance's teams stacked in one narrow cell
+    + `<td class="c show-sm mt-al">${nums.map((n) => `<a class="tn ${side} ${n === me ? "me" : ""}" href="#/${s}/team/${n}">${n}</a>`).join("")}</td>`;
   const rows = matches.map((m) => {
     const rs = m.redScore?.total ?? m.redScore?.np, bs = m.blueScore?.total ?? m.blueScore?.np;
     const pr = m.pred?.red?.rp?.map((p) => p > 0.5), pb = m.pred?.blue?.rp?.map((p) => p > 0.5);
@@ -212,12 +214,12 @@ export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
       <td class="lvl">${href ? `<a class="match-link" href="${href(m)}">${esc(m.d)}</a>` : esc(m.d)}</td>
       ${teams("red", m.red)}${teams("blue", m.blue)}
       <td class="c hide-sm">${pred}</td>
-      <td class="c">${winBar(m.pred?.pRed)}</td>
-      <td class="c">${final}</td>
+      <td class="c mt-wp">${winBar(m.pred?.pRed)}</td>
+      <td class="c mt-final">${final}</td>
     </tr>`;
   }).join("");
   return `<div class="table-wrap"><table class="mt">
-    <thead><tr>${video ? '<th class="c vid-cell">Video</th>' : ""}${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c" colspan="${slots}">Red</th><th class="c" colspan="${slots}">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Icons: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Icons: bonus RPs earned (hover them to see which)." : ""}">Final</span></th></tr></thead>
+    <thead><tr>${video ? '<th class="c vid-cell">Video</th>' : ""}${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c hide-sm" colspan="${slots}">Red</th><th class="c show-sm">Red</th><th class="c hide-sm" colspan="${slots}">Blue</th><th class="c show-sm">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Icons: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Icons: bonus RPs earned (hover them to see which)." : ""}">Final</span></th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
 }
 
