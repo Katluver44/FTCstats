@@ -88,10 +88,10 @@ export const DEFAULT_PARAMS = {
   // deserves less). Each team remembers a few recent partners and the covariance
   // their shared updates created; when A is later updated with someone else,
   // covBlend x that covariance passes part of the correction back to B. 0 = off.
-  covBlend: 0,
-  covDecay: 0.05, // covariance lost per match (robots change, the link goes stale)
-  covEvent: 0.5, // extra factor at a team's first match of a new event
-  covMax: 8, // partners remembered per team
+  covBlend: 0.4, // LOSO 2026-10: Brier better in 5 of 6 held-out seasons, flat in 2021 (every fold picked 0.5; 0.4 is the TRAIN pick, flat 0.3-0.85)
+  covDecay: 0.15, // covariance lost per match (robots change, the link goes stale)
+  covEvent: 0.2, // extra factor at a team's first match of a new event
+  covMax: 4, // partners remembered per team
 
   // Uncertainty-gated in-event OPR. While a team's variance is high (its first
   // matches at an event), pull its rating toward a ridge OPR solved from the
@@ -99,9 +99,9 @@ export const DEFAULT_PARAMS = {
   // oprBlend x max(0, v - oprVThr) / v, so it fades out as the Kalman variance
   // falls. Ridge prior is the team's own rating, so with no data OPR == rating.
   // Moves the predicted score and win probability only; rating updates are unchanged.
-  oprBlend: 0, // 0 = off
+  oprBlend: 0.2, // 0 = off (LOSO 2026-10, with covBlend: see README)
   oprVThr: 0.2, // variance below which the OPR gets no weight
-  oprRidge: 1.5, // ridge toward the rating (in matches' worth of evidence)
+  oprRidge: 1, // ridge toward the rating (in matches' worth of evidence)
 };
 
 // ---- Two tracks ----
