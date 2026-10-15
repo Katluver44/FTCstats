@@ -83,7 +83,24 @@ export const DEFAULT_PARAMS = {
   // zero in 3 (2019, 2021, 2025). On by owner's call (2026-10-13).
   calPair: 1,
   calPairWin: 1,
+  // Per-component Kalman variances (DARKO-style per-stat decay; research, off).
+  // compVar 1: each team carries a variance per component (t.vc) instead of one
+  // shared t.v, so auto / teleop / endgame get their own Kalman gain. The
+  // multipliers scale the shared settings per component (A = auto, T = teleop,
+  // E = endgame): vObs (match noise), vMatch (per-match drift), vEvent (new-event
+  // bump). t.v stays as a weighted mean of vc (weights avg[c]^2), for the win
+  // spread and the ranking sims. All multipliers 1 reproduces compVar 0 exactly.
+  compVar: 0,
+  vObsA: 1, vObsT: 1, vObsE: 1,
+  vMatchA: 1, vMatchT: 1, vMatchE: 1,
+  vEventA: 1, vEventT: 1, vEventE: 1,
+  // Per-component prior carry (multiplies carry for that component's starting
+  // rating; works with or without compVar; 1 = current).
+  carryA: 1, carryT: 1, carryE: 1,
 };
+
+// suffix of the per-component multiplier keys above
+const CX = { auto: "A", teleop: "T", endgame: "E" };
 
 // ---- Two tracks ----
 // The parameters above are the PREDICTION track ("Pred. rating"): tuned only for
@@ -230,6 +247,7 @@ export class Model {
   // eventType(code) -> the event's type, for zone-RP thresholds.
   constructor({ params = {}, baseline, priors = new Map(), cv = 0.5, soloComps = [], movedSpec = -1, parkedSpec = -1, rookieZ = 0, zoneRp = null, eventType = () => null } = {}) {
     this.p = { ...DEFAULT_PARAMS, ...params };
+    this.compVar = !!(this.p.kalman && this.p.compVar); // per-component variances (t.vc)
     this.zoneRp = zoneRp && movedSpec >= 0 && parkedSpec >= 0 ? zoneRp : null;
     this.eventType = eventType;
     this.soloComps = soloComps;
@@ -274,15 +292,18 @@ export class Model {
     }
     if (!t) {
       const z = this.priors.get(num) ?? (this.priors.size ? this.rookieZ : 0);
-      const f = Math.max(0.15, this.p.initFrac * (1 + this.p.carry * z * this.cv)) / 2;
+      // starting fraction of an average team, per component (carryA/T/E scale carry)
+      const f = {};
+      for (const c of COMPONENTS) f[c] = Math.max(0.15, this.p.initFrac * (1 + this.p.carry * this.p["carry" + CX[c]] * z * this.cv)) / 2;
       t = {
         n: 0, v: this.p.v0, ev: null,
-        auto: this.avg.auto * f,
-        teleop: this.avg.teleop * f,
-        endgame: this.avg.endgame * f,
-        solo: this.avg.solo.map((s) => s * f),
+        auto: this.avg.auto * f.auto,
+        teleop: this.avg.teleop * f.teleop,
+        endgame: this.avg.endgame * f.endgame,
+        solo: this.avg.solo.map((s, j) => s * f[this.soloComps[j]]),
         rp: this.avg.rp.map((r) => r / 2),
       };
+      if (this.compVar) t.vc = { auto: this.p.v0, teleop: this.p.v0, endgame: this.p.v0 };
       if (this.zoneRp) t.zone = [this.avg.zLeave, this.avg.zB0, this.avg.zB1, this.avg.zB2];
       this.teams.set(num, t);
     }
@@ -312,12 +333,24 @@ export class Model {
   }
 
   // Restore a team's state, e.g. its rating entering an event.
-  setTeam(num, { auto, teleop, endgame, n, rp, solo, v, ev, evStart, zone }) {
+  setTeam(num, { auto, teleop, endgame, n, rp, solo, v, vc, ev, evStart, zone }) {
+    const v1 = v ?? this.p.v0;
     this.teams.set(num, {
-      n, v: v ?? this.p.v0, ev: ev ?? null, evStart: evStart ?? null, auto, teleop, endgame,
+      n, v: v1, ev: ev ?? null, evStart: evStart ?? null, auto, teleop, endgame,
       solo: this.soloComps.map((_, j) => solo?.[j] ?? 0), rp: [...rp],
       ...(this.zoneRp ? { zone: zone ? [...zone] : [this.avg.zLeave, this.avg.zB0, this.avg.zB1, this.avg.zB2] } : {}),
+      ...(this.compVar ? { vc: vc ? { ...vc } : { auto: v1, teleop: v1, endgame: v1 } } : {}),
     });
+  }
+
+  // A team's overall variance from its per-component ones (compVar): the mean
+  // weighted by each component's share of the score, squared. Equal variances
+  // return that value exactly, so compVar with all multipliers 1 = compVar 0.
+  vMean(vc) {
+    if (vc.auto === vc.teleop && vc.auto === vc.endgame) return vc.auto;
+    let s = 0, ws = 0;
+    for (const c of COMPONENTS) { const w = this.avg[c] ** 2; s += w * vc[c]; ws += w; }
+    return ws > 0 ? s / ws : (vc.auto + vc.teleop + vc.endgame) / 3;
   }
 
   k(n) {
@@ -377,7 +410,13 @@ export class Model {
   // Variance a team will carry into this match (incl. the new-event bump).
   preVar(num, eventCode) {
     const t = this.team(num);
-    return t.v + (this.p.kalman && eventCode && t.ev && t.ev !== eventCode ? this.p.vEvent : 0);
+    const bump = this.p.kalman && eventCode && t.ev && t.ev !== eventCode;
+    if (this.compVar && bump) {
+      const vc = {};
+      for (const c of COMPONENTS) vc[c] = t.vc[c] + this.p.vEvent * this.p["vEvent" + CX[c]];
+      return this.vMean(vc);
+    }
+    return t.v + (bump ? this.p.vEvent : 0);
   }
 
   predict(red, blue, eventCode) {
@@ -473,12 +512,18 @@ export class Model {
 
   // How much of an alliance's error each team takes.
   // level: the alliance's predicted score / league average (match noise grows with it).
+  // Returns one share per team, or with compVar { auto, teleop, endgame } of those.
   shares(nums, eventCode, level = 1) {
     const ts = nums.map((n) => this.team(n));
     if (!this.p.kalman) return ts.map((t) => this.k(t.n) / nums.length);
     for (const t of ts) {
       if (eventCode && t.ev !== eventCode) {
-        if (t.ev) t.v += this.p.vEvent;
+        if (t.ev) {
+          if (this.compVar) {
+            for (const c of COMPONENTS) t.vc[c] += this.p.vEvent * this.p["vEvent" + CX[c]];
+            t.v = this.vMean(t.vc);
+          } else t.v += this.p.vEvent;
+        }
         if (this.p.mom) {
           if (t.ev && t.evStart) for (const c of COMPONENTS) t[c] += this.p.mom * (t[c] - t.evStart[c]);
           t.evStart = { auto: t.auto, teleop: t.teleop, endgame: t.endgame };
@@ -486,7 +531,16 @@ export class Model {
         t.ev = eventCode;
       }
     }
-    const sum = ts.reduce((s, t) => s + t.v, 0) + this.p.vObs * this.levelScale(level, this.p.obsHet);
+    const ls = this.levelScale(level, this.p.obsHet);
+    if (this.compVar) {
+      const out = {};
+      for (const c of COMPONENTS) {
+        const sum = ts.reduce((s, t) => s + t.vc[c], 0) + this.p.vObs * this.p["vObs" + CX[c]] * ls;
+        out[c] = ts.map((t) => t.vc[c] / sum);
+      }
+      return out;
+    }
+    const sum = ts.reduce((s, t) => s + t.v, 0) + this.p.vObs * ls;
     return ts.map((t) => t.v / sum);
   }
 
@@ -500,7 +554,9 @@ export class Model {
       const exp = pred[side], act = actual[side];
       const other = side === "red" ? "blue" : "red";
       const foulsMade = actual[other].total - actual[other].np;
-      const share = this.shares(nums, eventCode, exp.rawNp / Math.max(10, this.avgAllianceNp()));
+      const sh = this.shares(nums, eventCode, exp.rawNp / Math.max(10, this.avgAllianceNp()));
+      // per-component shares (one array for all three unless compVar)
+      const share = this.compVar ? sh : { auto: sh, teleop: sh, endgame: sh };
 
       // shared part of each component = component minus its per-robot elements
       const actShared = { auto: act.auto, teleop: act.teleop, endgame: act.endgame };
@@ -517,18 +573,18 @@ export class Model {
         const pts = spec >= 0 ? act.solo?.[spec] : null;
         return pts && pts.length === nums.length ? pts.map((p) => p <= 0) : null;
       };
-      const reweight = (idle, weight) => {
-        if (!idle || weight === 1) return share;
-        if (!idle.some((x) => x) || idle.every((x) => x)) return share;
-        const raw = share.map((s, i) => s * (idle[i] ? weight : 1));
-        const scale = share.reduce((a, b) => a + b, 0) / raw.reduce((a, b) => a + b, 0);
+      const reweight = (base, idle, weight) => {
+        if (!idle || weight === 1) return base;
+        if (!idle.some((x) => x) || idle.every((x) => x)) return base;
+        const raw = base.map((s, i) => s * (idle[i] ? weight : 1));
+        const scale = base.reduce((a, b) => a + b, 0) / raw.reduce((a, b) => a + b, 0);
         return raw.map((s) => s * scale);
       };
       const noMove = idleIn(this.movedSpec), noEnd = idleIn(this.parkedSpec);
       const dead = noMove && noEnd ? noMove.map((x, i) => x && noEnd[i]) : null;
-      const autoShare = reweight(noMove, this.p.idleShare);
-      let teleShare = reweight(noEnd, this.p.endIdleShare);
-      if (this.p.deadShare !== 1) teleShare = reweight(dead, this.p.deadShare);
+      const autoShare = reweight(share.auto, noMove, this.p.idleShare);
+      let teleShare = reweight(share.teleop, noEnd, this.p.endIdleShare);
+      if (this.p.deadShare !== 1) teleShare = reweight(share.teleop, dead, this.p.deadShare);
 
       // Robust errors: one breakdown or freak match moves ratings by at most clipC SDs' worth.
       const err = {}, ea = this.p.errAlpha;
@@ -546,7 +602,7 @@ export class Model {
 
       nums.forEach((num, i) => {
         const t = this.team(num);
-        const k = share[i] * w;
+        const k = share.endgame[i] * w;
         for (const c of COMPONENTS) {
           const kc = c === "auto" ? autoShare[i] * w : c === "teleop" ? teleShare[i] * w : k;
           t[c] += kc * err[c];
@@ -559,7 +615,10 @@ export class Model {
           const kr = this.p.kRp / nums.length;
           t.rp = t.rp.map((r, j) => clamp(r + kr * ((act.rp?.[j] ? 1 : 0) - exp.rp[j]), -0.2, 1));
         }
-        if (this.p.kalman) t.v = t.v * (1 - share[i] * w) + this.p.vMatch + volAdd * w;
+        if (this.compVar) {
+          for (const c of COMPONENTS) t.vc[c] = t.vc[c] * (1 - share[c][i] * w) + this.p.vMatch * this.p["vMatch" + CX[c]] + volAdd * w;
+          t.v = this.vMean(t.vc);
+        } else if (this.p.kalman) t.v = t.v * (1 - share.auto[i] * w) + this.p.vMatch + volAdd * w;
         t.n++;
       });
 
@@ -591,7 +650,7 @@ export class Model {
 
   epa(num) {
     const t = this.team(num);
-    const e = { n: t.n, v: t.v, ev: t.ev, evStart: t.evStart ?? null, ...(t.zone ? { zone: [...t.zone] } : {}), auto: t.auto, teleop: t.teleop, endgame: t.endgame, rp: [...t.rp], solo: [...t.solo] };
+    const e = { n: t.n, v: t.v, ...(t.vc ? { vc: { ...t.vc } } : {}), ev: t.ev, evStart: t.evStart ?? null, ...(t.zone ? { zone: [...t.zone] } : {}), auto: t.auto, teleop: t.teleop, endgame: t.endgame, rp: [...t.rp], solo: [...t.solo] };
     const shared = { auto: t.auto, teleop: t.teleop, endgame: t.endgame };
     t.solo.forEach((s, j) => (e[this.soloComps[j]] += s));
     e.np = e.auto + e.teleop + e.endgame;

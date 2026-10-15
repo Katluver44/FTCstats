@@ -15,8 +15,8 @@ const outcome = (x) => (x.actual.red.total === x.actual.blue.total ? 0.5 : x.act
 
 // Brier is also split into "early" matches (some team is in its first 3
 // matches of the event) and the rest.
-function run(name, params = {}, { solo = true, ctxs = train } = {}) {
-  let n = 0, c = 0, br = 0, en = 0, eb = 0;
+function run(name, params = {}, { solo = true, ctxs = train, quiet = false } = {}) {
+  let n = 0, c = 0, br = 0, en = 0, eb = 0, mae = 0;
   const per = [];
   for (const ctx of ctxs) {
     const soloComps = solo ? ctx.soloComps : [];
@@ -27,6 +27,7 @@ function run(name, params = {}, { solo = true, ctxs = train } = {}) {
       const o = outcome(x);
       const b = (pre.pRed - o) ** 2;
       sn++; sb += b;
+      mae += (Math.abs(pre.red.np - x.actual.red.np) + Math.abs(pre.blue.np - x.actual.blue.np)) / 2;
       if (o !== 0.5 && (pre.pRed > 0.5) === (o === 1)) sc++;
       let early = false;
       for (const t of [...x.red, ...x.blue]) {
@@ -39,17 +40,35 @@ function run(name, params = {}, { solo = true, ctxs = train } = {}) {
     n += sn; c += sc; br += sb;
     per.push(`${(sc / sn * 100).toFixed(1)}`);
   }
-  console.log(`${name.padEnd(34)} acc ${(c / n * 100).toFixed(2)}%  brier ${(br / n).toFixed(5)}  early ${(eb / en).toFixed(4)} rest ${((br - eb) / (n - en)).toFixed(4)}  [${per.join(" ")}]`);
+  if (!quiet) console.log(`${name.padEnd(34)} acc ${(c / n * 100).toFixed(2)}%  brier ${(br / n).toFixed(5)}  early ${(eb / en).toFixed(4)} rest ${((br - eb) / (n - en)).toFixed(4)}  mae ${(mae / n).toFixed(2)}  [${per.join(" ")}]`);
   return br / n;
 }
 
 // Candidate improvements from the 2026-10 research round, tuned on TRAIN only.
 const ROBUST = { volK: 0.1, volThr: 0.5, clipC: 1.25, clipUp: 0, vMatch: 0.01 }; // volatility + shortfall clip
 const WIN = { winSelf: 0.4, winFoul: 0.4, winVar: 0.02 }; // self-calibrating, foul- and uncertainty-aware spread
+// Per-component Kalman variances (compVar) and prior carry, seeded from the
+// EPA track's per-component ratios (teleop vObs 3/2, endgame vObs 5/2, endgame carry 0.3).
+const COMPVAR = { compVar: 1, vObsT: 1.5, vObsE: 2.5 };
 const variants = [
   ["current", {}], ["robust updates", ROBUST], ["win-prob spread", WIN], ["both", { ...ROBUST, ...WIN }],
+  ["compVar EPA ratios", COMPVAR], ["carryE .3", { carryE: 0.3 }], ["compVar + carryE", { ...COMPVAR, carryE: 0.3 }],
   ...process.argv.slice(2).map((a) => [a, JSON.parse(a)]),
 ];
+
+// Coordinate descent on TRAIN seasons only (never on TEST). Opt in: TUNE=compvar.
+function tune(start, grid) {
+  let best = { ...start }, bl = run("", best, { quiet: true });
+  for (let pass = 0; pass < 2; pass++) for (const [k, vs] of Object.entries(grid)) for (const v of vs) {
+    const t = { ...best, [k]: v }, l = run("", t, { quiet: true });
+    if (l < bl - 1e-6) { best = t; bl = l; }
+  }
+  return best;
+}
+if (process.env.TUNE === "compvar") {
+  const best = tune({ compVar: 1 }, { vObsA: [0.7, 1, 1.5], vObsT: [1, 1.5, 2], vObsE: [1, 2, 3], vMatchT: [1, 4, 8], vEventT: [0, 0.5, 1], carryE: [0.3, 0.6, 1], carryA: [0.7, 1] });
+  variants.push([`compVar tuned ${JSON.stringify(best)}`, best]);
+}
 for (const [name, p] of variants) run(name, p);
 console.log("--- held-out", TEST);
 for (const [name, p] of variants) run(name, p, { ctxs: test });

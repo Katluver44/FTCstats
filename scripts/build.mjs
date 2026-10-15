@@ -733,6 +733,7 @@ export async function build(season, params = {}, epaOver = {}) {
         state: start ? {
           auto: r1(start.shared.auto), teleop: r1(start.shared.teleop), endgame: r1(start.shared.endgame),
           solo: start.solo.map(r1), n: start.n, v: r3(start.v), rp: start.rp.map(r3), ev: start.ev ?? null,
+          ...(start.vc ? { vc: Object.fromEntries(Object.entries(start.vc).map(([k, v]) => [k, r3(v)])) } : {}),
           evStart: start.evStart ? Object.fromEntries(Object.entries(start.evStart).map(([k, v]) => [k, r1(v)])) : null,
           ...(start.zone ? { zone: start.zone.map(r3) } : {}),
         } : null,
