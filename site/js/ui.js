@@ -17,6 +17,7 @@ export function getJSON(url) {
   return cache.get(url);
 }
 
+const searchIdx = new Map(); // season -> promise of its search index
 const noVideo = new Set(); // "<season>/<code>" of events whose videos file 404'd
 export const data = {
   seasons: () => getJSON("data/seasons.json"),
@@ -49,6 +50,21 @@ export const data = {
     return out;
   },
   ranking: (s) => getJSON(`data/${s}/ranking.json`).catch(() => null),
+  // search index {played, teams: {num, name, loc}, events: [[code, name, type, start, loc, teams, st]]}
+  // (scripts/build.mjs), fetched when a search box gets focus. Seasons built before
+  // search.json: made from the full tables
+  search(s) {
+    if (!searchIdx.has(s)) searchIdx.set(s, getJSON(`data/${s}/search.json`).catch(async () => {
+      const [t, pre, ev] = await Promise.all([data.teams(s), data.pre(s), data.events(s)]);
+      const all = [...t, ...pre];
+      return {
+        played: t.length,
+        teams: { num: all.map((x) => x.team), name: all.map((x) => x.name), loc: all.map((x) => x.loc) },
+        events: ev.map((e) => [e.code, e.name, e.type, e.start, e.loc, e.teams, e.ongoing ? 1 : e.finished ? 2 : 0]),
+      };
+    }).catch((e) => { searchIdx.delete(s); throw e; }));
+    return searchIdx.get(s);
+  },
   // last season's teams that haven't played yet this season, on the EPA they start with
   async pre(s) {
     const t = await getJSON(`data/${s}/teams-pre.json`).catch(() => null);
@@ -86,10 +102,13 @@ export const fmt = (x, d = 1) => (x == null || Number.isNaN(x) ? "–" : Number(
 export const pct = (x, d = 0) => (x == null ? "–" : `${(x * 100).toFixed(d)}%`);
 export const fmtInt = (x) => (x == null ? "–" : Number(x).toLocaleString());
 
+// one formatter per options: toLocaleDateString builds a new one on every call, which is slow
+const dateFmts = new Map();
 export function fmtDate(s, opts = { month: "short", day: "numeric" }) {
   if (!s) return "";
-  const d = new Date(`${s}T12:00:00`);
-  return d.toLocaleDateString(undefined, opts);
+  const key = JSON.stringify(opts);
+  if (!dateFmts.has(key)) dateFmts.set(key, new Intl.DateTimeFormat(undefined, opts));
+  return dateFmts.get(key).format(new Date(`${s}T12:00:00`));
 }
 export function fmtRange(a, b) {
   if (!b || a === b) return fmtDate(a, { month: "short", day: "numeric", year: "numeric" });
@@ -192,7 +211,7 @@ export function videoLinks(id, t = 0) {
 export const PLAY_ICON = '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1.2v7.6L8.6 5Z" fill="currentColor"/></svg>';
 
 // outline play-circle, as in Statbotics' video column
-const VIDEO_ICON = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.3"/><path d="M7.1 5.6v6.8L12.4 9Z" fill="currentColor"/></svg>';
+export const VIDEO_ICON = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.3"/><path d="M7.1 5.6v6.8L12.4 9Z" fill="currentColor"/></svg>';
 
 export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
   if (!matches.length) return `<div class="empty">No matches yet.</div>`;
@@ -220,7 +239,11 @@ export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
         return v ? `<button class="vid" data-video="${v.id}" data-t="${v.t}"${v.ext ? ' data-ext="1"' : ""} data-title="${esc(m.d)}" aria-label="Watch ${esc(m.d)}" title="Watch this match">${VIDEO_ICON}</button>`
           : `<span class="vid none" title="No video found for this match">${VIDEO_ICON}</span>`;
       })()}</td>` : ""}
-      <td class="lvl">${href ? `<a class="match-link" href="${href(m)}">${esc(m.d)}</a>` : esc(m.d)}</td>
+      <td class="lvl">${href ? `<a class="match-link" href="${href(m)}">${esc(m.d)}</a>` : esc(m.d)}${(() => {
+        // team-page phones: the match label itself plays the video (the Video column is hidden there, style.css "mobile cuts: team")
+        const v = m.played && video?.(m);
+        return v ? `<button class="vid-lbl" data-video="${v.id}" data-t="${v.t}"${v.ext ? ' data-ext="1"' : ""} data-title="${esc(m.d)}" aria-label="Watch ${esc(m.d)}">${esc(m.d)} ${PLAY_ICON}</button>` : "";
+      })()}</td>
       ${teams("red", m.red)}${teams("blue", m.blue)}
       <td class="c hide-sm">${pred}</td>
       <td class="c mt-wp">${winBar(m.pred?.pRed)}</td>
@@ -228,14 +251,14 @@ export function matchTable(s, matches, { me, rpNames = [], video, href } = {}) {
     </tr>`;
   }).join("");
   return `<div class="table-wrap"><table class="mt${video && !anyVideo ? " mt-novid" : ""}">
-    <thead><tr>${video ? '<th class="c vid-cell"><span class="hide-sm">Video</span></th>' : ""}${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c hide-sm" colspan="${slots}">Red</th><th class="c show-sm">Red</th><th class="c hide-sm" colspan="${slots}">Blue</th><th class="c show-sm">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Icons: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in green.${rpNames.length ? " Icons: bonus RPs earned (hover them to see which)." : ""}">Final</span></th></tr></thead>
+    <thead><tr>${video ? '<th class="c vid-cell"><span class="hide-sm">Video</span></th>' : ""}${matches[0].evName ? "<th>Event</th>" : ""}<th>Match</th><th class="c hide-sm" colspan="${slots}">Red</th><th class="c show-sm">Red</th><th class="c hide-sm" colspan="${slots}">Blue</th><th class="c show-sm">Blue</th><th class="c hide-sm"><span class="th-tip" data-tip="Predicted score before the match (red–blue), from each team's EPA.${rpNames.length ? " Icons: bonus RPs each alliance was likely to earn." : ""}">Pred</span></th><th class="c"><span class="th-tip" data-tip="Chance of winning before the match. The number is the favourite's chance, in its colour; the bar shows red vs blue.">Win prob</span></th><th class="c"><span class="th-tip" data-tip="Final score including penalty points (red–blue); the winner is in bold.${rpNames.length ? " Icons: bonus RPs earned (hover them to see which)." : ""}">Final</span></th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
 }
 
 // ---------- line chart ----------
 // series: [{ name, color, values: number[] }], bands: [{ from, to, label }]
 // values may contain nulls (gaps); dash: dashed line; max: fixed top of the y axis
-export function mountLineChart(el, { series, bands = [], tooltip, zero = true, max = null }) {
+export function mountLineChart(el, { series, bands = [], tooltip, zero = true, max = null, xTitle = "" }) {
   const hidden = new Set();
   const legend = document.createElement("div");
   legend.className = "series-toggle";
@@ -250,7 +273,11 @@ export function mountLineChart(el, { series, bands = [], tooltip, zero = true, m
     // narrow (phones): a shorter plot, and match-number ticks on the x axis instead of event names.
     // Phone-gated so a half-width desktop chart (the about page's by-month card at ~1100-1200px) stays as it was.
     const narrow = W < 480 && matchMedia("(max-width: 640px)").matches;
-    const H = narrow ? 220 : 260, P = { l: narrow ? 30 : 36, r: 10, t: 16, b: 24 };
+    // ticks replace event-name labels; charts whose bands are one point each (months) keep their labels.
+    // A chart with an x title and no bands numbers its matches at every width.
+    const ticks = (narrow || (xTitle && !bands.length)) && !(bands.length && bands.every((b) => b.from === b.to));
+    const xt = ticks && xTitle;
+    const H = (narrow ? 220 : 260) + (xt ? 16 : 0), P = { l: narrow ? 30 : 36, r: 10, t: 16, b: xt ? 40 : 24 };
     const vis = series.filter((_, i) => !hidden.has(i));
     const n = Math.max(...series.map((s) => s.values.length));
     const all = vis.flatMap((s) => s.values).filter((v) => v != null);
@@ -259,15 +286,14 @@ export function mountLineChart(el, { series, bands = [], tooltip, zero = true, m
     const x = (i) => P.l + (n <= 1 ? 0 : (i / (n - 1)) * (W - P.l - P.r));
     const y = (v) => P.t + (1 - (v - lo) / (hi - lo)) * (H - P.t - P.b);
     const step = niceStep((hi - lo) / 4);
-    // ticks replace event-name labels; charts whose bands are one point each (months) keep their labels
-    const ticks = narrow && !(bands.length && bands.every((b) => b.from === b.to));
     let g = "";
     for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) {
       g += `<line class="grid-line" x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}"/><text x="${P.l - 6}" y="${y(v) + 4}" text-anchor="end">${Math.round(v)}</text>`;
     }
     bands.forEach((b, i) => {
       const x0 = x(b.from) - (b.from ? (x(1) - x(0)) / 2 : 0), x1 = x(b.to) + (b.to < n - 1 ? (x(1) - x(0)) / 2 : 0);
-      if (i % 2) g += `<rect x="${x0}" y="${P.t}" width="${Math.max(0, x1 - x0)}" height="${H - P.t - P.b}" fill="var(--band)"/>`;
+      // numbered axis: the bands would be unlabelled, so they go (event names are in the tooltip)
+      if (i % 2 && !ticks) g += `<rect x="${x0}" y="${P.t}" width="${Math.max(0, x1 - x0)}" height="${H - P.t - P.b}" fill="var(--band)"/>`;
       // fit the label to its band (about 6px per character), or skip it
       const fit = Math.floor((x1 - x0 - 6) / 6);
       if (!ticks && fit >= 4) {
@@ -278,7 +304,8 @@ export function mountLineChart(el, { series, bands = [], tooltip, zero = true, m
     // narrow: event names move to the tooltip; number the matches instead (charts without bands get an axis too)
     if (ticks) {
       const stepN = niceStep(Math.max(1, n / 4));
-      for (let i = 0; i < n; i += stepN) g += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${i + 1}</text>`;
+      for (let i = 0; i < n; i += stepN) g += `<text x="${x(i)}" y="${H - P.b + 18}" text-anchor="middle">${i + 1}</text>`;
+      if (xt) g += `<text class="axis-title" x="${(P.l + W - P.r) / 2}" y="${H - 4}" text-anchor="middle">${esc(xTitle)}</text>`;
     }
     const paths = vis.map((s) => {
       const d = smoothPath((s.smooth ? soften(s.values) : s.values).map((v, i) => (v == null ? null : [x(i), y(v)])));

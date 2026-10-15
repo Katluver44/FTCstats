@@ -10,6 +10,8 @@ import http from "node:http";
 import fs from "node:fs/promises";
 import path from "node:path";
 import zlib from "node:zlib";
+import crypto from "node:crypto";
+import { readFileSync } from "node:fs";
 import { promisify } from "node:util";
 import { pathToFileURL } from "node:url";
 
@@ -17,17 +19,28 @@ const port = +(process.argv[2] ?? process.env.PORT ?? 8080);
 const ROOT = path.resolve(process.env.SITE_DIR ?? "site");
 const brotli = promisify(zlib.brotliCompress), gzip = promisify(zlib.gzip);
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json; charset=utf-8",
-  ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".ico": "image/x-icon", ".txt": "text/plain; charset=utf-8" };
+  ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".ico": "image/x-icon", ".txt": "text/plain; charset=utf-8",
+  ".woff2": "font/woff2" };
 const COMPRESSIBLE = new Set([".html", ".js", ".css", ".json", ".svg", ".txt"]);
 const REWRITES = [
   [/^\/t\/(\d{4})\/([^/]+)$/, (m) => `/api/share?kind=team&season=${m[1]}&id=${m[2]}`],
   [/^\/e\/(\d{4})\/([^/]+)$/, (m) => `/api/share?kind=event&season=${m[1]}&id=${m[2]}`],
   [/^\/m\/(\d{4})\/([^/]+)\/([^/]+)$/, (m) => `/api/share?kind=match&season=${m[1]}&id=${m[2]}&d=${m[3]}`],
 ];
+// past seasons' data only changes when the model does: let browsers and Cloudflare keep it longer
+const CURRENT = (() => {
+  try { return Math.max(...JSON.parse(readFileSync(path.join(ROOT, "data", "seasons.json"), "utf8"))); } catch { return 0; } // unknown: treat every season as current
+})();
+const pastSeason = (p) => { const m = p.match(/^\/data\/(\d{4})\//); return m && +m[1] < CURRENT; };
 const cacheControl = (p) =>
-  p.startsWith("/data/") ? "public, max-age=300, s-maxage=600, stale-while-revalidate=86400"
-  : /^\/(js|css)\//.test(p) ? "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400"
+  pastSeason(p) ? "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800"
+  : p.startsWith("/data/") ? "public, max-age=300, s-maxage=600, stale-while-revalidate=86400"
+  // js/css revalidate every load (cheap 304s via ETag): index.html is never cached, so a
+  // cached old app.js could otherwise run against new markup and die at boot ("Loading…" forever)
+  : /^\/(js|css)\//.test(p) ? "public, max-age=0, must-revalidate"
   : p.endsWith(".html") || p === "/" ? "public, max-age=0, must-revalidate"
+  // fonts never change in place (a new font gets a new file name)
+  : p.startsWith("/fonts/") ? "public, max-age=31536000, immutable"
   : "public, max-age=3600";
 
 // small LRU by total bytes
@@ -55,7 +68,8 @@ async function readAndCompress(file, st, key) {
   let f;
   {
     const raw = await fs.readFile(file);
-    f = { raw, etag: `"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"` };
+    // ETag from the content, so an hourly rebuild that writes the same bytes keeps it (mtime is only the cache key)
+    f = { raw, etag: `"${crypto.createHash("sha1").update(raw).digest("base64url").slice(0, 16)}"` };
     if (COMPRESSIBLE.has(path.extname(file)) && raw.length > 1024) {
       [f.br, f.gz] = await Promise.all([brotli(raw, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 9 } }), gzip(raw, { level: 9 })]);
     }
@@ -64,10 +78,38 @@ async function readAndCompress(file, st, key) {
   return f;
 }
 
+// index.html with every script and the stylesheet at a URL that names its content (?v=<hash>), plus an import map
+// that does the same for the modules' own imports ("./ui.js"). A changed file gets a new URL, so Cloudflare or a
+// browser can never pair a new app.js with an old ui.js (that left the site on "Loading…").
+const indexCache = new Map();
+async function versionedIndex(file, st) {
+  const jsDir = path.join(ROOT, "js");
+  const names = (await fs.readdir(jsDir)).filter((n) => n.endsWith(".js")).sort();
+  const assets = [...names.map((n) => `js/${n}`), "css/style.css"];
+  const tags = await Promise.all(assets.map(async (a) => {
+    const p = path.join(ROOT, a), s = await fs.stat(p).catch(() => null);
+    return s ? [a, (await loadFile(p, s)).etag.slice(1, 9)] : null;
+  }));
+  const ver = new Map(tags.filter(Boolean));
+  const key = `${st.mtimeMs}:${[...ver.values()].join("")}`;
+  if (indexCache.has(key)) return indexCache.get(key);
+  const page = await loadFile(file, st);
+  const map = { imports: Object.fromEntries([...ver].filter(([a]) => a.startsWith("js/")).map(([a, h]) => [`/${a}`, `/${a}?v=${h}`])) };
+  let html = page.raw.toString("utf8").replace(/(href|src)="((?:js\/[\w-]+\.js)|css\/style\.css)"/g, (m, attr, a) => ver.has(a) ? `${attr}="${a}?v=${ver.get(a)}"` : m);
+  html = html.replace(/(\s*)<link rel="modulepreload"/, (m, ws) => `${ws}<script type="importmap">${JSON.stringify(map)}</script>${m}`);
+  const raw = Buffer.from(html);
+  const f = { raw, etag: `"${crypto.createHash("sha1").update(raw).digest("base64url").slice(0, 16)}"` };
+  [f.br, f.gz] = await Promise.all([brotli(raw), gzip(raw, { level: 9 })]);
+  indexCache.clear(); indexCache.set(key, f);
+  return f;
+}
+
 function sendBody(req, res, { raw, br, gz, etag }, type, cache) {
   const ae = String(req.headers["accept-encoding"] ?? "");
   const headers = { "Content-Type": type, "Cache-Control": cache, ETag: etag, Vary: "Accept-Encoding", "X-Content-Type-Options": "nosniff" };
-  if (req.headers["if-none-match"] === etag) { res.writeHead(304, headers); return res.end(); }
+  // Cloudflare turns ETags weak (W/"…") when it compresses, so compare without the W/
+  const inm = String(req.headers["if-none-match"] ?? "").split(",").map((s) => s.trim().replace(/^W\//, ""));
+  if (inm.includes(etag)) { res.writeHead(304, headers); return res.end(); }
   let body = raw;
   if (br && /\bbr\b/.test(ae)) { body = br; headers["Content-Encoding"] = "br"; }
   else if (gz && /\bgzip\b/.test(ae)) { body = gz; headers["Content-Encoding"] = "gzip"; }
@@ -128,8 +170,16 @@ const server = http.createServer(async (req, res) => {
     if (!file.startsWith(ROOT)) { res.writeHead(403); return res.end(); }
     let st = await fs.stat(file).catch(() => null);
     if (st?.isDirectory()) { file = path.join(file, "index.html"); rel = path.posix.join(rel, "index.html"); st = await fs.stat(file).catch(() => null); }
-    if (!st) { res.writeHead(404, { "Content-Type": "text/plain" }); return res.end("Not found"); }
-    sendBody(req, res, await loadFile(file, st), TYPES[path.extname(file)] ?? "application/octet-stream", cacheControl(url.pathname === "/" ? "/" : rel));
+    if (!st) {
+      // the site probes for data files that may not exist (e.g. videos/<event>.json): let the edge cache the miss
+      res.writeHead(404, { "Content-Type": "text/plain", ...(rel.startsWith("/data/") && { "Cache-Control": "public, max-age=300, s-maxage=3600" }) });
+      return res.end("Not found");
+    }
+    if (rel === "/index.html") return sendBody(req, res, await versionedIndex(file, st), TYPES[".html"], cacheControl("/"));
+    const f = await loadFile(file, st);
+    // a ?v= URL whose hash matches this file's content never changes: keep it for a year
+    const v = url.searchParams.get("v");
+    sendBody(req, res, f, TYPES[path.extname(file)] ?? "application/octet-stream", v && v === f.etag.slice(1, 9) ? "public, max-age=31536000, immutable" : cacheControl(url.pathname === "/" ? "/" : rel));
   } catch (e) {
     console.error(new Date().toISOString(), req.method, req.url, e);
     if (!res.headersSent) res.writeHead(500);

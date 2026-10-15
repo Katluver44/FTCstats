@@ -78,6 +78,13 @@ What the prediction rating does:
   predicted scores (win probabilities use the raw ratings).
 - **Priors**: starting ratings blend the last three seasons by rank; rookies
   start a little below average.
+- **Partner covariance**: two robots that split one alliance surprise end up
+  with negatively correlated errors, so each team remembers a few recent
+  partners and the covariance their shared updates created; a later update of
+  one passes part of the correction back to the other (`covBlend`).
+- **Early-event OPR**: while a team's uncertainty is high (its first matches at
+  an event), its predicted contribution is pulled toward a ridge OPR solved from
+  the event's quals so far (`oprBlend`); the pull fades as the variance falls.
 - Ranking rules per season are checked against FIRST's official ranking scores
   (`npm run check`): win = 2 RP before 2025, 3 from 2025; ULTIMATE GOAL and
   FREIGHT FRENZY ranked by total points scored.
@@ -108,6 +115,11 @@ Model changes are checked with leave-one-season-out cross-validation
 paired bootstrap over events. The 2026-10 round (level-aware noise,
 event-change reversion, score recalibration) lowered Brier in all six seasons
 (mean 0.1724 -> 0.1709) and score error 22.3 -> 21.3 points.
+The 2026-10-15 round (partner covariance + early-event OPR, found by a
+workflow of eight single-idea agents and tuned on 2022-24 only) lowered
+held-out Brier in five of six seasons with the 95% CI below zero (2019, 2022,
+2023, 2024, 2025) and was flat in 2021: mean 0.1706 -> 0.1701, score error
+21.3 -> 21.2; on 2025, 0.16521 -> 0.16444 and winner accuracy 74.73% -> 74.80%.
 
 Tried and rejected: per-team foul ratings, faster rating changes at each new
 event (superseded by the uncertainty model), blending EPA with OPR, an
@@ -116,7 +128,14 @@ the pre-schedule ranking forecast; and from the 2026-10 round: positive
 momentum (it hurts: event-to-event changes revert), a slow second rating
 track, a win/loss Elo blend, a higher starting uncertainty for rookies,
 uncertainty growing with days idle, per-team consistency in the win spread,
-per-event score offsets, extra spread for a team's first match at an event.
+per-event score offsets, extra spread for a team's first match at an event. From the
+2026-10-15 round (all within +-0.00015 Brier of the current model on 2022-24
+and 2025): per-component Kalman noise for the prediction track, a short-lived
+within-event form term, a fat-tailed win-probability curve and an explicit tie
+mass, asymmetric update gains, cohort (same-event / region) priors for unknown
+teams, and starting variance scaled by how much evidence sits behind the prior.
+Retuning noise parameters does nothing; the gains came from information the
+per-team update throws away (partner correlation, the event's own OPR).
 
 ## Hosting
 The live site at https://oddbot.org is served from a home PC: `npm start`

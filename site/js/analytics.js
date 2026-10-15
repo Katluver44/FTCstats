@@ -17,10 +17,17 @@ export function initAnalytics() {
     allow_google_signals: false,
     allow_ad_personalization_signals: false,
   });
-  const s = document.createElement("script");
-  s.async = true;
-  s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`;
-  document.head.appendChild(s);
+  // gtag.js is ~180 KB of script: fetch it only once the page has loaded and gone idle,
+  // so it never competes with first paint. Calls made before then wait in dataLayer.
+  const inject = () => {
+    const s = document.createElement("script");
+    s.async = true;
+    s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`;
+    document.head.appendChild(s);
+  };
+  const whenIdle = () => (window.requestIdleCallback ? requestIdleCallback(inject, { timeout: 5000 }) : setTimeout(inject, 2000));
+  if (document.readyState === "complete") whenIdle();
+  else addEventListener("load", whenIdle, { once: true });
 }
 
 // Called by the router after every navigation. Paths look like "/2025/team/20265".

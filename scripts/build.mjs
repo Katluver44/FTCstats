@@ -159,13 +159,22 @@ function normInv(p) {
 // season's meta.json (offTables).
 export const PRIOR_OPTS = { weights: [1, 0.3, 0.15], rookieZ: -0.5, minMatches: 5 }; // tuned on 2022-2024
 export const PRIOR_TABLE = "full";
+// The prediction-track columns (pnp, prank) live in priors.json ({file: {team: [pnp, prank]}}),
+// not in the team tables the browser downloads; seasons built before that still
+// have them as table columns, so those are read as they are.
 async function priorTable(season, table) {
   const dir = path.join("site", "data", String(season));
   const meta = await fs.readFile(path.join(dir, "meta.json"), "utf8").then(JSON.parse).catch(() => null);
   if (!meta) return null; // season not built
-  const file = meta.offTables?.[table];
+  const file = table === "official" ? "teams.json" : meta.offTables?.[table];
   if (!file) throw new Error(`site/data/${season}/meta.json has no offTables.${table}: rebuild ${season} first`);
-  return JSON.parse(await fs.readFile(path.join(dir, file), "utf8"));
+  return withPriorCols(dir, file, JSON.parse(await fs.readFile(path.join(dir, file), "utf8")));
+}
+async function withPriorCols(dir, file, t) {
+  if (t.cols.includes("pnp")) return t;
+  const pr = (await fs.readFile(path.join(dir, "priors.json"), "utf8").then(JSON.parse).catch(() => null))?.[file];
+  if (!pr) return t;
+  return { cols: [...t.cols, "pnp", "prank"], rows: t.rows.map((r) => [...r, ...(pr[r[0]] ?? [null, null])]) };
 }
 export async function loadPriors(season, opts = PRIOR_OPTS, col = "pnp", table = PRIOR_TABLE) {
   const { weights, rookieZ, minMatches } = { ...PRIOR_OPTS, ...opts };
@@ -193,7 +202,7 @@ export async function loadPriors(season, opts = PRIOR_OPTS, col = "pnp", table =
     priors.set(t, sum / wsum);
   }
   // spread of last season's EPAs relative to its mean, to turn z into points
-  const prev = JSON.parse(await fs.readFile(path.join("site", "data", String(season - 1), "teams.json"), "utf8"));
+  const prev = await priorTable(season - 1, "official");
   const npI = colOf(prev), mI = prev.cols.indexOf("matches");
   const vals = prev.rows.filter((r) => r[mI] >= minMatches).map((r) => r[npI]);
   if (vals.length < 10) return { priors: new Map(), cv: 0.5 };
@@ -420,9 +429,24 @@ const epaRow = (e) => ({
   rp: e.rp.map(r3),
 });
 
+// Season folders are built in <season>.tmp and swapped in at the end (no window where the
+// live site 404s). A file whose bytes match the live copy is hard-linked from it, and any
+// file left unchanged is not rewritten, so its mtime (the server's cache key) stays put.
+const staging = new Map(); // tmp dir -> live dir
 async function writeJson(file, data) {
+  const buf = Buffer.from(JSON.stringify(data));
   await fs.mkdir(path.dirname(file), { recursive: true });
-  await fs.writeFile(file, JSON.stringify(data));
+  const same = (f) => fs.readFile(f).then((old) => old.equals(buf), () => false);
+  if (await same(file)) return;
+  for (const [tmp, live] of staging) {
+    if (!file.startsWith(tmp + path.sep)) continue;
+    const old = path.join(live, path.relative(tmp, file));
+    if (await same(old)) {
+      await fs.rm(file, { force: true });
+      if (await fs.link(old, file).then(() => true, () => false)) return;
+    }
+  }
+  await fs.writeFile(file, buf);
 }
 
 // params: prediction-track overrides; epaOver: EPA-track overrides ({ shared, auto, teleop, endgame }).
@@ -510,13 +534,15 @@ export async function build(season, params = {}, epaOver = {}) {
     byMonth: [...months].filter(([, m]) => m.n >= 200).map(([month, m]) => ({ month, matches: m.n, epa: r3(m.c / m.n), opr: r3(m.o / m.n) })),
   };
 
-  const out = path.join("site", "data", String(season));
+  const live = path.join("site", "data", String(season));
+  const out = `${live}.tmp`;
   // videos.json / alliances.json come from other scripts (videos.mjs, alliances.mjs); keep them
   const keep = {};
-  for (const f of ["videos.json", "alliances.json"]) keep[f] = await fs.readFile(path.join(out, f)).catch(() => null);
+  for (const f of ["videos.json", "alliances.json"]) keep[f] = await fs.readFile(path.join(live, f)).catch(() => null);
   await fs.rm(out, { recursive: true, force: true });
   await fs.mkdir(out, { recursive: true });
-  for (const [f, buf] of Object.entries(keep)) if (buf) await fs.writeFile(path.join(out, f), buf);
+  staging.set(out, live);
+  for (const [f, buf] of Object.entries(keep)) if (buf) await fs.link(path.join(live, f), path.join(out, f)).catch(() => fs.writeFile(path.join(out, f), buf));
   if (keep["videos.json"]) await splitVideos(out, JSON.parse(keep["videos.json"]));
 
   // ---- team info gathered from event rosters ----
@@ -547,9 +573,18 @@ export async function build(season, params = {}, epaOver = {}) {
     // teams with only off-season matches have no official rating yet: list them last
     .sort(byRating("e", true));
   // np/auto/teleop/endgame: EPA track. pnp..pendgame, rp0-2: prediction track;
-  // prank: order by prediction rating (ties in the rounded pnp keep it, for priors)
-  const cols = ["team", "name", "loc", "country", "np", "auto", "teleop", "endgame", "rp0", "rp1", "rp2",
+  // prank: order by prediction rating (ties in the rounded pnp keep it, for priors).
+  // pnp and prank only seed next season's priors, so they go to priors.json, not the
+  // tables the browser loads (see slim()).
+  const fullCols = ["team", "name", "loc", "country", "np", "auto", "teleop", "endgame", "rp0", "rp1", "rp2",
     "matches", "wins", "losses", "ties", "events", "trend", "pnp", "pauto", "pteleop", "pendgame", "prank", "cons", "sos", "sosPlaces"];
+  const PRIOR_COLS = ["pnp", "prank"].map((c) => fullCols.indexOf(c));
+  const cols = fullCols.filter((_, j) => !PRIOR_COLS.includes(j));
+  const priorsOut = {};
+  const slim = (file, full) => {
+    priorsOut[file] = Object.fromEntries(full.map((r) => [r[0], PRIOR_COLS.map((j) => r[j])]));
+    return full.map((r) => r.filter((_, j) => !PRIOR_COLS.includes(j)));
+  };
   const predRank = (list, split) => new Map([...list].sort(byRating("p", split)).map((x, i) => [x.t, i]));
   // Strength of schedule (site/js/sos.js): how hard each team's qualification draws
   // were, 0-1 (the chance a random schedule would have been easier), on ranking points,
@@ -593,30 +628,33 @@ export async function build(season, params = {}, epaOver = {}) {
       ...p.rp.map(r3), hh.length, w, l, ti, evs, r1(e.np - prev),
       r1(p.np), r1(p.auto), r1(p.teleop), r1(p.endgame), prank.get(t), cons == null ? null : r3(cons), ...(sosOf(t, official) ?? [null, null])];
   });
-  const rows = tableRows(ranked, true, predRank(ranked, true));
+  const rows = slim("teams.json", tableRows(ranked, true, predRank(ranked, true)));
   await writeJson(path.join(out, "teams.json"), { cols, rows });
+  const ci = (k) => cols.indexOf(k);
   // the team page radar ranks a team among teams with 5+ matches; ship 101 quantiles
   // of each axis (meta.radarDist) instead of making the page load teams.json
   const quant = (xs) => {
     const v = xs.filter((x) => x != null && !Number.isNaN(x)).sort((a, b) => a - b);
     return v.length ? Array.from({ length: 101 }, (_, q) => r3(v[Math.round((q / 100) * (v.length - 1))])) : [];
   };
-  const radarPool = rows.filter((r) => r[11] >= 5);
+  const [mI, consI] = [ci("matches"), ci("cons")];
+  const radarPool = rows.filter((r) => r[mI] >= 5);
   const clamp01 = (x) => Math.min(1, Math.max(0, x ?? 0));
   const radarDist = {
     auto: quant(radarPool.map((r) => r[5])), teleop: quant(radarPool.map((r) => r[6])), endgame: quant(radarPool.map((r) => r[7])),
     rp: quant(radarPool.map((r) => cfg.rpNames.reduce((sum, _, i) => sum + clamp01(r[8 + i]), 0))),
-    cons: quant(radarPool.map((r) => (r[22] == null ? null : -r[22]))),
+    cons: quant(radarPool.map((r) => (r[consI] == null ? null : -r[consI]))),
     win: quant(radarPool.map((r) => (r[11] ? (r[12] + r[14] / 2) / r[11] : null))),
   };
-  const consOf = new Map(rows.map((r) => [r[0], r[22]]));
+  const consOf = new Map(rows.map((r) => [r[0], r[consI]]));
 
   // Teams from last season that haven't played this season yet, with the EPA the
   // model starts them on (carried over from past seasons), so Compete can use them
   const last = await fs.readFile(path.join("site", "data", String(season - 1), "teams.json"), "utf8").then(JSON.parse).catch(() => null);
+  let pre = [];
   if (last) {
     const c = (k) => last.cols.indexOf(k);
-    const pre = last.rows.filter((r) => !history.has(r[0]) && !isPlaceholder(r[0])).map((r) => {
+    pre = last.rows.filter((r) => !history.has(r[0]) && !isPlaceholder(r[0])).map((r) => {
       const t = r[0], e = epaTrack.rate(t), p = model.epa(t), i = info.get(t);
       return [t, i?.name || r[c("name")], i?.loc || r[c("loc")], r1(e.np), r1(e.auto), r1(e.teleop), r1(e.endgame),
         r1(p.np), r1(p.auto), r1(p.teleop), r1(p.endgame), ...p.rp.map(r3)];
@@ -660,9 +698,10 @@ export async function build(season, params = {}, epaOver = {}) {
         .map((t) => ({ t, e: allEpa.rate(t), p: allModel.epa(t), h: allHist.get(t) }))
         .sort(byRating("e", false));
       offTables[key] = OFF_TABLES[key].file;
-      await writeJson(path.join(out, offTables[key]), { cols, rows: tableRows(rankedAll, false, predRank(rankedAll, false)) });
+      await writeJson(path.join(out, offTables[key]), { cols, rows: slim(offTables[key], tableRows(rankedAll, false, predRank(rankedAll, false))) });
     }
   }
+  await writeJson(path.join(out, "priors.json"), priorsOut);
 
   // ---- per-team files, bundled 10 teams to a file (team/<number / 10>x.json: 1919x = 19190-19199) ----
   const rankOf = new Map(ranked.map((x, i) => [x.t, i + 1]));
@@ -743,6 +782,7 @@ export async function build(season, params = {}, epaOver = {}) {
           solo: start.solo.map(r1), n: start.n, v: r3(start.v), rp: start.rp.map(r3), ev: start.ev ?? null,
           evStart: start.evStart ? Object.fromEntries(Object.entries(start.evStart).map(([k, v]) => [k, r1(v)])) : null,
           ...(start.zone ? { zone: start.zone.map(r3) } : {}),
+          ...(start.cov ? { cov: start.cov.map((x, i) => (i & 1 ? r3(x) : x)) } : {}),
         } : null,
         epaEnd: h.length ? h[h.length - 1].epa[0] : null,
         // [np, auto, teleop, endgame] entering the event and after its last match here, for the pick map
@@ -828,6 +868,16 @@ export async function build(season, params = {}, epaOver = {}) {
   }
   evList.sort((a, b) => b.start.localeCompare(a.start) || b.strength - a.strength);
   await writeJson(path.join(out, "events.json"), evList);
+  // search index, loaded when the search box gets focus: every team, in columns
+  // (smaller once compressed): this season's in rank order (the first `played`), then
+  // last season's not seen yet; events as [code, name, type, start, loc, teams, st],
+  // st: 0 upcoming, 1 live, 2 finished
+  const searchTeams = [...rows, ...pre];
+  await writeJson(path.join(out, "search.json"), {
+    played: rows.length,
+    teams: { num: searchTeams.map((r) => r[0]), name: searchTeams.map((r) => r[1]), loc: searchTeams.map((r) => r[2]) },
+    events: evList.map((e) => [e.code, e.name, e.type, e.start, e.loc, e.teams, e.ongoing ? 1 : e.finished ? 2 : 0]),
+  });
   // small file so the home page loads without the full team/event lists
   await writeJson(path.join(out, "summary.json"), {
     cols, top: rows.slice(0, 10),
@@ -866,6 +916,13 @@ export async function build(season, params = {}, epaOver = {}) {
     solo: fits.map((f) => ({ comp: f.comp, label: f.label, moved: f.moved, parked: f.parked, robots: f.robots, values: f.values, exact: r3(f.exact) })),
   };
   await writeJson(path.join(out, "meta.json"), meta);
+  // swap the finished folder in: two renames, so the live folder is missing for well under a millisecond
+  staging.delete(out);
+  const old = `${live}.old`;
+  await fs.rm(old, { recursive: true, force: true });
+  await fs.rename(live, old).catch((e) => { if (e.code !== "ENOENT") throw e; });
+  await fs.rename(out, live);
+  await fs.rm(old, { recursive: true, force: true });
   return meta;
 }
 

@@ -11,9 +11,7 @@
   <meta property="og:description" content="FTC team ratings, match predictions you can check, and live ranking forecasts.">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap">
+  <link rel="preload" href="fonts/roboto-latin-var.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
   <link rel="modulepreload" href="js/app.js">
   <link rel="modulepreload" href="js/ui.js">
@@ -26,8 +24,7 @@
   <link rel="modulepreload" href="js/sos.js">
   <link rel="modulepreload" href="js/analytics.js">
   <link rel="modulepreload" href="js/advancement.js">
-  <!-- the season index is the first thing the app asks for: start it alongside the scripts -->
-  <link rel="preload" href="data/index.json" as="fetch" crossorigin="anonymous">
+  <link rel="preload" href="data/index.json" as="fetch" crossorigin>
 </head>
 <body>
   <header class="nav">
@@ -64,6 +61,6 @@
   </header>
   <main id="app"><div class="loading">Loading…</div></main>
   <footer>Match data from the <a href="https://ftc-events.firstinspires.org/api" target="_blank" rel="noopener">FIRST FTC Events API</a>, via <a href="https://ftcscout.org" target="_blank" rel="noopener">FTCScout</a> · not affiliated with FIRST</footer>
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js" data-cfasync="false"></script>
 </body>
 </html>
