@@ -447,7 +447,7 @@ function refitHome() {
   if (!homeRows || !document.body.classList.contains("home-fit") || !homeRows[0][0].isConnected) return;
   document.body.classList.remove("home-scroll");
   document.body.style.setProperty("--head-h", `${$("header")?.offsetHeight ?? 0}px`);
-  for (const [l, rows] of homeRows) l.replaceChildren(...rows);
+  for (const [l, rows] of homeRows) { l.replaceChildren(...rows); l.classList.remove("fitted"); }
   if (!matchMedia("(min-width: 901px) and (min-height: 520px)").matches) return;
   let fits = true;
   for (const [l] of homeRows) {
@@ -458,6 +458,8 @@ function refitHome() {
   // same number of rows on both sides, so the two cards line up
   const n = Math.min(...homeRows.map(([l]) => l.children.length));
   for (const [l] of homeRows) while (l.children.length > n) l.lastElementChild.remove();
+  // the rows share out what's left over (less than a row), instead of leaving a gap above "All teams →"
+  for (const [l] of homeRows) l.classList.add("fitted");
   // too short a window for a useful one-screen page: 4 rows a side, and scroll
   if (!fits) {
     for (const [l, rows] of homeRows) l.replaceChildren(...rows.slice(0, 4));
@@ -1217,16 +1219,20 @@ async function events(r) {
     { key: "start", label: "Date", cls: "c small muted", render: (e) => fmtDate(e.start) },
     { key: "type", label: "Type", cls: "c small muted hide-sm", render: (e) => esc(typeName(e.type)) },
     { key: "teams", label: "Teams", cls: "r hide-sm" },
-    { key: "played", label: "Matches", cls: "r small hide-sm", render: (e) => (e.matches ? (e.played < e.matches ? `${e.played}/${e.matches}` : e.matches) : "–") },
-    { key: "strength", label: '<span class="hide-sm">Strength</span><span class="show-sm">EPA</span>', cls: "r epa-col", render: (e) => epa(e.strength, meta) },
+        // events not played yet: no match count, and no strength until its teams have ratings (it read "0.0")
+    { key: "played", label: "Matches", cls: "r small hide-sm col-matches", render: (e) => (e.matches ? (e.played < e.matches ? `${e.played}/${e.matches}` : e.matches) : "") },
+    { key: "strength", label: '<span class="hide-sm">Strength</span><span class="show-sm">EPA</span>', cls: "r epa-col", render: (e) => (e.strength > 0 ? epa(e.strength, meta) : '<span class="faint">–</span>') },
   ];
+  $("#tbl").classList.add("ev-list");
   const table = sortableTable($("#tbl"), evs, cols, { sortKey: "start" });
   const fillStates = regionSelect($("#state"), () => evs.filter((e) => e.country === $("#country").value), query.get("state"));
   const apply = () => {
     const q = $("#filter").value.trim().toLowerCase(), ty = $("#type").value, c = $("#country").value, st = $("#state").value, mo = $("#month").value, stat = $("#status")?.value ?? "";
     syncQuery({ q: $("#filter").value.trim(), type: ty, country: c, state: st, month: mo, status: stat });
-    table.setRows(evs.filter((e) => (!ty || e.type === ty) && (!c || e.country === c) && (!st || e.region === st) && (!mo || e.month === mo) && (!stat || status(e) === stat) &&
-      (!q || e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q) || e.loc.toLowerCase().includes(q))));
+    const shown = evs.filter((e) => (!ty || e.type === ty) && (!c || e.country === c) && (!st || e.region === st) && (!mo || e.month === mo) && (!stat || status(e) === stat) &&
+      (!q || e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q) || e.loc.toLowerCase().includes(q)));
+    $("#tbl").classList.toggle("none-played", !shown.some((e) => e.matches)); // no Matches column when nothing listed has played
+    table.setRows(shown);
   };
   $("#filter").oninput = apply; $("#type").onchange = apply; $("#state").onchange = apply; $("#month").onchange = apply; if ($("#status")) $("#status").onchange = apply;
   $("#country").onchange = () => { fillStates(); apply(); };
