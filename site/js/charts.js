@@ -56,7 +56,6 @@ export function scatter(el, rows, { x, y, href, labelTop = 8 }) {
   let sxy = 0, sxx = 0, syy = 0;
   for (const p of pts) { sxy += (p.vx - mx) * (p.vy - my); sxx += (p.vx - mx) ** 2; syy += (p.vy - my) ** 2; }
   const corr = sxx && syy ? sxy / Math.sqrt(sxx * syy) : null, slope = sxx ? sxy / sxx : 0;
-  const medX = quantile(pts.map((p) => p.vx).sort((a, b) => a - b), 0.5), medY = quantile(pts.map((p) => p.vy).sort((a, b) => a - b), 0.5);
 
   responsive(el, (W) => {
     const H = Math.round(Math.min(560, Math.max(340, W * 0.5)));
@@ -66,7 +65,6 @@ export function scatter(el, rows, { x, y, href, labelTop = 8 }) {
     let g = "";
     for (const t of sy.ticks) g += `<line class="grid-line" x1="${P.l}" x2="${W - P.r}" y1="${Y(t)}" y2="${Y(t)}"/><text x="${P.l - 8}" y="${Y(t) + 4}" text-anchor="end">${y.show(t, true)}</text>`;
     for (const t of sx.ticks) g += `<line class="grid-line" y1="${P.t}" y2="${H - P.b}" x1="${X(t)}" x2="${X(t)}"/><text x="${X(t)}" y="${H - P.b + 18}" text-anchor="middle">${x.show(t, true)}</text>`;
-    g += `<line class="med-line" x1="${X(medX)}" x2="${X(medX)}" y1="${P.t}" y2="${H - P.b}"/><line class="med-line" x1="${P.l}" x2="${W - P.r}" y1="${Y(medY)}" y2="${Y(medY)}"/>`;
     // trend line, clipped to the plot box
     const clipY = (v) => Math.min(sy.hi, Math.max(sy.lo, v));
     const fy = (vx) => my + slope * (vx - mx);

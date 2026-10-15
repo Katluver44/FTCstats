@@ -1080,7 +1080,6 @@ body.home-fit .hero { flex-shrink: 0; }
 .chart .dot.top { fill: var(--gold); fill-opacity: .95; stroke: var(--surface); stroke-width: 1.5; }
 .chart .dot-label { fill: var(--text); fill-opacity: .6; font-size: 11.5px; font-weight: 700; paint-order: stroke; stroke: var(--surface); stroke-opacity: .5; stroke-width: 3px; }
 .chart .dot-ring { fill: none; stroke: var(--text); stroke-width: 2; pointer-events: none; }
-.chart .med-line { stroke: var(--faint); stroke-dasharray: 4 4; opacity: .55; }
 .chart .fit-line { stroke: var(--red); stroke-width: 1.5; stroke-dasharray: 6 4; opacity: .7; }
 .chart .corr { fill: var(--muted); font-size: 12px; font-weight: 600; }
 .chart .bar { fill: var(--accent); fill-opacity: .75; transition: fill-opacity .1s; }
