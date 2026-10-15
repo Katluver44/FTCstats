@@ -2082,7 +2082,7 @@ async function match(r) {
     const delta = played && played1 ? a.np - b.np : null;
     return `<tr class="side-${s}">
       <td>${teamCell(season, t, row?.name ?? "")}${played1 ? "" : ' <span class="pill">didn\'t play</span>'}</td>
-      <td class="c">${epa(b.np, meta)}</td>
+      <td class="c"><b>${fmt(b.np)}</b></td> <!-- plain, like the Compete table: the percentile chips read as random styling in a 4-row table -->
       <td class="r">${delta != null ? `${fmt(a.np)} ${trend(delta)}` : '<span class="faint">–</span>'}</td>
       <td class="r small hide-sm">${fmt(b.auto)}</td><td class="r small hide-sm">${fmt(b.teleop)}</td><td class="r small hide-sm">${fmt(b.endgame)}</td>
       <td class="r">${rankCell(t)}</td>
