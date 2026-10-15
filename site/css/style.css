@@ -1087,8 +1087,6 @@ body.home-fit .hero { flex-shrink: 0; }
 /* sits out in the left margin, so the search box keeps lining up with the table */
 @media (min-width: 901px) { .toolbar .view-pick { margin-left: calc(var(--gutter) / -2); } }
 @media (max-width: 640px) { .chart-controls { margin-left: 0; } .view-pick button { padding: 5px 9px; } }
-.csv-btn { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--glass-strong); color: var(--muted); cursor: pointer; }
-.csv-btn:hover { color: var(--accent); border-color: var(--accent); }
 button.pill { font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
 pre.code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
 .prose code { font-size: 12.5px; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
@@ -1278,8 +1276,7 @@ main > #tab > .card:last-child { flex: 1; }
   .toolbar input { min-width: 0; flex: 1 1 150px; }
   .toolbar > select { flex: 1 1 130px; min-width: 0; max-width: none; }
   .toolbar .scope a { padding: 6px 9px; font-size: 13px; }
-  .toolbar .col-pick summary, .toolbar .csv-btn { padding: 6px 10px; }
-  .toolbar .csv-btn { margin-left: auto; }
+  .toolbar .col-pick summary { padding: 6px 10px; }
   /* events: search on its own row, the four filters as a 2-column grid */
   .toolbar:not(:has(.view-pick)):has(#month) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .toolbar:not(:has(.view-pick)):has(#month) > input { grid-column: 1 / -1; }
@@ -1404,7 +1401,7 @@ main > #tab > .card:last-child { flex: 1; }
   .chart-pick a { min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
   .view-pick button { min-height: 36px; }
   .toolbar .scope a { min-height: 36px; display: inline-flex; align-items: center; }
-  .col-pick summary, .csv-btn { min-height: 36px; display: inline-flex; align-items: center; }
+  .col-pick summary { min-height: 36px; display: inline-flex; align-items: center; }
   .series-toggle button { min-height: 36px; padding: 0 12px; }
   .more { min-height: 44px; display: flex; align-items: center; }
 }
@@ -1493,7 +1490,7 @@ main > #tab > .card:last-child { flex: 1; }
 }
 /* -- end event page -- */
 /* -- mobile: teams/events lists, compete -- */
-/* Teams list: table only (no chart view, no CSV); #, Team, EPA, Record by default (app.js).
+/* Teams list: table only (no chart view); #, Team, EPA, Record by default (app.js).
    Events list: no Strength column (desk-only); Teams count shown; the location/Live line is back.
    Compete / Head to head / SIM: no intro paragraph (desk-only); bigger remove buttons, full-width actions. */
 @media (max-width: 640px) {
@@ -1628,9 +1625,12 @@ main > #tab > .card:last-child { flex: 1; }
    while loading. Reduced motion keeps it still. See STYLE.md "The robot". */
 .bot { display: block; overflow: visible; }
 .bot .bot-g { transform-box: view-box; transform-origin: 0 0; }
-.logo-bot .bot-g { animation: bot-hello 1.1s cubic-bezier(.3, .7, .3, 1) .15s both; }
+/* the logo drives in from off the left edge (strafing, still facing forward), then spins once on the spot */
+.logo-bot { animation: bot-enter 1.3s cubic-bezier(.2, .7, .25, 1) .1s both; }
+.logo-bot .bot-g { animation: bot-spin .55s ease-in-out 1.3s both; }
+@keyframes bot-enter { from { transform: translateX(calc(-1 * var(--gutter) - 48px)); } to { transform: none; } }
+@keyframes bot-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .logo:hover .logo-bot .bot-g { animation: bot-strafe .9s ease-in-out; }
-@keyframes bot-hello { 0% { transform: translateX(-18px) rotate(-180deg); opacity: 0; } 70% { transform: translateX(1px) rotate(8deg); opacity: 1; } 100% { transform: none; } }
 @keyframes bot-strafe { 0%, 100% { transform: none; } 30% { transform: translateX(-5px); } 70% { transform: translateX(5px); } }
 .loading { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .bot-wait .bot-g { animation: bot-wait 2.6s ease-in-out infinite; }
@@ -1642,7 +1642,7 @@ main > #tab > .card:last-child { flex: 1; }
 .bot-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 64px var(--gutter); text-align: center; }
 .bot-empty .bot { margin-bottom: 8px; }
 .bot-empty b { font-size: 20px; font-weight: 700; }
-@media (prefers-reduced-motion: reduce) { .bot .bot-g { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .bot, .bot .bot-g { animation: none !important; } }
 /* phones: no logo; the nav links take its place */
 @media (max-width: 640px) { .nav .logo { display: none; } }
 .bot-inline { display: inline-flex; align-items: center; gap: 10px; }

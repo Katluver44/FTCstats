@@ -151,7 +151,7 @@ mascot is a top-down mecanum robot: blue body, four wheels, rollers in an X.
   favicon.
 - **Where it doesn't:** next to data, in tables with rows, in charts, as a bullet
   or decoration. It marks "nothing here yet" or "this is oddrobot", nothing else.
-- **Motion:** the logo spins in once on load and strafes on hover; the loading
+- **Motion:** the logo drives in from off the left edge on load (strafing), spins once on the spot, and strafes on hover; the loading
   robot drives and turns; everything else is still. Mecanum moves only: strafe
   without turning, spin on the spot. All of it stops under `prefers-reduced-motion`.
 - **Phones:** no logo in the header (the nav links need the room). The robot still

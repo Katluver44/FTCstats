@@ -1,6 +1,6 @@
 import {
   $, $$, esc, data, getJSON, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
-  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, videoLinks, PLAY_ICON, downloadCsv, CSV_ICON, robot, ROBOT_PARTS } from "./ui.js";
+  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, videoLinks, PLAY_ICON, robot, ROBOT_PARTS } from "./ui.js";
 import { SEASONS } from "./seasons.js";
 import { scatter, histogram, breakdown } from "./charts.js";
 import { addEventSos, sosValue, sosPlaces } from "./sos.js";
@@ -489,7 +489,6 @@ async function teams(r) {
             .map(([k, l, tip]) => `<a href="#" data-off="${k}" class="${k === off ? "active" : ""}" title="${tip}">${l}</a>`).join("")}
         </div>` : ""}
         <details class="col-pick"${view === "chart" ? " hidden" : ""}><summary>Columns</summary><div id="col-list"></div></details>
-        <button type="button" class="csv-btn desk-only" id="csv" title="Download this list (filters, sort and shown columns) as a spreadsheet">${CSV_ICON}CSV</button>
       </div>
       <div id="tbl"${view === "chart" ? " hidden" : ""}></div>
       <div id="charts" class="card-pad team-charts"${view === "table" ? " hidden" : ""}></div>
@@ -519,24 +518,6 @@ async function teams(r) {
     { key: "trend", label: "Trend", cls: "r small", render: (r) => (r.trend == null ? "–" : `<span title="EPA change over the last 10 matches">${trend(r.trend)}</span>`) },
     { key: "sos", label: `<span title="Strength of schedule, 0 to 1: how hard its qualification draws (partners and opponents) were for its ranking, as the share of random schedules at the same events that would have been easier. 0.5 = typical, 1 = hardest">SOS</span>`, cls: "r small", render: (r) => sosCell(r.sos, r.sosPlaces) },
   ];
-  // CSV: plain values for each shown column (team splits into number + name)
-  const CSV_VAL = {
-    rank: (r) => r.rank, loc: (r) => r.loc, country: (r) => r.country, region: (r) => r.region, np: (r) => r.np,
-    auto: (r) => r.auto, teleop: (r) => r.teleop, endgame: (r) => r.endgame, rps: (r) => r.rps?.toFixed(2),
-    wins: (r) => `${r.wins}-${r.losses}-${r.ties}`, wr: (r) => r.wr?.toFixed(3), matches: (r) => r.matches, events: (r) => r.events,
-    cons: (r) => r.cons, trend: (r) => r.trend, sos: (r) => r.sos,
-  };
-  rpNames.forEach((_, i) => (CSV_VAL[`rpr${i}`] = (r) => r[`rpr${i}`]?.toFixed(3)));
-  $("#csv").onclick = () => {
-    const shownCols = cols.filter((c) => !hiddenCols.has(c.key));
-    const out = [];
-    for (const c of shownCols) {
-      if (c.key === "team") out.push({ label: "Team", get: (r) => r.team }, { label: "Name", get: (r) => r.name }, { label: "Location", get: (r) => r.loc });
-      else if (CSV_VAL[c.key]) out.push({ label: c.key === "np" ? "EPA" : c.key === "wins" ? "Record (W-L-T)" : plain(c), get: CSV_VAL[c.key] });
-    }
-    if (+$("#minm").value === 0) out.push({ label: "Predicted (no matches yet)", get: (r) => (r.pre ? "yes" : "") });
-    downloadCsv(`ftcstats-${season}-teams.csv`, out, view === "table" && table ? table.sorted() : shown);
-  };
   // Columns menu: everything but rank, team and EPA can be hidden (remembered per device).
   // Off by default: location, win rate and the extra columns added later.
   const FIXED = new Set(["rank", "team", "np"]);
