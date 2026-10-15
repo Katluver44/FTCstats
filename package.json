@@ -19,6 +19,7 @@
     "check": "for y in 2019 2020 2021 2022 2023 2024 2025 2026; do node scripts/check-rs.mjs $y || exit 1; done",
     "experiments": "node scripts/experiments.mjs",
     "solo-values": "node scripts/solo-values.mjs 2019 2020 2021 2022 2023 2024 2025 2026",
-    "start": "node scripts/server.mjs"
+    "start": "node scripts/server.mjs",
+    "style": "node scripts/style-lint.mjs"
   }
 }

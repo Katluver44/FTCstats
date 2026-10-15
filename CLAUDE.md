@@ -37,6 +37,9 @@ runs update + check hourly, so pushing to `main` goes live within the hour.
 Don't deploy by hand unless asked.
 
 ## Rules
+- Look and layout: follow STYLE.md (type/spacing/colour rules, one component per
+  job, the "AI tells" checklist). Run `npm run style` before and after CSS changes;
+  the count must not go up. Only one session does design work at a time (STYLE.md §10).
 - Model changes: run `npm run experiments` (or `compare`) before and after and
   report winner-accuracy / Brier on held-out data. Don't tune on the test season.
 - Run `npm run check` after anything touching rankings.
