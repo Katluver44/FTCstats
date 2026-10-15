@@ -1948,3 +1948,8 @@ button.link { padding: 0; border: 0; background: none; font: inherit; font-weigh
    no Matches column when nothing listed has been played */
 .ev-list th:first-child { width: 42%; }
 .ev-list.none-played .col-matches { display: none; }
+/* match page previous / next: a soft pill behind the link under the pointer, like the gear button's hover */
+.page-head .head-nav { gap: 4px; margin-right: -8px; }
+.page-head .head-nav .link { padding: 4px 8px; border-radius: 8px; transition: background-color .12s; }
+.page-head .head-nav .link:hover { background: var(--surface-2); text-decoration: none; }
+@media (max-width: 640px) { .page-head .head-nav { margin: -12px 0 0 -8px; } }
