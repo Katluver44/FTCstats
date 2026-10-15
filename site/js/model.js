@@ -83,6 +83,15 @@ export const DEFAULT_PARAMS = {
   // zero in 3 (2019, 2021, 2025). On by owner's call (2026-10-13).
   calPair: 1,
   calPairWin: 1,
+  // Partner covariance (joint attribution). Two partners who split one alliance
+  // surprise end up with negatively correlated errors (if A deserves more, B
+  // deserves less). Each team remembers a few recent partners and the covariance
+  // their shared updates created; when A is later updated with someone else,
+  // covBlend x that covariance passes part of the correction back to B. 0 = off.
+  covBlend: 0,
+  covDecay: 0.05, // covariance lost per match (robots change, the link goes stale)
+  covEvent: 0.5, // extra factor at a team's first match of a new event
+  covMax: 8, // partners remembered per team
 };
 
 // ---- Two tracks ----
@@ -479,6 +488,7 @@ export class Model {
     for (const t of ts) {
       if (eventCode && t.ev !== eventCode) {
         if (t.ev) t.v += this.p.vEvent;
+        if (t.cov) for (const [j, c] of t.cov) t.cov.set(j, c * this.p.covEvent);
         if (this.p.mom) {
           if (t.ev && t.evStart) for (const c of COMPONENTS) t[c] += this.p.mom * (t[c] - t.evStart[c]);
           t.evStart = { auto: t.auto, teleop: t.teleop, endgame: t.endgame };
@@ -487,7 +497,41 @@ export class Model {
       }
     }
     const sum = ts.reduce((s, t) => s + t.v, 0) + this.p.vObs * this.levelScale(level, this.p.obsHet);
+    this.lastS = sum;
     return ts.map((t) => t.v / sum);
+  }
+
+  // Joint attribution: the observation of `nums` (innovation err, variance S)
+  // also tells us about earlier partners of these teams through the covariance
+  // their shared updates left. Then the pairs inside this alliance get a new
+  // (negative) covariance from the update: c' = c - (v_i + c)(v_j + c) / S.
+  covStep(nums, preV, err, S, w) {
+    const { covBlend, covDecay, covMax } = this.p;
+    const ts = nums.map((n) => this.team(n));
+    ts.forEach((t, i) => {
+      if (!t.cov) return;
+      for (const [j, c] of [...t.cov]) {
+        if (nums.includes(j)) continue;
+        const tj = this.team(j);
+        const lim = 0.9 * Math.sqrt(t.v * tj.v);
+        for (const comp of COMPONENTS) tj[comp] += covBlend * w * (clamp(c, -lim, lim) / S) * err[comp];
+      }
+    });
+    ts.forEach((t, i) => {
+      t.cov ??= new Map();
+      for (const [j, c] of t.cov) t.cov.set(j, c * (1 - covDecay));
+      nums.forEach((o, j) => {
+        if (j === i) return;
+        const c = t.cov.get(o) ?? 0;
+        // keep it a valid correlation: |c| <= 0.9 sqrt(v_i v_j)
+        const lim = 0.9 * Math.sqrt(preV[i] * preV[j]);
+        t.cov.set(o, clamp(c - w * ((preV[i] + c) * (preV[j] + c)) / S, -lim, lim));
+      });
+      if (t.cov.size > covMax) {
+        const keep = [...t.cov].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, covMax);
+        t.cov = new Map(keep);
+      }
+    });
   }
 
   // actual: { red: {auto, teleop, endgame, np, total, rp, solo?}, blue: {...} }
@@ -544,6 +588,7 @@ export class Model {
       if (!isElim) this.errVar.np += ea * (eNp * eNp - this.errVar.np);
       const volAdd = this.p.volK ? this.p.volK * Math.max(0, Math.abs(zNp) - this.p.volThr) ** 2 : 0;
 
+      const S = this.lastS, preV = nums.map((n) => this.team(n).v);
       nums.forEach((num, i) => {
         const t = this.team(num);
         const k = share[i] * w;
@@ -562,6 +607,7 @@ export class Model {
         if (this.p.kalman) t.v = t.v * (1 - share[i] * w) + this.p.vMatch + volAdd * w;
         t.n++;
       });
+      if (this.p.kalman && this.p.covBlend) this.covStep(nums, preV, err, S, w);
 
       // season-wide averages drift as teams improve
       const a = this.p.emaAlpha;
