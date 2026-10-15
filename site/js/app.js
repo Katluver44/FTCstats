@@ -2486,18 +2486,9 @@ async function about(r) {
 
 async function boot() {
   initAnalytics();
-  const theme = (() => { try { return localStorage.getItem("theme"); } catch { return null; } })();
-  if (theme) document.documentElement.dataset.theme = theme;
-  const isDark = () => document.documentElement.dataset.theme
-    ? document.documentElement.dataset.theme === "dark"
-    : matchMedia("(prefers-color-scheme: dark)").matches;
-  const label = () => $("#theme").setAttribute("aria-label", isDark() ? "Switch to light mode" : "Switch to dark mode");
-  label();
-  $("#theme").onclick = () => {
-    document.documentElement.dataset.theme = isDark() ? "light" : "dark";
-    try { localStorage.setItem("theme", document.documentElement.dataset.theme); } catch {}
-    label();
-  };
+  // dark only (no theme toggle); forget a light choice saved by the old toggle
+  document.documentElement.dataset.theme = "dark";
+  try { localStorage.removeItem("theme"); } catch {}
 
   // one small file says which seasons exist and which to open by default
   const index = await getJSON("data/index.json").catch(() => null);
