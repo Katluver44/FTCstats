@@ -97,9 +97,10 @@ export async function prepare(season, events, priorOpts) {
   const matches = playedMatches(season, events, fits);
   const baseline = baselineOf(matches, soloComps);
   // prediction track's priors come from last seasons' prediction ratings, the EPA track's from their EPAs
-  const { priors, cv, rookieZ } = await loadPriors(season, priorOpts, "pnp");
+  // priorRel: each team's prior reliability in [0, 1) (Model param v0Rel)
+  const { priors, cv, rookieZ, rel: priorRel } = await loadPriors(season, priorOpts, "pnp");
   const epaPriors = await loadEpaPriors(season);
-  return { season, events, fits, soloComps, movedSpec, parkedSpec, matches, baseline, priors, cv, rookieZ, epaPriors };
+  return { season, events, fits, soloComps, movedSpec, parkedSpec, matches, baseline, priors, cv, rookieZ, priorRel, epaPriors };
 }
 
 // Average alliance values over the first matches; components exclude per-robot points.
@@ -155,7 +156,28 @@ function normInv(p) {
 // off-season event at OFF_WEIGHT, minus excluded ones) predicted the next season
 // marginally best (research/tune-shared/). The file name comes from that
 // season's meta.json (offTables).
-export const PRIOR_OPTS = { weights: [1, 0.3, 0.15], rookieZ: -0.5, minMatches: 5 }; // tuned on 2022-2024
+//
+// Marcel-style option (nWeight 1; off by default): each past season counts by
+// weight x matches played there (capped at nCap so one long season can't
+// dominate), and n0 pseudo-matches at zTarget regress thin histories toward the
+// league:
+//   z = (sum_k w_k min(n_k, nCap) z_k + n0 zTarget) / (sum_k w_k min(n_k, nCap) + n0)
+// Any team with >= nMinMatches counts, so one short event last season enters
+// with a small weight instead of the team starting as a rookie. A season the
+// team missed adds nMiss matches at rookieZ (0: it just adds no weight).
+// Whatever the blend, every team with history also gets a reliability
+// r = W / (W + n0) in [0, 1), W = sum_k w_k min(n_k, nCap): the model can start
+// thin histories with more variance (Model param v0Rel), so they learn faster.
+// (After Tango's Marcel projections and DARKO's prior handling.)
+export const PRIOR_OPTS = {
+  weights: [1, 0.3, 0.15], rookieZ: -0.5, minMatches: 5, // tuned on 2022-2024
+  nWeight: 0, // 1 = Marcel blend above; 0 = fixed season weights
+  n0: 15, // pseudo-matches of regression toward zTarget (also sets r)
+  nCap: 40, // per-season match cap
+  zTarget: 0, // regression target, in z
+  nMinMatches: 1, // matches needed to count when nWeight is on (minMatches otherwise)
+  nMiss: 0, // nWeight on: a missed season counts as nMiss matches at rookieZ
+};
 export const PRIOR_TABLE = "full";
 async function priorTable(season, table) {
   const dir = path.join("site", "data", String(season));
@@ -165,39 +187,58 @@ async function priorTable(season, table) {
   if (!file) throw new Error(`site/data/${season}/meta.json has no offTables.${table}: rebuild ${season} first`);
   return JSON.parse(await fs.readFile(path.join(dir, file), "utf8"));
 }
-export async function loadPriors(season, opts = PRIOR_OPTS, col = "pnp", table = PRIOR_TABLE) {
-  const { weights, rookieZ, minMatches } = { ...PRIOR_OPTS, ...opts };
+// Starting z-scores and reliabilities from past seasons' team tables
+// (tables[k - 1] = season minus k's table, or null). Pure, for tests.
+// Returns null without last season, else { priors, rel }: Map(team -> z), Map(team -> r).
+export function blendPriors(tables, opts = PRIOR_OPTS, col = "pnp") {
+  const { weights, rookieZ, minMatches, nWeight, n0, nCap, zTarget, nMinMatches, nMiss } = { ...PRIOR_OPTS, ...opts };
   const colOf = (t) => (t.cols.includes(col) ? t.cols.indexOf(col) : t.cols.indexOf("np"));
-  const past = [];
+  const minM = nWeight ? nMinMatches : minMatches;
+  const past = []; // per season: Map(team -> [z, matches]), or null
   for (let k = 1; k <= weights.length; k++) {
-    if (!weights[k - 1]) { past.push(null); continue; }
-    const prev = await priorTable(season - k, table);
+    const prev = weights[k - 1] ? tables[k - 1] : null;
     if (!prev) { past.push(null); continue; }
     const npI = colOf(prev), mI = prev.cols.indexOf("matches"), rkI = col === "pnp" ? prev.cols.indexOf("prank") : -1;
-    const rows = prev.rows.filter((r) => r[mI] >= minMatches).sort((a, b) => b[npI] - a[npI] || (rkI >= 0 ? a[rkI] - b[rkI] : 0));
-    const z = new Map(rows.map((r, i) => [r[0], -normInv((i + 0.5) / rows.length)]));
-    past.push(z);
+    const rows = prev.rows.filter((r) => r[mI] >= minM).sort((a, b) => b[npI] - a[npI] || (rkI >= 0 ? a[rkI] - b[rkI] : 0));
+    past.push(new Map(rows.map((r, i) => [r[0], [-normInv((i + 0.5) / rows.length), r[mI]]])));
   }
-  if (!past[0]) return { priors: new Map(), cv: 0.5 };
+  if (!past[0]) return null;
   const teams = new Set(past.flatMap((m) => (m ? [...m.keys()] : [])));
-  const priors = new Map();
+  const priors = new Map(), rel = new Map();
   for (const t of teams) {
-    let sum = 0, wsum = 0;
+    let sum = 0, wsum = 0; // fixed-weight blend
+    let nz = 0, nw = 0, W = 0; // Marcel blend; W: weighted matches actually played
     past.forEach((m, i) => {
       if (!weights[i] || !m) return;
-      sum += weights[i] * (m.get(t) ?? rookieZ);
+      const e = m.get(t);
+      sum += weights[i] * (e ? e[0] : rookieZ);
       wsum += weights[i];
+      const n = e ? Math.min(e[1], nCap) : nMiss;
+      nz += weights[i] * n * (e ? e[0] : rookieZ);
+      nw += weights[i] * n;
+      if (e) W += weights[i] * n;
     });
-    priors.set(t, sum / wsum);
+    priors.set(t, nWeight ? (nz + n0 * zTarget) / (nw + n0) : sum / wsum);
+    rel.set(t, W / (W + n0));
   }
+  return { priors, rel };
+}
+export async function loadPriors(season, opts = PRIOR_OPTS, col = "pnp", table = PRIOR_TABLE) {
+  const o = { ...PRIOR_OPTS, ...opts };
+  const tables = [];
+  for (let k = 1; k <= o.weights.length; k++) tables.push(o.weights[k - 1] ? await priorTable(season - k, table) : null);
+  const blend = blendPriors(tables, o, col);
+  if (!blend) return { priors: new Map(), cv: 0.5, rel: new Map() };
+  const { priors, rel } = blend;
   // spread of last season's EPAs relative to its mean, to turn z into points
+  // (teams with >= minMatches, whichever blend is used)
   const prev = JSON.parse(await fs.readFile(path.join("site", "data", String(season - 1), "teams.json"), "utf8"));
-  const npI = colOf(prev), mI = prev.cols.indexOf("matches");
-  const vals = prev.rows.filter((r) => r[mI] >= minMatches).map((r) => r[npI]);
-  if (vals.length < 10) return { priors: new Map(), cv: 0.5 };
+  const npI = prev.cols.includes(col) ? prev.cols.indexOf(col) : prev.cols.indexOf("np"), mI = prev.cols.indexOf("matches");
+  const vals = prev.rows.filter((r) => r[mI] >= o.minMatches).map((r) => r[npI]);
+  if (vals.length < 10) return { priors: new Map(), cv: 0.5, rel: new Map() };
   const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
   const sd = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length);
-  return { priors, cv: sd / mean, rookieZ };
+  return { priors, cv: sd / mean, rookieZ: o.rookieZ, rel };
 }
 
 // The EPA track's priors, with its own prior settings (EPA params `shared`).
@@ -293,9 +334,9 @@ function makeTrack(matches, modelArgs, { unofficial = UNOFFICIAL, offWeight = 0 
 }
 
 // The prediction track.
-export function simulate(matches, { season, params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, unofficial = UNOFFICIAL, offWeight = 0, zone = true }, onMatch) {
+export function simulate(matches, { season, params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, priorRel, unofficial = UNOFFICIAL, offWeight = 0, zone = true }, onMatch) {
   const types = new Map(matches.map((x) => [x.ev.code, x.ev.type]));
-  const track = makeTrack(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ,
+  const track = makeTrack(matches, { params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, priorRel,
     zoneRp: zone ? SEASONS[season]?.zoneRp : null, eventType: (code) => types.get(code) }, { unofficial, offWeight });
   const acc = newAcc();
   for (const [i, x] of matches.entries()) {
@@ -322,7 +363,7 @@ export function simulate(matches, { season, params, baseline, priors, cv, soloCo
 //     the ratings the match is played on (an off-season event's fork, or the main ones)
 // Returns { rate(team), epa: view over the main models, groups }.
 export function simulateEpa(matches, ctx, { epa = epaParams(), comps = COMPONENTS, offWeight, offFlagged = new Set(), epaPriors, onBefore, onMatch } = {}) {
-  const { priors, cv, rookieZ } = epaPriors ?? ctx.epaPriors;
+  const { priors, cv, rookieZ, rel: priorRel } = epaPriors ?? ctx.epaPriors;
   const { baseline, soloComps, movedSpec, parkedSpec } = ctx;
   const groups = new Map(), groupOf = {};
   for (const c of comps) {
@@ -330,7 +371,7 @@ export function simulateEpa(matches, ctx, { epa = epaParams(), comps = COMPONENT
     if (offWeight != null) s.offWeight = offWeight;
     const key = JSON.stringify(s);
     if (!groups.has(key)) {
-      const track = makeTrack(matches, { params: s.model, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ },
+      const track = makeTrack(matches, { params: s.model, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, priorRel },
         { unofficial: new Set(s.offTypes), offWeight: offWeights(matches, s, offFlagged) });
       groups.set(key, { track, comps: [] });
     }
@@ -429,7 +470,7 @@ export async function build(season, params = {}, epaOver = {}) {
   const hasRp = cfg.rpNames.length > 0;
   const events = await loadSeason(season);
   const ctx = await prepare(season, events);
-  const { matches, baseline, priors, cv, soloComps, movedSpec, parkedSpec, fits, rookieZ } = ctx;
+  const { matches, baseline, priors, cv, soloComps, movedSpec, parkedSpec, fits, rookieZ, priorRel } = ctx;
   const epa = epaParams(epaOver);
   const ctxEpa = { ...ctx, epaPriors: await loadEpaPriors(season, epa) };
 
@@ -455,7 +496,7 @@ export async function build(season, params = {}, epaOver = {}) {
   const predByMatch = new Map(); // `${code}:${id}` -> pre-match prediction
 
   const eventAvg = new Map(); // event code -> season averages when the event started
-  const { model, acc } = simulate(matches, { season, params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ }, (x, pre, model, before, avgBefore) => {
+  const { model, acc } = simulate(matches, { season, params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, priorRel }, (x, pre, model, before, avgBefore) => {
     if (!eventAvg.has(x.ev.code)) eventAvg.set(x.ev.code, avgBefore);
     predByMatch.set(`${x.ev.code}:${x.m.id}`, pre);
     for (const [side, mine, theirs] of [["red", x.red, x.blue], ["blue", x.blue, x.red]]) {
@@ -640,7 +681,7 @@ export async function build(season, params = {}, epaOver = {}) {
       const epaT = epaParams({ ...epaOver, shared: { ...epaOver.shared, ...shared } });
       // prediction-track columns (pnp.., next season's prediction priors): off-season
       // events at OFF_WEIGHT up to the cutoff, no exclusions (as before the presets)
-      const { model: allModel } = simulate(matches, { season, params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ,
+      const { model: allModel } = simulate(matches, { season, params, baseline, priors, cv, soloComps, movedSpec, parkedSpec, rookieZ, priorRel,
         offWeight: offWeights(matches, { offWeight: shared.offWeight, offCutoff: shared.offCutoff }) });
       const allHist = new Map();
       const cutStart = shared.offCutoff ? events.find((e) => e.code === shared.offCutoff)?.start : null;

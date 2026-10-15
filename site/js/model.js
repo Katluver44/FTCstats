@@ -49,6 +49,14 @@ export const DEFAULT_PARAMS = {
   idleShare: 0.2, // weight on a robot that didn't move in auto, for the alliance's auto error (user idea; +0.2 pts on held-out 2025)
   kalman: 1, // 1 = uncertainty-weighted updates instead of the K ramp
   v0: 0.5, // starting variance (relative units) for a new team
+  // Reliability-dependent starting variance: a team with a prior starts at
+  // v0 x (1 + v0Rel x (1 - r)), r = its prior's reliability in [0, 1) from how
+  // many past matches it rests on (priorRel; build.mjs PRIOR_OPTS n0), so a thin
+  // history learns faster. 0 = off. Rookies (no prior) keep v0 unless v0RelRookie
+  // is 1 (then they count as r = 0: kept apart, since "more starting uncertainty
+  // for rookies" alone was tried and rejected).
+  v0Rel: 0,
+  v0RelRookie: 0,
   vObs: 2, // match noise, same units (at an average-scoring alliance)
   obsHet: 0.75, // match noise x (alliance's predicted level / league average)^obsHet
   vMatch: 0.01, // variance added after every match (robots change)
@@ -225,10 +233,11 @@ export class Model {
   // soloComps: the component each solo spec belongs to, e.g. ["auto", "endgame"].
   // priors: Map(teamNumber -> z-score from earlier seasons), optional.
   // rookieZ: starting z for teams with no history, once priors exist at all.
+  // priorRel: Map(teamNumber -> reliability of its prior in [0, 1)), for v0Rel; optional.
   // movedSpec: index of the solo spec that records auto movement (-1 if none).
   // zoneRp: { rp, thr(eventType), leave, base, bonus } from the season config, or null.
   // eventType(code) -> the event's type, for zone-RP thresholds.
-  constructor({ params = {}, baseline, priors = new Map(), cv = 0.5, soloComps = [], movedSpec = -1, parkedSpec = -1, rookieZ = 0, zoneRp = null, eventType = () => null } = {}) {
+  constructor({ params = {}, baseline, priors = new Map(), cv = 0.5, soloComps = [], movedSpec = -1, parkedSpec = -1, rookieZ = 0, priorRel = new Map(), zoneRp = null, eventType = () => null } = {}) {
     this.p = { ...DEFAULT_PARAMS, ...params };
     this.zoneRp = zoneRp && movedSpec >= 0 && parkedSpec >= 0 ? zoneRp : null;
     this.eventType = eventType;
@@ -248,6 +257,7 @@ export class Model {
     this.avg.errVar ??= (this.p.winScale * this.avgAllianceNp() / (this.p.winSelf || 1)) ** 2;
     this.priors = priors;
     this.rookieZ = rookieZ;
+    this.priorRel = priorRel ?? new Map();
     this.cv = cv; // spread of team EPAs relative to the mean, for priors
     this.teams = new Map();
     // running variance of alliance errors per component and in total (for clipC / volK)
@@ -276,7 +286,7 @@ export class Model {
       const z = this.priors.get(num) ?? (this.priors.size ? this.rookieZ : 0);
       const f = Math.max(0.15, this.p.initFrac * (1 + this.p.carry * z * this.cv)) / 2;
       t = {
-        n: 0, v: this.p.v0, ev: null,
+        n: 0, v: this.startVar(num), ev: null,
         auto: this.avg.auto * f,
         teleop: this.avg.teleop * f,
         endgame: this.avg.endgame * f,
@@ -287,6 +297,14 @@ export class Model {
       this.teams.set(num, t);
     }
     return t;
+  }
+
+  // Starting variance of a new team (v0Rel; v0 when off).
+  startVar(num) {
+    const { v0, v0Rel, v0RelRookie } = this.p;
+    if (!v0Rel) return v0;
+    if (this.priors.has(num)) return v0 * (1 + v0Rel * (1 - clamp(this.priorRel.get(num) ?? 0, 0, 1)));
+    return v0RelRookie && this.priors.size ? v0 * (1 + v0Rel) : v0;
   }
 
   // A copy that learns on its own without changing this model, e.g. for an

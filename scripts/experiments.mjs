@@ -2,14 +2,18 @@
 // "wins" if it helps on games it wasn't designed around.
 //
 //   node scripts/experiments.mjs ['{"param":value}' ...]
+//   PRIOR='{"nWeight":1,"n0":15}' node scripts/experiments.mjs   # starting-rating
+//     settings (build.mjs PRIOR_OPTS overrides) for every variant
 
 import { prepare, simulate, baselineOf } from "./build.mjs";
 
 const TRAIN = [2022, 2023, 2024];
 const TEST = 2025; // never used for tuning
+const PRIOR = process.env.PRIOR ? JSON.parse(process.env.PRIOR) : undefined;
+if (PRIOR) console.log("priors:", JSON.stringify(PRIOR));
 const train = [];
-for (const s of TRAIN) train.push(await prepare(s));
-const test = [await prepare(TEST)];
+for (const s of TRAIN) train.push(await prepare(s, undefined, PRIOR));
+const test = [await prepare(TEST, undefined, PRIOR)];
 
 const outcome = (x) => (x.actual.red.total === x.actual.blue.total ? 0.5 : x.actual.red.total > x.actual.blue.total ? 1 : 0);
 
@@ -23,7 +27,7 @@ function run(name, params = {}, { solo = true, ctxs = train } = {}) {
     const baseline = solo ? ctx.baseline : baselineOf(ctx.matches, []);
     const seen = new Map(); // "event/team" -> matches played there so far
     let sn = 0, sc = 0, sb = 0;
-    simulate(ctx.matches, { params, baseline, priors: ctx.priors, cv: ctx.cv, soloComps, movedSpec: solo ? ctx.movedSpec : -1, parkedSpec: solo ? ctx.parkedSpec : -1, rookieZ: ctx.rookieZ }, (x, pre) => {
+    simulate(ctx.matches, { params, baseline, priors: ctx.priors, cv: ctx.cv, soloComps, movedSpec: solo ? ctx.movedSpec : -1, parkedSpec: solo ? ctx.parkedSpec : -1, rookieZ: ctx.rookieZ, priorRel: ctx.priorRel }, (x, pre) => {
       const o = outcome(x);
       const b = (pre.pRed - o) ** 2;
       sn++; sb += b;
@@ -48,6 +52,9 @@ const ROBUST = { volK: 0.1, volThr: 0.5, clipC: 1.25, clipUp: 0, vMatch: 0.01 };
 const WIN = { winSelf: 0.4, winFoul: 0.4, winVar: 0.02 }; // self-calibrating, foul- and uncertainty-aware spread
 const variants = [
   ["current", {}], ["robust updates", ROBUST], ["win-prob spread", WIN], ["both", { ...ROBUST, ...WIN }],
+  // reliability-dependent starting variance (thin prior histories learn faster);
+  // pairs with PRIOR='{"nWeight":1,...}' (Marcel priors). Grid: research/marcel-grid.mjs
+  ["v0Rel 1", { v0Rel: 1 }], ["v0Rel 2", { v0Rel: 2 }],
   ...process.argv.slice(2).map((a) => [a, JSON.parse(a)]),
 ];
 for (const [name, p] of variants) run(name, p);

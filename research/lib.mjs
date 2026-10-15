@@ -1,7 +1,25 @@
-import { prepare, simulate } from "../scripts/build.mjs";
+import { prepare, simulate, loadPriors } from "../scripts/build.mjs";
 export const TRAIN = [2022, 2023, 2024], TEST = [2025];
 const cache = new Map();
-export async function ctxs(seasons) { const out = []; for (const s of seasons) { if (!cache.has(s)) cache.set(s, await prepare(s)); out.push(cache.get(s)); } return out; }
+// Prediction-track prior settings (build.mjs PRIOR_OPTS overrides), e.g.
+// PRIOR='{"nWeight":1,"n0":15}'; or pass priorOpts to ctxs().
+export const ENV_PRIOR = process.env.PRIOR ? JSON.parse(process.env.PRIOR) : null;
+// A season's context; with priorOpts, its priors (priors, cv, rookieZ, priorRel)
+// are reloaded with those settings (the rest is shared, so a grid is cheap).
+export async function ctxs(seasons, priorOpts = ENV_PRIOR) {
+  const out = [];
+  for (const s of seasons) {
+    if (!cache.has(s)) cache.set(s, await prepare(s));
+    if (!priorOpts) { out.push(cache.get(s)); continue; }
+    const key = `${s}:${JSON.stringify(priorOpts)}`;
+    if (!cache.has(key)) {
+      const { priors, cv, rookieZ, rel: priorRel } = await loadPriors(s, priorOpts, "pnp");
+      cache.set(key, { ...cache.get(s), priors, cv, rookieZ, priorRel });
+    }
+    out.push(cache.get(key));
+  }
+  return out;
+}
 const outcome = (x) => (x.actual.red.total === x.actual.blue.total ? 0.5 : x.actual.red.total > x.actual.blue.total ? 1 : 0);
 export function evaluate(params, cs) {
   let n = 0, b = 0, c = 0, mae = 0;
