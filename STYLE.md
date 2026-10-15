@@ -135,7 +135,16 @@ Within a component use 4/8/12; between components 16/24; between sections 32/48.
 - Page switches: old page dims, new page fades in (160ms). No full-screen
   "Loading…" unless a load takes over 0.6s.
 - Hover/active transitions 120–160ms. Nothing animates on its own except the
-  gold shine, live indicators and the robot (below). Respect `prefers-reduced-motion`.
+  gold shine, live indicators, the loading wheel and the robot (below). Respect
+  `prefers-reduced-motion`.
+
+### The loading wheel
+
+Loading states (a page taking over 0.6 s, a SIM run) show one mecanum wheel seen
+side on: `wheel(size)` from `ui.js`, a hub and eight rollers set at 45°, all
+`--accent`, spinning in place (one turn per 1.1 s, linear), 48px, with the word
+under it ("Loading…", "Simulating…"). Never a generic spinner, a progress bar or
+the robot. It stops under `prefers-reduced-motion`.
 
 ### The robot
 
@@ -144,18 +153,19 @@ mascot is a top-down mecanum robot: blue body, four wheels, rollers in an X.
 
 - **One drawing.** Always `robot(cls, size)` / `ROBOT_PARTS` from `ui.js`. Never
   redraw it, recolour it or add a face. Body is `--accent`, wheels `--text`.
-- **Where it appears:** the desktop logo (34px), the loading state (48px, drives
-  side to side), empty pages such as page-not-found and a bad team number
-  (56px, still), empty tables and search results (24–28px, still, inline with the
-  message), and the no-matches field on a team page (drives the curve). Also the
-  favicon.
+- **Where it appears:** the desktop logo (34px), empty pages such as
+  page-not-found and a bad team number (56px, still), empty tables and search
+  results (24–28px, still, inline with the message), the no-matches field on a
+  team page (drives the curve), and the match page's play button (96px, the play
+  triangle on its body). Also the favicon.
 - **Where it doesn't:** next to data, in tables with rows, in charts, as a bullet
   or decoration. It marks "nothing here yet" or "this is oddrobot", nothing else.
-- **Motion:** the logo drives in from off the left edge on load (strafing), spins once on the spot, and strafes on hover; the loading
-  robot drives and turns; everything else is still. Mecanum moves only: strafe
-  without turning, spin on the spot. All of it stops under `prefers-reduced-motion`.
+- **Motion:** the logo drives in from off the left edge on load (strafing), spins
+  once on the spot, and strafes on hover (so does the play button); everything
+  else is still. Mecanum moves only: strafe without turning, spin on the spot. All
+  of it stops under `prefers-reduced-motion`.
 - **Phones:** no logo in the header (the nav links need the room). The robot still
-  appears in loading and empty states.
+  appears in empty states, and the wheel while loading.
 
 ---
 

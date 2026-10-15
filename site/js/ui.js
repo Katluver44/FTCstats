@@ -454,6 +454,11 @@ export function radar(axes, { size = 300, values = true } = {}) {
 // Drawn around (0, 0) in a 56 x 56 box so it can spin and strafe in place.
 export const ROBOT_PARTS = `<rect x="-20" y="-20" width="40" height="40" rx="6" class="wf-body"/>${[[-17, -25, 1], [5, -25, -1], [-17, 19, -1], [5, 19, 1]]
   .map(([x, y, d]) => `<rect x="${x}" y="${y}" width="12" height="6" rx="2" class="wf-wheel"/>${[3, 7].map((u) => `<line x1="${x + u}" y1="${d > 0 ? y + 6 : y}" x2="${x + u + 3}" y2="${d > 0 ? y : y + 6}" class="wf-roller"/>`).join("")}`).join("")}`;
-// cls picks its motion: "bot-wait" drives side to side (loading), "" sits still
+// cls picks its motion: "bot-wait" drives side to side, "" sits still
 export const robot = (cls = "", size = 40) =>
   `<svg class="bot ${cls}" width="${size}" height="${size}" viewBox="-28 -28 56 56" aria-hidden="true"><g class="bot-g">${ROBOT_PARTS}</g></svg>`;
+// the loading indicator: one mecanum wheel seen side on (hub, eight rollers set at 45°), spinning in place
+export const wheel = (size = 48) =>
+  `<svg class="mw" width="${size}" height="${size}" viewBox="-24 -24 48 48" aria-hidden="true"><g class="mw-g"><circle r="16" class="mw-ring"/>${
+    Array.from({ length: 8 }, (_, i) => `<rect x="-5" y="-2.5" width="10" height="5" rx="2.5" class="mw-roller" transform="rotate(${i * 45}) translate(16 0) rotate(45)"/>`).join("")
+  }<circle r="7" class="mw-hub"/></g></svg>`;

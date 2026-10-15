@@ -1,6 +1,6 @@
 import {
   $, $$, esc, data, getJSON, fmt, pct, fmtInt, fmtDate, fmtRange, typeName, epa, teamCell, evCell,
-  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, videoLinks, PLAY_ICON, VIDEO_ICON, robot, ROBOT_PARTS } from "./ui.js";
+  trend, matchTable, mountLineChart, sortableTable, radar, winBar, videoFor, videoLinks, PLAY_ICON, VIDEO_ICON, robot, wheel, ROBOT_PARTS } from "./ui.js";
 import { SEASONS } from "./seasons.js";
 import { scatter, histogram, breakdown } from "./charts.js";
 import { addEventSos, sosValue, sosPlaces } from "./sos.js";
@@ -55,7 +55,7 @@ async function route() {
   // keep the current page (dimmed) until the new one is ready, instead of flashing a blank
   // "Loading…" screen; only a slow load (over 0.6 s) shows the loading message
   app.classList.add("routing");
-  const slow = setTimeout(() => { if (!stale(r)) { app.innerHTML = `<div class="loading">${robot("bot-wait", 48)}<span>Loading…</span></div>`; window.scrollTo(0, 0); } }, 600);
+  const slow = setTimeout(() => { if (!stale(r)) { app.innerHTML = `<div class="loading">${wheel(48)}<span>Loading…</span></div>`; window.scrollTo(0, 0); } }, 600);
   const pages = { "": home, teams, team, events, event, match, compete, h2h, sim, about, live };
   const fn = pages[r.page] ?? notFound;
   setTitle(r.page && (PAGE_TITLES[r.page] ?? "Page not found"));
@@ -2445,7 +2445,7 @@ async function sim(r) {
     sync();
     const nums = st.teams;
     if (nums.length < 4) { $("#sim-out").innerHTML = `<div class="empty">Add at least 4 teams, or load an event's teams.</div>`; return; }
-    $("#sim-out").innerHTML = `<div class="loading">Simulating…</div>`;
+    $("#sim-out").innerHTML = `<div class="loading">${wheel(48)}<span>Simulating…</span></div>`;
     clearTimeout(timer);
     timer = setTimeout(() => {
       const teamList = nums.map((n) => {
