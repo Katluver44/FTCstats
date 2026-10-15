@@ -2,8 +2,7 @@
 // Reads the built site/data (run `npm run videos` first). Lists the events with the
 // most uncovered matches so a video hunt knows where to look.
 //
-//   node scripts/video-coverage.mjs [--gaps N] [--json out.json] [--summary site/data/videos-summary.json]
-// --summary writes the totals the home page shows ("90,713 matches on video")
+//   node scripts/video-coverage.mjs [--gaps N] [--json out.json]
 
 import fs from "node:fs";
 import { videoFor } from "../site/js/ui.js";
@@ -11,8 +10,6 @@ import { videoFor } from "../site/js/ui.js";
 const args = process.argv.slice(2);
 const gapsN = Number(args[args.indexOf("--gaps") + 1]) || 0;
 const jsonOut = args.includes("--json") ? args[args.indexOf("--json") + 1] : null;
-const summaryOut = args.includes("--summary") ? args[args.indexOf("--summary") + 1] : null;
-const bySeason = {};
 const seasons = JSON.parse(fs.readFileSync("site/data/seasons.json", "utf8")).map?.((s) => s.season ?? s) ?? [];
 const all = { matches: 0, covered: 0 };
 const gaps = [];
@@ -32,11 +29,9 @@ for (const season of seasons) {
     }
   }
   all.matches += matches; all.covered += covered;
-  bySeason[season] = { matches, covered };
   console.log(season, `${covered}/${matches} matches with video (${(100 * covered / (matches || 1)).toFixed(1)}%)`);
 }
 console.log("all", `${all.covered}/${all.matches} (${(100 * all.covered / all.matches).toFixed(1)}%); 50% needs ${Math.max(0, Math.ceil(all.matches / 2) - all.covered)} more`);
 gaps.sort((a, b) => b.missingMatches - a.missingMatches);
 if (gapsN) for (const g of gaps.slice(0, gapsN)) console.log(g.season, g.code, g.missingMatches, g.haveVideo ? "(partial)" : "", g.name, g.matchDays.join(","));
 if (jsonOut) fs.writeFileSync(jsonOut, JSON.stringify(gaps, null, 1));
-if (summaryOut) fs.writeFileSync(summaryOut, JSON.stringify({ ...all, bySeason, generated: new Date().toISOString() }));

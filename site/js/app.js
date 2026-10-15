@@ -316,7 +316,6 @@ async function home(r) {
           <div><b>${pct(acc.accuracy, 1)}</b><span>winners called before the match</span></div>
           <div><b>${fmtInt(meta.matches)}</b><span>matches rated</span></div>
           <div><b>${fmtInt(meta.teams)}</b><span>teams</span></div>
-          <div id="hero-videos" hidden></div>
         </div>
         </div>
       </div>
@@ -335,13 +334,6 @@ async function home(r) {
       </div>
     </div>`;
   wireSearch($("#hero-search"));
-  // the video catalogue: every season's matches that open straight to the right moment
-  getJSON("data/videos-summary.json").then((v) => {
-    const el = $("#hero-videos");
-    if (!el || !v?.covered || stale(r)) return;
-    el.innerHTML = `<b>${fmtInt(v.covered)}</b><span title="${pct(v.covered / v.matches)} of every FTC match since 2019 (${fmtInt(v.matches)}); each opens at the moment the match starts">matches on video, cued to the start</span>`;
-    el.hidden = false;
-  }).catch(() => {});
   // five big rows a side: who's on top, and what just happened
   const rec = (x) => `${x.wins}-${x.losses}${x.ties ? `-${x.ties}` : ""}`;
   $("#top-teams").innerHTML = `<div class="hl">${teams.slice(0, 8).map((t) => `

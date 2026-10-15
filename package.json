@@ -10,7 +10,7 @@
   "scripts": {
     "fetch": "for y in 2019 2020 2021 2022 2023 2024 2025 2026; do node scripts/fetch.mjs $y || exit 1; done && node scripts/fetch-awards.mjs 2019 2020 2021 2022 2023 2024 2025 2026",
     "build": "node scripts/build.mjs 2019 2020 2021 2022 2023 2024 2025 2026 && node scripts/rank-backtest.mjs --cached 2019 2021 2022 2023 2024 2025",
-    "videos": "node scripts/videos.mjs 2019 2020 2021 2022 2023 2024 2025 2026 && node scripts/video-coverage.mjs --summary site/data/videos-summary.json",
+    "videos": "node scripts/videos.mjs 2019 2020 2021 2022 2023 2024 2025 2026",
     "alliances": "node scripts/alliances.mjs 2019 2020 2021 2022 2023 2024 2025 2026",
     "update": "npm run fetch && npm run build && npm run videos && npm run alliances",
     "serve": "python3 scripts/serve.py 5173",
