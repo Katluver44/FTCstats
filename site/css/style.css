@@ -1,5 +1,6 @@
 /* FIRST-style theme: white surfaces, Roboto, FIRST blue and FTC orange. */
 :root {
+  --on-accent: #fff; /* text on a solid accent fill */
   --page: #ffffff;
   --cyan: #0a9bd7; /* the block colour behind FIRST's hero media */
   --surface: #ffffff;
@@ -1954,5 +1955,6 @@ td.epa-col .epa { background: none !important; color: var(--text) !important; pa
 .toolbar .scope { gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
 .toolbar .scope a { min-height: 28px; padding: 0 12px; border: 0; border-radius: 6px; color: var(--muted); }
 .toolbar .scope a:hover { color: var(--text); }
-.toolbar .scope a.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgba(0, 0, 0, .08), 0 0 0 1px var(--line); }
+/* the chosen side: solid blue with white text (Table | Chart matches) */
+.toolbar .scope a.active, .toolbar .scope a.active:hover, .view-pick button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); box-shadow: none; }
 .toolbar .scope a.active::after { content: none; }
