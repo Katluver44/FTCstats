@@ -39,8 +39,12 @@ async function readJson(file, fallback) {
 // uses cached details only, so a deploy still goes out; uncached videos wait
 // for the next run.
 let ytDown = false;
+// Details are also kept in git (cache/youtube/<season>.json) so a machine with no API key
+// or an empty .cache (e.g. the home server that builds oddbot.org) still knows every video;
+// without them every YouTube video was dropped there.
 async function youtubeDetails(ids, cacheFile) {
-  const cache = await readJson(cacheFile, {});
+  const shared = path.join("cache", "youtube", path.basename(cacheFile));
+  const cache = { ...(await readJson(shared, {})), ...(await readJson(cacheFile, {})) };
   const key = await env("YOUTUBE_API_KEY");
   const todo = [...new Set(ids)].filter((id) => !cache[id] || cache[id].live || cache[id].v !== CACHE_V);
   if (key && todo.length && !ytDown) {
@@ -75,6 +79,9 @@ async function youtubeDetails(ids, cacheFile) {
     await fs.mkdir(path.dirname(cacheFile), { recursive: true });
     await fs.writeFile(cacheFile, JSON.stringify(cache));
   }
+  // keep the shared copy current (sorted keys: small, stable git diffs)
+  await fs.mkdir(path.dirname(shared), { recursive: true });
+  await fs.writeFile(shared, JSON.stringify(Object.fromEntries(Object.keys(cache).sort().map((k) => [k, cache[k]]))) + "\n");
   return cache;
 }
 
