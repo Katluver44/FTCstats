@@ -70,7 +70,7 @@ export function replayEvent(meta, ev, matches, cutoff = Infinity) {
     const usePlayed = m.played && !frozen;
     const pre = usePlayed
       ? model.update(red, blue, { red: m.redScore, blue: m.blueScore }, !isQual, ev.code)
-      : model.predict(red, blue);
+      : model.predict(red, blue, undefined, { at: ev.code });
     return {
       ...m,
       played: usePlayed,

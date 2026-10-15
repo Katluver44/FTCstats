@@ -83,6 +83,15 @@ export const DEFAULT_PARAMS = {
   // zero in 3 (2019, 2021, 2025). On by owner's call (2026-10-13).
   calPair: 1,
   calPairWin: 1,
+  // Within-event experience (after TrueSkill 2's experience offset and DARKO's
+  // rest/back-to-back terms): two more recalibration features per alliance,
+  //   e1 = share of its robots in their first 2 matches at this event,
+  //   e2 = share of its robots at their first event of the season,
+  // fitted online like the others (ridge keeps them near 0 unless the data
+  // supports an offset). calExpWin: how much of their correction also moves the
+  // win probability, as calPairWin. Off (unevaluated: needs experiments.mjs + LOSO).
+  calExp: 0,
+  calExpWin: 0,
 };
 
 // ---- Two tracks ----
@@ -254,7 +263,7 @@ export class Model {
     const np0 = this.avgAllianceNp();
     // restored from an event file when replaying in the browser, so live matches the build
     // score-recalibration moments; restored from an event file like clipVar
-    const nCal = this.p.calPair ? 4 : 3;
+    const nCal = 3 + (this.p.calPair ? 1 : 0) + (this.p.calExp ? 2 : 0);
     this.cal = baseline.cal?.b?.length === nCal ? structuredClone(baseline.cal)
       : { b: new Array(nCal).fill(0), XX: Array.from({ length: nCal }, () => new Array(nCal).fill(0)), XY: new Array(nCal).fill(0) };
     this.errVar = baseline.clipVar ? { ...baseline.clipVar } : { auto: (0.6 * this.avg.auto) ** 2, teleop: (0.6 * this.avg.teleop) ** 2, endgame: (0.6 * this.avg.endgame) ** 2, np: (0.4 * np0) ** 2 };
@@ -312,11 +321,13 @@ export class Model {
   }
 
   // Restore a team's state, e.g. its rating entering an event.
-  setTeam(num, { auto, teleop, endgame, n, rp, solo, v, ev, evStart, zone }) {
+  setTeam(num, { auto, teleop, endgame, n, rp, solo, v, ev, evStart, zone, xEv, evN, evCount }) {
     this.teams.set(num, {
       n, v: v ?? this.p.v0, ev: ev ?? null, evStart: evStart ?? null, auto, teleop, endgame,
       solo: this.soloComps.map((_, j) => solo?.[j] ?? 0), rp: [...rp],
       ...(this.zoneRp ? { zone: zone ? [...zone] : [this.avg.zLeave, this.avg.zB0, this.avg.zB1, this.avg.zB2] } : {}),
+      // within-event experience (calExp); state saved without it counts any earlier event as one
+      ...(this.p.calExp ? { xEv: xEv ?? ev ?? null, evN: evN ?? 0, evCount: evCount ?? (ev ? 1 : 0) } : {}),
     });
   }
 
@@ -380,7 +391,23 @@ export class Model {
     return t.v + (this.p.kalman && eventCode && t.ev && t.ev !== eventCode ? this.p.vEvent : 0);
   }
 
-  predict(red, blue, eventCode) {
+  // Within-event experience features of an alliance at event `at` (calExp):
+  // [share of robots in their first 2 matches there, share at their first event
+  // of the season]. No event known (long-range forecasts): [0, 0], no correction.
+  expX(nums, at) {
+    if (at == null || !nums.length) return [0, 0];
+    let e1 = 0, e2 = 0;
+    for (const n of nums) {
+      const t = this.team(n), here = t.xEv === at;
+      if ((here ? t.evN ?? 0 : 0) < 2) e1++;
+      if ((here ? t.evCount ?? 0 : (t.evCount ?? 0) + 1) === 1) e2++;
+    }
+    return [e1 / nums.length, e2 / nums.length];
+  }
+
+  // at: the event a match is at, for the experience features only, when no
+  // eventCode is passed (eventCode also adds the new-event variance to varSum).
+  predict(red, blue, eventCode, { at } = {}) {
     const r = this.allianceExpected(red);
     const b = this.allianceExpected(blue);
     const A = Math.max(10, this.avgAllianceNp());
@@ -390,7 +417,18 @@ export class Model {
     const varSum = this.p.kalman ? [...red, ...blue].reduce((s, n) => s + this.preVar(n, eventCode), 0) : 0;
     // the overlap part of the recalibration can also move the win probability
     const ov = (x) => (this.p.cal && this.p.calPair ? this.p.calPairWin * A * this.cal.b[3] * 2 * (x.overlap / A - 0.25) : 0);
-    const pRed = this.winProb(r.np + ov(r) + b.foul, b.np + ov(b) + r.foul, varSum, level);
+    let rMean = r.np + ov(r), bMean = b.np + ov(b);
+    const expOn = this.p.cal && this.p.calExp, ix = 3 + (this.p.calPair ? 1 : 0);
+    if (expOn) {
+      r.expX = this.expX(red, eventCode ?? at);
+      b.expX = this.expX(blue, eventCode ?? at);
+      // ... and so can the experience part
+      if (this.p.calExpWin) {
+        const ex = (x) => this.p.calExpWin * A * (this.cal.b[ix] * x.expX[0] + this.cal.b[ix + 1] * x.expX[1]);
+        rMean += ex(r); bMean += ex(b);
+      }
+    }
+    const pRed = this.winProb(rMean + b.foul, bMean + r.foul, varSum, level);
     if (this.zoneRp) {
       const thr = this.zoneRp.thr(this.eventType(eventCode));
       for (const [al, nums] of [[r, red], [b, blue]]) {
@@ -401,6 +439,7 @@ export class Model {
       r.calX = [1, r.rawNp / A - 1, b.rawNp / A - 1];
       b.calX = [1, b.rawNp / A - 1, r.rawNp / A - 1];
       if (this.p.calPair) { r.calX.push(2 * (r.overlap / A - 0.25)); b.calX.push(2 * (b.overlap / A - 0.25)); }
+      if (expOn) { r.calX.push(...r.expX); b.calX.push(...b.expX); }
       r.np += A * this.calDot(r.calX);
       b.np += A * this.calDot(b.calX);
     }
@@ -496,6 +535,14 @@ export class Model {
   update(red, blue, actual, isElim, eventCode) {
     const pred = this.predict(red, blue, eventCode);
     const w = isElim ? this.p.elimWeight : 1;
+    // within-event experience (calExp): matches at the current event, events this season
+    if (this.p.calExp && eventCode) {
+      for (const n of [...red, ...blue]) {
+        const t = this.team(n);
+        if (t.xEv !== eventCode) { t.xEv = eventCode; t.evN = 0; t.evCount = (t.evCount ?? 0) + 1; }
+        t.evN++;
+      }
+    }
     for (const [nums, side] of [[red, "red"], [blue, "blue"]]) {
       const exp = pred[side], act = actual[side];
       const other = side === "red" ? "blue" : "red";
@@ -591,7 +638,8 @@ export class Model {
 
   epa(num) {
     const t = this.team(num);
-    const e = { n: t.n, v: t.v, ev: t.ev, evStart: t.evStart ?? null, ...(t.zone ? { zone: [...t.zone] } : {}), auto: t.auto, teleop: t.teleop, endgame: t.endgame, rp: [...t.rp], solo: [...t.solo] };
+    const e = { n: t.n, v: t.v, ev: t.ev, evStart: t.evStart ?? null, ...(t.zone ? { zone: [...t.zone] } : {}),
+      ...(this.p.calExp ? { xEv: t.xEv ?? null, evN: t.evN ?? 0, evCount: t.evCount ?? 0 } : {}), auto: t.auto, teleop: t.teleop, endgame: t.endgame, rp: [...t.rp], solo: [...t.solo] };
     const shared = { auto: t.auto, teleop: t.teleop, endgame: t.endgame };
     t.solo.forEach((s, j) => (e[this.soloComps[j]] += s));
     e.np = e.auto + e.teleop + e.endgame;

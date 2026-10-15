@@ -735,6 +735,7 @@ export async function build(season, params = {}, epaOver = {}) {
           solo: start.solo.map(r1), n: start.n, v: r3(start.v), rp: start.rp.map(r3), ev: start.ev ?? null,
           evStart: start.evStart ? Object.fromEntries(Object.entries(start.evStart).map(([k, v]) => [k, r1(v)])) : null,
           ...(start.zone ? { zone: start.zone.map(r3) } : {}),
+          ...(start.evCount != null ? { evCount: start.evCount } : {}), // calExp: events played this season (matches here rebuild on replay)
         } : null,
         epaEnd: h.length ? h[h.length - 1].epa[0] : null,
         // [np, auto, teleop, endgame] entering the event and after its last match here, for the pick map
@@ -755,7 +756,7 @@ export async function build(season, params = {}, epaOver = {}) {
         let pre = predByMatch.get(`${ev.code}:${m.id}`);
         // unplayed matches get a prediction from current ratings; a played match the
         // model skipped (bad on-field data) gets none, rather than one that knows the result
-        if (!pre && !played && redOn.length && blueOn.length) pre = model.predict(redOn, blueOn);
+        if (!pre && !played && redOn.length && blueOn.length) pre = model.predict(redOn, blueOn, undefined, { at: ev.code });
         const res = played ? { red: read(m.scores.red), blue: read(m.scores.blue) } : null;
         if (res && pre && res.red.total !== res.blue.total) {
           decided++;
