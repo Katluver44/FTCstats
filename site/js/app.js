@@ -1725,6 +1725,8 @@ function eventSos(season, ev, matches) {
   return new Map([...acc].map(([t, a]) => [t, { v: sosValue(a), places: sosPlaces(a) }]));
 }
 
+// the video stage's play button: the oddrobot mascot with the play triangle on its body
+const STAGE_PLAY = `<svg class="bot" width="96" height="96" viewBox="-28 -28 56 56" aria-hidden="true"><g class="bot-g">${ROBOT_PARTS}<path d="M-6 -9 10 0 -6 9Z" class="wf-play"/></g></svg>`;
 const GEAR_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
 
 // Event Teams tab: one row per team; a gear menu shows / hides columns (remembered per device)
@@ -2030,12 +2032,12 @@ async function match(r) {
       ${v.ext
         // the owner turned off embedding: same spot, on YouTube
         ? `<a class="stage-play" href="${openUrl}" target="_blank" rel="noopener">
-        <span class="stage-play-icon">${PLAY_ICON}</span>
+        <span class="stage-play-icon">${STAGE_PLAY}</span>
         <span class="stage-play-text"><b>Watch ${esc(matchTitle(m.d))} on ${links.site} ↗</b>
           <small>${v.t ? `From ${clock(v.t)} · ` : ""}this video's owner doesn't allow playing it here</small></span>
       </a>`
         : `<button class="stage-play" data-play-inline aria-label="Play ${esc(matchTitle(m.d))}">
-        <span class="stage-play-icon">${PLAY_ICON}</span>
+        <span class="stage-play-icon">${STAGE_PLAY}</span>
         <span class="stage-play-text"><b>Watch ${esc(matchTitle(m.d))}</b>
           <small>${v.t ? `Event video, from ${clock(v.t)}` : "Match video"}${links.site === "YouTube" ? "" : ` · ${links.site}`}</small></span>
       </button>`}
