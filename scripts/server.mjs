@@ -26,7 +26,9 @@ const REWRITES = [
 ];
 const cacheControl = (p) =>
   p.startsWith("/data/") ? "public, max-age=300, s-maxage=600, stale-while-revalidate=86400"
-  : /^\/(js|css)\//.test(p) ? "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400"
+  // js/css revalidate every load (cheap 304s via ETag): index.html is never cached, so a
+  // cached old app.js could otherwise run against new markup and die at boot ("Loading…" forever)
+  : /^\/(js|css)\//.test(p) ? "public, max-age=0, must-revalidate"
   : p.endsWith(".html") || p === "/" ? "public, max-age=0, must-revalidate"
   : "public, max-age=3600";
 
