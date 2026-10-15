@@ -1,14 +1,11 @@
-# Refreshes match data, rebuilds ratings, and deploys the site (with the photo
-# service) to Vercel. GitHub Pages now only serves a redirect to the Vercel site,
-# so old links keep working.
-# Runs hourly; during an event, live pages also pull fresh results in the browser.
+# Keeps the GitHub Pages redirect pointing at the live site (oddbot.org, self-hosted
+# behind a Cloudflare Tunnel; the home server refreshes data hourly on its own).
+# Vercel deploys were retired on 2026-10-15.
 name: Update and deploy
 
 on:
   push:
     branches: [main]
-  schedule:
-    - cron: "17 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -22,9 +19,6 @@ concurrency:
 
 env:
   SITE_URL: https://oddbot.org
-  # not secrets: they only say which Vercel project to deploy to
-  VERCEL_ORG_ID: team_r1o66OZwsgZCXGjollpuMNFZ
-  VERCEL_PROJECT_ID: prj_EYnS7Q15FgxkYGBeqF5AyCkwb0iF
 
 jobs:
   build:
@@ -51,13 +45,7 @@ jobs:
           FTC_API_KEY: ${{ secrets.FTC_API_KEY }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
       - run: npm run check
-      - name: Deploy to Vercel
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: |
-          node scripts/package-vercel.mjs
-          npx -y vercel@63.1.2 deploy dist --prod --yes --archive=tgz --token "$VERCEL_TOKEN"
-      # GitHub Pages: a tiny page that forwards to the same page on Vercel
+      # GitHub Pages: a tiny page that forwards to the same page on the live site
       - name: Build redirect page
         run: |
           mkdir -p redirect

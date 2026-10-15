@@ -118,12 +118,13 @@ track, a win/loss Elo blend, a higher starting uncertainty for rookies,
 uncertainty growing with days idle, per-team consistency in the win spread,
 per-event score offsets, extra spread for a team's first match at an event.
 
-## Deploying
-`.github/workflows/deploy.yml` runs hourly on GitHub Actions: fetch → build →
-ranking check (fails the run if our math drifts from FIRST's) → package the
-site with the photo service (`scripts/package-vercel.mjs`) → deploy to Vercel
-using the `VERCEL_TOKEN` secret. GitHub Pages only serves a redirect.
-Photo uploads go to Vercel Blob and appear after review at `/admin.html`.
+## Hosting
+The live site at https://oddbot.org is served from a home PC: `npm start`
+(`scripts/server.mjs`, port 8080) behind a Cloudflare Tunnel, with an hourly
+scheduled task that pulls main, runs `npm run update` and `npm run check`.
+Photo uploads go to Vercel Blob and appear after review at `/admin.html`
+(the server needs BLOB_READ_WRITE_TOKEN and ADMIN_TOKEN for that). GitHub Pages
+only serves a redirect to the live site.
 
 Data credit: match data from the FIRST FTC Events API via FTCScout. Not
 affiliated with FIRST. The FIRST API terms ask for non-commercial use and a

@@ -30,8 +30,10 @@ write-up and accuracy table; read it before changing the model.
     npm run compare       # EPA vs OPR baseline on 2025
 
 ## Deploy
-Push to `main` → `.github/workflows/deploy.yml` (also hourly): update → check →
-package → `vercel deploy dist --prod`. A failing `npm run check` blocks the deploy.
+The live site (https://oddbot.org) is self-hosted: `npm start` (scripts/server.mjs)
+on a home PC behind a Cloudflare Tunnel; a scheduled task there pulls `main` and
+runs update + check hourly, so pushing to `main` goes live within the hour.
+`.github/workflows/deploy.yml` only refreshes the GitHub Pages redirect.
 Don't deploy by hand unless asked.
 
 ## Rules
