@@ -1969,3 +1969,18 @@ td.epa-col .epa { background: none !important; color: var(--text) !important; pa
   :is(#tbl, .tt-card) table th.num { min-width: 56px; }
   :is(#tbl, .tt-card) table :is(td.r, td.c) { white-space: nowrap; }
 }
+/* segmented switch (one blue pill marks the choice): which chart on the team page */
+.seg-switch { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+.seg-switch a { display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.seg-switch a:hover { color: var(--text); }
+.seg-switch a.active { background: var(--accent); color: var(--on-accent); }
+/* team page: the switch and the compare box share the tabs row, right-aligned, all 38px tall */
+.chart-side { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chart-side .vs-form { gap: 8px; }
+.chart-side .vs-form input { box-sizing: border-box; width: 190px; height: 38px; padding: 0 12px; }
+.chart-side .vs-form .btn { box-sizing: border-box; height: 38px; padding: 0 16px; }
+@media (max-width: 640px) {
+  .chart-side { flex: 1 1 100%; }
+  .chart-side .vs-form { flex: 1 1 100%; }
+  .chart-side .vs-form input { flex: 1 1 auto; width: auto; min-width: 0; }
+}

@@ -806,6 +806,7 @@ async function team(r) {
         <a href="#/${season}/team/${n}" class="${view === "matches" ? "active" : ""}">Matches</a>
         <a href="#/${season}/team/${n}/charts" class="${view === "charts" ? "active" : ""}">Charts</a>
       </nav>
+      <div class="chart-side" id="chart-side"></div>
     </div>
     <div id="view"></div>`;
 
@@ -840,9 +841,9 @@ async function team(r) {
     const head = (m) => `<b>${esc(evName.get(m.ev) ?? m.ev)}</b> · ${esc(m.m)}`;
     const result = (m) => `${m.score > m.oppScore ? "W" : m.score < m.oppScore ? "L" : "T"} ${m.score}–${m.oppScore}`;
     const note = (s) => ($("#chart-note").textContent = s);
-    $("#view").innerHTML = `<div class="card card-pad section team-chart">
-      <div class="chart-head"><nav class="seg" id="graph-pick"></nav><span id="chart-tools"></span></div>
-      <p class="small muted" id="chart-note"></p><div id="chart"></div></div>`;
+    // which chart, and the compare box, sit on the right of the Matches | Charts row (one row of controls, not two)
+    $("#chart-side").innerHTML = `<nav class="seg-switch" id="graph-pick" aria-label="Chart"></nav><span id="chart-tools"></span>`;
+    $("#view").innerHTML = `<div class="card card-pad section team-chart"><p class="small muted" id="chart-note"></p><div id="chart"></div></div>`;
     // switching graphs redraws just the chart (the URL updates quietly), not the whole page
     const q = { g: GRAPHS.some(([k]) => k === r.query.get("g")) ? r.query.get("g") : "epa", vs: r.query.get("vs") ?? "" };
     const drawGraph = async () => {
@@ -1239,7 +1240,11 @@ async function events(r) {
     { key: "strength", label: "Strength", cls: "r epa-col hide-sm", render: (e) => (e.strength > 0 ? epa(e.strength, meta) : '<span class="faint">–</span>') },
   ];
   $("#tbl").classList.add("ev-list");
-  const table = sortableTable($("#tbl"), evs, cols, { sortKey: "start" });
+  // the current season opens on what's coming: live events, then upcoming soonest first, then finished (most recent
+  // first); past seasons just run newest first. Clicking Date sorts by date as usual.
+  const current = season === state.defaultSeason, todayMs = Date.parse(localToday(0));
+  for (const e of evs) { const d = Date.parse(e.start) - todayMs; e.soon = e.ongoing ? -1 : !e.finished && d >= -86400e3 ? Math.max(0, d) : 1e15 - d; }
+  const table = sortableTable($("#tbl"), evs, cols, current ? { sortKey: "soon", desc: false } : { sortKey: "start" });
   const fillStates = regionSelect($("#state"), () => evs.filter((e) => e.country === $("#country").value), query.get("state"));
   const apply = () => {
     const q = $("#filter").value.trim().toLowerCase(), ty = $("#type").value, c = $("#country").value, st = $("#state").value, mo = $("#month").value, stat = $("#status")?.value ?? "";
