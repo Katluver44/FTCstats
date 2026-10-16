@@ -96,45 +96,37 @@ function matchCard(c) {
     h("div", { height: 16, borderRadius: 8, background: C.blue, width: "100%" }, h("div", { width: `${r}%`, height: 16, borderRadius: 8, background: C.red })));
 }
 
-// the card for a bare link: our robot, head-on, doing the Megamind meme.
-// ?v= picks a variant (caption, where it sits, the face); 1 is what the site uses.
-const SITE_VARIANTS = {
-  1: { text: "no EPA?", at: "top", face: "sideeye" },
-  2: { text: "no EPA?", at: "bottom", face: "sideeye" },
-  3: { text: "no match videos?", at: "top", face: "sideeye" },
-  4: { text: "no EPA?", at: "top", face: "squint" },
-  5: { text: "no ranking forecasts?", at: "bottom", face: "squint" },
-};
-const FACES = {
-  // lids = how much of each eye the lid covers; pupilX = where the pupil looks
-  sideeye: { lids: [40, 70], pupilX: 74, brows: [[86, 135, 14], [316, 107, -6]], mouth: { left: 230, top: 400, width: 180, rot: -8 } },
-  squint: { lids: [76, 76], pupilX: 40, brows: [[86, 128, 16], [316, 128, -16]], mouth: { left: 180, top: 420, width: 180, rot: 0 } },
-};
+// the card for a bare link: the Megamind "no …?" meme with our robot in his place.
+// Face fills the frame and runs off the bottom, head tilted, huge white Impact-style
+// caption across the top, and the look: worried brows, big wet eyes, a small pout.
+// ?v= picks the caption; 1 is what the site link uses.
+const SITE_VARIANTS = { 1: "no EPA?", 2: "no match videos?", 3: "no ranking forecasts?", 4: "no predictions?" };
+const el = (type, props, ...children) => ({ type, props: { ...props, children: children.flat().filter((c) => c != null && c !== false) } });
 function siteCard(v = 1) {
-  const { text, at, face } = SITE_VARIANTS[v] ?? SITE_VARIANTS[1];
-  const f = FACES[face];
-  const fontSize = Math.min(170, Math.floor(1120 / (0.52 * text.length)));
-  const outline = [-5, 5].flatMap((x) => [-5, 5].map((y) => `${x}px ${y}px 0 #000`)).concat(["0 7px 0 #000", "0 -7px 0 #000", "7px 0 0 #000", "-7px 0 0 #000"]).join(", ");
-  const B = 540, bx = (1200 - B) / 2, by = 60; // body: a 540px square, head-on
-  // wheels poke out past the body: a dark tyre with a lighter tread stripe, so they read on the dark card
-  const wheel = (left, top) => h("div", { position: "absolute", left, top, width: 84, height: 150, borderRadius: 20, background: "#3a3a3a", alignItems: "center", justifyContent: "center" },
-    h("div", { width: 26, height: 110, borderRadius: 13, background: "#555" }));
-  // eye: white circle, pupil, then a bigger accent circle shifted up as the lid (curved, and
-  // accent-on-accent outside the eye, so nothing clips)
-  const eye = (left, lid) => h("div", { position: "absolute", left, top: 185, width: 140, height: 140 },
-    h("div", { position: "absolute", left: 0, top: 0, width: 140, height: 140, borderRadius: 70, background: "#fff" }),
-    h("div", { position: "absolute", left: f.pupilX, top: 56, width: 60, height: 60, borderRadius: 30, background: "#111" }),
-    h("div", { position: "absolute", left: -18, top: lid - 178, width: 178, height: 178, borderRadius: 89, background: C.accent }));
-  const brow = ([left, top, angle]) => h("div", { position: "absolute", left, top, width: 160, height: 24, borderRadius: 12, background: "#111", transform: `rotate(${angle}deg)` });
-  const body = h("div", { position: "absolute", left: bx, top: by, width: B, height: B, borderRadius: 72, background: C.accent },
-    eye(92, f.lids[0]), eye(308, f.lids[1]),
-    ...f.brows.map(brow), // after the eyes, so the lids don't paint over them
-    h("div", { position: "absolute", left: f.mouth.left, top: f.mouth.top, width: f.mouth.width, height: 22, borderRadius: 11, background: "#111", transform: `rotate(${f.mouth.rot}deg)` }));
-  const caption = h("div", { position: "absolute", left: 0, width: 1200, top: at === "top" ? 14 : 630 - fontSize - 24, justifyContent: "center",
-    fontFamily: "Anton", fontSize, lineHeight: 1, letterSpacing: 2, textTransform: "uppercase", color: "#fff", textShadow: outline }, text);
-  return h("div", { position: "relative", width: "100%", height: "100%", background: C.bg },
-    wheel(bx - 66, by + 80), wheel(bx - 66, by + 300), wheel(bx + B - 18, by + 80), wheel(bx + B - 18, by + 300),
-    body, caption);
+  const text = SITE_VARIANTS[v] ?? SITE_VARIANTS[1];
+  const fontSize = Math.min(210, Math.floor(1140 / (0.52 * text.length)));
+  const outline = [-6, 6].flatMap((x) => [-6, 6].map((y) => `${x}px ${y}px 0 #000`)).concat(["0 8px 0 #000", "0 -8px 0 #000", "8px 0 0 #000", "-8px 0 0 #000"]).join(", ");
+  const B = 760; // the body: a rounded square wider than the eye can take in, cropped by the bottom edge
+  const wheel = (left, top) => h("div", { position: "absolute", left, top, width: 110, height: 210, borderRadius: 26, background: "#3a3a3a", alignItems: "center", justifyContent: "center" },
+    h("div", { width: 34, height: 160, borderRadius: 17, background: "#555" }));
+  // big wet eyes: white, a dark iris, the pupil, and a highlight; both look a little to the right, at you
+  const eye = (left) => h("div", { position: "absolute", left, top: 190, width: 200, height: 200, borderRadius: 100, background: "#fff" },
+    h("div", { position: "absolute", left: 58, top: 56, width: 118, height: 118, borderRadius: 59, background: "#1d2a3a" }),
+    h("div", { position: "absolute", left: 80, top: 78, width: 74, height: 74, borderRadius: 37, background: "#0a0a0a" }),
+    h("div", { position: "absolute", left: 86, top: 80, width: 30, height: 30, borderRadius: 15, background: "#fff" }));
+  // worried brows (inner ends up) and a small pout, as strokes
+  const strokes = el("svg", { width: B, height: B, viewBox: `0 0 ${B} ${B}`, style: { position: "absolute", left: 0, top: 0 } },
+    // one brow sits higher than the other: more judgement, less pity
+    el("path", { d: "M 92 148 Q 200 62 330 96", stroke: "#111", strokeWidth: 36, strokeLinecap: "round", fill: "none" }),
+    el("path", { d: "M 430 152 Q 560 120 668 204", stroke: "#111", strokeWidth: 36, strokeLinecap: "round", fill: "none" }),
+    el("path", { d: "M 340 486 Q 405 444 470 480", stroke: "#111", strokeWidth: 28, strokeLinecap: "round", fill: "none" }));
+  const body = h("div", { position: "absolute", left: 0, top: 0, width: B, height: B, borderRadius: 110, background: C.accent }, eye(130), eye(430), strokes);
+  // the whole robot, tilted like a head cocked at you
+  const robot = h("div", { position: "absolute", left: (1200 - B) / 2, top: 104, width: B, height: B, transform: "rotate(-6deg)" },
+    wheel(-72, 150), wheel(-72, 430), wheel(B - 38, 150), wheel(B - 38, 430), body);
+  const caption = h("div", { position: "absolute", left: 0, width: 1200, top: 12, justifyContent: "center",
+    fontFamily: "Anton", fontSize, lineHeight: 1, letterSpacing: 4, textTransform: "uppercase", color: "#fff", textShadow: outline }, text);
+  return h("div", { position: "relative", width: "100%", height: "100%", overflow: "hidden", background: "#0f0f10" }, robot, caption);
 }
 
 export default async function handler(req, res) {
