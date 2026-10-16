@@ -97,7 +97,7 @@ function matchCard(c) {
 }
 
 // the card for a bare link: our robot, deadpan, asking the question (the Megamind meme)
-const MEME_TEXT = "no predictions?";
+const MEME_TEXT = "no EPA?";
 function siteCard() {
   const outline = [-4, 4].flatMap((x) => [-4, 4].map((y) => `${x}px ${y}px 0 #000`)).concat(["0 6px 0 #000", "0 -6px 0 #000", "6px 0 0 #000", "-6px 0 0 #000"]).join(", ");
   const wheel = (left, top) => h("div", { position: "absolute", left, top, width: 84, height: 40, borderRadius: 12, background: "#2a2a2a" });
@@ -116,7 +116,7 @@ function siteCard() {
     bot,
     h("div", { alignItems: "center", gap: 18, fontSize: 30, color: C.muted },
       h("span", { fontWeight: 800, color: C.text }, "odd", h("span", { fontStyle: "italic", fontWeight: 800 }, "robot")),
-      h("span", {}, "·"), h("span", {}, "oddbot.org"), h("span", {}, "·"), h("span", {}, "FTC ratings, predictions you can check, live forecasts")));
+      h("span", {}, "·"), h("span", {}, "oddbot.org"), h("span", {}, "·"), h("span", {}, "EPA, match videos, ranking forecasts")));
 }
 
 export default async function handler(req, res) {
