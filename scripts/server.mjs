@@ -54,7 +54,7 @@ class Lru {
   }
 }
 const files = new Lru(400 * 1024 * 1024); // file bodies + their compressed copies
-const fnCache = new Lru(150 * 1024 * 1024); // rendered /api/card and share pages
+let fnCache = new Lru(150 * 1024 * 1024); // rendered /api/card and share pages
 
 const loading = new Map(); // in-flight loads, so a burst of requests compresses a file once
 function loadFile(file, st) {
@@ -129,14 +129,20 @@ function vres(res, onDone) {
   });
 }
 
+// Function modules are re-imported when their file changes (the hourly git pull), so a
+// change to photo-service/api/*.js goes live without restarting the server. Their own
+// imports (photo-service/lib) are cached by Node, so a change there still needs a restart.
 const handlers = new Map();
 async function handler(name) {
-  if (!handlers.has(name)) {
-    const file = path.resolve("photo-service/api", `${name}.js`);
-    await fs.access(file);
-    handlers.set(name, (await import(pathToFileURL(file).href)).default);
+  const file = path.resolve("photo-service/api", `${name}.js`);
+  const st = await fs.stat(file);
+  const had = handlers.get(name);
+  if (!had || had.mtimeMs !== st.mtimeMs) {
+    const fn = (await import(`${pathToFileURL(file).href}?v=${st.mtimeMs}`)).default;
+    handlers.set(name, { mtimeMs: st.mtimeMs, fn });
+    if (had) { fnCache = new Lru(150 * 1024 * 1024); console.log(`reloaded api/${name}.js`); } // rendered cards came from the old code
   }
-  return handlers.get(name);
+  return handlers.get(name).fn;
 }
 
 const server = http.createServer(async (req, res) => {
