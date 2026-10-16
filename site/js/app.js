@@ -2717,6 +2717,10 @@ async function h2h(r) {
     const a = cur(ta), b = cur(tb);
     const g = shared(a.matches, season);
     out.innerHTML = `
+      <div class="section-title"><h2>EPA through the season</h2><p class="muted desk-only" style="margin:6px 0 0">By match number (1st match, 2nd, …) so seasons of different lengths line up.</p></div>
+      <div class="card card-pad"><div id="chart"></div></div>
+      <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(g.vs)}</b> for ${A} · Together: <b>${recordOf(g.withB)}</b> · scores show ${A}'s alliance first</p></div>
+      ${meetTable([g], evNames)}
       <div class="section card card-pad">${headRow(a, b)}<div class="tape">
         ${tape("EPA", a.epa.np, b.epa.np, (v) => fmt(v), { tip: EPA_TIP })}
         ${tape("Auto", a.epa.auto, b.epa.auto, (v) => fmt(v), { cls: "desk-only" })}
@@ -2728,11 +2732,7 @@ async function h2h(r) {
         ${tape("World rank", a.rank / a.of, b.rank / b.of, () => "", { low: true, text: [`#${fmtInt(a.rank)}`, `#${fmtInt(b.rank)}`], tip: `Bars: share of the season's ${fmtInt(a.of)} teams ranked below` })}
         ${tape("Awards", (a.awards ?? []).length, (b.awards ?? []).length, (v) => fmtInt(v))}
       </div></div>
-      ${awardsTitle}${awardsCard()}
-      <div class="section-title"><h2>EPA through the season</h2><p class="muted desk-only" style="margin:6px 0 0">By match number (1st match, 2nd, …) so seasons of different lengths line up.</p></div>
-      <div class="card card-pad"><div id="chart"></div></div>
-      <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(g.vs)}</b> for ${A} · Together: <b>${recordOf(g.withB)}</b> · scores show ${A}'s alliance first</p></div>
-      ${meetTable([g], evNames)}`;
+      ${awardsTitle}${awardsCard()}`;
     const len = Math.max(a.matches.length, b.matches.length);
     const pad = (arr) => Array.from({ length: len }, (_, i) => arr[i] ?? null);
     mountLineChart($("#chart"), {
@@ -2756,6 +2756,10 @@ async function h2h(r) {
   const topPct = (p) => `Top ${Math.max(1, Math.round(p * 100))}%`;
   const allVs = groups.flatMap((x) => x.vs), allWith = groups.flatMap((x) => x.withB);
   out.innerHTML = `
+    <div class="section-title"><h2>Season by season</h2><p class="muted desk-only" style="margin:6px 0 0">Share of each season's teams ranked below them (higher is better), since each game scores differently and EPAs don't compare across seasons. Hover for ranks and EPAs.</p></div>
+    <div class="card card-pad"><div id="chart"></div></div>
+    <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(allVs)}</b> for ${A} · Together: <b>${recordOf(allWith)}</b> · scores show ${A}'s alliance first</p></div>
+    ${meetTable(groups, evNames)}
     <div class="section card card-pad">${headRow(anyOf(ta), anyOf(tb))}<div class="tape">
       ${tape("Seasons", ca.seasons, cb.seasons, (v) => fmtInt(v))}
       ${tape("Matches", ca.matches, cb.matches, (v) => fmtInt(v))}
@@ -2764,11 +2768,7 @@ async function h2h(r) {
       ${tape("Awards", ca.awards, cb.awards, (v) => fmtInt(v))}
       ${tape("Wins (banners)", ca.banners, cb.banners, (v) => fmtInt(v), { tip: "Event wins and Inspire awards" })}
     </div></div>
-    <div class="section-title"><h2>Season by season</h2><p class="muted desk-only" style="margin:6px 0 0">Share of each season's teams ranked below them (higher is better), since each game scores differently and EPAs don't compare across seasons. Hover for ranks and EPAs.</p></div>
-    <div class="card card-pad"><div id="chart"></div></div>
-    ${awardsTitle}${awardsCard()}
-    <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(allVs)}</b> for ${A} · Together: <b>${recordOf(allWith)}</b> · scores show ${A}'s alliance first</p></div>
-    ${meetTable(groups, evNames)}`;
+    ${awardsTitle}${awardsCard()}`;
   // a line per team: 100 = best in the world that season, 0 = last; a season a team skipped is a gap
   const played = seasons.map((s, i) => ({ s, a: ta[i], b: tb[i] })).filter((x) => x.a || x.b);
   const beat = (t) => (t?.rank ? (1 - (t.rank - 1) / t.of) * 100 : null);
