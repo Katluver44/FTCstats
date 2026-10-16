@@ -2,6 +2,7 @@
 :root {
   --on-accent: #fff; /* text on a solid accent fill */
   --stage-glow: #10203a; /* deep navy behind the video play button, fading out to the page */
+  --sorted-tint: color-mix(in srgb, var(--accent) 12%, transparent); /* the sorted column's strip */
   --page: #ffffff;
   --cyan: #0a9bd7; /* the block colour behind FIRST's hero media */
   --surface: #ffffff;
@@ -1908,9 +1909,14 @@ button.link { padding: 0; border: 0; background: none; font: inherit; font-weigh
   .mt th.vid-cell, .mt td.vid-cell { text-align: left; }
 }
 
-/* the sorted column is a light blue strip (it moves when you sort by another column);
-   the teams and events lists show EPA there as plain numbers, no chips */
-th.col-sorted, td.col-sorted, tbody tr td.col-sorted { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+/* the sorted column is a light blue strip (it moves when you sort by another column); the teams and events lists
+   show EPA there as plain numbers, no chips. The strip is a background image sized to the column, because the first
+   and last cells carry the page gutter as padding (so zebra rows and hovers run edge to edge): on those the strip
+   stops where a normal cell's 12px padding would start, instead of bleeding across the margin. */
+th.col-sorted, td.col-sorted, tbody tr td.col-sorted { background-color: transparent; background-image: linear-gradient(var(--sorted-tint), var(--sorted-tint)); background-repeat: no-repeat; background-size: 100% 100%; background-position: center; }
+.card :is(th, td).col-sorted:first-child { background-size: calc(100% - var(--gutter) + 12px) 100%; background-position: right center; }
+.card :is(th, td).col-sorted:last-child { background-size: calc(100% - var(--gutter) + 12px) 100%; background-position: left center; }
+@media (max-width: 640px) { .card :is(th, td).col-sorted:first-child, .card :is(th, td).col-sorted:last-child { background-size: 100% 100%; } } /* phones: 16px gutter, the strip meets the edge */
 td.epa-col .epa { background: none !important; color: var(--text) !important; padding: 0; min-width: 0; font-weight: 600; }
 /* event Teams tab: the gear's middle on the header row's middle (the 40px phone tap target sat 6px low) */
 @media (max-width: 640px) { .tt-gear { top: -4px; } }
