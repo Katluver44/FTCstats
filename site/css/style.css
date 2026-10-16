@@ -1998,3 +1998,9 @@ body.theatre .match-stage .stage-video, body.theatre .stage-side .bug { width: m
 .mw-ring { fill: none; stroke: var(--accent); stroke-width: 2; opacity: .35; }
 @keyframes mw-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .mw .mw-g { animation: none; } }
+/* match page: "Score & teams ↓" pill at the foot of the first screen while the video fills it; gone once you scroll */
+.scroll-hint { position: fixed; left: 50%; bottom: 16px; z-index: 5; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+.scroll-hint:hover { color: var(--text); }
+.scroll-hint.gone { opacity: 0; pointer-events: none; }
+@media (max-width: 640px) { .scroll-hint { display: none; } } /* phones: the score sits right under the title */

@@ -2111,13 +2111,20 @@ async function match(r) {
       </nav>` : ""}
     </div></div>
 
-    ${stage}
+    ${stage}${v ? `<button type="button" class="scroll-hint">Score &amp; teams <span aria-hidden="true">↓</span></button>` : ""}
 
     <div class="card card-pad section ls-card match-sec"><h2>Line score</h2>${lineScore}</div>
 
     <div class="card section match-sec"><div class="card-pad" style="padding-bottom:6px"><h2 style="margin:0">Teams</h2><p class="small muted desk-only" style="margin:4px 0 0">Each robot's EPA going into this match, and where this result moved it${isQual ? ". Event rank and record are as of the end of this match" : ""}.</p></div><div class="table-wrap"><table class="match-teams">
       <thead><tr><th>Team</th><th class="c">EPA before</th><th class="r">After</th><th class="r hide-sm">Auto</th><th class="r hide-sm">Teleop</th><th class="r hide-sm">Endgame</th><th class="r"><span class="hide-sm">${isQual ? "Event" : "Qual"} </span>rank</th><th class="r hide-sm">Record</th></tr></thead>
       <tbody>${teamRows}</tbody></table></div></div>`;
+  // the video fills the first screen, so a pill says the score and teams are below; it goes once you scroll (see the
+  // scroll listener by the play handler) and clicking it takes you to the score strip
+  const hint = $(".scroll-hint");
+  if (hint) {
+    hint.classList.toggle("gone", document.documentElement.scrollHeight <= innerHeight + 80);
+    hint.onclick = () => scrollTo({ top: scrollY + $(".stage-side").getBoundingClientRect().top - ($("header.nav")?.offsetHeight ?? 0) - 16, behavior: "smooth" });
+  }
   // team photos (when a team has one) as small avatars in the line score
   data.photos(CONFIG.photoApi).catch(() => ({})).then((p) => {
     if (stale(r)) return;
@@ -2945,6 +2952,7 @@ async function boot() {
     scrollTo({ top: scrollY + box.getBoundingClientRect().top - ($("header.nav")?.offsetHeight ?? 0) - 16, behavior: "smooth" });
   });
   addEventListener("hashchange", () => document.body.classList.remove("theatre"));
+  addEventListener("scroll", () => { const h = $(".scroll-hint"); if (h && scrollY > 60) h.classList.add("gone"); }, { passive: true });
 
   document.addEventListener("click", (e) => { const b = e.target.closest("[data-share]"); if (b) { e.preventDefault(); share(b); } });
   // match videos: one player dialog for every ▶ button
