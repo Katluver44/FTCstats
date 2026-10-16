@@ -100,23 +100,26 @@ function matchCard(c) {
 const MEME_TEXT = "no EPA?";
 function siteCard() {
   const outline = [-4, 4].flatMap((x) => [-4, 4].map((y) => `${x}px ${y}px 0 #000`)).concat(["0 6px 0 #000", "0 -6px 0 #000", "6px 0 0 #000", "-6px 0 0 #000"]).join(", ");
-  const wheel = (left, top) => h("div", { position: "absolute", left, top, width: 84, height: 40, borderRadius: 12, background: "#2a2a2a" });
-  const eye = (left, lid) => h("div", { position: "absolute", left, top: 118, width: 62, height: 62, borderRadius: 31, background: "#fff", overflow: "hidden" },
-    h("div", { position: "absolute", left: 20, top: 24, width: 26, height: 26, borderRadius: 13, background: "#111" }),
-    // a heavy lid, one lower than the other: unimpressed
-    h("div", { position: "absolute", left: -4, top: -40 + lid, width: 70, height: 40, background: C.accent }));
-  const bot = h("div", { position: "relative", width: 360, height: 360 },
-    wheel(28, 0), wheel(248, 0), wheel(28, 320), wheel(248, 320),
-    h("div", { position: "absolute", left: 40, top: 40, width: 280, height: 280, borderRadius: 40, background: C.accent },
-      eye(60, 18), eye(158, 30),
-      // flat mouth
-      h("div", { position: "absolute", left: 92, top: 214, width: 96, height: 10, borderRadius: 5, background: "#111" })));
-  return h("div", { flexDirection: "column", alignItems: "center", justifyContent: "space-between", width: "100%", height: "100%", padding: "36px 60px 30px", background: C.bg, color: C.text },
-    h("div", { fontFamily: "Anton", fontSize: 118, lineHeight: 1, letterSpacing: 2, textTransform: "uppercase", color: "#fff", textShadow: outline }, MEME_TEXT),
+  // bigger, ruder: side-eye, one brow up, a smirk that goes one way
+  const wheel = (left, top) => h("div", { position: "absolute", left, top, width: 104, height: 46, borderRadius: 14, background: "#2a2a2a" });
+  // eye: white circle, pupil, then a bigger accent circle shifted up as the lid (a curved
+  // lid, and accent-on-accent outside the eye, so no clipped edges show)
+  const eye = (left, lid, pupilX) => h("div", { position: "absolute", left, top: 120, width: 92, height: 92 },
+    h("div", { position: "absolute", left: 0, top: 0, width: 92, height: 92, borderRadius: 46, background: "#fff" }),
+    h("div", { position: "absolute", left: pupilX, top: 36, width: 40, height: 40, borderRadius: 20, background: "#111" }),
+    h("div", { position: "absolute", left: -12, top: lid - 116, width: 116, height: 116, borderRadius: 58, background: C.accent }));
+  const brow = (left, top, angle) => h("div", { position: "absolute", left, top, width: 104, height: 16, borderRadius: 8, background: "#111", transform: `rotate(${angle}deg)` });
+  const bot = h("div", { position: "relative", width: 440, height: 440 },
+    wheel(36, 0), wheel(300, 0), wheel(36, 394), wheel(300, 394),
+    h("div", { position: "absolute", left: 44, top: 44, width: 352, height: 352, borderRadius: 48, background: C.accent },
+      eye(60, 26, 48), eye(206, 46, 48),
+      brow(56, 88, 14), brow(206, 70, -6), // after the eyes, so the lids don't paint over them
+      h("div", { position: "absolute", left: 150, top: 262, width: 120, height: 14, borderRadius: 7, background: "#111", transform: "rotate(-8deg)" })));
+  return h("div", { flexDirection: "column", alignItems: "center", justifyContent: "space-between", width: "100%", height: "100%", padding: "22px 60px 18px", background: C.bg, color: C.text },
+    h("div", { fontFamily: "Anton", fontSize: 128, lineHeight: 1, letterSpacing: 2, textTransform: "uppercase", color: "#fff", textShadow: outline }, MEME_TEXT),
     bot,
-    h("div", { alignItems: "center", gap: 18, fontSize: 30, color: C.muted },
-      h("span", { fontWeight: 800, color: C.text }, "odd", h("span", { fontStyle: "italic", fontWeight: 800 }, "robot")),
-      h("span", {}, "·"), h("span", {}, "oddbot.org"), h("span", {}, "·"), h("span", {}, "EPA, match videos, ranking forecasts")));
+    h("div", { alignItems: "center", gap: 16, fontSize: 26, color: C.muted },
+      h("span", { fontWeight: 700, color: C.text }, "oddbot.org"), h("span", {}, "·"), h("span", {}, "EPA, match videos, ranking forecasts")));
 }
 
 export default async function handler(req, res) {
