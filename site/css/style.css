@@ -2004,3 +2004,15 @@ body.theatre .match-stage .stage-video, body.theatre .stage-side .bug { width: m
 .scroll-hint:hover { color: var(--text); }
 .scroll-hint.gone { opacity: 0; pointer-events: none; }
 @media (max-width: 640px) { .scroll-hint { display: none; } } /* phones: the score sits right under the title */
+/* ---- one look for controls (the switch style): 8px corners, 1px line, surface-2, 13px/600; the chosen option or the
+   primary action is solid accent with white text. Pill groups (Compete modes, This season | Career, Matches per team,
+   the chart type picker) and the action buttons around them all follow it. ---- */
+.chart-pick { gap: 2px; padding: 2px; border-radius: 8px; }
+.chart-pick a { display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; border-radius: 6px; }
+.chart-pick a:hover { color: var(--text); }
+.chart-pick a.active { background: var(--accent); color: var(--on-accent); }
+.compete-bar .btn, button.pill, .vs-form .btn { box-sizing: border-box; min-height: 38px; padding: 0 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.2; }
+.compete-bar .btn:hover, button.pill:hover, .vs-form .btn:hover { background: var(--hover); color: var(--text); opacity: 1; }
+.compete-bar .btn-solid, .vs-form .btn-solid { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.compete-bar .btn-solid:hover, .vs-form .btn-solid:hover { background: var(--accent); color: var(--on-accent); filter: brightness(1.08); }
+.sim-ev input { box-sizing: border-box; min-height: 38px; padding: 0 12px; border-radius: 8px; }
