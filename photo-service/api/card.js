@@ -12,9 +12,9 @@ let fonts;
 async function loadFonts() {
   if (fonts) return fonts;
   // without a browser user agent, Google Fonts serves plain TTF files, which the renderer reads
-  const css = await (await fetch("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900")).text();
-  const urls = [...css.matchAll(/font-weight:\s*(\d+);[^}]*?src:\s*url\(([^)]+)\)/g)].map((m) => [+m[1], m[2]]);
-  fonts = await Promise.all(urls.map(async ([weight, url]) => ({ name: "Roboto", weight, style: "normal", data: await (await fetch(url)).arrayBuffer() })));
+  const css = await (await fetch("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Anton")).text();
+  const faces = [...css.matchAll(/font-family:\s*'([^']+)';[^}]*?font-weight:\s*(\d+);[^}]*?src:\s*url\(([^)]+)\)/g)].map((m) => [m[1], +m[2], m[3]]);
+  fonts = await Promise.all(faces.map(async ([name, weight, url]) => ({ name, weight, style: "normal", data: await (await fetch(url)).arrayBuffer() })));
   return fonts;
 }
 const h = (type, style, ...children) => ({ type, props: { style: { display: "flex", ...style }, children: children.flat().filter((c) => c != null && c !== false) } });
@@ -96,17 +96,27 @@ function matchCard(c) {
     h("div", { height: 16, borderRadius: 8, background: C.blue, width: "100%" }, h("div", { width: `${r}%`, height: 16, borderRadius: 8, background: C.red })));
 }
 
-// what the site does, for a link to the front page
+// the card for a bare link: our robot, deadpan, asking the question (the Megamind meme)
+const MEME_TEXT = "no predictions?";
 function siteCard() {
-  const lines = ["Ranking forecasts before the first qualification match", "EPA carried across every season since 2019", "Live scores and forecasts, updated every 60 seconds", "Match video one click away"];
-  return h("div", { flexDirection: "column", justifyContent: "space-between", width: "100%", height: "100%", padding: "48px 60px", background: C.bg, color: C.text },
-    logo("oddbot.org"),
-    h("div", { flexDirection: "column", gap: 10 },
-      h("div", { fontSize: 76, fontWeight: 800, lineHeight: 1.05 }, "Who wins, and by how much."),
-      h("div", { fontSize: 34, color: C.muted }, "FTC team ratings and match predictions you can check")),
-    h("div", { flexDirection: "column", gap: 12 },
-      ...lines.map((t) => h("div", { alignItems: "center", gap: 16, fontSize: 28 },
-        h("div", { width: 12, height: 12, borderRadius: 6, background: C.accent }), t))));
+  const outline = [-4, 4].flatMap((x) => [-4, 4].map((y) => `${x}px ${y}px 0 #000`)).concat(["0 6px 0 #000", "0 -6px 0 #000", "6px 0 0 #000", "-6px 0 0 #000"]).join(", ");
+  const wheel = (left, top) => h("div", { position: "absolute", left, top, width: 84, height: 40, borderRadius: 12, background: "#2a2a2a" });
+  const eye = (left, lid) => h("div", { position: "absolute", left, top: 118, width: 62, height: 62, borderRadius: 31, background: "#fff", overflow: "hidden" },
+    h("div", { position: "absolute", left: 20, top: 24, width: 26, height: 26, borderRadius: 13, background: "#111" }),
+    // a heavy lid, one lower than the other: unimpressed
+    h("div", { position: "absolute", left: -4, top: -40 + lid, width: 70, height: 40, background: C.accent }));
+  const bot = h("div", { position: "relative", width: 360, height: 360 },
+    wheel(28, 0), wheel(248, 0), wheel(28, 320), wheel(248, 320),
+    h("div", { position: "absolute", left: 40, top: 40, width: 280, height: 280, borderRadius: 40, background: C.accent },
+      eye(60, 18), eye(158, 30),
+      // flat mouth
+      h("div", { position: "absolute", left: 92, top: 214, width: 96, height: 10, borderRadius: 5, background: "#111" })));
+  return h("div", { flexDirection: "column", alignItems: "center", justifyContent: "space-between", width: "100%", height: "100%", padding: "36px 60px 30px", background: C.bg, color: C.text },
+    h("div", { fontFamily: "Anton", fontSize: 118, lineHeight: 1, letterSpacing: 2, textTransform: "uppercase", color: "#fff", textShadow: outline }, MEME_TEXT),
+    bot,
+    h("div", { alignItems: "center", gap: 18, fontSize: 30, color: C.muted },
+      h("span", { fontWeight: 800, color: C.text }, "odd", h("span", { fontStyle: "italic", fontWeight: 800 }, "robot")),
+      h("span", {}, "·"), h("span", {}, "oddbot.org"), h("span", {}, "·"), h("span", {}, "FTC ratings, predictions you can check, live forecasts")));
 }
 
 export default async function handler(req, res) {
