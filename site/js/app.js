@@ -2111,14 +2111,14 @@ async function match(r) {
       </nav>` : ""}
     </div></div>
 
-    ${stage}${v ? `<button type="button" class="scroll-hint">Score &amp; teams <span aria-hidden="true">↓</span></button>` : ""}
+    ${stage}${v ? `<button type="button" class="scroll-hint">See advanced analytics <span aria-hidden="true">↓</span></button>` : ""}
 
     <div class="card card-pad section ls-card match-sec"><h2>Line score</h2>${lineScore}</div>
 
     <div class="card section match-sec"><div class="card-pad" style="padding-bottom:6px"><h2 style="margin:0">Teams</h2><p class="small muted desk-only" style="margin:4px 0 0">Each robot's EPA going into this match, and where this result moved it${isQual ? ". Event rank and record are as of the end of this match" : ""}.</p></div><div class="table-wrap"><table class="match-teams">
       <thead><tr><th>Team</th><th class="c">EPA before</th><th class="r">After</th><th class="r hide-sm">Auto</th><th class="r hide-sm">Teleop</th><th class="r hide-sm">Endgame</th><th class="r"><span class="hide-sm">${isQual ? "Event" : "Qual"} </span>rank</th><th class="r hide-sm">Record</th></tr></thead>
       <tbody>${teamRows}</tbody></table></div></div>`;
-  // the video fills the first screen, so a pill says the score and teams are below; it goes once you scroll (see the
+  // the video fills the first screen, so a pill points at the analysis below; it goes once you scroll (see the
   // scroll listener by the play handler) and clicking it takes you to the score strip
   const hint = $(".scroll-hint");
   if (hint) {
