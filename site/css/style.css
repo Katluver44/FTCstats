@@ -677,7 +677,7 @@ table.alliances tr.champ td { background: var(--accent-soft); }
 .al-teams { display: flex; gap: 8px; font-size: 13px; font-weight: 650; }
 .al-teams .tn { min-width: 0; text-align: left; }
 .po-alliances td.res { white-space: normal; max-width: 96px; line-height: 1.3; }
-.al-name { font-size: 11.5px; color: var(--muted); max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.al-name { font-size: 11.5px; color: var(--muted); max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .po-note { padding: 10px 20px 0; font-size: 11.5px; color: var(--faint); }
 .po-bracket { display: flex; gap: 24px; align-items: flex-start; justify-content: safe center; padding: 24px 24px 28px; overflow-x: auto; min-width: 0; }
 .po-stack { display: flex; flex-direction: column; gap: 18px; flex: 1 1 auto; min-width: 0; }

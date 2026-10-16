@@ -1593,7 +1593,7 @@ function eventPlayoffs(season, meta, ev, matches, official, video) {
   const shortRes = (x) => x.replace(/^Tied /, "").replace(/^Out in (.+)$/, (_, w) => ({ semifinals: "Semis", quarterfinals: "Quarters" })[w] ?? w[0].toUpperCase() + w.slice(1));
   const allianceRows = p.alliances.map((a) => `<tr class="${a.result === "Winner" ? "champ" : ""}">
     <td class="num"><span class="seed">A${a.seed}</span></td>
-    <td><div class="al-teams">${a.teams.map((t) => tn(t)).join("")}</div><div class="al-name">${esc(name(a.captain))}</div></td>
+    <td><div class="al-teams">${a.teams.map((t) => tn(t)).join("")}</div><div class="al-name">${a.teams.map((t) => esc(name(t))).filter(Boolean).join(" · ")}</div></td>
     <td class="r desk-only"><b>${fmt(strength(a))}</b></td>
     <td class="r small muted desk-only">${record(a)}</td>
     <td class="small res ${a.result === "Winner" ? "res-win" : a.result === "Finalist" ? "res-final" : "muted"}"${shortRes(a.result) !== a.result ? ` title="${esc(a.result)}"` : ""}>${esc(shortRes(a.result))}</td>
