@@ -2451,7 +2451,9 @@ async function sim(r) {
   const run = () => {
     sync();
     const nums = st.teams;
-    if (nums.length < 4) { $("#sim-out").innerHTML = `<div class="empty">Add at least 4 teams, or load an event's teams.</div>`; return; }
+    // fewer than 4 teams: no results card at all (the pickers above make the ask clear)
+    $("#sim-out").hidden = nums.length < 4;
+    if (nums.length < 4) { $("#sim-out").innerHTML = ""; return; }
     $("#sim-out").innerHTML = `<div class="loading">${wheel(48)}<span>Simulating…</span></div>`;
     clearTimeout(timer);
     timer = setTimeout(() => {
@@ -2639,7 +2641,7 @@ async function h2h(r) {
   }
   const out = $("#out");
   if (A == null || B == null || !(view === "career" ? anyOf(ta) && anyOf(tb) : cur(ta) && cur(tb))) {
-    out.innerHTML = `<div class="section"><div class="card empty">Pick two teams${view === "season" ? " that have played this season" : ""}.</div></div>`;
+    out.innerHTML = ""; // nothing to compare yet: the empty pickers say it
     return;
   }
   if (A === B) { out.innerHTML = `<div class="section"><div class="card empty">Pick two different teams.</div></div>`; return; }
