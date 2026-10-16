@@ -1,4 +1,4 @@
-# oddrobot style guide
+# oddbot style guide
 
 The site should feel designed by one person with a point of view, not assembled
 by many sessions. Every rule here exists to remove a decision someone would
@@ -157,7 +157,7 @@ the robot. It stops under `prefers-reduced-motion`.
 
 ### The robot
 
-The site is **oddrobot** (all lower case; the wordmark is `odd<i>robot</i>`). Its
+The site is **oddbot** (all lower case; the wordmark is `odd<i>bot</i>`). Its
 mascot is a top-down mecanum robot: blue body, four wheels, rollers in an X.
 
 - **One drawing.** Always `robot(cls, size)` / `ROBOT_PARTS` from `ui.js`. Never
@@ -168,7 +168,7 @@ mascot is a top-down mecanum robot: blue body, four wheels, rollers in an X.
   team page (drives the curve), and the match page's play button (96px, the play
   triangle on its body). Also the favicon.
 - **Where it doesn't:** next to data, in tables with rows, in charts, as a bullet
-  or decoration. It marks "nothing here yet" or "this is oddrobot", nothing else.
+  or decoration. It marks "nothing here yet" or "this is oddbot", nothing else.
 - **Motion:** the logo drives in from off the left edge on load (strafing), spins
   once on the spot, and strafes on hover (so does the play button); everything
   else is still. Mecanum moves only: strafe without turning, spin on the spot. All

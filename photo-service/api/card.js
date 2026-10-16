@@ -27,7 +27,7 @@ const logo = (season) => h("div", { justifyContent: "space-between", alignItems:
     h("div", { position: "relative", width: 44, height: 44 },
       ...[[3, 31, C.text], [12, 22, C.text], [21, 26, C.text], [29, 14, C.accent], [36, 4, C.accent]].map(([x, y, c], i) =>
         h("div", { position: "absolute", left: x, top: y, width: i === 4 ? 9 : 7, height: i === 4 ? 9 : 7, borderRadius: 9, background: c }))),
-    h("div", { fontSize: 34, fontWeight: 800, color: C.text }, "odd", h("span", { fontStyle: "italic", fontWeight: 800 }, "robot"))),
+    h("div", { fontSize: 34, fontWeight: 800, color: C.text }, "odd", h("span", { fontStyle: "italic", fontWeight: 800 }, "bot"))),
   h("div", { fontSize: 26, color: C.muted }, season));
 
 function teamCard(c) {

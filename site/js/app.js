@@ -40,7 +40,7 @@ function labelFilters(root = document) {
 }
 document.addEventListener("change", (e) => { if (e.target instanceof HTMLSelectElement) labelFilters(e.target.parentElement ?? document); }, true);
 const PAGE_TITLES = { home: "Home", teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", sim: "SIM event", about: "Our methodology", live: "Happening now" };
-const setTitle = (name) => (document.title = name ? `${name} · oddrobot` : "oddrobot · FTC ratings & match predictions");
+const setTitle = (name) => (document.title = name ? `${name} · oddbot` : "oddbot · FTC ratings & match predictions");
 
 async function route() {
   clearInterval(state.liveTimer);
@@ -65,7 +65,7 @@ async function route() {
     clearTimeout(slow);
     if (!stale(r)) { app.classList.remove("routing"); window.scrollTo(0, 0); }
     if (!stale(r)) labelFilters($("#app")); // filters set from the link already read "All …"
-    // a heading names the page better, e.g. "20265 Heart of RoBots · oddrobot"
+    // a heading names the page better, e.g. "20265 Heart of RoBots · oddbot"
     const h1 = !stale(r) && r.page && $("#app h1");
     if (h1) setTitle(h1.textContent.trim().replace(/\s+/g, " "));
     if (!stale(r)) trackPage(`/${r.season}/${[r.page, ...r.args].filter(Boolean).join("/")}`, document.title);
@@ -1726,7 +1726,7 @@ function eventSos(season, ev, matches) {
   return new Map([...acc].map(([t, a]) => [t, { v: sosValue(a), places: sosPlaces(a) }]));
 }
 
-// the video stage's play button: the oddrobot mascot with the play triangle on its body
+// the video stage's play button: the oddbot mascot with the play triangle on its body
 const STAGE_PLAY = `<svg class="bot" width="96" height="96" viewBox="-28 -28 56 56" aria-hidden="true"><g class="bot-g">${ROBOT_PARTS}<path d="M-6 -9 10 0 -6 9Z" class="wf-play"/></g></svg>`;
 const GEAR_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
 

@@ -450,7 +450,7 @@ export function radar(axes, { size = 300, values = true } = {}) {
 }
 
 // ---------- the robot ----------
-// oddrobot's mascot: a top-down mecanum robot (body, four wheels, rollers in an X).
+// oddbot's mascot: a top-down mecanum robot (body, four wheels, rollers in an X).
 // Drawn around (0, 0) in a 56 x 56 box so it can spin and strafe in place.
 export const ROBOT_PARTS = `<rect x="-20" y="-20" width="40" height="40" rx="6" class="wf-body"/>${[[-17, -25, 1], [5, -25, -1], [-17, 19, -1], [5, 19, 1]]
   .map(([x, y, d]) => `<rect x="${x}" y="${y}" width="12" height="6" rx="2" class="wf-wheel"/>${[3, 7].map((u) => `<line x1="${x + u}" y1="${d > 0 ? y + 6 : y}" x2="${x + u + 3}" y2="${d > 0 ? y : y + 6}" class="wf-roller"/>`).join("")}`).join("")}`;
