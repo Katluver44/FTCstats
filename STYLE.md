@@ -120,6 +120,15 @@ Within a component use 4/8/12; between components 16/24; between sections 32/48.
 
 ## 7. Copy
 
+- **Nothing explains a heading.** A page title or section heading names the thing;
+  the content under it shows it. No muted sentence under an `h1` or `h2` saying
+  what the section is, how to read it or what the numbers mean ("By match number
+  so seasons line up", "How many times each team has won each award… hover a
+  row for where", "Pick any teams and see how a qualification tournament…"). If
+  a unit or basis has to be said, it goes in the axis label, the column header or
+  a tooltip on the number, never in a paragraph. Cut in Oct 2026; don't add them
+  back.
+
 - One sentence max under any heading. Detail lives on the Methodology page or
   in a hover tip.
 - Plain, specific, short: "Share of its last 10 quals it left the start zone",
@@ -185,6 +194,7 @@ Run this on every screenshot before shipping. Any "yes" is a fix.
 - [ ] Empty band, dead space, or a lone item on its own line
 - [ ] Text smaller than 12px, or a size not in the type scale
 - [ ] Labels overlap, or text is cut mid-word
+- [ ] A muted sentence under a heading explaining the section
 - [ ] Blank or "Loading…" flash when clicking between pages
 - [ ] Looks wrong at 375px or at 2000px
 

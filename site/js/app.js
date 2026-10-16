@@ -2177,7 +2177,6 @@ async function compete(r) {
     app.innerHTML = `
       <div class="card card-pad"><div class="page-head"><div>
         <h1>Compete</h1>
-        <p class="muted desk-only" style="margin:4px 0 0">Put any teams against each other and see the predicted score, who wins and how often. Uses each team's current EPA.</p>
       </div>${competeModes(season, "compete")}</div></div>
       <div class="predictor section">${sideBox("r")}${sideBox("b")}</div>
       <div class="compete-bar section">
@@ -2324,7 +2323,7 @@ async function compete(r) {
         <div class="card card-pad"><h3>Score breakdown</h3>${breakdown}</div>
         ${rpCard}
       </div>
-      <div class="section-title"><h2>Robots</h2><p class="muted desk-only" style="margin:6px 0 0">Each robot's EPA and how much of its alliance's points it brings.</p></div>
+      <div class="section-title"><h2>Robots</h2></div>
       <div class="card"><div class="table-wrap"><table class="match-teams">
         <thead><tr><th>Team</th><th class="c">EPA</th><th class="r hide-sm">Auto</th><th class="r hide-sm">Teleop</th><th class="r hide-sm">Endgame</th><th class="r">Share</th><th class="r hide-sm">Record</th></tr></thead>
         <tbody>${robotRows}</tbody></table></div></div></div>`;
@@ -2426,7 +2425,6 @@ async function sim(r) {
   app.innerHTML = `
     <div class="card card-pad"><div class="page-head"><div>
       <h1>SIM event</h1>
-      <p class="muted desk-only" style="margin:4px 0 0">Pick any teams and see how a qualification tournament between them would likely rank: thousands of random schedules, each played out from every team's current EPA.</p>
     </div>${competeModes(season, "sim")}</div></div>
     <div class="compete-bar section">
       <div class="row">
@@ -2616,7 +2614,6 @@ async function h2h(r) {
   app.innerHTML = `
     <div class="card card-pad"><div class="page-head"><div>
       <h1>Head to head</h1>
-      <p class="muted desk-only" style="margin:4px 0 0">Two teams side by side: this season's ratings and every match they've played against or with each other, or their whole careers.</p>
     </div>${competeModes(season, "h2h")}</div></div>
     <div class="compete-bar section">
       <nav class="chart-pick" aria-label="Compare over">${[["season", "This season"], ["career", "Career"]].map(([k, l]) => `<a href="${href({ view: k })}" class="${k === view ? "active" : ""}">${l}</a>`).join("")}</nav>
@@ -2711,15 +2708,15 @@ async function h2h(r) {
     }).join("")}</div></div>`;
   };
   // phones: the tape's Awards row is the summary; the per-award breakdown is desk-only
-  const awardsTitle = `<div class="section-title desk-only"><h2>Awards</h2><p class="muted desk-only" style="margin:6px 0 0">How many times each team has won each award${view === "career" ? " across every season" : " this season"}, counting 2nd and 3rd places. Hover a row for where.</p></div>`;
+  const awardsTitle = `<div class="section-title desk-only"><h2>Awards</h2></div>`;
 
   if (view === "season") {
     const a = cur(ta), b = cur(tb);
     const g = shared(a.matches, season);
     out.innerHTML = `
-      <div class="section-title"><h2>EPA through the season</h2><p class="muted desk-only" style="margin:6px 0 0">By match number (1st match, 2nd, …) so seasons of different lengths line up.</p></div>
+      <div class="section-title"><h2>EPA through the season</h2></div>
       <div class="card card-pad"><div id="chart"></div></div>
-      <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(g.vs)}</b> for ${A} · Together: <b>${recordOf(g.withB)}</b> · scores show ${A}'s alliance first</p></div>
+      <div class="section-title"><h2>When they met</h2></div>
       ${meetTable([g], evNames)}
       <div class="section card card-pad">${headRow(a, b)}<div class="tape">
         ${tape("EPA", a.epa.np, b.epa.np, (v) => fmt(v), { tip: EPA_TIP })}
@@ -2756,9 +2753,9 @@ async function h2h(r) {
   const topPct = (p) => `Top ${Math.max(1, Math.round(p * 100))}%`;
   const allVs = groups.flatMap((x) => x.vs), allWith = groups.flatMap((x) => x.withB);
   out.innerHTML = `
-    <div class="section-title"><h2>Season by season</h2><p class="muted desk-only" style="margin:6px 0 0">Share of each season's teams ranked below them (higher is better), since each game scores differently and EPAs don't compare across seasons. Hover for ranks and EPAs.</p></div>
+    <div class="section-title"><h2>Season by season</h2></div>
     <div class="card card-pad"><div id="chart"></div></div>
-    <div class="section-title"><h2>When they met</h2><p class="muted" style="margin:6px 0 0">Against each other: <b>${recordOf(allVs)}</b> for ${A} · Together: <b>${recordOf(allWith)}</b> · scores show ${A}'s alliance first</p></div>
+    <div class="section-title"><h2>When they met</h2></div>
     ${meetTable(groups, evNames)}
     <div class="section card card-pad">${headRow(anyOf(ta), anyOf(tb))}<div class="tape">
       ${tape("Seasons", ca.seasons, cb.seasons, (v) => fmtInt(v))}
