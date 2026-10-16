@@ -39,7 +39,7 @@ function labelFilters(root = document) {
   }
 }
 document.addEventListener("change", (e) => { if (e.target instanceof HTMLSelectElement) labelFilters(e.target.parentElement ?? document); }, true);
-const PAGE_TITLES = { teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", sim: "SIM event", about: "Our methodology", live: "Happening now" };
+const PAGE_TITLES = { home: "Home", teams: "Teams", team: "Team", events: "Events", event: "Event", match: "Match", compete: "Compete", h2h: "Head to head", sim: "SIM event", about: "Our methodology", live: "Happening now" };
 const setTitle = (name) => (document.title = name ? `${name} · oddrobot` : "oddrobot · FTC ratings & match predictions");
 
 async function route() {
@@ -47,16 +47,17 @@ async function route() {
   // a bare "#/" needs the index to know the default season; a link naming one doesn't wait
   if (!state.seasons.length && !SEASONS[location.hash.match(/^#\/(\d{4})(?=\/|\?|$)/)?.[1]]) await state.indexReady;
   const r = parseHash();
+  if (!r.page) r.page = "teams"; // the site opens on the Teams list
   r.nav = ++state.nav;
   state.season = r.season;
   renderNav(r);
   // the home page fits one screen on desktop (fitHome); every other page scrolls normally
-  document.body.classList.toggle("home-fit", !r.page);
+  document.body.classList.toggle("home-fit", r.page === "home");
   // keep the current page (dimmed) until the new one is ready, instead of flashing a blank
   // "Loading…" screen; only a slow load (over 0.6 s) shows the loading message
   app.classList.add("routing");
   const slow = setTimeout(() => { if (!stale(r)) { app.innerHTML = `<div class="loading">${wheel(48)}<span>Loading…</span></div>`; window.scrollTo(0, 0); } }, 600);
-  const pages = { "": home, teams, team, events, event, match, compete, h2h, sim, about, live };
+  const pages = { home, teams, team, events, event, match, compete, h2h, sim, about, live };
   const fn = pages[r.page] ?? notFound;
   setTitle(r.page && (PAGE_TITLES[r.page] ?? "Page not found"));
   try {

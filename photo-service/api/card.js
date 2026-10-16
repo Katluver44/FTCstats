@@ -1,4 +1,5 @@
 // GET /api/card?kind=team|event|match&season=2025&id=14270[&d=Q-12] -> 1200x630 PNG
+//     /api/card?kind=site                                         -> the card for a bare oddbot.org link
 // The preview image Discord, iMessage, Instagram etc. show for a shared link.
 import { ImageResponse } from "@vercel/og";
 import { describe } from "../lib/share.js";
@@ -26,7 +27,7 @@ const logo = (season) => h("div", { justifyContent: "space-between", alignItems:
     h("div", { position: "relative", width: 44, height: 44 },
       ...[[3, 31, C.text], [12, 22, C.text], [21, 26, C.text], [29, 14, C.accent], [36, 4, C.accent]].map(([x, y, c], i) =>
         h("div", { position: "absolute", left: x, top: y, width: i === 4 ? 9 : 7, height: i === 4 ? 9 : 7, borderRadius: 9, background: c }))),
-    h("div", { fontSize: 34, fontWeight: 800, color: C.text }, "FTC", h("span", { fontStyle: "italic", fontWeight: 800 }, "stats"))),
+    h("div", { fontSize: 34, fontWeight: 800, color: C.text }, "odd", h("span", { fontStyle: "italic", fontWeight: 800 }, "robot"))),
   h("div", { fontSize: 26, color: C.muted }, season));
 
 function teamCard(c) {
@@ -95,9 +96,28 @@ function matchCard(c) {
     h("div", { height: 16, borderRadius: 8, background: C.blue, width: "100%" }, h("div", { width: `${r}%`, height: 16, borderRadius: 8, background: C.red })));
 }
 
+// what the site does, for a link to the front page
+function siteCard() {
+  const lines = ["Ranking forecasts before the first qualification match", "EPA carried across every season since 2019", "Live scores and forecasts, updated every 60 seconds", "Match video one click away"];
+  return h("div", { flexDirection: "column", justifyContent: "space-between", width: "100%", height: "100%", padding: "48px 60px", background: C.bg, color: C.text },
+    logo("oddbot.org"),
+    h("div", { flexDirection: "column", gap: 10 },
+      h("div", { fontSize: 76, fontWeight: 800, lineHeight: 1.05 }, "Who wins, and by how much."),
+      h("div", { fontSize: 34, color: C.muted }, "FTC team ratings and match predictions you can check")),
+    h("div", { flexDirection: "column", gap: 12 },
+      ...lines.map((t) => h("div", { alignItems: "center", gap: 16, fontSize: 28 },
+        h("div", { width: 12, height: 12, borderRadius: 6, background: C.accent }), t))));
+}
+
 export default async function handler(req, res) {
   const q = new URL(req.url, "http://x").searchParams;
   try {
+    if (q.get("kind") === "site") {
+      const img = new ImageResponse(h("div", { width: "100%", height: "100%", fontFamily: "Roboto" }, siteCard()), { width: 1200, height: 630, fonts: await loadFonts().catch(() => undefined) });
+      res.setHeader("Content-Type", "image/png");
+      res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
+      return res.status(200).end(Buffer.from(await img.arrayBuffer()));
+    }
     const info = await describe(`${/^(localhost|127\.0\.0\.1)(:|$)/.test(req.headers.host ?? "") ? "http" : "https"}://${req.headers.host}`, q.get("kind"), q.get("season") ?? "", q.get("id") ?? "", q.get("d"));
     const c = info.card;
     const tree = c.kind === "team" ? teamCard(c) : c.kind === "event" ? eventCard(c) : matchCard(c);
