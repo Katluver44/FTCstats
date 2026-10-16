@@ -96,37 +96,52 @@ function matchCard(c) {
     h("div", { height: 16, borderRadius: 8, background: C.blue, width: "100%" }, h("div", { width: `${r}%`, height: 16, borderRadius: 8, background: C.red })));
 }
 
-// the card for a bare link: our robot, deadpan, asking the question (the Megamind meme)
-const MEME_TEXT = "no EPA?";
-function siteCard() {
-  const outline = [-4, 4].flatMap((x) => [-4, 4].map((y) => `${x}px ${y}px 0 #000`)).concat(["0 6px 0 #000", "0 -6px 0 #000", "6px 0 0 #000", "-6px 0 0 #000"]).join(", ");
-  // bigger, ruder: side-eye, one brow up, a smirk that goes one way
-  const wheel = (left, top) => h("div", { position: "absolute", left, top, width: 104, height: 46, borderRadius: 14, background: "#2a2a2a" });
-  // eye: white circle, pupil, then a bigger accent circle shifted up as the lid (a curved
-  // lid, and accent-on-accent outside the eye, so no clipped edges show)
-  const eye = (left, lid, pupilX) => h("div", { position: "absolute", left, top: 120, width: 92, height: 92 },
-    h("div", { position: "absolute", left: 0, top: 0, width: 92, height: 92, borderRadius: 46, background: "#fff" }),
-    h("div", { position: "absolute", left: pupilX, top: 36, width: 40, height: 40, borderRadius: 20, background: "#111" }),
-    h("div", { position: "absolute", left: -12, top: lid - 116, width: 116, height: 116, borderRadius: 58, background: C.accent }));
-  const brow = (left, top, angle) => h("div", { position: "absolute", left, top, width: 104, height: 16, borderRadius: 8, background: "#111", transform: `rotate(${angle}deg)` });
-  const bot = h("div", { position: "relative", width: 440, height: 440 },
-    wheel(36, 0), wheel(300, 0), wheel(36, 394), wheel(300, 394),
-    h("div", { position: "absolute", left: 44, top: 44, width: 352, height: 352, borderRadius: 48, background: C.accent },
-      eye(60, 26, 48), eye(206, 46, 48),
-      brow(56, 88, 14), brow(206, 70, -6), // after the eyes, so the lids don't paint over them
-      h("div", { position: "absolute", left: 150, top: 262, width: 120, height: 14, borderRadius: 7, background: "#111", transform: "rotate(-8deg)" })));
-  return h("div", { flexDirection: "column", alignItems: "center", justifyContent: "space-between", width: "100%", height: "100%", padding: "22px 60px 18px", background: C.bg, color: C.text },
-    h("div", { fontFamily: "Anton", fontSize: 128, lineHeight: 1, letterSpacing: 2, textTransform: "uppercase", color: "#fff", textShadow: outline }, MEME_TEXT),
-    bot,
-    h("div", { alignItems: "center", gap: 16, fontSize: 26, color: C.muted },
-      h("span", { fontWeight: 700, color: C.text }, "oddbot.org"), h("span", {}, "·"), h("span", {}, "EPA, match videos, ranking forecasts")));
+// the card for a bare link: our robot, head-on, doing the Megamind meme.
+// ?v= picks a variant (caption, where it sits, the face); 1 is what the site uses.
+const SITE_VARIANTS = {
+  1: { text: "no EPA?", at: "top", face: "sideeye" },
+  2: { text: "no EPA?", at: "bottom", face: "sideeye" },
+  3: { text: "no match videos?", at: "top", face: "sideeye" },
+  4: { text: "no EPA?", at: "top", face: "squint" },
+  5: { text: "no ranking forecasts?", at: "bottom", face: "squint" },
+};
+const FACES = {
+  // lids = how much of each eye the lid covers; pupilX = where the pupil looks
+  sideeye: { lids: [40, 70], pupilX: 74, brows: [[86, 135, 14], [316, 107, -6]], mouth: { left: 230, top: 400, width: 180, rot: -8 } },
+  squint: { lids: [76, 76], pupilX: 40, brows: [[86, 128, 16], [316, 128, -16]], mouth: { left: 180, top: 420, width: 180, rot: 0 } },
+};
+function siteCard(v = 1) {
+  const { text, at, face } = SITE_VARIANTS[v] ?? SITE_VARIANTS[1];
+  const f = FACES[face];
+  const fontSize = Math.min(170, Math.floor(1120 / (0.52 * text.length)));
+  const outline = [-5, 5].flatMap((x) => [-5, 5].map((y) => `${x}px ${y}px 0 #000`)).concat(["0 7px 0 #000", "0 -7px 0 #000", "7px 0 0 #000", "-7px 0 0 #000"]).join(", ");
+  const B = 540, bx = (1200 - B) / 2, by = 60; // body: a 540px square, head-on
+  // wheels poke out past the body: a dark tyre with a lighter tread stripe, so they read on the dark card
+  const wheel = (left, top) => h("div", { position: "absolute", left, top, width: 84, height: 150, borderRadius: 20, background: "#3a3a3a", alignItems: "center", justifyContent: "center" },
+    h("div", { width: 26, height: 110, borderRadius: 13, background: "#555" }));
+  // eye: white circle, pupil, then a bigger accent circle shifted up as the lid (curved, and
+  // accent-on-accent outside the eye, so nothing clips)
+  const eye = (left, lid) => h("div", { position: "absolute", left, top: 185, width: 140, height: 140 },
+    h("div", { position: "absolute", left: 0, top: 0, width: 140, height: 140, borderRadius: 70, background: "#fff" }),
+    h("div", { position: "absolute", left: f.pupilX, top: 56, width: 60, height: 60, borderRadius: 30, background: "#111" }),
+    h("div", { position: "absolute", left: -18, top: lid - 178, width: 178, height: 178, borderRadius: 89, background: C.accent }));
+  const brow = ([left, top, angle]) => h("div", { position: "absolute", left, top, width: 160, height: 24, borderRadius: 12, background: "#111", transform: `rotate(${angle}deg)` });
+  const body = h("div", { position: "absolute", left: bx, top: by, width: B, height: B, borderRadius: 72, background: C.accent },
+    eye(92, f.lids[0]), eye(308, f.lids[1]),
+    ...f.brows.map(brow), // after the eyes, so the lids don't paint over them
+    h("div", { position: "absolute", left: f.mouth.left, top: f.mouth.top, width: f.mouth.width, height: 22, borderRadius: 11, background: "#111", transform: `rotate(${f.mouth.rot}deg)` }));
+  const caption = h("div", { position: "absolute", left: 0, width: 1200, top: at === "top" ? 14 : 630 - fontSize - 24, justifyContent: "center",
+    fontFamily: "Anton", fontSize, lineHeight: 1, letterSpacing: 2, textTransform: "uppercase", color: "#fff", textShadow: outline }, text);
+  return h("div", { position: "relative", width: "100%", height: "100%", background: C.bg },
+    wheel(bx - 66, by + 80), wheel(bx - 66, by + 300), wheel(bx + B - 18, by + 80), wheel(bx + B - 18, by + 300),
+    body, caption);
 }
 
 export default async function handler(req, res) {
   const q = new URL(req.url, "http://x").searchParams;
   try {
     if (q.get("kind") === "site") {
-      const img = new ImageResponse(h("div", { width: "100%", height: "100%", fontFamily: "Roboto" }, siteCard()), { width: 1200, height: 630, fonts: await loadFonts().catch(() => undefined) });
+      const img = new ImageResponse(h("div", { width: "100%", height: "100%", fontFamily: "Roboto" }, siteCard(+(q.get("v") ?? 1))), { width: 1200, height: 630, fonts: await loadFonts().catch(() => undefined) });
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
       return res.status(200).end(Buffer.from(await img.arrayBuffer()));
