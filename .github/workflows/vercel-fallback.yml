@@ -1,0 +1,44 @@
+# Fallback hosting: builds the site and deploys it to Vercel (project ftcstats-photos,
+# which already holds the oddbot.org domains). Use it when the home server is down:
+# run this, then point oddbot.org's DNS at Vercel in Cloudflare. Manual only, so the
+# self-hosted site stays the normal home.
+name: Vercel fallback deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  VERCEL_ORG_ID: team_r1o66OZwsgZCXGjollpuMNFZ
+  VERCEL_PROJECT_ID: prj_EYnS7Q15FgxkYGBeqF5AyCkwb0iF
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - id: day
+        run: echo "day=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: .cache
+          key: ftc-cache-v2-${{ steps.day.outputs.day }}
+          restore-keys: ftc-cache-v2-
+      - run: npm run update
+        env:
+          FTC_API_USER: ${{ secrets.FTC_API_USER }}
+          FTC_API_KEY: ${{ secrets.FTC_API_KEY }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+      - run: npm run check
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          node scripts/package-vercel.mjs
+          npx -y vercel@63.1.2 deploy dist --prod --yes --archive=tgz --token "$VERCEL_TOKEN"
