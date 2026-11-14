@@ -145,6 +145,20 @@ Photo uploads go to Vercel Blob and appear after review at `/admin.html`
 (the server needs BLOB_READ_WRITE_TOKEN and ADMIN_TOKEN for that). GitHub Pages
 only serves a redirect to the live site.
 
+### Fallback when the home PC is down (Cloudflare error 1033 / HTTP 530)
+1. Run the **Vercel fallback deploy** workflow (Actions tab, or
+   `gh workflow run vercel-fallback.yml`). It builds the site and deploys it to
+   the Vercel project `ftcstats-photos`, which already holds oddbot.org and www.
+2. Cloudflare → oddbot.org → DNS → Records: set `oddbot.org` and `www` to
+   CNAME `cname.vercel-dns.com`, **DNS only** (grey cloud).
+The Vercel copy does not update itself; re-run the workflow to refresh data.
+
+To switch back once the PC and its tunnel are up again, set both records to
+CNAME `a907c9af-0bf6-4c38-a662-036eff4f4260.cfargotunnel.com` (the `ftcstats`
+tunnel), **Proxied** (orange cloud).
+
+Last used 2026-11-14: the home PC went offline and the site was moved to Vercel.
+
 Data credit: match data from the FIRST FTC Events API via FTCScout. Not
 affiliated with FIRST. The FIRST API terms ask for non-commercial use and a
 link back, which the site footer provides.
