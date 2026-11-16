@@ -151,7 +151,8 @@ only serves a redirect to the live site.
    the Vercel project `ftcstats-photos`, which already holds oddbot.org and www.
 2. Cloudflare → oddbot.org → DNS → Records: set `oddbot.org` and `www` to
    CNAME `cname.vercel-dns.com`, **DNS only** (grey cloud).
-The Vercel copy does not update itself; re-run the workflow to refresh data.
+While the home PC is down (since 2026-11-14) the workflow also runs hourly on a
+`schedule:`; remove that schedule (or disable the workflow) once the PC is back.
 
 To switch back once the PC and its tunnel are up again, set both records to
 CNAME `a907c9af-0bf6-4c38-a662-036eff4f4260.cfargotunnel.com` (the `ftcstats`

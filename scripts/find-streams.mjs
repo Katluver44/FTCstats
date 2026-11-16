@@ -24,16 +24,41 @@ let budget = budgetAt >= 0 ? +args.splice(budgetAt, 2)[1] : 3000;
 const seasons = args.map(Number);
 
 const readJson = (f, fallback) => fs.readFile(f, "utf8").then(JSON.parse).catch(() => fallback);
-const key = process.env.YOUTUBE_API_KEY ?? (await fs.readFile(".env", "utf8").catch(() => "")).match(/^YOUTUBE_API_KEY=(\S+)/m)?.[1];
+// every Google API key we can find: YOUTUBE_API_KEY(S) from the environment and any
+// AIza… line in .env whatever its name (same rule as videos.mjs). Each Google Cloud
+// project has its own daily quota, so when one key is refused or out of quota we move
+// on to the next, and stop cleanly when none is left. Keys are never printed.
+async function ytKeys() {
+  const text = await fs.readFile(".env", "utf8").catch(() => "");
+  const fromEnv = [process.env.YOUTUBE_API_KEY, ...(process.env.YOUTUBE_API_KEYS ?? "").split(",")];
+  const fromFile = [...text.matchAll(/^[\w-]+=(AIza[\w-]{35})\s*$/gm)].map((m) => m[1]);
+  return [...new Set([...fromEnv, ...fromFile].map((k) => k?.trim()).filter(Boolean))];
+}
+const keys = await ytKeys();
+let keyAt = 0, spent = 0;
+const outOfBudget = (msg) => Object.assign(new Error(msg), { budget: true });
+// errors that are about the key (refused, disabled, out of quota), not about the request
+const keyProblem = (err) => err.code === 429 ||
+  ((err.code === 400 || err.code === 403) && (err.status === "PERMISSION_DENIED" ||
+    (err.errors ?? []).some((x) => /quota|limit|keyInvalid|keyExpired|accessNotConfigured|ipRefererBlocked|forbidden/i.test(x.reason ?? "")) ||
+    /API key|quota|Permission denied on the service|has not been used|is disabled/i.test(err.message ?? "")));
 
 async function yt(endpoint, params, cost) {
-  if (budget < cost) throw Object.assign(new Error("out of budget"), { budget: true });
-  budget -= cost;
-  const u = new URL(`${API}/${endpoint}`);
-  for (const [k, v] of Object.entries({ ...params, key })) u.searchParams.set(k, v);
-  const r = await (await fetch(u)).json();
-  if (r.error) throw new Error(`YouTube ${endpoint}: ${r.error.message}`);
-  return r;
+  if (budget < cost) throw outOfBudget("out of budget");
+  for (;;) {
+    if (keyAt >= keys.length) throw outOfBudget("no working YouTube API key left");
+    budget -= cost;
+    spent += cost;
+    const u = new URL(`${API}/${endpoint}`);
+    for (const [k, v] of Object.entries({ ...params, key: keys[keyAt] })) u.searchParams.set(k, v);
+    const r = await (await fetch(u)).json();
+    if (!r.error) return r;
+    if (!keyProblem(r.error)) throw new Error(`YouTube ${endpoint}: ${r.error.message}`);
+    console.warn(`  YouTube API key ${keyAt + 1}/${keys.length}: ${String(r.error.message).replace(/<[^>]+>/g, "")} - trying the next key`);
+    budget += cost; // a refused call costs the next key nothing
+    spent -= cost;
+    keyAt++;
+  }
 }
 
 const US = { AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado", CT: "Connecticut", DE: "Delaware", FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", DC: "Washington DC" };
@@ -48,6 +73,15 @@ const letterLeagues = (s) => s.replace(/\b([a-z](?:\s*&\s*[a-z])*)[\s-]+(league|
   .replace(/\b(group|pool|division|league)\s+([a-z]\d?)\b/g, "$1$2"); // "Group H" vs "Group V"
 const words = (s) => letterLeagues(String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")).split(/[^a-z0-9]+/).filter((w) => w && !STOP.has(w) && !/^20\d\d$/.test(w));
 const numbers = (s) => new Set([...String(s).matchAll(/(?:#|\bno\.?\s*|\b(?:qt|meet|qualifier|tournament|league)\s*)(\d{1,2})\b/gi)].map((m) => m[1]));
+
+// pairs checked by hand and found wrong ("season:event:video"); without this the next run
+// would file them again, since discovered.json only ever gains streams
+const REJECT = new Set([
+  "2026:BRPIQ:W4E117NLxis", "2026:BRPIQ:ZazpmyCEX60", // "Seletiva GO" is Goiás (BRGOQ), same days as Paraná
+  "2026:BRGOQ:lr02XUBKdlc", "2026:BRGOQ:2H9i7CoohzY", // "Seletiva FTC, PR" is Paraná (BRPIQ, filed by hand)
+  "2026:USTXNODTQ1:nYeQyYnUkAM", // "Fall Fiesta 2026 FTC" is not the NTX Denton qualifier
+  "2026:USFLFNM1:_Ry4fO4RGSY", // "xRC Tournament of FUN" is a simulator tournament
+]);
 
 export async function findStreams(season) {
   const cacheFile = path.join(".cache", "streams", `${season}.json`);
@@ -129,7 +163,7 @@ export async function findStreams(season) {
     }
   } catch (e) {
     if (!e.budget) throw e;
-    console.log(`  ${season}: quota budget used up; run again later to continue`);
+    console.log(`  ${season}: ${e.message}; run again later to continue`);
   }
   await save();
 
@@ -139,9 +173,12 @@ export async function findStreams(season) {
   const df = new Map();
   for (const e of evs) for (const w of new Set(words(e.name))) df.set(w, (df.get(w) ?? 0) + 1);
   const rare = (w) => !/^\d+$/.test(w) && w.length >= 3 && (df.get(w) ?? 0) <= Math.max(3, evs.length * 0.02);
-  const NOT_FTC = /\b(vex|v5rc|vrc|vexu|v5|iq|push back|fll|lego|frc|ri3d|robot in 3 days|rebuilt|airport|webcam)\b/i;
+  const NOT_FTC = /\b(vex|v5rc|vrc|vexu|v5|iq|push back|fll|lego|frc|ri3d|robot in 3 days|rebuilt|airport|webcam|xrc|football|hockey|basketball|soccer|volleyball|baseball|softball|lacrosse|wrestling|ncaa|audio only)\b/i;
+  // and it must look like a robotics event at all: college sports streams named after the
+  // host school ("Adrian College Football") matched events held at a college
+  const FTC_ISH = /ftc|first|tech challenge|robot|scrimmage|league|meet|qualifier|biobuzz|decode|tournament|championship|torneio|seletiva|festival/i;
   const taken = new Set(Object.values(linked).flatMap((v) => v.streams?.map((x) => x.id) ?? [])); // already some event's video
-  const streams = Object.entries(cache.videos).filter(([id, v]) => v.start && v.end && v.ok && !NOT_FTC.test(v.title) && !taken.has(id)).map(([id, v]) => ({ id, ...v }));
+  const streams = Object.entries(cache.videos).filter(([id, v]) => v.start && v.end && v.ok && !NOT_FTC.test(v.title) && FTC_ISH.test(v.title) && !taken.has(id)).map(([id, v]) => ({ id, ...v }));
   // every event competes for a stream, even ones that already have video: otherwise
   // "Suburban Northwest" wins the Northeast stream once Northeast has its own
   const cands = []; // { code, id, score, inside }
@@ -150,6 +187,7 @@ export async function findStreams(season) {
     const city = words(e.city ?? "").filter((w) => w.length >= 4);
     const nums = numbers(e.name);
     for (const s of streams) {
+      if (REJECT.has(`${season}:${e.code}:${s.id}`)) continue;
       const inside = e.times.filter((t) => t >= s.start - 60e3 && t <= s.end + 60e3).length / e.times.length;
       if (inside < 0.12) continue; // one day of a three-day event can hold under a quarter of it
       const tw = new Set(words(s.title));
@@ -212,13 +250,22 @@ export async function findStreams(season) {
 
 
 if (seasons.length) {
-  if (!key || !hasFirstApi()) throw new Error("needs YOUTUBE_API_KEY and the FIRST API login in .env");
+  // Part of `npm run update`, so a missing key, an exhausted quota or a FIRST API hiccup
+  // must not fail the update: say so and exit 0 (videos.mjs then uses what is on disk).
+  if (!keys.length || !hasFirstApi()) {
+    console.log(`find-streams: skipped (${!keys.length ? "no YouTube API key" : "no FIRST API login"} in env/.env)`);
+    process.exit(0);
+  }
   const file = path.join("site", "videos", "discovered.json");
   const all = await readJson(file, {});
   for (const s of seasons) {
     all[s] ??= {};
-    for (const [code, ids] of Object.entries(await findStreams(s))) all[s][code] = [...new Set([...(all[s][code] ?? []), ...ids])];
-    console.log(s, `${Object.keys(all[s]).length} events matched to a stream (budget left ${budget})`);
+    try {
+      for (const [code, ids] of Object.entries(await findStreams(s))) all[s][code] = [...new Set([...(all[s][code] ?? []), ...ids])];
+    } catch (e) {
+      console.warn(`find-streams ${s}: ${e.message} (skipped this season)`);
+    }
+    console.log(s, `${Object.keys(all[s]).length} events matched to a stream (quota used this run ${spent}, budget left ${budget})`);
   }
   await fs.mkdir(path.dirname(file), { recursive: true });
   await fs.writeFile(file, JSON.stringify(all, null, 1) + "\n");

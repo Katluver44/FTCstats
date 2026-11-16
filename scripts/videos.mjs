@@ -3,7 +3,8 @@
 // Sources, best first (Bilibili clips come in through timestamped.json with a "bili:" id):
 //  1. Per-match uploads FIRST links on each match (Worlds playoffs, mostly).
 //  2. The event's livestream recording (FIRST event listing + overrides),
-//     with each match located by its official start time.
+//     with each match located by its official start time. When FIRST links a channel page
+//     instead of a video, that channel's recordings live during the event's matches.
 //  3. Manual / community additions in site/videos/overrides.json.
 // Livestream start/end times come from the YouTube Data API (YOUTUBE_API_KEY);
 // FIRST data needs FTC_API_USER / FTC_API_KEY. Missing keys = that source skipped.
@@ -58,6 +59,137 @@ export function youtubeId(url) {
   return m?.[1] ?? null;
 }
 
+// A channel link instead of a video link (".../@ndhsrobotics/live", ".../channel/UC…/streams",
+// ".../c/FIRSTChesapeake", ".../user/x"): what to look the channel up by, or null.
+export function youtubeChannel(url) {
+  let s = String(url ?? "");
+  if (youtubeId(s) || !/youtube\.com\//i.test(s)) return null;
+  try { s = decodeURI(s); } catch {}
+  let m = s.match(/youtube\.com\/channel\/(UC[\w-]{22})/i);
+  if (m) return { id: m[1] };
+  m = s.match(/youtube\.com\/@([^/?#\s]+)/i);
+  if (m) return { handle: m[1] };
+  m = s.match(/youtube\.com\/(c|user)\/([^/?#\s]+)/i);
+  if (m) return { [m[1].toLowerCase() === "user" ? "user" : "custom"]: m[2] };
+  return null;
+}
+
+// One YouTube Data API call (googleapis.com only) with the same key rotation as youtubeDetails.
+// null when no key works: callers then skip quietly.
+const YTAPI = "https://www.googleapis.com/youtube/v3";
+let ytUnits = 0; // quota spent this run (list calls cost 1 unit each)
+async function ytApi(endpoint, params) {
+  ytKeyList ??= await ytKeys();
+  if (!ytKeyList.length || ytDown) return null;
+  for (;;) {
+    const u = new URL(`${YTAPI}/${endpoint}`);
+    for (const [k, v] of Object.entries({ ...params, key: ytKeyList[ytKeyAt] })) u.searchParams.set(k, v);
+    ytUnits++;
+    const json = await fetch(u).then((r) => r.json()).catch((e) => ({ error: { message: e.message } }));
+    if (!json.error) return json;
+    console.warn(`YouTube API key ${ytKeyAt + 1}/${ytKeyList.length}: ${String(json.error.message).replace(/<[^>]+>/g, "")}`);
+    if (++ytKeyAt >= ytKeyList.length) { ytDown = true; return null; }
+  }
+}
+
+// Channel id for a channel link; handles are cached for good (null = no such channel).
+async function resolveChannel(ref, handles) {
+  if (ref.id) return ref.id;
+  const key = ref.handle ? `@${ref.handle}` : ref.user ? `user/${ref.user}` : `c/${ref.custom}`;
+  if (key in handles) return handles[key];
+  // /c/ names: usually the same as the channel's @handle, else a legacy username
+  const tries = ref.handle ? [{ forHandle: ref.handle }] : ref.user ? [{ forUsername: ref.user }] : [{ forHandle: ref.custom }, { forUsername: ref.custom }];
+  for (const q of tries) {
+    const r = await ytApi("channels", { part: "id", ...q });
+    if (!r) return undefined; // API down: try again next run
+    if (r.items?.[0]?.id) return (handles[key] = r.items[0].id);
+  }
+  return (handles[key] = null);
+}
+
+// Recordings for events whose FIRST stream link is a channel, not a video. One channel often
+// streams several events on different days, so a recording only counts for an event when it
+// was live during that event's matches (and, when one recording overlaps two of the channel's
+// events at once, only if its title names one of them). Finished events are cached.
+//   links: [{ code, name, url, dateStart, dateEnd }]
+// Returns { pending: code -> [candidate ids] (need details), match(code, details) -> ids }.
+async function channelStreams(season, links) {
+  const dir = path.join(".cache", "yt-channels");
+  const handlesFile = path.join(dir, "handles.json"), doneFile = path.join(dir, `events-${season}.json`);
+  const handles = await readJson(handlesFile, {});
+  const done = await readJson(doneFile, {}); // finished event code -> matched ids
+  const now = Date.now();
+  const cached = {}, pending = {}, info = {};
+  const byChannel = new Map(); // channel id -> [event links]
+  for (const l of links) {
+    if (done[l.code]) { cached[l.code] = done[l.code]; continue; }
+    const start = Date.parse(l.dateStart), end = Date.parse(l.dateEnd) + 864e5;
+    if (!(start < now)) continue; // not started yet
+    const ev = await readJson(path.join("site", "data", String(season), "event", `${l.code}.json`), null);
+    const times = (ev?.matchList ?? []).filter((m) => m.played && m.time).map((m) => m.time);
+    if (!times.length) continue; // nothing played yet: nothing to place
+    const id = await resolveChannel(youtubeChannel(l.url), handles);
+    if (!id) continue;
+    info[l.code] = { ...l, start, end, times, channel: id, finished: end < now - 3 * 864e5 };
+    if (!byChannel.has(id)) byChannel.set(id, []);
+    byChannel.get(id).push(info[l.code]);
+  }
+  // list each channel's uploads (newest first) back to a week before its earliest event:
+  // a stream's publish time can be when it was scheduled, days before it went live
+  for (const [id, evs] of byChannel) {
+    const from = Math.min(...evs.map((e) => e.start)) - 7 * 864e5;
+    const vids = [];
+    let pageToken, page = 0;
+    do {
+      const r = await ytApi("playlistItems", { part: "contentDetails", playlistId: `UU${id.slice(2)}`, maxResults: 50, ...(pageToken ? { pageToken } : {}) });
+      if (!r) break;
+      for (const it of r.items ?? []) vids.push({ id: it.contentDetails?.videoId, at: Date.parse(it.contentDetails?.videoPublishedAt) });
+      pageToken = r.nextPageToken;
+      if (vids.length && vids.at(-1).at < from) break;
+    } while (pageToken && ++page < 10);
+    for (const e of evs) {
+      pending[e.code] = vids.filter((v) => v.id && v.at >= e.start - 7 * 864e5 && v.at <= e.end + 2 * 864e5).map((v) => v.id);
+    }
+  }
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(handlesFile, JSON.stringify(handles, null, 1));
+
+  const match = async (details) => {
+    // which events each recording was live during (enough of their matches inside it)
+    const hits = {};
+    for (const [code, ids] of Object.entries(pending)) {
+      const e = info[code];
+      for (const id of ids) {
+        const v = details[id];
+        if (!v?.start || v.missing) continue;
+        const end = v.end ?? (v.live ? now : v.start + (v.seconds ?? 0) * 1000);
+        const n = e.times.filter((t) => t >= v.start - 5 * 60e3 && t <= end).length;
+        if (n >= Math.min(3, e.times.length) && n >= e.times.length * 0.25) (hits[id] ??= []).push(code);
+      }
+    }
+    const found = {};
+    for (const [id, codes] of Object.entries(hits)) {
+      let keep = codes;
+      if (codes.length > 1) keep = codes.filter((c) => titleNames(details[id].title, info[c].name, codes.map((x) => info[x].name)));
+      for (const c of keep) (found[c] ??= []).push(id);
+    }
+    // cache finished events (an empty answer too), unless the API gave out partway
+    if (!ytDown) for (const [code, e] of Object.entries(info)) if (e.finished && pending[code]) done[code] = found[code] ?? [];
+    await fs.writeFile(doneFile, JSON.stringify(done, null, 1));
+    return { ...cached, ...found };
+  };
+  return { pending, cached, match };
+}
+
+// Does a recording's title pick out this event among others streamed at the same time?
+// Looks for the number or word that tells the event names apart ("Meet 5" vs "Meet 6").
+function titleNames(title = "", name, others) {
+  const toks = (s) => new Set(String(s).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+  const t = toks(title), mine = toks(name);
+  const distinct = [...mine].filter((w) => others.some((o) => o !== name && !toks(o).has(w)));
+  return distinct.length > 0 && distinct.every((w) => t.has(w));
+}
+
 async function readJson(file, fallback) {
   return fs.readFile(file, "utf8").then(JSON.parse).catch(() => fallback);
 }
@@ -80,6 +212,7 @@ async function youtubeDetails(ids, cacheFile) {
       const batch = todo.slice(i, i + 50);
       let json;
       for (;;) {
+        ytUnits++;
         const res = await fetch(`${YT}?part=liveStreamingDetails,contentDetails,status,snippet&id=${batch.join(",")}&key=${ytKeyList[ytKeyAt]}`);
         json = await res.json();
         if (!json.error) break;
@@ -163,6 +296,7 @@ export async function buildVideos(season) {
   const overrides = (await readJson(path.join("site", "videos", "overrides.json"), {}))[season] ?? {};
   const events = {}; // code -> { streams: Set(ids), uploads: [{ t: match start ms, id }] }
   const add = (code) => (events[code] ??= { streams: new Set(), uploads: [] });
+  const chanLinks = []; // FIRST stream links that point at a channel, not a video
 
   if (hasFirstApi()) {
     const listing = await first(`${season}/events`).catch(() => null);
@@ -170,6 +304,7 @@ export async function buildVideos(season) {
       for (const url of [e.liveStreamUrl, ...(e.webcasts ?? []).map((w) => w?.url ?? w)]) {
         const id = youtubeId(url);
         if (id) add(e.code).streams.add(id);
+        else if (youtubeChannel(url)) chanLinks.push({ code: e.code, name: e.name, url, dateStart: e.dateStart, dateEnd: e.dateEnd });
       }
     }
     // per-match uploads: FIRST links a clip per match for some events (the Championship,
@@ -204,6 +339,8 @@ export async function buildVideos(season) {
   for (const [code, o] of Object.entries(overrides)) {
     for (const url of o.streams ?? []) { const id = youtubeId(url); if (id) add(code).streams.add(id); }
   }
+  // events whose stream link is a channel page: that channel's recordings from the event's days
+  const chan = await channelStreams(season, chanLinks);
   // uploads whose description times every match (scripts/find-timestamped.mjs): exact spots;
   // plus livestream matches whose start was read off the overlay (scripts/ocr-calibrate-streams.mjs)
   const stamped = (await readJson(path.join("site", "videos", "timestamped.json"), {}))[season] ?? {};
@@ -237,7 +374,11 @@ export async function buildVideos(season) {
   // timestamped.json) have no YouTube details to look up: kept as they are
   const isBili = (id) => String(id).startsWith("bili:");
   const allIds = Object.values(events).flatMap((e) => [...e.streams, ...e.uploads.map((u) => u.id)]).filter((id) => !isBili(id));
+  allIds.push(...Object.values(chan.pending).flat(), ...Object.values(chan.cached).flat());
   const yt = await youtubeDetails(allIds, path.join(".cache", "videos", `${season}.json`));
+  const fromChannels = await chan.match(yt);
+  for (const [code, ids] of Object.entries(fromChannels)) for (const id of ids) add(code).streams.add(id);
+  if (chanLinks.length) console.log(`${season}: channel links ${chanLinks.length}, recordings placed for ${Object.values(fromChannels).filter((x) => x.length).length} events (${ytUnits} YouTube units this run so far)`);
 
   // keep recordings we can place matches in (start and end known); ones whose owner
   // turned off embedding are kept with ext: 1 and open on YouTube instead

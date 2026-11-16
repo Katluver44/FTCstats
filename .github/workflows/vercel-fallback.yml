@@ -1,11 +1,21 @@
 # Fallback hosting: builds the site and deploys it to Vercel (project ftcstats-photos,
 # which already holds the oddbot.org domains). Use it when the home server is down:
-# run this, then point oddbot.org's DNS at Vercel in Cloudflare. Manual only, so the
-# self-hosted site stays the normal home.
+# run this, then point oddbot.org's DNS at Vercel in Cloudflare.
 name: Vercel fallback deploy
 
 on:
   workflow_dispatch:
+  # TEMPORARY: the home PC went offline on 2026-11-14, so this refreshes the Vercel copy
+  # hourly, like the PC did (warm-cache update takes ~5 min; the repo is public, so Actions
+  # minutes are free). REMOVE this schedule (or disable the workflow) once the home PC is
+  # back (and DNS points at the tunnel again), or it keeps deploying to Vercel for nothing.
+  schedule:
+    - cron: "23 * * * *"
+
+# never two deploys at once; a queued run waits for the current one instead of cancelling it
+concurrency:
+  group: vercel-fallback
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -35,6 +45,9 @@ jobs:
           FTC_API_USER: ${{ secrets.FTC_API_USER }}
           FTC_API_KEY: ${{ secrets.FTC_API_KEY }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          TOA_API_KEY: ${{ secrets.TOA_API_KEY }}
+          # CI keeps its .cache only once a day, so hourly runs repeat searches: keep the stream finder small
+          STREAMS_BUDGET: 200
       - run: npm run check
       - name: Deploy to Vercel
         env:
